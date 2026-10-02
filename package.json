@@ -1,0 +1,26 @@
+{
+  "name": "firearm-designer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "check-data": "esbuild scripts/check-presets.ts --bundle --platform=node --log-level=warning --outfile=node_modules/.cache/check.cjs && node node_modules/.cache/check.cjs",
+    "artifact": "node scripts/make-artifact.mjs",
+    "test": "node --test scripts/extract-price.test.mjs",
+    "update-prices": "node scripts/update-prices.mjs"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "esbuild": "^0.21.5",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.0"
+  }
+}

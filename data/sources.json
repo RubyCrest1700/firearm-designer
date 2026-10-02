@@ -1,0 +1,11 @@
+{
+  "_comment": "Product page URLs the nightly price job reads, keyed by part id, then retailer id (see src/data/retailers.ts). Add a URL here to make that part's price live.",
+  "parts": {
+    "ar-bcg-toolcraft": {
+      "PA": "https://www.primaryarms.com/toolcraft-556-nato-complete-m16-bolt-carrier-group-nitride"
+    },
+    "ar-stock-moesl": {
+      "MAGPUL": "https://magpul.com/moe-sl-carbine-stock-mil-spec.html"
+    }
+  }
+}
