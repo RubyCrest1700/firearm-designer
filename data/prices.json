@@ -1,4 +1,213 @@
 {
-  "updatedAt": null,
-  "offers": {}
+  "updatedAt": "2026-10-02T03:48:45.160Z",
+  "offers": {
+    "a10-buf-aero": {
+      "AERO": {
+        "price": 105,
+        "inStock": true,
+        "url": "https://www.aeroprecisionusa.com/m5-308-carbine-buffer-kit-1",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "a10-ch-dpms": {
+      "AERO": {
+        "price": 27,
+        "inStock": true,
+        "url": "https://www.aeroprecisionusa.com/ar308-charging-handle",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "a10-gb-750": {
+      "AERO": {
+        "price": 40,
+        "inStock": true,
+        "url": "https://www.aeroprecisionusa.com/750-low-profile-gas-block-w-aero-logo-nitride",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "a10-hg-atlas": {
+      "AERO": {
+        "price": 225,
+        "inStock": true,
+        "url": "https://www.aeroprecisionusa.com/m5-15-atlas-s-one-m-lok-handguard-anodized-black",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "a10-lower-aero": {
+      "AERO": {
+        "price": 170,
+        "inStock": true,
+        "url": "https://www.aeroprecisionusa.com/m5-308-stripped-lower-receiver-anodized-black",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "a10-lpk-dpms": {
+      "AERO": {
+        "price": 55,
+        "inStock": true,
+        "url": "https://www.aeroprecisionusa.com/m5-308-lower-parts-kit-minus-fcg",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "a10-trig-alg": {
+      "PA": {
+        "price": 69.99,
+        "inStock": true,
+        "url": "https://www.primaryarms.com/alg-defense-combat-trigger-act",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "a10-trig-geissele": {
+      "PA": {
+        "price": 189.99,
+        "inStock": true,
+        "url": "https://www.primaryarms.com/geissele-automatics-super-semi-automatic-enhanced-ssa-e-two-stage-ar-15-trigger-.154in",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "a10-upper-aero": {
+      "AERO": {
+        "price": 155,
+        "inStock": true,
+        "url": "https://www.aeroprecisionusa.com/m5-stripped-upper-receiver-anodized",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "ar-ch-aero": {
+      "AERO": {
+        "price": 24,
+        "inStock": true,
+        "url": "https://www.aeroprecisionusa.com/ar15-charging-handle",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "ar-ch-radian": {
+      "PA": {
+        "price": 104.95,
+        "inStock": true,
+        "url": "https://www.primaryarms.com/radian-weapons-ar15-m16-raptor-ambidextrous-charging-handle-black",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "ar-gb-aero750": {
+      "AERO": {
+        "price": 40,
+        "inStock": true,
+        "url": "https://www.aeroprecisionusa.com/750-low-profile-gas-block-w-aero-logo-nitride",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "ar-gt-carbine": {
+      "AERO": {
+        "price": 20,
+        "inStock": true,
+        "url": "https://www.aeroprecisionusa.com/gas-tube-carbine-length-melonite",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "ar-lpk-aero": {
+      "AERO": {
+        "price": 40,
+        "inStock": true,
+        "url": "https://www.aeroprecisionusa.com/ar15-lpk-minus",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "ar-stock-moesl": {
+      "MAGPUL": {
+        "price": 69.95,
+        "inStock": true,
+        "url": "https://magpul.com/moe-sl-carbine-stock-mil-spec.html",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "ar-trig-alg": {
+      "PA": {
+        "price": 69.99,
+        "inStock": true,
+        "url": "https://www.primaryarms.com/alg-defense-combat-trigger-act",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "ar-trig-geissele": {
+      "PA": {
+        "price": 189.99,
+        "inStock": true,
+        "url": "https://www.primaryarms.com/geissele-automatics-super-semi-automatic-enhanced-ssa-e-two-stage-ar-15-trigger-.154in",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "ar-upper-aero": {
+      "AERO": {
+        "price": 150,
+        "inStock": true,
+        "url": "https://www.aeroprecisionusa.com/m4e1-threaded-stripped-upper-receiver-anodized-black",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "g-mag-pmag12": {
+      "MAGPUL": {
+        "price": 14.95,
+        "inStock": true,
+        "url": "https://magpul.com/pmag-12-gl9-glock-g26.html",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "g-mag-pmag15": {
+      "MAGPUL": {
+        "price": 14.95,
+        "inStock": true,
+        "url": "https://magpul.com/pmag-15-gl9-glock-g19.html",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "g-mag-pmag17": {
+      "MAGPUL": {
+        "price": 14.95,
+        "inStock": true,
+        "url": "https://magpul.com/pmag-17-gl9-glock-17.html",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "g-opt-507c": {
+      "PA": {
+        "price": 232.99,
+        "inStock": true,
+        "url": "https://www.primaryarms.com/holosun-hs507c-x2-pistol-red-dot-sight-2-moa",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "gs-opt-507k": {
+      "PA": {
+        "price": 295.99,
+        "inStock": true,
+        "url": "https://www.primaryarms.com/holosun-hs507k-x2-compact-pistol-red-dot-sight-2-moa",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "p365-mag-10": {
+      "PA": {
+        "price": 44.99,
+        "inStock": true,
+        "url": "https://www.primaryarms.com/sig-sauer-9mm-p365-10-round-magazine",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "p365-opt-507k": {
+      "PA": {
+        "price": 295.99,
+        "inStock": true,
+        "url": "https://www.primaryarms.com/holosun-hs507k-x2-compact-pistol-red-dot-sight-2-moa",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    },
+    "p365-opt-eps": {
+      "PA": {
+        "price": 399.99,
+        "inStock": true,
+        "url": "https://www.primaryarms.com/holosun-eps-carry-mrs-enclosed-pistol-sight-multiple-reticle-red-reticle",
+        "checkedAt": "2026-10-02T03:48:45.160Z"
+      }
+    }
+  }
 }
