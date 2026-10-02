@@ -5,9 +5,9 @@ import sources from '../../data/sources.json';
 type PartInput = Omit<Part, 'offers'> & { offers: OfferTuple[] };
 
 /** Live prices written by scripts/update-prices.mjs, keyed by part id, then retailer id. */
-const LIVE = (prices as { offers: Record<string, Record<string, Offer>> }).offers;
+const LIVE = (prices as unknown as { offers: Record<string, Record<string, Offer>> }).offers;
 /** Known product page URLs, so "View" links go to the product even before a live price exists. */
-const URLS = (sources as { parts: Record<string, Record<string, string>> }).parts;
+const URLS = (sources as unknown as { parts: Record<string, Record<string, string>> }).parts;
 
 /**
  * Builds parts from inline sample offers, then overlays any live prices from data/prices.json.

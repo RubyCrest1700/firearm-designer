@@ -10,4 +10,4 @@ import type { Platform } from '../types';
 export const PLATFORMS: Platform[] = [ar15, ar10, glock17, glock19, glock26, glockSlim, p320, p365];
 
 /** When the nightly job last ran, or null if every price is still sample data. */
-export const PRICES_UPDATED_AT: string | null = (prices as { updatedAt: string | null }).updatedAt;
+export const PRICES_UPDATED_AT: string | null = (prices as unknown as { updatedAt: string | null }).updatedAt;
