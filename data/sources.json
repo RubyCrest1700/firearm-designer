@@ -5,19 +5,16 @@
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-bolts-bolt-carrier-groups/ar-.308-low-mass-operating-system-complete-carrier-group/"
     },
     "a10-buf-aero": {
-      "AERO": "https://www.aeroprecisionusa.com/m5-308-carbine-buffer-kit-1",
-      "PA": "https://www.primaryarms.com/APRH100158"
+      "AERO": "https://www.aeroprecisionusa.com/m5-308-carbine-buffer-kit-1"
     },
     "a10-ch-dpms": {
       "AERO": "https://www.aeroprecisionusa.com/ar308-charging-handle"
     },
     "a10-ch-radian": {
-      "PA": "https://www.primaryarms.com/radian-ar10-sr25-raptor-ambidextrous-charging-handle-black",
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-charging-handle-parts/ar-308-raptor-charging-handle-7.62/"
     },
     "a10-gb-750": {
-      "AERO": "https://www.aeroprecisionusa.com/750-low-profile-gas-block-w-aero-logo-nitride",
-      "PA": "https://www.primaryarms.com/aero-precision-low-profile-gas-block-no-logo-.750in-nitride"
+      "AERO": "https://www.aeroprecisionusa.com/750-low-profile-gas-block-w-aero-logo-nitride"
     },
     "a10-grip-bcm": {
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-grips/ar-15-mod-3-gunfighter-grip/?sku=100013641"
@@ -60,8 +57,7 @@
       "PSA": "https://palmettostatearmory.com/psa-ar15-pa10-enhanced-polished-trigger.html"
     },
     "a10-upper-aero": {
-      "AERO": "https://www.aeroprecisionusa.com/m5-stripped-upper-receiver-anodized",
-      "PA": "https://www.primaryarms.com/aero-precision-m5-308-stripped-upper-receiver-apar308503"
+      "AERO": "https://www.aeroprecisionusa.com/m5-stripped-upper-receiver-anodized"
     },
     "ar-bbl-ba16": {
       "PA": "https://www.primaryarms.com/ballistic-advantage-ar-15-5-56-nato-16-mid-length-barrel-1-2x28-babl556015m"
@@ -71,9 +67,6 @@
     },
     "ar-bcg-psa": {
       "PSA": "https://palmettostatearmory.com/psa-5-56-nitride-mpi-full-auto-bolt-carrier-group-516446953.html"
-    },
-    "ar-bcg-toolcraft": {
-      "PA": "https://www.primaryarms.com/toolcraft-556-nato-complete-m16-bolt-carrier-group-nitride"
     },
     "ar-buf-aero": {
       "AERO": "https://www.aeroprecisionusa.com/ar15-carbine-buffer-kit-w-heavy-buffer"
@@ -93,8 +86,7 @@
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-charging-handle-parts/ar-15-raptor-charging-handle-5.56/"
     },
     "ar-gb-aero750": {
-      "AERO": "https://www.aeroprecisionusa.com/750-low-profile-gas-block-w-aero-logo-nitride",
-      "PA": "https://www.primaryarms.com/aero-precision-low-profile-gas-block-no-logo-.750in-nitride"
+      "AERO": "https://www.aeroprecisionusa.com/750-low-profile-gas-block-w-aero-logo-nitride"
     },
     "ar-grip-bcm": {
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-grips/ar-15-mod-3-gunfighter-grip/?sku=100013641"
@@ -163,9 +155,6 @@
     },
     "g-mag-oem15": {
       "BRN": "https://www.brownells.com/gun-parts/magazines/handgun-magazines-parts/9mm-luger-magazines-for-glock-19/?sku=100002772"
-    },
-    "g-mag-oem17": {
-      "PA": "https://www.primaryarms.com/glock-factory-17-magazine-17-round-9mm-mggl17017-mggl17017"
     },
     "g-mag-pmag12": {
       "MID": "https://www.midwayusa.com/product/1018078247",
