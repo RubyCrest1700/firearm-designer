@@ -1,4 +1,5 @@
 # Builds the site and publishes it to GitHub Pages (free for public repos).
+# Pull requests only build and test; nothing is published until they merge.
 # On the nightly schedule (or a manual run) it first refreshes data/prices.json
 # from retailer product pages and commits the change.
 name: Build, update prices, deploy
@@ -6,6 +7,7 @@ name: Build, update prices, deploy
 on:
   push:
     branches: [main]
+  pull_request:
   schedule:
     - cron: '17 8 * * *' # daily, ~4am US Eastern
   workflow_dispatch:
@@ -21,7 +23,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: deploy
+  group: deploy-${{ github.event_name == 'pull_request' && github.ref || 'main' }}
   cancel-in-progress: false
 
 jobs:
@@ -51,11 +53,13 @@ jobs:
       - run: npm run check-data
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
         with:
           path: dist
 
   deploy:
     needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

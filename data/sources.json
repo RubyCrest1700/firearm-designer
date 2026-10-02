@@ -1,11 +1,354 @@
 {
   "_comment": "Product page URLs the nightly price job reads, keyed by part id, then retailer id (see src/data/retailers.ts). Add a URL here to make that part's price live.",
   "parts": {
+    "a10-bcg-jp": {
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-bolts-bolt-carrier-groups/ar-.308-low-mass-operating-system-complete-carrier-group/"
+    },
+    "a10-buf-aero": {
+      "AERO": "https://www.aeroprecisionusa.com/m5-308-carbine-buffer-kit-1",
+      "PA": "https://www.primaryarms.com/APRH100158"
+    },
+    "a10-ch-dpms": {
+      "AERO": "https://www.aeroprecisionusa.com/ar308-charging-handle"
+    },
+    "a10-ch-radian": {
+      "PA": "https://www.primaryarms.com/radian-ar10-sr25-raptor-ambidextrous-charging-handle-black",
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-charging-handle-parts/ar-308-raptor-charging-handle-7.62/"
+    },
+    "a10-gb-750": {
+      "AERO": "https://www.aeroprecisionusa.com/750-low-profile-gas-block-w-aero-logo-nitride",
+      "PA": "https://www.primaryarms.com/aero-precision-low-profile-gas-block-no-logo-.750in-nitride"
+    },
+    "a10-grip-bcm": {
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-grips/ar-15-mod-3-gunfighter-grip/?sku=100013641"
+    },
+    "a10-grip-moe": {
+      "PSA": "https://palmettostatearmory.com/magpul-moe-grip-ar15-m16-mag415-blk-mfg-retail-kit.html"
+    },
+    "a10-hg-atlas": {
+      "AERO": "https://www.aeroprecisionusa.com/m5-15-atlas-s-one-m-lok-handguard-anodized-black"
+    },
+    "a10-lower-aero": {
+      "AERO": "https://www.aeroprecisionusa.com/m5-308-stripped-lower-receiver-anodized-black"
+    },
+    "a10-lpk-dpms": {
+      "AERO": "https://www.aeroprecisionusa.com/m5-308-lower-parts-kit-minus-fcg"
+    },
+    "a10-mag-pmag": {
+      "PA": "https://www.primaryarms.com/magpul-pmag-20-lr-sr-gen-m3-7-62x51-magazine-black-mag291blk"
+    },
+    "a10-mz-pa": {
+      "PA": "https://www.primaryarms.com/precision-armament-m4-72-severe-duty-7-62-compensator-5-8x24-black",
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-muzzle-devices/ar-.308--m4-72-severe-duty-brake-30-caliber/"
+    },
+    "a10-stock-moesl": {
+      "PA": "https://www.primaryarms.com/magpul-moe-slim-line-carbine-stock-mil-spec-black-mag347-blk",
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-stocks-parts/ar-15-moe-sl-stock-collapsible-mil-spec/?sku=100015169"
+    },
+    "a10-stock-ubr": {
+      "PA": "https://www.primaryarms.com/Magpul-UBR-GEN2-Collapsible-Stock-Black",
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-stocks-parts/ar-15-ubr-2.0-collapsible-stock-collapsible-a5-length/"
+    },
+    "a10-trig-alg": {
+      "PA": "https://www.primaryarms.com/alg-defense-combat-trigger-act"
+    },
+    "a10-trig-geissele": {
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-triggers-parts/ssa-e-super-sem-automatic-enhanced-2-stage-trigger-for-ar-15/",
+      "PA": "https://www.primaryarms.com/geissele-automatics-super-semi-automatic-enhanced-ssa-e-two-stage-ar-15-trigger-.154in"
+    },
+    "a10-trig-psa": {
+      "PSA": "https://palmettostatearmory.com/psa-ar15-pa10-enhanced-polished-trigger.html"
+    },
+    "a10-upper-aero": {
+      "AERO": "https://www.aeroprecisionusa.com/m5-stripped-upper-receiver-anodized",
+      "PA": "https://www.primaryarms.com/aero-precision-m5-308-stripped-upper-receiver-apar308503"
+    },
+    "ar-bbl-ba16": {
+      "PA": "https://www.primaryarms.com/ballistic-advantage-ar-15-5-56-nato-16-mid-length-barrel-1-2x28-babl556015m"
+    },
+    "ar-bcg-bcm": {
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-bolts-bolt-carrier-groups/m16-5.56-bolt-carrier-group-1aa756be/?sku=100020758"
+    },
+    "ar-bcg-psa": {
+      "PSA": "https://palmettostatearmory.com/psa-5-56-nitride-mpi-full-auto-bolt-carrier-group-516446953.html"
+    },
     "ar-bcg-toolcraft": {
       "PA": "https://www.primaryarms.com/toolcraft-556-nato-complete-m16-bolt-carrier-group-nitride"
     },
+    "ar-buf-aero": {
+      "AERO": "https://www.aeroprecisionusa.com/ar15-carbine-buffer-kit-w-heavy-buffer"
+    },
+    "ar-buf-vltor": {
+      "MID": "https://www.midwayusa.com/product/1003409554"
+    },
+    "ar-ch-aero": {
+      "AERO": "https://www.aeroprecisionusa.com/ar15-charging-handle"
+    },
+    "ar-ch-bcm": {
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-charging-handle-parts/ar-15-bcmgunfighter-charging-handle-gen-2-black/?sku=100027144",
+      "MID": "https://www.midwayusa.com/product/1025635734"
+    },
+    "ar-ch-radian": {
+      "PA": "https://www.primaryarms.com/radian-weapons-ar15-m16-raptor-ambidextrous-charging-handle-black",
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-charging-handle-parts/ar-15-raptor-charging-handle-5.56/"
+    },
+    "ar-gb-aero750": {
+      "AERO": "https://www.aeroprecisionusa.com/750-low-profile-gas-block-w-aero-logo-nitride",
+      "PA": "https://www.primaryarms.com/aero-precision-low-profile-gas-block-no-logo-.750in-nitride"
+    },
+    "ar-grip-bcm": {
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-grips/ar-15-mod-3-gunfighter-grip/?sku=100013641"
+    },
+    "ar-grip-k2": {
+      "PA": "https://www.primaryarms.com/magpul-moe-k2-plus-pistol-grip-black",
+      "OP": "https://www.opticsplanet.com/v/mag532-blk-magpul-industries-moe-k2-grip.html"
+    },
+    "ar-grip-moe": {
+      "PSA": "https://palmettostatearmory.com/magpul-moe-grip-ar15-m16-mag415-blk-mfg-retail-kit.html",
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-grips/ar-15-moe-grip-a0040530/"
+    },
+    "ar-gt-carbine": {
+      "AERO": "https://www.aeroprecisionusa.com/gas-tube-carbine-length-melonite"
+    },
+    "ar-hg-bcm": {
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-handguards-parts/ar-15-bcmgunfighter--mcmr-handguard-m-lok-free-float/?sku=100026763"
+    },
+    "ar-hg-mi": {
+      "PA": "https://www.primaryarms.com/midwest-industries-15in-combat-rail-m-lok-ar-15-handguard-black"
+    },
+    "ar-lower-aero": {
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-receivers-parts/m4e1-stripped-lower-receivers-for-ar-15/?sku=100026146"
+    },
+    "ar-lower-anderson": {
+      "PSA": "https://palmettostatearmory.com/anderson-manufacturing-am-15-stripped-lower-5-56x45mm-black.html"
+    },
+    "ar-lpk-aero": {
+      "AERO": "https://www.aeroprecisionusa.com/ar15-lpk-minus"
+    },
+    "ar-lpk-bcm": {
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-upper-lower-parts-kits/ar-15-bcmgunfighter-enhanced-lower-parts-kits/?sku=100018636",
+      "MID": "https://www.midwayusa.com/product/1025634882"
+    },
+    "ar-mz-warcomp": {
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-muzzle-devices/ar-15-warcomp-flash-hider-22-cal/",
+      "OP": "https://www.opticsplanet.com/v/warcomp-556-1-2-28-surefire-warcomp-flash-hider-adapter.html"
+    },
+    "ar-opt-aimpoint": {
+      "BRN": "https://www.brownells.com/optics/reflex-red-dot-sights/red-dot-sights/patrol-rifle-optic-pro/",
+      "MID": "https://www.midwayusa.com/product/1027902722"
+    },
+    "ar-stock-bcm": {
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-stocks-parts/ar-15-bcmgunfighter-stock-collapsible-mil-spec/"
+    },
     "ar-stock-moesl": {
-      "MAGPUL": "https://magpul.com/moe-sl-carbine-stock-mil-spec.html"
+      "MAGPUL": "https://magpul.com/moe-sl-carbine-stock-mil-spec.html",
+      "PA": "https://www.primaryarms.com/magpul-moe-slim-line-carbine-stock-mil-spec-black-mag347-blk",
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-stocks-parts/ar-15-moe-sl-stock-collapsible-mil-spec/?sku=100015169"
+    },
+    "ar-trig-alg": {
+      "PA": "https://www.primaryarms.com/alg-defense-combat-trigger-act"
+    },
+    "ar-trig-geissele": {
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-triggers-parts/ssa-e-super-sem-automatic-enhanced-2-stage-trigger-for-ar-15/",
+      "PA": "https://www.primaryarms.com/geissele-automatics-super-semi-automatic-enhanced-ssa-e-two-stage-ar-15-trigger-.154in"
+    },
+    "ar-trig-psa": {
+      "PSA": "https://palmettostatearmory.com/psa-ar15-pa10-enhanced-polished-trigger.html"
+    },
+    "ar-upper-aero": {
+      "AERO": "https://www.aeroprecisionusa.com/m4e1-threaded-stripped-upper-receiver-anodized-black"
+    },
+    "g-mag-oem10": {
+      "BRN": "https://www.brownells.com/gun-parts/magazines/handgun-magazines-parts/gen-5-magazine-for-glock-g26/?sku=100033566"
+    },
+    "g-mag-oem15": {
+      "BRN": "https://www.brownells.com/gun-parts/magazines/handgun-magazines-parts/9mm-luger-magazines-for-glock-19/?sku=100002772"
+    },
+    "g-mag-oem17": {
+      "PA": "https://www.primaryarms.com/glock-factory-17-magazine-17-round-9mm-mggl17017-mggl17017"
+    },
+    "g-mag-pmag12": {
+      "MID": "https://www.midwayusa.com/product/1018078247",
+      "MAGPUL": "https://magpul.com/pmag-12-gl9-glock-g26.html"
+    },
+    "g-mag-pmag15": {
+      "MAGPUL": "https://magpul.com/pmag-15-gl9-glock-g19.html",
+      "MID": "https://www.midwayusa.com/product/1016432573"
+    },
+    "g-mag-pmag17": {
+      "MAGPUL": "https://magpul.com/pmag-17-gl9-glock-17.html",
+      "MID": "https://www.midwayusa.com/product/1018425189"
+    },
+    "g-opt-507c": {
+      "PA": "https://www.primaryarms.com/holosun-hs507c-x2-pistol-red-dot-sight-2-moa",
+      "OP": "https://www.opticsplanet.com/holosun-hs507c-x2-red-dot-sights.html"
+    },
+    "g-opt-rmr": {
+      "BRN": "https://www.brownells.com/optics/reflex-red-dot-sights/red-dot-sights/rmr-type-2-rm06-3.25-moa-adjustable-led-reflex-sight/"
+    },
+    "g-sight-ameriglo": {
+      "BRN": "https://www.brownells.com/handgun-parts/sights/sight-sets/suppressor-sights-for-glock--prod53947.aspx"
+    },
+    "g-spk-lw": {
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-slides-parts/slide-completion-kits-for-glock/"
+    },
+    "g-spk-oem34": {
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-slides-parts/slide-completion-kits-for-glock-gen-3-handgun/"
+    },
+    "g17-bbl-faxon": {
+      "OP": "https://www.opticsplanet.com/faxon-firearms-g17-barrel-full-size-gen-1-4-9mm-saami-4150-qpq-threaded-barrel.html"
+    },
+    "g17-bbl-oem34": {
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-barrels-parts/barrel-g17/"
+    },
+    "g17-frame-lw": {
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-frames-parts/twf-textured-frame-fits-glock-gen34-g1717l222431343537/"
+    },
+    "g17-rsa-g3": {
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-recoil-parts/recoil-spring-assembly/?sku=100002704"
+    },
+    "g17-rsa-ismi": {
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-recoil-parts/recoil-spring-for-glock/?sku=445000008"
+    },
+    "g17-slide-brn": {
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-slides-parts/slides-with-rmr-cut-for-glock-17/?sku=430111308"
+    },
+    "g19-bbl-faxon": {
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-barrels-parts/threaded-compact-barrel-for-glock~-19-gen-1-4/"
+    },
+    "g19-frame-lw": {
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-frames-parts/twc-textured-frame-fits-glock-gen34-g19-23-32-38-slide/?sku=430105222"
+    },
+    "g19-rsa-g3": {
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-recoil-parts/recoil-spring-assembly/?sku=100002722"
+    },
+    "g19-rsa-g45": {
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-recoil-parts/rec-spring-assembly-dual-g19-gen-4/"
+    },
+    "g19-slide-brn": {
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-slides-parts/slides-with-rmr-cut-for-glock-19/?sku=430111306"
+    },
+    "g26-slide-brn": {
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-slides-parts/rmr-slide-window-for-glock--26-gen-1-4-ss-nitride/"
+    },
+    "gs-fcg-apex": {
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-triggers-parts/action-enhancement-trigger-kit-for-slim-frame-glocks/"
+    },
+    "gs-mag-oem10": {
+      "BRN": "https://www.brownells.com/gun-parts/magazines/handgun-magazines-parts/factory-magazine-43x48/?sku=100033567"
+    },
+    "gs-mag-s15": {
+      "BRN": "https://www.brownells.com/gun-parts/magazines/handgun-magazines-parts/s15-9mm-luger-magazine-for-glock-43x48-gen3/",
+      "GS": "https://www.glockstore.com/Shield-Arms-S15-Gen3-Magazines-for-G43X-48"
+    },
+    "gs-opt-507k": {
+      "PA": "https://www.primaryarms.com/holosun-hs507k-x2-compact-pistol-red-dot-sight-2-moa",
+      "OP": "https://www.opticsplanet.com/holosun-sub-compact-hs507k-x2-red-dot-sights.html"
+    },
+    "gs-rsa-48": {
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-recoil-parts/recoil-spring-assembly/?sku=100700158"
+    },
+    "p-bbl-c9": {
+      "SIG": "https://www.sigsauer.com/barrel-p320-p250-9mm-compact.html",
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-barrels-parts/p320p250-factory-replacement-barrels/?sku=100043008"
+    },
+    "p-bbl-f9": {
+      "SIG": "https://www.sigsauer.com/barrel-p320-p250-9mm-full.html",
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-barrels-parts/9mm-luger-barrel-with-lci-for-sig-sauer-p320-full-size/"
+    },
+    "p-bbl-faxonc": {
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-barrels-parts/sig-sauer-p320-compact-9mm-luger-flame-fluted-barrel/"
+    },
+    "p-fcu-std": {
+      "SIG": "https://www.sigsauer.com/p320-fcu.html",
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-frames-parts/p320-fire-control-unit/?sku=430103660"
+    },
+    "p-grip-compact": {
+      "SIG": "https://www.sigsauer.com/p320-p250-compact-grip-module-9mm-40-auto-357sig-medium-black.html"
+    },
+    "p-grip-xcarry": {
+      "SIG": "https://www.sigsauer.com/p320-carry-x-series-grip-module-coyote.html",
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-grips-parts/p320-250-x-series-carry-940357-medium-grip-module/"
+    },
+    "p-grip-xfull": {
+      "SIG": "https://www.sigsauer.com/p320-x-series-grip-module-9mm-40-auto-357sig.html"
+    },
+    "p-mag-sig15": {
+      "SIG": "https://www.sigsauer.com/p250-p320-compact-15rd-9mm-magazine.html"
+    },
+    "p-mag-sig17": {
+      "SIG": "https://www.sigsauer.com/p250-p320-full-17rd-9mm-magazine.html",
+      "BRN": "https://www.brownells.com/gun-parts/magazines/handgun-magazines-parts/p250p320-full-sizecarry-9mm-luger-handgun-magazines/"
+    },
+    "p-opt-r1p": {
+      "SIG": "https://www.sigsauer.com/romeo1pro-1x30-mm.html",
+      "OP": "https://www.opticsplanet.com/v/sor1p101-sig-sauer-romeo1pro-1x30mm-red.html"
+    },
+    "p-opt-romeox": {
+      "SIG": "https://www.sigsauer.com/romeo-x-pro.html",
+      "OP": "https://www.opticsplanet.com/sig-sauer-romeo-x-pro-24mm-prismatic-red-dot-sight.html"
+    },
+    "p-slide-compact": {
+      "SIG": "https://www.sigsauer.com/p320-carry-compact-9mm-3-9-slide-assembly-sig-loc-ready-black.html"
+    },
+    "p-slide-m18": {
+      "SIG": "https://www.sigsauer.com/p320-m18-9mm-3-9-slide-assembly-romeo-m17-coyote.html"
+    },
+    "p-spr-c": {
+      "SIG": "https://www.sigsauer.com/p320-recoil-spring-assembly.html",
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-recoil-parts/p320-compact-xcarry-recoil-spring-assembly/"
+    },
+    "p-spr-f": {
+      "SIG": "https://www.sigsauer.com/recoil-spring-assembly-p320-9mm-full-size.html",
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-slides-parts/p320-full-size-9mm-luger-recoil-spring-assembly/"
+    },
+    "p365-bbl-std": {
+      "SIG": "https://www.sigsauer.com/barrel-365-9mm.html"
+    },
+    "p365-bbl-xl": {
+      "SIG": "https://www.sigsauer.com/p365xl-barrel-lci-blk.html"
+    },
+    "p365-fcu": {
+      "SIG": "https://www.sigsauer.com/p365-fcu.html"
+    },
+    "p365-grip-std": {
+      "SIG": "https://www.sigsauer.com/grip-module-assy-365-9-standard-coy.html",
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-grips-parts/standard-grip-module-for-sig-sauer-p365/?sku=732000652"
+    },
+    "p365-grip-wilson": {
+      "OP": "https://www.opticsplanet.com/wilson-combat-wcp365-xl-grip-module.html"
+    },
+    "p365-grip-xl": {
+      "SIG": "https://www.sigsauer.com/grip-module-365xl-standard-blk-1.html",
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-grips-parts/standard-grip-module-for-sig-sauer-p365xl/"
+    },
+    "p365-mag-10": {
+      "SIG": "https://www.sigsauer.com/p365-micro-compact-10rd-9mm-magazine.html",
+      "PA": "https://www.primaryarms.com/sig-sauer-9mm-p365-10-round-magazine"
+    },
+    "p365-mag-12": {
+      "SIG": "https://www.sigsauer.com/p365-micro-compact-12rd-9mm-magazine.html"
+    },
+    "p365-opt-507k": {
+      "PA": "https://www.primaryarms.com/holosun-hs507k-x2-compact-pistol-red-dot-sight-2-moa",
+      "OP": "https://www.opticsplanet.com/holosun-hs507k-compact-pistol-red-dot-sight.html"
+    },
+    "p365-opt-eps": {
+      "PA": "https://www.primaryarms.com/holosun-eps-carry-mrs-enclosed-pistol-sight-multiple-reticle-red-reticle"
+    },
+    "p365-slide-std": {
+      "SIG": "https://www.sigsauer.com/p365x-9mm-3-1-slide-assembly-sig-loctm-optic-ready-black.html"
+    },
+    "p365-slide-xl": {
+      "SIG": "https://www.sigsauer.com/p365-xl-9mm-3-7-slide-assembly-sig-loctm-optic-ready-black.html",
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-slides-parts/slide-assembly-optic-ready-for-sig-sauer-p365xl/"
+    },
+    "p365-spr-std": {
+      "SIG": "https://www.sigsauer.com/p365-recoil-spring-assembly.html",
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-recoil-parts/sig-sauer-p365-recoil-spring-assembly/"
+    },
+    "p365-spr-xl": {
+      "SIG": "https://www.sigsauer.com/recoil-spring-assembly-p365xl.html"
     }
   }
 }

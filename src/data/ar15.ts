@@ -42,8 +42,8 @@ const allParts = [
       offers: [['BRN', 74.99], ['MID', 76.99]], pick: pick('premium', 'Adds an ambidextrous safety selector.') },
   ]),
   ...parts('trigger', [
-    { id: 'ar-trig-psa', brand: 'Palmetto State Armory', name: 'Enhanced Mil-Spec Trigger', specs: ['Single stage', '~6.5 lb'], attrs: {},
-      offers: [['PSA', 24.99]], pick: pick('budget', 'Smoother than a bare mil-spec trigger for almost the same price.') },
+    { id: 'ar-trig-psa', brand: 'Palmetto State Armory', name: 'EPT Enhanced Polished Trigger', specs: ['Single stage', '~6 lb', 'Polished'], attrs: {},
+      offers: [['PSA', 39.99]], pick: pick('budget', 'Polished mil-spec parts: smoother than a bare mil-spec trigger for little more.') },
     { id: 'ar-trig-alg', brand: 'ALG Defense', name: 'ACT Trigger', specs: ['Single stage', '~5.5 lb', 'NP3 coated'], attrs: {},
       offers: [['BRN', 69.0], ['PA', 69.99], ['MID', 71.99]], pick: pick('value', 'Made by Geissele\'s sister company. The best trigger under $100.') },
     { id: 'ar-trig-rise', brand: 'Rise Armament', name: 'RA-535 Advanced Performance', specs: ['Single stage', '3.5 lb', 'Drop-in cassette'], attrs: {},

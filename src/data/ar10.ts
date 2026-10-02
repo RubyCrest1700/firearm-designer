@@ -47,8 +47,8 @@ const allParts = [
       offers: [['BRN', 79.99]] },
   ]),
   ...parts('trigger', [
-    { id: 'a10-trig-psa', brand: 'Palmetto State Armory', name: 'Enhanced Mil-Spec Trigger', specs: ['Single stage', '~6.5 lb'], attrs: {},
-      offers: [['PSA', 24.99]], pick: pick('budget', 'Basic and dependable.') },
+    { id: 'a10-trig-psa', brand: 'Palmetto State Armory', name: 'EPT Enhanced Polished Trigger', specs: ['Single stage', '~6 lb', 'Polished'], attrs: {},
+      offers: [['PSA', 39.99]], pick: pick('budget', 'Smoother than mil-spec for little more.') },
     { id: 'a10-trig-alg', brand: 'ALG Defense', name: 'ACT Trigger', specs: ['Single stage', '~5.5 lb'], attrs: {},
       offers: [['BRN', 69.0], ['PA', 69.99]], pick: pick('value', 'The best trigger under $100.') },
     { id: 'a10-trig-geissele', brand: 'Geissele', name: 'SSA-E Two Stage', specs: ['Two stage', '3.5 lb total'], attrs: {},
