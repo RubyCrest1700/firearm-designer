@@ -185,6 +185,8 @@ h1 { font: 700 clamp(28px, 4.2vw, 40px)/1.08 var(--f-head); letter-spacing: -.00
 .bp-part.error path { stroke: var(--bp-err); fill: rgba(255,139,123,.12); }
 .bp-part[role=button] { cursor: pointer; outline: none; }
 .bp-part[role=button]:hover path, .bp-part.active path, .bp-part[role=button]:focus-visible path { stroke: var(--bp-hi); fill: rgba(255,195,92,.14); }
+.bp-part.movable { cursor: grab; touch-action: none; }
+.bp-part.movable.dragging { cursor: grabbing; }
 .bp-part .hit { fill: transparent; stroke: none; pointer-events: all; }
 .bp-callout { pointer-events: none; }
 .bp-callout .hit { fill: transparent; stroke: none; pointer-events: all; cursor: pointer; }
@@ -282,6 +284,11 @@ h1 { font: 700 clamp(28px, 4.2vw, 40px)/1.08 var(--f-head); letter-spacing: -.00
 .amt.dim, .dim { color: var(--faint); }
 .src { font-size: 12px; color: var(--muted); }
 .part-fit { display: flex; justify-content: flex-end; align-items: center; gap: 6px; }
+.mount-ctl { grid-column: 2 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 2px; }
+.segctl.small button { padding: 4px 8px; font-size: 12px; }
+.mount-pos { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); flex: 1 1 160px; min-width: 0; }
+.mount-pos input { flex: 1; min-width: 80px; accent-color: var(--cta); }
+.mount-pos span { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .x { border: 0; background: none; color: var(--faint); font-size: 18px; line-height: 1; padding: 2px 4px; border-radius: 4px; }
 .x:hover { color: var(--err); background: var(--err-soft); }
 @media (max-width: 599px) {

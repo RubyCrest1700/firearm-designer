@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react';
-import type { Build, Part, Platform } from './types';
+import { useRef, useState, type ReactNode } from 'react';
+import { mountsFor } from './data/addons';
+import type { Build, Part, Placement, Platform } from './types';
 
 /**
  * Blueprint-style side elevation of a build, drawn as our own line art from real-world
@@ -18,6 +19,10 @@ interface Piece {
   target: [number, number];
   row: 'top' | 'bottom';
   el: ReactNode;
+  /** Accessories the builder can drag along the rail: position limits and snap step in inches, px per inch. */
+  move?: { at: number; min: number; max: number; step: number; scale: number };
+  /** Dimension shown while the piece is selected: [x0, x1, y, label] in px. */
+  dim?: [number, number, number, string];
 }
 
 interface Scene {
@@ -56,7 +61,7 @@ function repeat(from: number, to: number, step: number, fn: (x: number) => strin
 
 const GAS_FROM_BOLT: Record<string, number> = { pistol: 4, carbine: 7, midlength: 9, rifle: 12 };
 
-function rifle(platform: Platform, b: Build): Scene {
+function rifle(platform: Platform, b: Build, place: Placement): Scene {
   const S = 22;
   const ox = 300;
   const oy = 170;
@@ -231,36 +236,58 @@ function rifle(platform: Platform, b: Build): Scene {
     el: <><path fillRule="evenodd" d={T(od)} /><path className="detail" d={T(odet)} /></> });
 
   // Add-ons, drawn only once chosen. Sizes are the makers' published lengths, rounded.
-  const light = b.light;
-  if (light) {
-    // Under the handguard at 6 o'clock, lens a little behind the rail's front end.
-    const len = matches(light, /REIN/) ? 3.6 : matches(light, /M600/) ? 5.3 : 5.4;
-    const x1 = HX - 0.35;
-    const x0 = x1 - len;
-    const y0 = 0.95 + 0.12;
-    const r = 0.5;
-    const hr = 0.62; // bezel
-    const hx = x1 - 1.1;
-    P.push({ slot: 'light', z: 13, row: 'bottom', target: px(x0 + len * 0.45, y0 + r * 2),
-      el: <>
-        <path d={T(`M${f(x0)},${f(y0 + 0.12)} L${f(hx)},${f(y0 + 0.12)} L${f(hx + 0.3)},${f(y0 + r - hr + 0.12)} L${f(x1)},${f(y0 + r - hr + 0.12)} L${f(x1)},${f(y0 + r + hr + 0.12)} L${f(hx + 0.3)},${f(y0 + r + hr + 0.12)} L${f(hx)},${f(y0 + 2 * r + 0.12)} L${f(x0)},${f(y0 + 2 * r + 0.12)} Q${f(x0 - 0.25)},${f(y0 + r + 0.12)} ${f(x0)},${f(y0 + 0.12)} Z`)} />
-        <path className="detail" d={T(`M${f(x0 + 0.8)},${f(y0 - 0.12)} L${f(x0 + 2.0)},${f(y0 - 0.12)} L${f(x0 + 2.0)},${f(y0 + 0.12)} M${f(x0 + 0.8)},${f(y0 - 0.12)} L${f(x0 + 0.8)},${f(y0 + 0.12)} M${f(x1 - 0.12)},${f(y0 + r - hr + 0.2)} L${f(x1 - 0.12)},${f(y0 + r + hr + 0.04)} ${repeat(x0 + 0.5, hx - 0.4, 0.35, (x) => `M${x},${f(y0 + 0.24)} L${x},${f(y0 + 2 * r)}`)}`)} />
-      </> });
+  // Lights, lasers and foregrips go where the builder put them: on the top, right, left or bottom of the
+  // handguard, at a distance from the receiver. This is the right-side view, so anything on the left is
+  // hidden behind the handguard and drawn in dashed hidden lines.
+  const mounts = mountsFor(b, place, H);
+  const RAIL_TOP = freeFloat ? -1.1 : -0.98;
+  const RAIL_BOT = freeFloat ? 0.95 : 0.98;
+  const mountPiece = (slot: string, el: ReactNode, x0: number, x1: number, y0: number, y1: number) => {
+    const m = mounts[slot];
+    const outside = m.side === 'bottom' ? y1 + 0.55 : m.side === 'top' ? y0 - 0.55 : RAIL_TOP - 0.45;
+    P.push({ slot, internal: m.side === 'left', z: 13, row: m.side === 'bottom' ? 'bottom' : 'top', target: px((x0 + x1) / 2, m.side === 'bottom' ? y1 : y0),
+      move: { at: m.at, min: m.min, max: m.max, step: m.step, scale: S },
+      dim: [f(ox + RF * S), f(ox + x0 * S), f(oy + outside * S), `${inch(m.at)} from receiver`], el });
+  };
+  if (b.light && mounts.light) {
+    const m = mounts.light;
+    const len = m.len;
+    const r = 0.5, hr = 0.62, gap = 0.24;
+    const cy = m.side === 'bottom' ? RAIL_BOT + gap + r : m.side === 'top' ? RAIL_TOP - gap - r : -0.08;
+    const x0 = RF + m.at, x1 = x0 + len, hx = x1 - 1.1;
+    const tab = m.side === 'bottom' ? `M${f(x0 + 0.8)},${f(RAIL_BOT)} L${f(x0 + 0.8)},${f(cy - r)} M${f(x0 + 2.0)},${f(RAIL_BOT)} L${f(x0 + 2.0)},${f(cy - r)}`
+      : m.side === 'top' ? `M${f(x0 + 0.8)},${f(RAIL_TOP)} L${f(x0 + 0.8)},${f(cy + r)} M${f(x0 + 2.0)},${f(RAIL_TOP)} L${f(x0 + 2.0)},${f(cy + r)}` : '';
+    mountPiece('light', <>
+      <path d={T(`M${f(x0)},${f(cy - r)} L${f(hx)},${f(cy - r)} L${f(hx + 0.3)},${f(cy - hr)} L${f(x1)},${f(cy - hr)} L${f(x1)},${f(cy + hr)} L${f(hx + 0.3)},${f(cy + hr)} L${f(hx)},${f(cy + r)} L${f(x0)},${f(cy + r)} Q${f(x0 - 0.25)},${f(cy)} ${f(x0)},${f(cy - r)} Z`)} />
+      <path className="detail" d={T(`${tab} M${f(x1 - 0.12)},${f(cy - hr + 0.08)} L${f(x1 - 0.12)},${f(cy + hr - 0.08)} ${repeat(x0 + 0.5, hx - 0.4, 0.35, (x) => `M${x},${f(cy - r + 0.12)} L${x},${f(cy + r - 0.12)}`)}`)} />
+    </>, x0, x1, cy - hr, cy + hr);
   }
-  const laser = b.laser;
-  if (laser) {
-    // On the handguard's top rail near the front.
-    const combo = matches(laser, /CMR|light/i);
-    const len = combo ? 3.9 : 3.2;
+  if (b.laser && mounts.laser) {
+    const m = mounts.laser;
+    const combo = matches(b.laser, /CMR|light/i);
     const h = combo ? 1.3 : 1.1;
-    const x1 = HX - 0.4;
-    const x0 = x1 - len;
-    const yb = -1.1;
-    P.push({ slot: 'laser', z: 13, row: 'top', target: px(x0 + len / 2, yb - h),
-      el: <>
-        <path d={T(`M${f(x0)},${f(yb)} L${f(x0)},${f(yb - h + 0.15)} Q${f(x0)},${f(yb - h)} ${f(x0 + 0.15)},${f(yb - h)} L${f(x1 - 0.1)},${f(yb - h)} Q${f(x1)},${f(yb - h)} ${f(x1)},${f(yb - h + 0.1)} L${f(x1)},${f(yb - 0.25)} L${f(x1 - 0.5)},${f(yb)} Z`)} />
-        <path className="detail" d={T(`M${f(x1 - 0.18)},${f(yb - h + 0.22)} L${f(x1 - 0.18)},${f(yb - h * 0.45)} M${f(x0 + 0.3)},${f(yb - 0.25)} L${f(x1 - 0.7)},${f(yb - 0.25)}${combo ? ` M${f(x1 - 0.18)},${f(yb - h * 0.4)} L${f(x1 - 0.18)},${f(yb - 0.35)}` : ''}`)} />
-      </> });
+    const x0 = RF + m.at, x1 = x0 + m.len;
+    const ya = m.side === 'bottom' ? RAIL_BOT : m.side === 'top' ? RAIL_TOP - h : -0.08 - h / 2;
+    const yb = ya + h;
+    mountPiece('laser', <>
+      <path d={T(`M${f(x0)},${f(ya + 0.15)} Q${f(x0)},${f(ya)} ${f(x0 + 0.15)},${f(ya)} L${f(x1 - 0.1)},${f(ya)} Q${f(x1)},${f(ya)} ${f(x1)},${f(ya + 0.1)} L${f(x1)},${f(yb - 0.1)} Q${f(x1)},${f(yb)} ${f(x1 - 0.1)},${f(yb)} L${f(x0 + 0.15)},${f(yb)} Q${f(x0)},${f(yb)} ${f(x0)},${f(yb - 0.15)} Z`)} />
+      <path className="detail" d={T(`M${f(x1 - 0.18)},${f(ya + 0.2)} L${f(x1 - 0.18)},${f(ya + h * 0.5)}${combo ? ` M${f(x1 - 0.18)},${f(ya + h * 0.6)} L${f(x1 - 0.18)},${f(yb - 0.2)}` : ''} M${f(x0 + 0.3)},${f(m.side === 'top' ? yb - 0.25 : ya + 0.25)} L${f(x1 - 0.7)},${f(m.side === 'top' ? yb - 0.25 : ya + 0.25)}`)} />
+    </>, x0, x1, ya, yb);
+  }
+  if (b.foregrip && mounts.foregrip) {
+    const m = mounts.foregrip;
+    const kind = b.foregrip.attrs.kind;
+    const h = (b.foregrip.attrs.h as number) ?? 1;
+    const x0 = RF + m.at, x1 = x0 + m.len, y = RAIL_BOT, yb = y + h;
+    const d = kind === 'vertical'
+      ? `M${f(x0)},${f(y)} L${f(x1)},${f(y)} L${f(x1 - 0.12)},${f(yb - 0.25)} Q${f(x1 - 0.16)},${f(yb)} ${f(x1 - 0.42)},${f(yb)} L${f(x0 + 0.3)},${f(yb)} Q${f(x0 + 0.05)},${f(yb)} ${f(x0 + 0.08)},${f(yb - 0.28)} Z`
+      : kind === 'angled'
+        ? `M${f(x0)},${f(y)} L${f(x1)},${f(y)} L${f(x1 - 0.15)},${f(y + 0.28)} L${f(x0 + 0.55)},${f(yb)} Q${f(x0 + 0.1)},${f(yb + 0.02)} ${f(x0)},${f(yb - 0.35)} Z`
+        : `M${f(x0)},${f(y)} L${f(x1)},${f(y)} L${f(x1)},${f(yb - 0.1)} Q${f(x1)},${f(yb)} ${f(x1 - 0.12)},${f(yb)} L${f(x0 + 0.55)},${f(yb)} L${f(x0)},${f(y + 0.12)} Z`;
+    const det = kind === 'vertical'
+      ? repeat(y + 0.7, yb - 0.4, 0.42, (yy) => `M${f(x0 + 0.2)},${yy} L${f(x1 - 0.2)},${yy}`)
+      : `M${f(x0 + 0.25)},${f(y + 0.12)} L${f(x1 - 0.25)},${f(y + 0.12)}`;
+    mountPiece('foregrip', <><path d={T(d)} /><path className="detail" d={T(det)} /></>, x0, x1, y, yb);
   }
   const mag3x = b.magnifier;
   if (mag3x && opt?.attrs.kind === 'dot') {
@@ -587,21 +614,31 @@ const O2 = (x: number, y: number, r: number) =>
 
 /* ================================================================== render */
 
-export function sceneFor(platform: Platform, build: Build): Scene {
-  return platform.family === 'Rifle' ? rifle(platform, build) : pistol(platform, build);
+export function sceneFor(platform: Platform, build: Build, place: Placement = {}): Scene {
+  return platform.family === 'Rifle' ? rifle(platform, build, place) : pistol(platform, build);
 }
 
-export function Blueprint({ platform, build, states, active, onPick, onHover, compact }: {
+export function Blueprint({ platform, build, place, states, active, onPick, onHover, onMove, compact }: {
   platform: Platform;
   build: Build;
+  place?: Placement;
   states: Record<string, RegionState>;
   active?: string | null;
   onPick?: (slot: string) => void;
   onHover?: (slot: string | null) => void;
+  /** Called while a light, laser or grip is dragged along the rail, with its new distance from the receiver. */
+  onMove?: (slot: string, at: number) => void;
   /** Thumbnail mode: no callouts, dimensions or interaction. */
   compact?: boolean;
 }) {
-  const scene = sceneFor(platform, build);
+  const scene = sceneFor(platform, build, place);
+  const drag = useRef<{ slot: string; x: number; at: number; k: number; moved: boolean } | null>(null);
+  const dragged = useRef(false);
+  const [dragging, setDragging] = useState<string | null>(null);
+  const moveTo = (slot: string, m: NonNullable<Piece['move']>, at: number) => {
+    const snapped = m.min + Math.round((at - m.min) / m.step) * m.step;
+    onMove?.(slot, Math.round(Math.min(m.max, Math.max(m.min, snapped)) * 100) / 100);
+  };
   const slotIds = new Set(platform.slots.map((s) => s.id));
   const numberOf = new Map(platform.slots.map((s, i) => [s.id, i + 1]));
   const pieces = scene.pieces
@@ -623,15 +660,36 @@ export function Blueprint({ platform, build, states, active, onPick, onHover, co
         if (!p.slot || compact || !onPick) return <g key={i} className={cls} aria-hidden="true">{p.el}</g>;
         const slot = platform.slots.find((s) => s.id === p.slot)!;
         const part = build[slot.id];
+        const mv = onMove ? p.move : undefined;
         return (
           <g
             key={p.slot}
-            className={cls}
+            className={cls + (mv ? ' movable' : '') + (dragging === slot.id ? ' dragging' : '')}
             role="button"
             tabIndex={0}
-            aria-label={`${numberOf.get(slot.id)}. ${slot.name}${part ? `: ${part.brand} ${part.name}` : ', empty'}`}
-            onClick={() => onPick(slot.id)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPick(slot.id); } }}
+            aria-label={`${numberOf.get(slot.id)}. ${slot.name}${part ? `: ${part.brand} ${part.name}` : ', empty'}${mv ? `, ${mv.at} inches from the receiver. Arrow keys move it along the rail` : ''}`}
+            onClick={() => { if (dragged.current) { dragged.current = false; return; } onPick(slot.id); }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPick(slot.id); }
+              if (mv && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) { e.preventDefault(); moveTo(slot.id, mv, mv.at + (e.key === 'ArrowRight' ? mv.step : -mv.step)); }
+            }}
+            onPointerDown={mv ? (e) => {
+              const k = (e.currentTarget.ownerSVGElement?.getScreenCTM()?.a ?? 1) * mv.scale;
+              drag.current = { slot: slot.id, x: e.clientX, at: mv.at, k, moved: false };
+              dragged.current = false;
+              e.currentTarget.setPointerCapture(e.pointerId);
+            } : undefined}
+            onPointerMove={mv ? (e) => {
+              const d = drag.current;
+              if (!d || d.slot !== slot.id) return;
+              const dx = e.clientX - d.x;
+              if (!d.moved && Math.abs(dx) < 4) return;
+              d.moved = true;
+              setDragging(slot.id);
+              moveTo(slot.id, mv, d.at + dx / d.k);
+            } : undefined}
+            onPointerUp={mv ? () => { dragged.current = !!drag.current?.moved; drag.current = null; setDragging(null); } : undefined}
+            onPointerCancel={mv ? () => { drag.current = null; setDragging(null); } : undefined}
             onMouseEnter={() => onHover?.(slot.id)}
             onMouseLeave={() => onHover?.(null)}
             onFocus={() => onHover?.(slot.id)}
@@ -665,7 +723,7 @@ export function Blueprint({ platform, build, states, active, onPick, onHover, co
           </g>
         </g>
       ))}
-      {!compact && scene.dims.map(([x0, x1, y, text], i) => (
+      {!compact && [...scene.dims, ...pieces.filter((p) => p.dim && p.slot && (p.slot === active || p.slot === dragging)).map((p) => p.dim!)].map(([x0, x1, y, text], i) => (
         <g key={i} className="bp-dim" aria-hidden="true">
           <path d={`M${x0},${y - 9} L${x0},${y + 9} M${x1},${y - 9} L${x1},${y + 9} M${x0},${y} L${x1},${y}`} />
           <path d={`M${x0 + 9},${y - 4} L${x0},${y} L${x0 + 9},${y + 4} M${x1 - 9},${y - 4} L${x1},${y} L${x1 - 9},${y + 4}`} />

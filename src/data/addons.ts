@@ -1,4 +1,4 @@
-import type { Build, Issue, Part, Slot } from '../types';
+import type { Build, Issue, Part, Placement, Side, Slot } from '../types';
 import { parts } from './helpers';
 
 /**
@@ -14,8 +14,9 @@ const G = 'Add-ons';
 // ---------- Rifles ----------
 
 export const rifleAddonSlots: Slot[] = [
-  { id: 'light', name: 'Weapon light', group: G, required: false, hint: 'Mounts to M-LOK directly or to a Picatinny rail section.' },
-  { id: 'laser', name: 'Laser', group: G, required: false, hint: 'Most lasers clamp to Picatinny; add a rail section on an M-LOK handguard.' },
+  { id: 'light', name: 'Weapon light', group: G, required: false, hint: 'Mounts to M-LOK directly or to a Picatinny rail section. Pick the side and drag it along the rail.' },
+  { id: 'laser', name: 'Laser', group: G, required: false, hint: 'Most lasers clamp to Picatinny; add a rail section on an M-LOK handguard. Pick the side and drag it along the rail.' },
+  { id: 'foregrip', name: 'Foregrip', group: G, required: false, hint: 'Vertical grip, angled grip or hand stop on the bottom of the handguard. Drag it along the rail on the drawing.' },
   { id: 'magnifier', name: 'Magnifier', group: G, required: false, hint: 'Sits behind a 1x red dot at the same height. Not for scopes or LPVOs.' },
   { id: 'rail', name: 'Rail section', group: G, required: false, hint: 'Adds a Picatinny rail to an M-LOK handguard.' },
   { id: 'qdmount', name: 'Sling mount', group: G, required: false, hint: 'Adds a QD sling socket to an M-LOK handguard.' },
@@ -25,18 +26,31 @@ export const rifleAddonSlots: Slot[] = [
 
 export const rifleAddonParts: Part[] = [
   ...parts('light', [
-    { id: 'r-light-hlx', brand: 'Streamlight', name: 'ProTac Rail Mount HL-X', specs: ['1,000 lm', 'Picatinny clamp', 'M-LOK mount included'], attrs: { mount: 'both' },
+    { id: 'r-light-hlx', brand: 'Streamlight', name: 'ProTac Rail Mount HL-X', specs: ['1,000 lm', 'Picatinny clamp', 'M-LOK mount included'], attrs: { mount: 'both', len: 5.4 },
       offers: [['PA', 119.99]] },
-    { id: 'r-light-m600', brand: 'SureFire', name: 'M600DF Scout Light', specs: ['1,500 lm', 'Picatinny (M75 thumbscrew)'], attrs: { mount: 'pic' },
+    { id: 'r-light-m600', brand: 'SureFire', name: 'M600DF Scout Light', specs: ['1,500 lm', 'Picatinny (M75 thumbscrew)'], attrs: { mount: 'pic', len: 5.3 },
       offers: [['BRN', 399.0], ['OP', 399.0]] },
-    { id: 'r-light-rein', brand: 'Cloud Defensive', name: 'REIN Micro', specs: ['M-LOK inline mount', 'High candela'], attrs: { mount: 'mlok' },
+    { id: 'r-light-rein', brand: 'Cloud Defensive', name: 'REIN Micro', specs: ['M-LOK inline mount', 'High candela'], attrs: { mount: 'mlok', len: 3.6 },
       offers: [['BRN', 369.99]] },
   ]),
   ...parts('laser', [
-    { id: 'r-laser-cmr301', brand: 'Crimson Trace', name: 'CMR-301 Rail Master Pro', specs: ['Light + green laser', 'Picatinny and M-LOK mounts', 'Class 3R'], attrs: { mount: 'both' },
+    { id: 'r-laser-cmr301', brand: 'Crimson Trace', name: 'CMR-301 Rail Master Pro', specs: ['Light + green laser', 'Picatinny and M-LOK mounts', 'Class 3R'], attrs: { mount: 'both', len: 3.9 },
       offers: [['BRN', 317.99]] },
-    { id: 'r-laser-ls117', brand: 'Holosun', name: 'LS117G Green Laser', specs: ['Green laser', 'QD Picatinny mount', 'Class IIIa'], attrs: { mount: 'pic' },
+    { id: 'r-laser-ls117', brand: 'Holosun', name: 'LS117G Green Laser', specs: ['Green laser', 'QD Picatinny mount', 'Class IIIa'], attrs: { mount: 'pic', len: 3.2 },
       offers: [['OP', 299.99]] },
+  ]),
+  // `len` is the footprint along the rail and `h` the height below it, in inches, rounded from the makers' listings.
+  ...parts('foregrip', [
+    { id: 'r-fg-mvg', brand: 'Magpul', name: 'MVG M-LOK Vertical Grip', specs: ['Vertical', 'M-LOK'], attrs: { mount: 'mlok', kind: 'vertical', len: 1.7, h: 3.6 },
+      offers: [['MAGPUL', 21.95], ['PA', 21.95]] },
+    { id: 'r-fg-bcmvg', brand: 'Bravo Company', name: 'Gunfighter Vertical Grip Mod 3, M-LOK', specs: ['Short vertical', 'M-LOK'], attrs: { mount: 'mlok', kind: 'vertical', len: 1.6, h: 2.6 },
+      offers: [['BRN', 29.95]] },
+    { id: 'r-fg-kag', brand: 'Bravo Company', name: 'Gunfighter Kinesthetic Angled Grip, M-LOK', specs: ['Angled', 'M-LOK'], attrs: { mount: 'mlok', kind: 'angled', len: 3.5, h: 1.2 },
+      offers: [['BRN', 29.95]] },
+    { id: 'r-fg-afg2', brand: 'Magpul', name: 'AFG-2 Angled Fore Grip', specs: ['Angled', 'Picatinny'], attrs: { mount: 'pic', kind: 'angled', len: 4.6, h: 1.35 },
+      offers: [['MAGPUL', 39.95], ['PA', 39.95]] },
+    { id: 'r-fg-stop', brand: 'Magpul', name: 'M-LOK Hand Stop Kit', specs: ['Hand stop', 'M-LOK'], attrs: { mount: 'mlok', kind: 'stop', len: 1.5, h: 0.6 },
+      offers: [['MAGPUL', 19.95]] },
   ]),
   ...parts('magnifier', [
     { id: 'r-mag-hm3x', brand: 'Holosun', name: 'HM3X 3x Magnifier', specs: ['3x', 'Flip-to-side QD mount', 'Absolute or lower 1/3 (spacer)'], attrs: { heights: ['1.41', '1.535'] },
@@ -93,18 +107,93 @@ export function rifleLength(b: Build, large: boolean): { collapsed: number; exte
 
 const MOUNT_LABEL: Record<string, string> = { pic: 'Picatinny', mlok: 'M-LOK', both: 'Picatinny or M-LOK' };
 
-export function rifleAddonRules(b: Build, large: boolean): Issue[] {
+/* ---------- Placement on the handguard ---------- */
+
+/** Accessories the builder can move: which sides of the handguard they go on, and the default side. */
+export const MOVABLE: Record<string, { sides: Side[]; side: Side }> = {
+  light: { sides: ['right', 'left', 'bottom', 'top'], side: 'right' },
+  laser: { sides: ['top', 'right', 'left', 'bottom'], side: 'top' },
+  foregrip: { sides: ['bottom'], side: 'bottom' },
+};
+export const SIDE_LABEL: Record<Side, string> = { top: 'Top', right: 'Right', left: 'Left', bottom: 'Bottom' };
+
+/** First usable spot, clear of the barrel nut at the receiver face (approximate). */
+const RAIL_START = 0.4;
+/** Picatinny slots are 0.394" apart; M-LOK slots repeat every 40 mm (32 mm slot plus 8 mm web). */
+const PIC_PITCH = 0.394;
+const MLOK_PITCH = 1.575;
+
+export function railLength(b: Build, large: boolean): number {
+  const hg = b.handguard;
+  if (typeof hg?.attrs.length === 'number') return hg.attrs.length;
+  return hg && hg.attrs.freeFloat === false ? 9 : large ? 15 : 13.5;
+}
+
+export interface Resolved { side: Side; at: number; len: number; min: number; max: number; step: number; fits: boolean }
+
+/**
+ * Where each chosen accessory actually sits: the saved spot snapped to the slot spacing and kept on the rail,
+ * or a sensible default (lights and lasers near the front, grips a hand's width ahead of the receiver).
+ */
+export function mountsFor(b: Build, place: Placement, railLen: number): Record<string, Resolved> {
+  const out: Record<string, Resolved> = {};
+  for (const [slot, cfg] of Object.entries(MOVABLE)) {
+    const part = b[slot];
+    if (!part) continue;
+    const len = (part.attrs.len as number) ?? 3;
+    const min = RAIL_START;
+    const max = Math.round((railLen - len - 0.15) * 100) / 100;
+    const step = part.attrs.mount === 'pic' || b.handguard?.attrs.interface === 'pic' ? PIC_PITCH : MLOK_PITCH;
+    const saved = place[slot];
+    const side = saved && cfg.sides.includes(saved.side) ? saved.side : cfg.side;
+    const kind = part.attrs.kind;
+    const want = saved?.at ?? (slot === 'foregrip' ? (kind === 'stop' ? max : min + (kind === 'angled' ? 2 : 3)) : max);
+    let at = min + Math.round((want - min) / step) * step;
+    if (at > max) at = want >= max ? max : at - step;
+    at = Math.round(Math.max(min, at) * 100) / 100;
+    out[slot] = { side, at, len, min, max: Math.max(min, max), step, fits: max >= min };
+  }
+  return out;
+}
+
+const DEVICE: Record<string, string> = { light: 'light', laser: 'laser', foregrip: 'grip' };
+const inch1 = (n: number) => `${(Math.round(n * 10) / 10).toFixed(1).replace(/\.0$/, '')}"`;
+
+export function rifleAddonRules(b: Build, large: boolean, place: Placement = {}): Issue[] {
   const out: Issue[] = [];
-  const { handguard, light, laser, magnifier, optic, rail, qdmount, sling, stock } = b;
+  const { handguard, light, laser, foregrip, magnifier, optic, rail, qdmount, sling, stock } = b;
   const hgPic = handguard?.attrs.interface === 'pic';
-  const picOnly = [light, laser].filter((p): p is Part => !!p && p.attrs.mount === 'pic');
+  const mounts = mountsFor(b, place, railLength(b, large));
+
+  if (handguard) {
+    for (const [slot, m] of Object.entries(mounts))
+      if (!m.fits)
+        out.push({ severity: 'error', slots: [slot, 'handguard'], message: `The ${b[slot]!.brand} ${b[slot]!.name} is about ${inch1(m.len)} long and won't fit on a ${inch1(railLength(b, large))} rail. Choose a longer handguard.` });
+    const placed = Object.entries(mounts).filter(([, m]) => m.fits);
+    for (let i = 0; i < placed.length; i++)
+      for (let j = i + 1; j < placed.length; j++) {
+        const [sa, a] = placed[i];
+        const [sb, c] = placed[j];
+        const from = Math.max(a.at, c.at);
+        const to = Math.min(a.at + a.len, c.at + c.len);
+        if (a.side === c.side && to - from > 0.05)
+          out.push({ severity: 'error', slots: [sa, sb], message: `The ${DEVICE[sa]} and the ${DEVICE[sb]} are both on the ${a.side} of the rail and overlap from ${inch1(from)} to ${inch1(to)} ahead of the receiver. Drag one along the rail on the drawing, or move it to another side.` });
+      }
+  }
+
+  const picOnly = [light, laser, foregrip].filter((p): p is Part => !!p && p.attrs.mount === 'pic');
   for (const dev of picOnly)
     if (handguard && !hgPic && !rail)
       out.push({ severity: 'warn', slots: [dev.slot, 'rail'], message: `The ${dev.brand} ${dev.name} clamps to a Picatinny rail, and this handguard is M-LOK. Add an M-LOK rail section.` });
-  if (picOnly.length === 2 && rail && (rail.attrs.slots as number) < 9 && !hgPic)
-    out.push({ severity: 'warn', slots: ['rail', 'light', 'laser'], message: 'A 5-slot rail section fits one light or laser. Use the 9-slot section, or mount the second device elsewhere.' });
+  if (picOnly.length >= 2 && rail && !hgPic) {
+    const sides = [...new Set(picOnly.map((p) => mounts[p.slot]?.side))];
+    if (sides.length > 1)
+      out.push({ severity: 'warn', slots: ['rail', ...picOnly.map((p) => p.slot)], message: `The Picatinny-only ${picOnly.map((p) => `${DEVICE[p.slot]} (${mounts[p.slot]?.side})`).join(' and ')} sit on different sides, and one rail section covers one side. Put them on the same side, or add a rail section for each.` });
+    else if ((rail.attrs.slots as number) < 9)
+      out.push({ severity: 'warn', slots: ['rail', ...picOnly.map((p) => p.slot)], message: 'A 5-slot rail section fits one Picatinny device. Use the 9-slot section, or mount the second device elsewhere.' });
+  }
   if (rail && !picOnly.length)
-    out.push({ severity: 'info', slots: ['rail'], message: `Nothing in this build needs the rail section; your ${[light, laser].filter(Boolean).map((p) => MOUNT_LABEL[p!.attrs.mount as string]).join(' and ') || 'add-ons'} mount directly.` });
+    out.push({ severity: 'info', slots: ['rail'], message: `Nothing in this build needs the rail section; your ${[light, laser, foregrip].filter(Boolean).map((p) => MOUNT_LABEL[p!.attrs.mount as string]).join(' and ') || 'add-ons'} mount directly.` });
 
   if (magnifier) {
     const kind = optic?.attrs.kind as string | undefined;

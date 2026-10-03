@@ -1,4 +1,4 @@
-import type { Build, Issue, Platform } from '../types';
+import type { Build, Issue, Placement, Platform } from '../types';
 import { boreIssue, parts, pick, threadIssue } from './helpers';
 import { rifleAddonParts, rifleAddonRules, rifleAddonSlots } from './addons';
 
@@ -168,7 +168,7 @@ const allParts = [
   ]),
 ];
 
-function rules(b: Build): Issue[] {
+function rules(b: Build, place: Placement = {}): Issue[] {
   const out: Issue[] = [];
   const { lower, upper, lpk, handguard, charging, mag, barrel, gasblock, gastube, muzzle } = b;
   if (lower && upper && lower.attrs.pattern !== upper.attrs.pattern) {
@@ -218,7 +218,7 @@ function rules(b: Build): Issue[] {
     if (hg < port + 1)
       out.push({ severity: 'info', slots: ['handguard', 'barrel'], message: `The gas block sits about ${port}" out, so a ${hg}" handguard leaves it exposed.` });
   }
-  out.push(...rifleAddonRules(b, true));
+  out.push(...rifleAddonRules(b, true, place));
   return out;
 }
 

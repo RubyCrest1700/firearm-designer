@@ -1,5 +1,5 @@
 import { PLATFORMS } from './data';
-import { bestOffer, presetSelection, toBuild, type Selection } from './engine';
+import { MOUNT_CODE, bestOffer, placementOf, presetSelection, selectionTokens, toBuild, type Selection } from './engine';
 import type { Build, Platform, Tier } from './types';
 
 /* ---------------------------------------------------------------- saved builds */
@@ -36,10 +36,10 @@ export const newId = () => Math.random().toString(36).slice(2, 10);
 
 /* ----------------------------------------------------------------- share links */
 
-/** `?b=<platform>~<part>.<part>…` — part ids never contain `.` or `~`. */
+/** `?b=<platform>~<part>.<part>…` — part ids and placement tokens never contain `.` or `~`. */
 export function shareUrl(platformId: string, sel: Selection) {
   const base = `${location.origin}${location.pathname}`;
-  return `${base}?b=${encodeURIComponent(`${platformId}~${Object.values(sel).join('.')}`)}`;
+  return `${base}?b=${encodeURIComponent(`${platformId}~${selectionTokens(sel).join('.')}`)}`;
 }
 
 export function readSharedBuild(): { platform: string; selection: Selection } | null {
@@ -53,11 +53,16 @@ export function readSharedBuild(): { platform: string; selection: Selection } | 
   }
 }
 
-/** Turns a list of part ids back into a selection, skipping ids the catalog no longer has. */
+/** Turns part ids and placement tokens back into a selection, skipping ids the catalog no longer has. */
 export function selectionFromParts(platformId: string, ids: string[]): Selection {
   const platform = PLATFORMS.find((p) => p.id === platformId);
   const selection: Selection = {};
   for (const id of ids) {
+    const at = id.match(/^at-([a-z]+)-(\w+)$/);
+    if (at) {
+      if (MOUNT_CODE.test(at[2]) && platform?.slots.some((s) => s.id === at[1])) selection['@' + at[1]] = at[2];
+      continue;
+    }
     const part = platform?.parts.find((p) => p.id === id);
     if (part) selection[part.slot] = part.id;
   }
@@ -103,5 +108,5 @@ export function totalOf(platform: Platform, build: Build) {
 
 export function buildOf(platformId: string, sel: Selection) {
   const platform = PLATFORMS.find((p) => p.id === platformId) ?? PLATFORMS[0];
-  return { platform, build: toBuild(platform, sel) };
+  return { platform, build: toBuild(platform, sel), place: placementOf(sel) };
 }

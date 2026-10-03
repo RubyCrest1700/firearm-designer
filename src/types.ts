@@ -46,6 +46,11 @@ export interface Issue {
 
 export type Build = Record<string, Part | undefined>;
 
+/** Where an accessory sits on the handguard: which side, and inches from the receiver to its rear end. */
+export type Side = 'top' | 'right' | 'left' | 'bottom';
+export interface Mount { side: Side; at: number }
+export type Placement = Record<string, Mount>;
+
 export interface Platform {
   id: string;
   name: string;
@@ -55,6 +60,6 @@ export interface Platform {
   blurb: string;
   slots: Slot[];
   parts: Part[];
-  rules: (b: Build) => Issue[];
+  rules: (b: Build, place?: Placement) => Issue[];
   presets: Record<Tier, string[]>;
 }
