@@ -14,6 +14,7 @@ import {
   communityLive, featuredBuilds, listBuilds, myVotes, recordBuyClick, reportBuild, setVote, shareBuild,
   type CommunityBuild, type CommunitySort,
 } from './community';
+import { awarenessFor, type Aware } from './awareness';
 import type { Build, Issue, Part, Platform, Severity, Slot, Tier } from './types';
 
 const STORE_KEY = 'firearm-designer:v2';
@@ -306,7 +307,7 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
         <div className="builder-grid">
           <PartsList platform={platform} build={build} issues={issues} states={states} hover={hover} onHover={setHover} onOpen={setOpenSlot} onRemove={remove} />
           <Summary
-            platform={platform} build={build} issues={issues} states={states} status={status} total={total}
+            platform={platform} build={build} issues={issues} aware={awarenessFor(platform, build)} states={states} status={status} total={total}
             openSaved={openSaved} onSave={onSave} onShare={onShare} onCopyLink={onCopyLink} onOpen={setOpenSlot}
             onPreset={(t) => { setSelection(presetSelection(platform, t)); setOpenSlot(null); }}
             onClear={() => setSelection({})} onBrowseFeatured={onBrowseFeatured}
@@ -361,7 +362,7 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
             {slots.map((slot) => {
               const part = build[slot.id];
               const offer = part && bestOffer(part);
-              const rowIssues = issues.filter((i) => i.slots.includes(slot.id) && i.severity !== 'info');
+              const rowIssues = issues.filter((i) => i.severity === 'info' ? i.slots[0] === slot.id : i.slots.includes(slot.id));
               return (
                 <li key={slot.id} className={'part-row ' + states[slot.id] + (hover === slot.id ? ' hover' : '')}
                   onMouseEnter={() => onHover(slot.id)} onMouseLeave={() => onHover(null)}>
@@ -392,8 +393,8 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
   );
 }
 
-function Summary({ platform, build, issues, states, status, total, openSaved, onSave, onShare, onCopyLink, onOpen, onPreset, onClear, onBrowseFeatured }: {
-  platform: Platform; build: Build; issues: Issue[]; states: Record<string, RegionState>; status: { cls: string; text: string }; total: number;
+function Summary({ platform, build, issues, aware, states, status, total, openSaved, onSave, onShare, onCopyLink, onOpen, onPreset, onClear, onBrowseFeatured }: {
+  platform: Platform; build: Build; issues: Issue[]; aware: Aware[]; states: Record<string, RegionState>; status: { cls: string; text: string }; total: number;
   openSaved: SavedBuild | null; onSave: (name: string, asNew: boolean) => void; onShare: (name: string, note: string) => Promise<void>;
   onCopyLink: () => void; onOpen: (s: string) => void;
   onPreset: (t: Tier) => void; onClear: () => void; onBrowseFeatured: () => void;
@@ -482,6 +483,27 @@ function Summary({ platform, build, issues, states, status, total, openSaved, on
           <ul className="issues">
             {issues.map((i, n) => (
               <li key={n} className={'issue ' + i.severity}><span className="issue-tag">{SEV_LABEL[i.severity]}</span><span>{i.message}</span></li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {aware.length > 0 && (
+        <section className="card">
+          <h2 className="card-title">Heads up</h2>
+          <p className="card-note">Things to know about this build. None of them stop it from working.</p>
+          <ul className="issues">
+            {aware.map((a, n) => (
+              <li key={n} className={'issue aware ' + a.level}>
+                <span className="issue-tag">{a.level === 'caution' ? 'Caution' : 'Note'}</span>
+                <span>
+                  <b>{a.title}.</b> {a.message}
+                  <span className="aware-basis">
+                    {a.basis}
+                    {a.source && <> · <a href={a.source.url} target="_blank" rel="noopener noreferrer">{a.source.label}</a></>}
+                  </span>
+                </span>
+              </li>
             ))}
           </ul>
         </section>
@@ -821,7 +843,7 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onStart, onToast }: {
         </div>
         {error && <p className="form-error" role="alert">{error}</p>}
         {builds === null ? <p className="dim">Loading shared builds…</p> : builds.length === 0 ? (
-          <div className="empty card">
+          <div className="empty-state card">
             <h2>No shared builds here yet</h2>
             <p>Be the first. Put together a complete build, then press Share to community.</p>
             <div className="build-card-actions"><button className="btn primary" onClick={onStart}>Start a build</button></div>
@@ -876,7 +898,7 @@ function SavedPage({ saved, onOpen, onRename, onDuplicate, onDelete, onCopyLink,
         <p className="lede">Builds are saved in this browser. Use Copy link to open one on another device or send it to someone.</p>
       </div>
       {saved.length === 0 ? (
-        <div className="empty card">
+        <div className="empty-state card">
           <h2>No saved builds yet</h2>
           <p>Put a build together and press Save build, or save one from the Community page to start from.</p>
           <div className="build-card-actions">

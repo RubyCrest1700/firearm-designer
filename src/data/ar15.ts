@@ -1,5 +1,6 @@
 import type { Build, Issue, Platform } from '../types';
-import { parts, pick, threadIssue } from './helpers';
+import { boreIssue, parts, pick, threadIssue } from './helpers';
+import { rifleAddonParts, rifleAddonRules, rifleAddonSlots } from './addons';
 
 /** Approximate gas port distance from the receiver face, in inches. */
 const PORT_DISTANCE: Record<string, number> = { pistol: 4.5, carbine: 7.5, midlength: 9.5, rifle: 12.5 };
@@ -20,6 +21,7 @@ const slots = [
   { id: 'charging', name: 'Charging handle', group: 'Upper', required: true, hint: 'Any mil-spec handle fits.' },
   { id: 'muzzle', name: 'Muzzle device', group: 'Accessories', required: false, hint: 'Thread pitch must match the barrel.' },
   { id: 'optic', name: 'Optic', group: 'Accessories', required: false, hint: 'Prices include a mount where noted.' },
+  ...rifleAddonSlots,
 ];
 
 const allParts = [
@@ -62,15 +64,15 @@ const allParts = [
       offers: [['AERO', 59.99], ['BRN', 64.99]] },
   ]),
   ...parts('stock', [
-    { id: 'ar-stock-moesl', brand: 'Magpul', name: 'MOE SL Carbine Stock', specs: ['Collapsible', 'Mil-spec diameter'], attrs: { fits: ['carbine', 'a5'] },
+    { id: 'ar-stock-moesl', brand: 'Magpul', name: 'MOE SL Carbine Stock', specs: ['Collapsible', 'Mil-spec diameter', 'QD socket'], attrs: { fits: ['carbine', 'a5'], qd: true },
       offers: [['PA', 49.95], ['BRN', 54.95], ['PSA', 49.99], ['MID', 51.99]], pick: pick('value', 'Slim, snag-free, and fits both carbine and A5 tubes.') },
     { id: 'ar-stock-psa', brand: 'Palmetto State Armory', name: 'Classic M4 Stock', specs: ['Collapsible', 'Mil-spec diameter'], attrs: { fits: ['carbine', 'a5'] },
       offers: [['PSA', 19.99]], pick: pick('budget', 'Basic M4 stock. Works, and is easy to upgrade later.') },
-    { id: 'ar-stock-bcm', brand: 'Bravo Company', name: 'Gunfighter Stock Mod 0', specs: ['Collapsible', 'QD sling mounts'], attrs: { fits: ['carbine', 'a5'] },
+    { id: 'ar-stock-bcm', brand: 'Bravo Company', name: 'Gunfighter Stock Mod 0', specs: ['Collapsible', 'QD sling mounts'], attrs: { fits: ['carbine', 'a5'], qd: true },
       offers: [['BRN', 59.95], ['MID', 61.99]], pick: pick('premium', 'Ambi QD sockets and a solid cheek weld.') },
     { id: 'ar-stock-a2', brand: 'Generic', name: 'A2 Fixed Rifle Stock', specs: ['Fixed', 'Rifle length'], attrs: { fits: ['rifle'] },
       offers: [['PSA', 24.99], ['BRN', 32.99]] },
-    { id: 'ar-stock-prs', brand: 'Magpul', name: 'PRS Gen3 Precision Stock', specs: ['Fixed', 'Adjustable cheek and LOP'], attrs: { fits: ['rifle'] },
+    { id: 'ar-stock-prs', brand: 'Magpul', name: 'PRS Gen3 Precision Stock', specs: ['Fixed', 'Adjustable cheek and LOP', 'QD sockets'], attrs: { fits: ['rifle'], qd: true },
       offers: [['PA', 254.95], ['BRN', 259.95], ['OP', 249.99]] },
   ]),
   ...parts('grip', [
@@ -91,25 +93,25 @@ const allParts = [
   ]),
   ...parts('barrel', [
     { id: 'ar-bbl-psa16', brand: 'Palmetto State Armory', name: '16" 5.56 NATO Carbine, Nitride', specs: ['16"', '5.56 NATO', 'Carbine gas', '.750 journal', '1:7', '1/2x28 thread'],
-      attrs: { caliber: '5.56', bolt: '5.56', length: 16, gas: 'carbine', journal: '.750', thread: '1/2x28' },
+      attrs: { caliber: '5.56', bolt: '5.56', bullet: .224, length: 16, gas: 'carbine', journal: '.750', thread: '1/2x28' },
       offers: [['PSA', 109.99]], pick: pick('budget', 'Reliable carbine-gas barrel at the lowest price.') },
     { id: 'ar-bbl-ba16', brand: 'Ballistic Advantage', name: '16" 5.56 Midlength Modern Series', specs: ['16"', '5.56 NATO', 'Midlength gas', '.750 journal', '1:7', '1/2x28 thread'],
-      attrs: { caliber: '5.56', bolt: '5.56', length: 16, gas: 'midlength', journal: '.750', thread: '1/2x28' },
+      attrs: { caliber: '5.56', bolt: '5.56', bullet: .224, length: 16, gas: 'midlength', journal: '.750', thread: '1/2x28' },
       offers: [['PA', 159.99], ['BRN', 169.99], ['OP', 164.99]], pick: pick('value', 'Midlength gas runs softer than carbine gas on a 16" barrel.') },
     { id: 'ar-bbl-faxon', brand: 'Faxon', name: '16" Gunner Pencil, 5.56', specs: ['16"', '5.56 NATO', 'Midlength gas', '.625 journal', 'Light profile', '1/2x28 thread'],
-      attrs: { caliber: '5.56', bolt: '5.56', length: 16, gas: 'midlength', journal: '.625', thread: '1/2x28' },
+      attrs: { caliber: '5.56', bolt: '5.56', bullet: .224, length: 16, gas: 'midlength', journal: '.625', thread: '1/2x28' },
       offers: [['BRN', 229.99], ['OP', 219.0]] },
     { id: 'ar-bbl-bcm', brand: 'Bravo Company', name: '16" Mid-16 Standard, 5.56', specs: ['16"', '5.56 NATO', 'Midlength gas', '.750 journal', 'Chrome lined', '1/2x28 thread'],
-      attrs: { caliber: '5.56', bolt: '5.56', length: 16, gas: 'midlength', journal: '.750', thread: '1/2x28' },
+      attrs: { caliber: '5.56', bolt: '5.56', bullet: .224, length: 16, gas: 'midlength', journal: '.750', thread: '1/2x28' },
       offers: [['BRN', 254.95], ['MID', 259.99]], pick: pick('premium', 'Chrome-lined, HPT/MPI tested, duty-grade.') },
     { id: 'ar-bbl-criterion', brand: 'Criterion', name: '18" Hybrid SPR, .223 Wylde', specs: ['18"', '.223 Wylde', 'Rifle gas', '.750 journal', '1:8', '1/2x28 thread'],
-      attrs: { caliber: '.223 Wylde', bolt: '5.56', length: 18, gas: 'rifle', journal: '.750', thread: '1/2x28' },
+      attrs: { caliber: '.223 Wylde', bolt: '5.56', bullet: .224, length: 18, gas: 'rifle', journal: '.750', thread: '1/2x28' },
       offers: [['BRN', 279.0], ['PA', 284.99]] },
     { id: 'ar-bbl-ba10', brand: 'Ballistic Advantage', name: '10.3" 5.56 Carbine Hanson', specs: ['10.3"', '5.56 NATO', 'Carbine gas', '.750 journal', '1/2x28 thread'],
-      attrs: { caliber: '5.56', bolt: '5.56', length: 10.3, gas: 'carbine', journal: '.750', thread: '1/2x28' },
+      attrs: { caliber: '5.56', bolt: '5.56', bullet: .224, length: 10.3, gas: 'carbine', journal: '.750', thread: '1/2x28' },
       offers: [['PA', 164.99], ['OP', 169.99]] },
     { id: 'ar-bbl-300', brand: 'Ballistic Advantage', name: '16" .300 BLK Pistol-Length', specs: ['16"', '.300 Blackout', 'Pistol gas', '.750 journal', '5/8x24'],
-      attrs: { caliber: '.300 BLK', bolt: '5.56', length: 16, gas: 'pistol', journal: '.750', thread: '5/8x24' },
+      attrs: { caliber: '.300 BLK', bolt: '5.56', bullet: .308, length: 16, gas: 'pistol', journal: '.750', thread: '5/8x24' },
       offers: [['PA', 164.99], ['BRN', 174.99]] },
   ]),
   ...parts('gasblock', [
@@ -135,6 +137,12 @@ const allParts = [
       offers: [['PA', 149.99], ['BRN', 159.99], ['OP', 154.95]], pick: pick('value', 'Full-length rail with anti-rotation tabs and good QD placement.') },
     { id: 'ar-hg-bcm', brand: 'Bravo Company', name: 'MCMR-13 M-LOK Rail', specs: ['13"', 'Free float', 'M-LOK', 'Proprietary nut'], attrs: { freeFloat: true, length: 13 },
       offers: [['BRN', 224.95], ['MID', 229.99]], pick: pick('premium', 'Lightweight, stiff, and the reference rail for midlength builds.') },
+    { id: 'ar-hg-mi9', brand: 'Midwest Industries', name: 'Combat Rail 9.25" M-LOK', specs: ['9.25"', 'Free float', 'M-LOK', 'Proprietary nut'], attrs: { freeFloat: true, length: 9.25 },
+      offers: [['PA', 144.99]] },
+    { id: 'ar-hg-aero9', brand: 'Aero Precision', name: 'ATLAS S-ONE 9.2" M-LOK', specs: ['9.2"', 'Free float', 'M-LOK', 'Proprietary nut'], attrs: { freeFloat: true, length: 9.2 },
+      offers: [['AERO', 159.99]] },
+    { id: 'ar-hg-bcm10', brand: 'Bravo Company', name: 'MCMR-10 M-LOK Rail', specs: ['10"', 'Free float', 'M-LOK', 'Proprietary nut'], attrs: { freeFloat: true, length: 10 },
+      offers: [['BRN', 199.99]] },
     { id: 'ar-hg-moe', brand: 'Magpul', name: 'MOE Drop-In Handguard, Midlength', specs: ['Drop-in', 'Midlength', 'Needs A2 front sight base'], attrs: { freeFloat: false, dropIn: 'midlength', length: 9 },
       offers: [['PA', 34.95], ['BRN', 36.95]] },
   ]),
@@ -157,21 +165,21 @@ const allParts = [
       offers: [['BRN', 89.95], ['PA', 89.99], ['OP', 92.95]], pick: pick('premium', 'Fully ambidextrous, works great with optics.') },
   ]),
   ...parts('muzzle', [
-    { id: 'ar-mz-a2', brand: 'Generic', name: 'A2 Birdcage Flash Hider', specs: ['1/2x28', 'Flash hider'], attrs: { thread: '1/2x28' },
+    { id: 'ar-mz-a2', brand: 'Generic', name: 'A2 Birdcage Flash Hider', specs: ['1/2x28', 'Flash hider'], attrs: { thread: '1/2x28', kind: 'flash', bore: .224 },
       offers: [['PSA', 9.99], ['BRN', 12.99]], pick: pick('budget', 'Standard flash hider, crush washer included.') },
-    { id: 'ar-mz-lantac', brand: 'Lantac', name: 'Dragon Muzzle Brake 5.56', specs: ['1/2x28', 'Brake'], attrs: { thread: '1/2x28' },
+    { id: 'ar-mz-lantac', brand: 'Lantac', name: 'Dragon Muzzle Brake 5.56', specs: ['1/2x28', 'Brake'], attrs: { thread: '1/2x28', kind: 'brake', bore: .224 },
       offers: [['BRN', 89.95], ['PA', 94.99]], pick: pick('value', 'Cuts recoil a lot, with less side blast than most brakes.') },
-    { id: 'ar-mz-warcomp', brand: 'SureFire', name: 'WarComp 5.56', specs: ['1/2x28', 'Flash hider/comp', 'Suppressor mount'], attrs: { thread: '1/2x28' },
+    { id: 'ar-mz-warcomp', brand: 'SureFire', name: 'WarComp 5.56', specs: ['1/2x28', 'Flash hider/comp', 'Suppressor mount'], attrs: { thread: '1/2x28', kind: 'flash', bore: .224 },
       offers: [['BRN', 149.0], ['OP', 145.0]], pick: pick('premium', 'Also serves as the mount for a SureFire suppressor.') },
-    { id: 'ar-mz-pa', brand: 'Precision Armament', name: 'M4-72 Severe Duty Brake (5/8x24)', specs: ['5/8x24', 'Brake'], attrs: { thread: '5/8x24' },
+    { id: 'ar-mz-pa', brand: 'Precision Armament', name: 'M4-72 Severe Duty Brake (5/8x24)', specs: ['5/8x24', 'Brake'], attrs: { thread: '5/8x24', kind: 'brake', bore: .308 },
       offers: [['BRN', 94.99], ['PA', 99.99]] },
   ]),
   ...parts('optic', [
-    { id: 'ar-opt-vortex', brand: 'Vortex', name: 'Strike Eagle 1-6x24 + Mount', specs: ['LPVO', '1-6x', 'Mount included'], attrs: {},
+    { id: 'ar-opt-vortex', brand: 'Vortex', name: 'Strike Eagle 1-6x24 + Mount', specs: ['LPVO', '1-6x', 'Mount included'], attrs: { kind: 'lpvo' },
       offers: [['PA', 299.99], ['OP', 309.99], ['BRN', 319.99]], pick: pick('value', '1x for close range, 6x for distance. Mount in the box.') },
-    { id: 'ar-opt-holosun', brand: 'Holosun', name: 'HS510C Open Reflex', specs: ['Red dot', 'Solar', 'Mount included'], attrs: {},
+    { id: 'ar-opt-holosun', brand: 'Holosun', name: 'HS510C Open Reflex', specs: ['Red dot', 'Solar', 'Mount included', 'Absolute co-witness'], attrs: { kind: 'dot', height: '1.41' },
       offers: [['PA', 299.99], ['OP', 294.99]], pick: pick('budget', 'Fast, rugged, and runs on solar plus battery.') },
-    { id: 'ar-opt-aimpoint', brand: 'Aimpoint', name: 'PRO Patrol Rifle Optic', specs: ['Red dot', '2 MOA', 'Mount included'], attrs: {},
+    { id: 'ar-opt-aimpoint', brand: 'Aimpoint', name: 'PRO Patrol Rifle Optic', specs: ['Red dot', '2 MOA', 'QRP2 mount + spacer', 'Lower 1/3'], attrs: { kind: 'dot', height: '1.535' },
       offers: [['BRN', 439.0], ['OP', 432.0], ['MID', 449.99]], pick: pick('premium', 'Battery lasts about 3 years left on. Duty-proven.') },
   ]),
 ];
@@ -194,8 +202,12 @@ function rules(b: Build): Issue[] {
   if (handguard && barrel && handguard.attrs.freeFloat) {
     const hg = handguard.attrs.length as number;
     const bl = barrel.attrs.length as number;
-    if (hg >= bl)
-      out.push({ severity: 'warn', slots: ['handguard', 'barrel'], message: `A ${hg}" handguard is as long as the ${bl}" barrel. A muzzle device won't fit and the rail will cover the muzzle.` });
+    if (hg >= bl && !muzzle)
+      out.push({ severity: 'warn', slots: ['handguard', 'muzzle'], message: `The ${hg}" rail runs ${(hg - bl).toFixed(1)}" past the end of the ${bl}" barrel and there's no muzzle device. The muzzle would sit inside the rail, so blast and fouling hit the rail. Add a muzzle device, installed before the rail.` });
+    else if (hg >= bl)
+      out.push({ severity: 'info', slots: ['handguard', 'barrel'], message: `The ${hg}" rail runs ${(hg - bl).toFixed(1)}" past the end of the ${bl}" barrel, a popular shrouded look. Install the muzzle device before the rail, and make sure it fits inside the rail.` });
+    else if (hg > bl - 1)
+      out.push({ severity: 'info', slots: ['handguard', 'barrel'], message: `A ${hg}" rail on a ${bl}" barrel ends almost at the muzzle. Install the muzzle device before the rail, since there's little room for a wrench afterwards.` });
     const port = PORT_DISTANCE[barrel.attrs.gas as string];
     if (hg < port + 1)
       out.push({ severity: 'info', slots: ['handguard', 'barrel'], message: `The gas block sits about ${port}" from the receiver, so a ${hg}" handguard leaves it exposed. That works, but looks unfinished.` });
@@ -204,12 +216,11 @@ function rules(b: Build): Issue[] {
     out.push({ severity: 'error', slots: ['stock', 'buffer'], message: `This stock fits ${(stock.attrs.fits as string[]).join(' or ')} buffer tubes, but the buffer kit is a ${buffer.attrs.tube} tube.` });
   if (bcg && barrel && bcg.attrs.bolt !== barrel.attrs.bolt)
     out.push({ severity: 'error', slots: ['bcg', 'barrel'], message: `A ${barrel.attrs.caliber} barrel needs a ${barrel.attrs.bolt} bolt; this BCG has a ${bcg.attrs.bolt} bolt face.` });
-  const thread = threadIssue(barrel, muzzle);
+  const thread = threadIssue(barrel, muzzle) ?? boreIssue(barrel, muzzle);
   if (thread) out.push(thread);
   if (barrel && (barrel.attrs.length as number) < 16 && stock)
     out.push({ severity: 'warn', slots: ['barrel', 'stock'], message: `A barrel under 16" with a stock makes a short-barreled rifle under the NFA. Approve an ATF Form 1 before assembly, or build it as a pistol without a stock.` });
-  if (barrel && barrel.attrs.caliber === '.300 BLK')
-    out.push({ severity: 'info', slots: ['barrel'], message: '.300 BLK uses standard 5.56 magazines. Mark them clearly: a .300 BLK round fired in a 5.56 rifle can destroy it.' });
+  out.push(...rifleAddonRules(b, false));
   return out;
 }
 
@@ -219,7 +230,7 @@ export const ar15: Platform = {
   family: 'Rifle',
   blurb: 'Mil-spec AR-15 / M4 pattern. Build from a stripped lower up.',
   slots,
-  parts: allParts,
+  parts: [...allParts, ...rifleAddonParts],
   rules,
   presets: {
     budget: ['ar-lower-anderson', 'ar-lpk-psa', 'ar-trig-psa', 'ar-buf-psa', 'ar-stock-psa', 'ar-grip-moe', 'ar-upper-psa', 'ar-bbl-psa16', 'ar-gb-aero750', 'ar-gt-carbine', 'ar-hg-psa', 'ar-bcg-psa', 'ar-ch-aero', 'ar-mz-a2'],
