@@ -135,6 +135,12 @@ const allParts = [
       offers: [['PA', 149.99], ['BRN', 159.99], ['OP', 154.95]], pick: pick('value', 'Full-length rail with anti-rotation tabs and good QD placement.') },
     { id: 'ar-hg-bcm', brand: 'Bravo Company', name: 'MCMR-13 M-LOK Rail', specs: ['13"', 'Free float', 'M-LOK', 'Proprietary nut'], attrs: { freeFloat: true, length: 13 },
       offers: [['BRN', 224.95], ['MID', 229.99]], pick: pick('premium', 'Lightweight, stiff, and the reference rail for midlength builds.') },
+    { id: 'ar-hg-mi9', brand: 'Midwest Industries', name: 'Combat Rail 9.25" M-LOK', specs: ['9.25"', 'Free float', 'M-LOK', 'Proprietary nut'], attrs: { freeFloat: true, length: 9.25 },
+      offers: [['PA', 144.99]] },
+    { id: 'ar-hg-aero9', brand: 'Aero Precision', name: 'ATLAS S-ONE 9.2" M-LOK', specs: ['9.2"', 'Free float', 'M-LOK', 'Proprietary nut'], attrs: { freeFloat: true, length: 9.2 },
+      offers: [['AERO', 159.99]] },
+    { id: 'ar-hg-bcm10', brand: 'Bravo Company', name: 'MCMR-10 M-LOK Rail', specs: ['10"', 'Free float', 'M-LOK', 'Proprietary nut'], attrs: { freeFloat: true, length: 10 },
+      offers: [['BRN', 199.99]] },
     { id: 'ar-hg-moe', brand: 'Magpul', name: 'MOE Drop-In Handguard, Midlength', specs: ['Drop-in', 'Midlength', 'Needs A2 front sight base'], attrs: { freeFloat: false, dropIn: 'midlength', length: 9 },
       offers: [['PA', 34.95], ['BRN', 36.95]] },
   ]),
@@ -195,9 +201,9 @@ function rules(b: Build): Issue[] {
     const hg = handguard.attrs.length as number;
     const bl = barrel.attrs.length as number;
     if (hg >= bl)
-      out.push({ severity: 'warn', slots: ['handguard', 'barrel'], message: `A ${hg}" handguard is as long as the ${bl}" barrel. A muzzle device won't fit and the rail will cover the muzzle.` });
+      out.push({ severity: 'info', slots: ['handguard', 'barrel'], message: `The ${hg}" rail runs past the end of the ${bl}" barrel, a popular shrouded look. Install the muzzle device before the rail, and make sure the device fits inside the rail.` });
     else if (hg > bl - 1)
-      out.push({ severity: 'warn', slots: ['handguard', 'barrel'], message: `A ${hg}" handguard on a ${bl}" barrel leaves almost no barrel past the rail to install a muzzle device or wrench. Builders usually go at least 1" shorter than the barrel.` });
+      out.push({ severity: 'info', slots: ['handguard', 'barrel'], message: `A ${hg}" rail on a ${bl}" barrel ends almost at the muzzle. Install the muzzle device before the rail, since there's little room for a wrench afterwards.` });
     const port = PORT_DISTANCE[barrel.attrs.gas as string];
     if (hg < port + 1)
       out.push({ severity: 'info', slots: ['handguard', 'barrel'], message: `The gas block sits about ${port}" from the receiver, so a ${hg}" handguard leaves it exposed. That works, but looks unfinished.` });

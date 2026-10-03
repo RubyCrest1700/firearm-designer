@@ -202,9 +202,9 @@ function rules(b: Build): Issue[] {
     const hg = handguard.attrs.length as number;
     const bl = barrel.attrs.length as number;
     if (hg >= bl)
-      out.push({ severity: 'warn', slots: ['handguard', 'barrel'], message: `A ${hg}" handguard covers the ${bl}" barrel's muzzle.` });
+      out.push({ severity: 'info', slots: ['handguard', 'barrel'], message: `The ${hg}" rail runs past the end of the ${bl}" barrel. Install the muzzle device before the rail, and make sure the device fits inside the rail.` });
     else if (hg > bl - 1)
-      out.push({ severity: 'warn', slots: ['handguard', 'barrel'], message: `A ${hg}" handguard on a ${bl}" barrel leaves almost no barrel past the rail to install a muzzle device. Builders usually go at least 1" shorter than the barrel.` });
+      out.push({ severity: 'info', slots: ['handguard', 'barrel'], message: `A ${hg}" rail on a ${bl}" barrel ends almost at the muzzle. Install the muzzle device before the rail.` });
     const port = PORT_DISTANCE[barrel.attrs.gas as string];
     if (hg < port + 1)
       out.push({ severity: 'info', slots: ['handguard', 'barrel'], message: `The gas block sits about ${port}" out, so a ${hg}" handguard leaves it exposed.` });
