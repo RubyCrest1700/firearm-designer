@@ -843,7 +843,7 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onStart, onToast }: {
         </div>
         {error && <p className="form-error" role="alert">{error}</p>}
         {builds === null ? <p className="dim">Loading shared builds…</p> : builds.length === 0 ? (
-          <div className="empty card">
+          <div className="empty-state card">
             <h2>No shared builds here yet</h2>
             <p>Be the first. Put together a complete build, then press Share to community.</p>
             <div className="build-card-actions"><button className="btn primary" onClick={onStart}>Start a build</button></div>
@@ -898,7 +898,7 @@ function SavedPage({ saved, onOpen, onRename, onDuplicate, onDelete, onCopyLink,
         <p className="lede">Builds are saved in this browser. Use Copy link to open one on another device or send it to someone.</p>
       </div>
       {saved.length === 0 ? (
-        <div className="empty card">
+        <div className="empty-state card">
           <h2>No saved builds yet</h2>
           <p>Put a build together and press Save build, or save one from the Community page to start from.</p>
           <div className="build-card-actions">

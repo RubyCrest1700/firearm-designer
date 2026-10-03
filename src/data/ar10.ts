@@ -1,5 +1,6 @@
 import type { Build, Issue, Platform } from '../types';
 import { boreIssue, parts, pick, threadIssue } from './helpers';
+import { rifleAddonParts, rifleAddonRules, rifleAddonSlots } from './addons';
 
 /**
  * AR-10 / LR-308 (.308 Win and 6.5 Creedmoor). Unlike the AR-15 there is no single
@@ -31,8 +32,9 @@ const slots = [
   { id: 'bcg', name: 'Bolt carrier group', group: 'Upper', required: true, hint: 'DPMS and Armalite bolt carriers differ. 6.5 CM uses the .308 bolt face.' },
   { id: 'charging', name: 'Charging handle', group: 'Upper', required: true, hint: 'DPMS and Armalite charging handles differ.' },
   { id: 'muzzle', name: 'Muzzle device', group: 'Accessories', required: false, hint: 'Most .308 barrels are threaded 5/8x24.' },
-  { id: 'mag', name: 'Magazine', group: 'Accessories', required: false, hint: 'DPMS uses SR-25 / PMAG LR mags; Armalite uses its own.' },
+  { id: 'mag', name: 'Magazine', group: 'Accessories', required: false, hint: 'SR-25 pattern (Magpul PMAG LR/SR) mags fit DPMS and current Armalite A-series lowers.' },
   { id: 'optic', name: 'Optic', group: 'Accessories', required: false, hint: 'Prices include a mount where noted.' },
+  ...rifleAddonSlots,
 ];
 
 const allParts = [
@@ -67,11 +69,11 @@ const allParts = [
       offers: [['PSA', 49.99]], pick: pick('budget', 'Complete kit at the lowest price.') },
   ]),
   ...parts('stock', [
-    { id: 'a10-stock-moesl', brand: 'Magpul', name: 'MOE SL Carbine Stock', specs: ['Collapsible'], attrs: {},
+    { id: 'a10-stock-moesl', brand: 'Magpul', name: 'MOE SL Carbine Stock', specs: ['Collapsible', 'QD socket'], attrs: { qd: true },
       offers: [['PA', 49.95], ['BRN', 54.95]], pick: pick('value', 'Light, solid, fits AR-10 carbine tubes.') },
     { id: 'a10-stock-psa', brand: 'Palmetto State Armory', name: 'Classic M4 Stock', specs: ['Collapsible'], attrs: {},
       offers: [['PSA', 19.99]], pick: pick('budget', 'Basic and cheap.') },
-    { id: 'a10-stock-ubr', brand: 'Magpul', name: 'UBR Gen2 Collapsible Stock', specs: ['Collapsible', 'Adjustable cheek'], attrs: {},
+    { id: 'a10-stock-ubr', brand: 'Magpul', name: 'UBR Gen2 Collapsible Stock', specs: ['Collapsible', 'Adjustable cheek', 'QD sockets'], attrs: { qd: true },
       offers: [['PA', 239.95], ['BRN', 249.95]], pick: pick('premium', 'Precision-style stock that still collapses.') },
   ]),
   ...parts('grip', [
@@ -133,6 +135,8 @@ const allParts = [
       offers: [['BRN', 169.99], ['PA', 164.99]], pick: pick('value', 'Well-made and fairly priced.') },
     { id: 'a10-bcg-jp', brand: 'JP Enterprises', name: 'LMOS .308 Bolt Carrier', specs: ['.308 / 6.5 CM', 'Low-mass', 'Enhanced bolt'], attrs: { family: 'DPMS' },
       offers: [['BRN', 349.99]], pick: pick('premium', 'Low-mass carrier for a flatter-shooting precision rifle.') },
+    { id: 'a10-bcg-young', brand: 'Young Manufacturing', name: 'AR-10 Armalite Black Nitride BCG', specs: ['Armalite pattern', '.308 / 6.5 CM', 'Nitride'], attrs: { family: 'Armalite' },
+      offers: [['YM', 199.95]] },
   ]),
   ...parts('charging', [
     { id: 'a10-ch-dpms', brand: 'Aero Precision', name: 'AR-10/M5 Charging Handle', specs: ['DPMS pattern'], attrs: { family: 'DPMS' },
@@ -151,15 +155,15 @@ const allParts = [
       offers: [['PSA', 9.99]] },
   ]),
   ...parts('mag', [
-    { id: 'a10-mag-pmag', brand: 'Magpul', name: 'PMAG 20 LR/SR Gen M3', specs: ['20 rd', 'SR-25 / DPMS pattern'], attrs: { family: 'DPMS' },
+    { id: 'a10-mag-pmag', brand: 'Magpul', name: 'PMAG 20 LR/SR Gen M3', specs: ['20 rd', 'SR-25 pattern', 'DPMS and Armalite'], attrs: { family: 'SR-25' },
       offers: [['PA', 24.95], ['MID', 25.99], ['BRN', 26.99]], pick: pick('value', 'The standard DPMS-pattern magazine.') },
-    { id: 'a10-mag-armalite', brand: 'Armalite', name: 'AR-10 20-Round Magazine', specs: ['20 rd', 'Armalite pattern'], attrs: { family: 'Armalite' },
+    { id: 'a10-mag-armalite', brand: 'Armalite', name: 'AR-10 20-Round Magazine', specs: ['20 rd', 'SR-25 pattern', 'Armalite A-series'], attrs: { family: 'SR-25' },
       offers: [['BRN', 39.99]] },
   ]),
   ...parts('optic', [
-    { id: 'a10-opt-vortex', brand: 'Vortex', name: 'Strike Eagle 1-8x24 + Mount', specs: ['LPVO', '1-8x'], attrs: {},
+    { id: 'a10-opt-vortex', brand: 'Vortex', name: 'Strike Eagle 1-8x24 + Mount', specs: ['LPVO', '1-8x'], attrs: { kind: 'lpvo' },
       offers: [['PA', 349.99], ['OP', 359.99]], pick: pick('value', 'Versatile from close range out to 600 yards.') },
-    { id: 'a10-opt-venom', brand: 'Vortex', name: 'Venom 5-25x56 FFP + Mount', specs: ['Precision scope', 'FFP'], attrs: {},
+    { id: 'a10-opt-venom', brand: 'Vortex', name: 'Venom 5-25x56 FFP + Mount', specs: ['Precision scope', 'FFP'], attrs: { kind: 'scope' },
       offers: [['PA', 649.99], ['OP', 639.99]], pick: pick('premium', 'First-focal-plane scope for long-range 6.5 CM.') },
   ]),
 ];
@@ -187,11 +191,14 @@ function rules(b: Build): Issue[] {
     out.push({ severity: 'warn', slots: ['upper', 'handguard'], message: `This handguard is made for ${PATTERN_LABEL[handguard.attrs.pattern as string]} uppers. It mounts on a ${PATTERN_LABEL[upper.attrs.pattern as string]} upper, but its top rail won't line up exactly with the receiver rail.` });
   for (const [slot, part, what] of [['barrel', barrel, 'barrel extension'], ['bcg', b.bcg, 'bolt carrier'], ['gastube', gastube, 'gas tube length']] as const)
     if (upper && part && part.attrs.family && part.attrs.family !== family(upper.attrs.pattern))
-      out.push({ severity: 'error', slots: ['upper', slot], message: `${family(upper.attrs.pattern)} and ${part.attrs.family} patterns use a different ${what}. This part is ${part.attrs.family} pattern.` });
+      out.push({ severity: 'error', slots: ['upper', slot], message: `${family(upper.attrs.pattern)} and ${part.attrs.family} patterns use a different ${what}. This part is ${part.attrs.family} pattern.${family(upper.attrs.pattern) === 'Armalite' && slot !== 'bcg' ? ' Armalite sells its barrels and gas tubes mainly as factory spares, so few are sold separately.' : ''}` });
   if (upper && charging && charging.attrs.family !== family(upper.attrs.pattern))
     out.push({ severity: 'error', slots: ['upper', 'charging'], message: `${family(upper.attrs.pattern)} uppers need a ${family(upper.attrs.pattern)}-pattern charging handle.` });
-  if (lower && mag && mag.attrs.family !== family(lower.attrs.pattern))
-    out.push({ severity: 'error', slots: ['lower', 'mag'], message: `${family(lower.attrs.pattern)}-pattern lowers don't take ${mag.attrs.family}-pattern magazines.` });
+  // DPMS and current Armalite (A-series) lowers both take SR-25 pattern magazines; only the old AR-10B used
+  // modified M14 mags. Sources: https://sadefensejournal.com/armalites-ar-10a/,
+  // https://armalite.com/product/ar10-tactical-rifles/ar-10-18-tactical-rifle/ (ships with a Magpul PMAG)
+  if (lower && mag && mag.attrs.family !== 'SR-25')
+    out.push({ severity: 'error', slots: ['lower', 'mag'], message: `This lower takes SR-25 pattern magazines.` });
   if (barrel && gastube && barrel.attrs.gas !== gastube.attrs.length)
     out.push({ severity: 'error', slots: ['barrel', 'gastube'], message: `The barrel is ${barrel.attrs.gas}-length gas but the gas tube is ${gastube.attrs.length}-length.` });
   if (barrel && gasblock && barrel.attrs.journal !== gasblock.attrs.journal)
@@ -211,6 +218,7 @@ function rules(b: Build): Issue[] {
     if (hg < port + 1)
       out.push({ severity: 'info', slots: ['handguard', 'barrel'], message: `The gas block sits about ${port}" out, so a ${hg}" handguard leaves it exposed.` });
   }
+  out.push(...rifleAddonRules(b, true));
   return out;
 }
 
@@ -220,7 +228,7 @@ export const ar10: Platform = {
   family: 'Rifle',
   blurb: '.308 Win / 6.5 Creedmoor. Pick DPMS or Armalite pattern first; most parts follow from it.',
   slots,
-  parts: allParts,
+  parts: [...allParts, ...rifleAddonParts],
   rules,
   presets: {
     budget: ['a10-lower-psa', 'a10-lpk-dpms', 'a10-trig-psa', 'a10-buf-psa', 'a10-stock-psa', 'a10-grip-moe', 'a10-upper-psa', 'a10-bbl-psa18', 'a10-gb-750', 'a10-gt-mid', 'a10-hg-psa', 'a10-bcg-psa', 'a10-ch-dpms', 'a10-mz-a2', 'a10-mag-pmag'],

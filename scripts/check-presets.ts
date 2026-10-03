@@ -102,5 +102,36 @@ for (const p of PLATFORMS.filter((x) => x.family === 'Rifle'))
   expect({ muzzle: 'ar-mz-lantac' }, 'caution:Much louder beside you');
   expect({ barrel: 'ar-bbl-300', gastube: 'ar-gt-pistol', muzzle: 'ar-mz-pa' }, 'caution:Keep .300 BLK ammo separate');
 }
+// Add-on fit checks.
+{
+  const sev = (pid: string, tier: 'budget' | 'value' | 'premium', over: Record<string, string>, slot: string) => {
+    const p = PLATFORMS.find((x) => x.id === pid)!;
+    const issues = issuesFor(p, toBuild(p, { ...presetSelection(p, tier), ...over })).filter((i) => i.slots.includes(slot));
+    return issues.some((i) => i.severity === 'error') ? 'error' : issues.some((i) => i.severity === 'warn') ? 'warn' : issues.length ? 'info' : 'ok';
+  };
+  const cases: [string, 'budget' | 'value' | 'premium', Record<string, string>, string, string][] = [
+    ['ar15', 'budget', { light: 'r-light-m600' }, 'light', 'warn'],
+    ['ar15', 'budget', { light: 'r-light-m600', rail: 'r-rail-5' }, 'light', 'ok'],
+    ['ar15', 'budget', { light: 'r-light-hlx' }, 'light', 'ok'],
+    ['ar15', 'value', { magnifier: 'r-mag-hm3x' }, 'magnifier', 'error'],
+    ['ar15', 'premium', { magnifier: 'r-mag-hm3x' }, 'magnifier', 'info'],
+    ['ar15', 'budget', { sling: 'r-sling-ms4', qdmount: 'r-qd-magpul' }, 'sling', 'warn'],
+    ['ar15', 'value', { sling: 'r-sling-ms4', qdmount: 'r-qd-magpul' }, 'sling', 'ok'],
+    ['ar15', 'budget', { case: 'r-case-sav36' }, 'case', 'ok'],
+    ['ar10', 'value', { case: 'r-case-sav36' }, 'case', 'warn'],
+    ['ar10', 'value', { case: 'r-case-v730' }, 'case', 'ok'],
+    ['glock19', 'value', { holster: 'g19-hol-g19-tlr7a' }, 'holster', 'error'],
+    ['glock19', 'value', { holster: 'g19-hol-g19-tlr7a', light: 'p-light-tlr7a' }, 'holster', 'info'],
+    ['glock19', 'value', { holster: 'g19-hol-g19', light: 'p-light-tlr7a' }, 'holster', 'error'],
+    ['glock43x', 'budget', { light: 'p-light-tlr7sub-g' }, 'light', 'error'],
+    ['glock43x', 'premium', { light: 'p-light-tlr7sub-g' }, 'light', 'ok'],
+    ['p365', 'budget', { holster: 'p365-hol-xl' }, 'holster', 'warn'],
+    ['p320', 'value', { light: 'p-light-tlr7a', holster: 'p320-hol-compact-tlr7a' }, 'holster', 'info'],
+  ];
+  for (const [pid, tier, over, slot, want] of cases) {
+    const got = sev(pid, tier, over, slot);
+    if (got !== want) { console.log(`add-ons: ${pid}/${tier} ${JSON.stringify(over)} on ${slot}: expected ${want}, got ${got}`); bad++; }
+  }
+}
 console.log(`Interface audit: ${combos} part combinations checked across ${IFACES.length} measured interfaces.`);
 process.exit(bad ? 1 : 0);

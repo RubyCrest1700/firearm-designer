@@ -1,5 +1,6 @@
 import type { Build, Issue, Platform } from '../types';
 import { boreIssue, parts, pick, threadIssue } from './helpers';
+import { rifleAddonParts, rifleAddonRules, rifleAddonSlots } from './addons';
 
 /** Approximate gas port distance from the receiver face, in inches. */
 const PORT_DISTANCE: Record<string, number> = { pistol: 4.5, carbine: 7.5, midlength: 9.5, rifle: 12.5 };
@@ -20,6 +21,7 @@ const slots = [
   { id: 'charging', name: 'Charging handle', group: 'Upper', required: true, hint: 'Any mil-spec handle fits.' },
   { id: 'muzzle', name: 'Muzzle device', group: 'Accessories', required: false, hint: 'Thread pitch must match the barrel.' },
   { id: 'optic', name: 'Optic', group: 'Accessories', required: false, hint: 'Prices include a mount where noted.' },
+  ...rifleAddonSlots,
 ];
 
 const allParts = [
@@ -62,15 +64,15 @@ const allParts = [
       offers: [['AERO', 59.99], ['BRN', 64.99]] },
   ]),
   ...parts('stock', [
-    { id: 'ar-stock-moesl', brand: 'Magpul', name: 'MOE SL Carbine Stock', specs: ['Collapsible', 'Mil-spec diameter'], attrs: { fits: ['carbine', 'a5'] },
+    { id: 'ar-stock-moesl', brand: 'Magpul', name: 'MOE SL Carbine Stock', specs: ['Collapsible', 'Mil-spec diameter', 'QD socket'], attrs: { fits: ['carbine', 'a5'], qd: true },
       offers: [['PA', 49.95], ['BRN', 54.95], ['PSA', 49.99], ['MID', 51.99]], pick: pick('value', 'Slim, snag-free, and fits both carbine and A5 tubes.') },
     { id: 'ar-stock-psa', brand: 'Palmetto State Armory', name: 'Classic M4 Stock', specs: ['Collapsible', 'Mil-spec diameter'], attrs: { fits: ['carbine', 'a5'] },
       offers: [['PSA', 19.99]], pick: pick('budget', 'Basic M4 stock. Works, and is easy to upgrade later.') },
-    { id: 'ar-stock-bcm', brand: 'Bravo Company', name: 'Gunfighter Stock Mod 0', specs: ['Collapsible', 'QD sling mounts'], attrs: { fits: ['carbine', 'a5'] },
+    { id: 'ar-stock-bcm', brand: 'Bravo Company', name: 'Gunfighter Stock Mod 0', specs: ['Collapsible', 'QD sling mounts'], attrs: { fits: ['carbine', 'a5'], qd: true },
       offers: [['BRN', 59.95], ['MID', 61.99]], pick: pick('premium', 'Ambi QD sockets and a solid cheek weld.') },
     { id: 'ar-stock-a2', brand: 'Generic', name: 'A2 Fixed Rifle Stock', specs: ['Fixed', 'Rifle length'], attrs: { fits: ['rifle'] },
       offers: [['PSA', 24.99], ['BRN', 32.99]] },
-    { id: 'ar-stock-prs', brand: 'Magpul', name: 'PRS Gen3 Precision Stock', specs: ['Fixed', 'Adjustable cheek and LOP'], attrs: { fits: ['rifle'] },
+    { id: 'ar-stock-prs', brand: 'Magpul', name: 'PRS Gen3 Precision Stock', specs: ['Fixed', 'Adjustable cheek and LOP', 'QD sockets'], attrs: { fits: ['rifle'], qd: true },
       offers: [['PA', 254.95], ['BRN', 259.95], ['OP', 249.99]] },
   ]),
   ...parts('grip', [
@@ -173,11 +175,11 @@ const allParts = [
       offers: [['BRN', 94.99], ['PA', 99.99]] },
   ]),
   ...parts('optic', [
-    { id: 'ar-opt-vortex', brand: 'Vortex', name: 'Strike Eagle 1-6x24 + Mount', specs: ['LPVO', '1-6x', 'Mount included'], attrs: {},
+    { id: 'ar-opt-vortex', brand: 'Vortex', name: 'Strike Eagle 1-6x24 + Mount', specs: ['LPVO', '1-6x', 'Mount included'], attrs: { kind: 'lpvo' },
       offers: [['PA', 299.99], ['OP', 309.99], ['BRN', 319.99]], pick: pick('value', '1x for close range, 6x for distance. Mount in the box.') },
-    { id: 'ar-opt-holosun', brand: 'Holosun', name: 'HS510C Open Reflex', specs: ['Red dot', 'Solar', 'Mount included'], attrs: {},
+    { id: 'ar-opt-holosun', brand: 'Holosun', name: 'HS510C Open Reflex', specs: ['Red dot', 'Solar', 'Mount included', 'Absolute co-witness'], attrs: { kind: 'dot', height: '1.41' },
       offers: [['PA', 299.99], ['OP', 294.99]], pick: pick('budget', 'Fast, rugged, and runs on solar plus battery.') },
-    { id: 'ar-opt-aimpoint', brand: 'Aimpoint', name: 'PRO Patrol Rifle Optic', specs: ['Red dot', '2 MOA', 'Mount included'], attrs: {},
+    { id: 'ar-opt-aimpoint', brand: 'Aimpoint', name: 'PRO Patrol Rifle Optic', specs: ['Red dot', '2 MOA', 'QRP2 mount + spacer', 'Lower 1/3'], attrs: { kind: 'dot', height: '1.535' },
       offers: [['BRN', 439.0], ['OP', 432.0], ['MID', 449.99]], pick: pick('premium', 'Battery lasts about 3 years left on. Duty-proven.') },
   ]),
 ];
@@ -218,6 +220,7 @@ function rules(b: Build): Issue[] {
   if (thread) out.push(thread);
   if (barrel && (barrel.attrs.length as number) < 16 && stock)
     out.push({ severity: 'warn', slots: ['barrel', 'stock'], message: `A barrel under 16" with a stock makes a short-barreled rifle under the NFA. Approve an ATF Form 1 before assembly, or build it as a pistol without a stock.` });
+  out.push(...rifleAddonRules(b, false));
   return out;
 }
 
@@ -227,7 +230,7 @@ export const ar15: Platform = {
   family: 'Rifle',
   blurb: 'Mil-spec AR-15 / M4 pattern. Build from a stripped lower up.',
   slots,
-  parts: allParts,
+  parts: [...allParts, ...rifleAddonParts],
   rules,
   presets: {
     budget: ['ar-lower-anderson', 'ar-lpk-psa', 'ar-trig-psa', 'ar-buf-psa', 'ar-stock-psa', 'ar-grip-moe', 'ar-upper-psa', 'ar-bbl-psa16', 'ar-gb-aero750', 'ar-gt-carbine', 'ar-hg-psa', 'ar-bcg-psa', 'ar-ch-aero', 'ar-mz-a2'],

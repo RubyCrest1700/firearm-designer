@@ -16,6 +16,7 @@ export const RETAILERS: Record<string, Retailer> = {
   AERO: { id: 'AERO', name: 'Aero Precision', search: 'https://aeroprecisionusa.com/search?q=' },
   MAGPUL: { id: 'MAGPUL', name: 'Magpul', search: 'https://magpul.com/catalogsearch/result/?q=' },
   CF: { id: 'CF', name: 'Classic Firearms', search: 'https://www.classicfirearms.com/catalogsearch/result/?q=' },
+  YM: { id: 'YM', name: 'Young Manufacturing', search: 'https://www.youngmanufacturing.net/search.aspx?searchterm=' },
 };
 
 export function offerUrl(retailerId: string, query: string): string {

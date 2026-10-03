@@ -389,9 +389,9 @@ tr:first-child td { border-top: 0; }
 .confirm { font-size: 13.5px; font-weight: 600; color: var(--err); margin-right: 4px; }
 .rename { display: flex; gap: 8px; }
 .rename input { padding: 6px 10px; font: 600 15px var(--f-sans); }
-.empty { padding: 36px 24px; text-align: center; display: grid; gap: 10px; justify-items: center; max-width: 560px; }
-.empty h2 { font: 700 24px/1.2 var(--f-head); }
-.empty p { color: var(--muted); }
+.empty-state { padding: 36px 24px; text-align: center; display: grid; gap: 10px; justify-items: center; max-width: 560px; }
+.empty-state h2 { font: 700 24px/1.2 var(--f-head); }
+.empty-state p { color: var(--muted); }
 
 /* ------------------------------------------------------------------- footer */
 

@@ -1,5 +1,6 @@
 import type { Build, Issue, Platform } from '../types';
 import { parts, pick } from './helpers';
+import { holsters, pistolAddonRules, pistolAddonSlots, pistolCases, pistolLights } from './addons';
 
 /**
  * G43X and G48 use the same frame and magazines; the G48 has a longer slide and barrel.
@@ -17,13 +18,14 @@ const slots = [
   { id: 'sights', name: 'Sights', group: 'Upper', required: true, hint: 'Slimline sights; double-stack Glock rear sights also fit.' },
   { id: 'optic', name: 'Optic', group: 'Accessories', required: false, hint: 'MOS slides take the Shield RMSc footprint directly.' },
   { id: 'mag', name: 'Magazine', group: 'Accessories', required: false, hint: 'All slimline 9mm mags fit both frames.' },
+  ...pistolAddonSlots,
 ];
 
 const allParts = [
   ...parts('frame', [
     { id: 'gs-frame-43x', brand: 'Glock', name: 'G43X Frame (OEM, stripped)', specs: ['Slimline', 'Rail-less', 'Fits G43X and G48 slides'], attrs: {}, serialized: true,
       offers: [['GS', 164.99], ['BRN', 172.99]], pick: pick('value', 'Takes either slide, so you can swap later.') },
-    { id: 'gs-frame-43xr', brand: 'Glock', name: 'G43X Rail Frame (OEM, stripped)', specs: ['Slimline', 'Accessory rail', 'Fits G43X and G48 slides'], attrs: {}, serialized: true,
+    { id: 'gs-frame-43xr', brand: 'Glock', name: 'G43X Rail Frame (OEM, stripped)', specs: ['Slimline', 'Accessory rail', 'Fits G43X and G48 slides'], attrs: { rail: 'glockslim' }, serialized: true,
       offers: [['GS', 174.99]], pick: pick('premium', 'Adds a rail for a compact weapon light.') },
     { id: 'gs-frame-48', brand: 'Glock', name: 'G48 Frame (OEM, stripped)', specs: ['Slimline', 'Rail-less', 'Same frame as the G43X'], attrs: {}, serialized: true,
       offers: [['GS', 164.99], ['BRN', 172.99]], pick: pick('budget', 'The same frame as the G43X, sold with G48 pistols.') },
@@ -100,6 +102,8 @@ function rules(b: Build): Issue[] {
     out.push({ severity: 'info', slots: ['optic', 'sights'], message: 'Standard-height sights won\'t co-witness with a dot.' });
   if (mag?.attrs.kind === 's15')
     out.push({ severity: 'info', slots: ['mag'], message: 'Shield Arms recommends their steel magazine catch with S15 mags, especially in older frames.' });
+  const len = slide?.attrs.len as string | undefined;
+  out.push(...pistolAddonRules(b, b.frame?.attrs.rail as 'glockslim' | undefined, 'frame', len && `g${len.toLowerCase()}`, `Glock ${len}`));
   return out;
 }
 
@@ -109,7 +113,8 @@ export const glockSlim: Platform = {
   family: 'Pistol',
   blurb: 'Slimline single-stack-width 9mm. The two models share frames, parts and mags.',
   slots,
-  parts: allParts,
+  parts: [...allParts, ...pistolLights.filter((l) => (l.attrs.rails as string[]).includes('glockslim')),
+    ...holsters('gs', [['g43x', 'Glock 43X'], ['g48', 'Glock 48']], ['tlr7sub']), ...pistolCases],
   rules,
   presets: {
     budget: ['gs-frame-48', 'gs-fcg-oem', 'gs-slide-48', 'gs-spk-oem', 'gs-bbl-48', 'gs-rsa-48', 'gs-sight-oem', 'gs-mag-oem10'],

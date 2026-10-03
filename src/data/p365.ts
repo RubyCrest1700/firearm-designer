@@ -1,5 +1,6 @@
 import type { Build, Issue, Platform } from '../types';
 import { parts, pick } from './helpers';
+import { holsters, pistolAddonRules, pistolAddonSlots, pistolCases, pistolLights } from './addons';
 
 /** Grip length: standard (micro) < XL. Magazines are sized to a grip. */
 const GRIP_LEN: Record<string, number> = { std: 1, xl: 2 };
@@ -14,6 +15,7 @@ const slots = [
   { id: 'spring', name: 'Recoil spring', group: 'Upper', required: true, hint: 'Must match the slide length.' },
   { id: 'optic', name: 'Optic', group: 'Accessories', required: false, hint: 'Optic-ready P365 slides take the RMSc / Romeo Zero footprint.' },
   { id: 'mag', name: 'Magazine', group: 'Accessories', required: true, hint: 'Match the mag to the grip length for a flush fit.' },
+  ...pistolAddonSlots,
 ];
 
 const allParts = [
@@ -96,6 +98,9 @@ function rules(b: Build): Issue[] {
     else if (m > g)
       out.push({ severity: 'info', slots: ['mag', 'grip'], message: 'This magazine extends below the grip. It works and adds capacity.' });
   }
+  // P365 and P365XL grips both have Sig's proprietary accessory rail.
+  const len = slide?.attrs.len as string | undefined;
+  out.push(...pistolAddonRules(b, 'p365', 'grip', len, len === 'xl' ? 'P365XL' : 'P365'));
   return out;
 }
 
@@ -105,7 +110,8 @@ export const p365: Platform = {
   family: 'Pistol',
   blurb: 'Micro-compact 9mm on a serialized fire control unit. Mix grips and slides freely.',
   slots,
-  parts: allParts,
+  parts: [...allParts, ...pistolLights.filter((l) => (l.attrs.rails as string[]).includes('p365')),
+    ...holsters('p365', [['std', 'P365'], ['xl', 'P365XL']], ['tlr7sub']), ...pistolCases],
   rules,
   presets: {
     budget: ['p365-fcu', 'p365-grip-std', 'p365-slide-std', 'p365-bbl-std', 'p365-spr-std', 'p365-mag-10'],

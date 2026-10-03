@@ -1,5 +1,6 @@
 import type { Build, Issue, Platform } from '../types';
 import { parts, pick } from './helpers';
+import { holsters, pistolAddonRules, pistolAddonSlots, pistolCases, pistolLights } from './addons';
 
 /** Slide and dust-cover lengths, shortest to longest. */
 const LEN_RANK: Record<string, number> = { subcompact: 1, compact: 2, full: 3 };
@@ -20,6 +21,7 @@ const slots = [
   { id: 'spring', name: 'Recoil spring', group: 'Upper', required: true, hint: 'Matched to slide length.' },
   { id: 'optic', name: 'Optic', group: 'Accessories', required: false, hint: 'Sig optic-ready slides use the Romeo1Pro / DeltaPoint footprint.' },
   { id: 'mag', name: 'Magazine', group: 'Accessories', required: true, hint: 'Should be at least as long as the grip.' },
+  ...pistolAddonSlots,
 ];
 
 const allParts = [
@@ -130,6 +132,9 @@ function rules(b: Build): Issue[] {
     else if (LEN_RANK[m] > LEN_RANK[well])
       out.push({ severity: 'info', slots: ['mag', 'grip'], message: `A ${m} magazine extends below this grip. It works and adds capacity.` });
   }
+  // Every P320 grip module has a 1913-style accessory rail.
+  const len = slide?.attrs.length as string | undefined;
+  out.push(...pistolAddonRules(b, 'pic', 'grip', len, `P320 ${len ? len[0].toUpperCase() + len.slice(1) : ''}`));
   return out;
 }
 
@@ -139,7 +144,8 @@ export const p320: Platform = {
   family: 'Pistol',
   blurb: 'Modular 9mm built around a serialized fire control unit. Swap sizes freely.',
   slots,
-  parts: allParts,
+  parts: [...allParts, ...pistolLights.filter((l) => (l.attrs.rails as string[]).includes('pic')),
+    ...holsters('p320', [['subcompact', 'P320 Subcompact'], ['compact', 'P320 Compact'], ['full', 'P320 Full']], ['tlr7a', 'x300']), ...pistolCases],
   rules,
   presets: {
     budget: ['p-fcu-std', 'p-grip-compact', 'p-slide-compact', 'p-bbl-c9', 'p-spr-c', 'p-mag-sig15'],

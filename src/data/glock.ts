@@ -1,5 +1,6 @@
 import type { Build, Issue, Part, Platform, Tier } from '../types';
 import { parts, pick, threadIssue } from './helpers';
+import { holsters, pistolAddonRules, pistolAddonSlots, pistolCases, pistolLights } from './addons';
 
 /**
  * Double-stack 9mm Glocks (G17, G19, G26). Trigger parts, slide parts, sights and optics
@@ -50,6 +51,7 @@ const slots = [
   { id: 'optic', name: 'Optic', group: 'Accessories', required: false, hint: 'Footprint must match the slide cut.' },
   { id: 'muzzle', name: 'Muzzle device', group: 'Accessories', required: false, hint: 'Screws onto a threaded barrel. The thread size and direction must match exactly.' },
   { id: 'mag', name: 'Magazine', group: 'Accessories', required: false, hint: 'Longer Glock 9mm mags fit shorter grips and stick out below.' },
+  ...pistolAddonSlots,
 ];
 
 /** Model-specific parts. `{M}` is replaced with the model name, `{m}` with its number. */
@@ -215,6 +217,8 @@ function rulesFor(M: Model) {
       else if (ms > SIZE[M])
         out.push({ severity: 'info', slots: ['mag'], message: `This magazine sticks out below the ${M} grip. It works and adds capacity; a sleeve can fill the gap.` });
     }
+    // Every Gen3-5 G17/19/26 frame has the Glock accessory rail.
+    out.push(...pistolAddonRules(b, 'glock', 'frame', M.toLowerCase(), M));
     return out;
   };
 }
@@ -227,7 +231,8 @@ function makeGlock(M: Model, presets: Record<Tier, string[]>): Platform {
     family: 'Pistol',
     blurb: MODEL_DESC[M],
     slots,
-    parts: [...modelParts(M), ...shared],
+    parts: [...modelParts(M), ...shared, ...pistolLights.filter((l) => (l.attrs.rails as string[]).includes('glock')),
+      ...holsters(`g${n}`, [[`g${n}`, `Glock ${n}`]], ['tlr7a', 'x300']), ...pistolCases],
     rules: rulesFor(M),
     presets,
   };
