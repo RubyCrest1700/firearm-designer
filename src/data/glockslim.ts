@@ -57,6 +57,8 @@ const allParts = [
       offers: [['GS', 129.99], ['BRN', 134.99]], pick: pick('value', 'Factory barrel for the long slide.') },
     { id: 'gs-bbl-48tp', brand: 'True Precision', name: 'G48 Axiom Barrel', specs: ['4.17"', 'Match grade', 'Stainless'], attrs: { len: '48' },
       offers: [['BRN', 214.99], ['OP', 209.99]] },
+    { id: 'gs-bbl-43xtp', brand: 'True Precision', name: 'G43X Axiom Barrel', specs: ['3.41"', 'Match grade', 'Stainless'], attrs: { len: '43X' },
+      offers: [['BRN', 214.99], ['OP', 209.99]] },
   ]),
   ...parts('rsa', [
     { id: 'gs-rsa-43x', brand: 'Glock', name: 'G43X Recoil Spring Assembly (OEM)', specs: ['G43X length'], attrs: { len: '43X' }, offers: [['GS', 16.99], ['BRN', 18.99]] },
@@ -73,6 +75,8 @@ const allParts = [
       offers: [['PA', 269.99], ['OP', 274.99]], pick: pick('value', 'Fits the MOS cut directly. The common pick for slim Glocks.') },
     { id: 'gs-opt-rmsc', brand: 'Shield', name: 'RMSc 4 MOA', specs: ['RMSc footprint', 'Very low profile'], attrs: { footprint: 'rmsc' },
       offers: [['BRN', 299.99], ['OP', 289.99]] },
+    { id: 'gs-opt-epsc', brand: 'Holosun', name: 'EPS Carry', specs: ['RMSc footprint', 'Enclosed emitter'], attrs: { footprint: 'rmsc' },
+      offers: [['PA', 349.99], ['OP', 354.99]] },
     { id: 'gs-opt-rmr', brand: 'Trijicon', name: 'RMR Type 2, 3.25 MOA', specs: ['RMR footprint'], attrs: { footprint: 'rmr' },
       offers: [['BRN', 449.99], ['OP', 439.99]] },
   ]),
