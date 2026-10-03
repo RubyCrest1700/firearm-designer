@@ -8,7 +8,7 @@ const js = readFileSync(`${dir}/${files.find((f) => f.endsWith('.js'))}`, 'utf8'
 const css = readFileSync(`${dir}/${files.find((f) => f.endsWith('.css'))}`, 'utf8');
 
 const page = `<title>Firearm Designer</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Saira+Condensed:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>${css}</style>
 <div id="root"></div>
 <script type="module">${js}</script>
