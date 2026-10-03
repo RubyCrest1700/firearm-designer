@@ -1,4 +1,5 @@
 // Verifies every preset build is complete and free of compatibility errors.
+import { awarenessFor } from '../src/awareness';
 import { PLATFORMS } from '../src/data/index';
 import { issuesFor, presetSelection, toBuild } from '../src/engine';
 
@@ -71,5 +72,20 @@ for (const p of PLATFORMS)
       console.log(`${p.id}: ${part.id} names thread ${named} but attrs say ${part.attrs.thread}`); bad++;
     }
   }
+// Awareness warnings fire on the thresholds agreed in the Build Warnings Proposal.
+{
+  const ar = PLATFORMS.find((x) => x.id === 'ar15')!;
+  const titles = (over: Record<string, string>) =>
+    awarenessFor(ar, toBuild(ar, { ...presetSelection(ar, 'budget'), ...over })).map((w) => `${w.level}:${w.title}`);
+  const expect = (over: Record<string, string>, want: string, present = true) => {
+    if (titles(over).includes(want) !== present) { console.log(`awareness: expected ${present ? '' : 'no '}"${want}" for ${JSON.stringify(over)}`); bad++; }
+  };
+  expect({ barrel: 'ar-bbl-ba10' }, 'caution:Heavy flash and blast');
+  expect({ barrel: 'ar-bbl-ba10' }, 'caution:Common ammo loses effectiveness');
+  expect({ barrel: 'ar-bbl-psa16' }, 'caution:Heavy flash and blast', false);
+  expect({ barrel: 'ar-bbl-psa16' }, 'note:Runs overgassed');
+  expect({ muzzle: 'ar-mz-lantac' }, 'caution:Much louder beside you');
+  expect({ barrel: 'ar-bbl-300', gastube: 'ar-gt-pistol', muzzle: 'ar-mz-pa' }, 'caution:Keep .300 BLK ammo separate');
+}
 console.log(`Interface audit: ${combos} part combinations checked across ${IFACES.length} measured interfaces.`);
 process.exit(bad ? 1 : 0);

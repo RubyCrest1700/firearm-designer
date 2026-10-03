@@ -20,6 +20,8 @@
   --ok-soft: #e4f2e9;
   --warn: #a8670a;
   --warn-soft: #fbefd9;
+  --note: #1d5fa8;
+  --note-soft: #e3eefb;
   --err: #b8382c;
   --err-soft: #fbe6e3;
   --shadow: 0 1px 2px rgba(16, 30, 45, .06), 0 4px 14px rgba(16, 30, 45, .06);
@@ -44,7 +46,7 @@
   :root:not([data-theme='light']) {
     --bg: #0e1318; --surface: #151c23; --surface-2: #1a232c; --ink: #e6ebef; --muted: #9aa6b0; --faint: #6e7a84;
     --line: #26313b; --line-2: #33414d; --navy: #0a1f36; --navy-2: #12304f; --blue: #6aa6dd; --cta: #ec8a45; --cta-ink: #1a0f06;
-    --ok: #5fc58a; --ok-soft: rgba(95,197,138,.12); --warn: #e7b04f; --warn-soft: rgba(231,176,79,.13);
+    --ok: #5fc58a; --ok-soft: rgba(95,197,138,.12); --warn: #e7b04f; --warn-soft: rgba(231,176,79,.13); --note: #79aef0; --note-soft: rgba(121,174,240,.14);
     --err: #f07a6c; --err-soft: rgba(240,122,108,.13); --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 18px rgba(0,0,0,.25);
     color-scheme: dark;
   }
@@ -52,7 +54,7 @@
 :root[data-theme='dark'] {
   --bg: #0e1318; --surface: #151c23; --surface-2: #1a232c; --ink: #e6ebef; --muted: #9aa6b0; --faint: #6e7a84;
   --line: #26313b; --line-2: #33414d; --navy: #0a1f36; --navy-2: #12304f; --blue: #6aa6dd; --cta: #ec8a45; --cta-ink: #1a0f06;
-  --ok: #5fc58a; --ok-soft: rgba(95,197,138,.12); --warn: #e7b04f; --warn-soft: rgba(231,176,79,.13);
+  --ok: #5fc58a; --ok-soft: rgba(95,197,138,.12); --warn: #e7b04f; --warn-soft: rgba(231,176,79,.13); --note: #79aef0; --note-soft: rgba(121,174,240,.14);
   --err: #f07a6c; --err-soft: rgba(240,122,108,.13); --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 18px rgba(0,0,0,.25);
   color-scheme: dark;
 }
@@ -284,6 +286,10 @@ input:focus { outline: 2px solid var(--blue); outline-offset: -1px; }
 .issue.error .issue-tag { background: var(--err-soft); color: var(--err); }
 .issue.warn .issue-tag { background: var(--warn-soft); color: var(--warn); }
 .issue.info .issue-tag { background: var(--surface-2); color: var(--muted); }
+.issue.aware.caution .issue-tag { background: var(--warn-soft); color: var(--warn); }
+.issue.aware.note .issue-tag { background: var(--note-soft); color: var(--note); }
+.aware-basis { display: block; margin-top: 3px; font: 12px/1.4 var(--f-mono, monospace); color: var(--muted); }
+.aware-basis a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 
 table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
 td, th { padding: 7px 0; border-top: 1px solid var(--line); text-align: left; }

@@ -143,11 +143,11 @@ const allParts = [
       offers: [['BRN', 49.99]] },
   ]),
   ...parts('muzzle', [
-    { id: 'a10-mz-pa', brand: 'Precision Armament', name: 'M4-72 Severe Duty Brake (5/8x24)', specs: ['5/8x24', 'Brake'], attrs: { thread: '5/8x24' },
+    { id: 'a10-mz-pa', brand: 'Precision Armament', name: 'M4-72 Severe Duty Brake (5/8x24)', specs: ['5/8x24', 'Brake'], attrs: { thread: '5/8x24', kind: 'brake' },
       offers: [['BRN', 94.99], ['PA', 99.99]], pick: pick('value', 'Big recoil reduction for .308.') },
-    { id: 'a10-mz-a2', brand: 'Generic', name: 'A2 Flash Hider .308 (5/8x24)', specs: ['5/8x24', 'Flash hider'], attrs: { thread: '5/8x24' },
+    { id: 'a10-mz-a2', brand: 'Generic', name: 'A2 Flash Hider .308 (5/8x24)', specs: ['5/8x24', 'Flash hider'], attrs: { thread: '5/8x24', kind: 'flash' },
       offers: [['PSA', 14.99]], pick: pick('budget', 'Basic flash hider.') },
-    { id: 'a10-mz-a2-556', brand: 'Generic', name: 'A2 Birdcage 5.56 (1/2x28)', specs: ['1/2x28', 'Flash hider'], attrs: { thread: '1/2x28' },
+    { id: 'a10-mz-a2-556', brand: 'Generic', name: 'A2 Birdcage 5.56 (1/2x28)', specs: ['1/2x28', 'Flash hider'], attrs: { thread: '1/2x28', kind: 'flash' },
       offers: [['PSA', 9.99]] },
   ]),
   ...parts('mag', [

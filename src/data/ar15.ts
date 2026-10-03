@@ -157,13 +157,13 @@ const allParts = [
       offers: [['BRN', 89.95], ['PA', 89.99], ['OP', 92.95]], pick: pick('premium', 'Fully ambidextrous, works great with optics.') },
   ]),
   ...parts('muzzle', [
-    { id: 'ar-mz-a2', brand: 'Generic', name: 'A2 Birdcage Flash Hider', specs: ['1/2x28', 'Flash hider'], attrs: { thread: '1/2x28' },
+    { id: 'ar-mz-a2', brand: 'Generic', name: 'A2 Birdcage Flash Hider', specs: ['1/2x28', 'Flash hider'], attrs: { thread: '1/2x28', kind: 'flash' },
       offers: [['PSA', 9.99], ['BRN', 12.99]], pick: pick('budget', 'Standard flash hider, crush washer included.') },
-    { id: 'ar-mz-lantac', brand: 'Lantac', name: 'Dragon Muzzle Brake 5.56', specs: ['1/2x28', 'Brake'], attrs: { thread: '1/2x28' },
+    { id: 'ar-mz-lantac', brand: 'Lantac', name: 'Dragon Muzzle Brake 5.56', specs: ['1/2x28', 'Brake'], attrs: { thread: '1/2x28', kind: 'brake' },
       offers: [['BRN', 89.95], ['PA', 94.99]], pick: pick('value', 'Cuts recoil a lot, with less side blast than most brakes.') },
-    { id: 'ar-mz-warcomp', brand: 'SureFire', name: 'WarComp 5.56', specs: ['1/2x28', 'Flash hider/comp', 'Suppressor mount'], attrs: { thread: '1/2x28' },
+    { id: 'ar-mz-warcomp', brand: 'SureFire', name: 'WarComp 5.56', specs: ['1/2x28', 'Flash hider/comp', 'Suppressor mount'], attrs: { thread: '1/2x28', kind: 'flash' },
       offers: [['BRN', 149.0], ['OP', 145.0]], pick: pick('premium', 'Also serves as the mount for a SureFire suppressor.') },
-    { id: 'ar-mz-pa', brand: 'Precision Armament', name: 'M4-72 Severe Duty Brake (5/8x24)', specs: ['5/8x24', 'Brake'], attrs: { thread: '5/8x24' },
+    { id: 'ar-mz-pa', brand: 'Precision Armament', name: 'M4-72 Severe Duty Brake (5/8x24)', specs: ['5/8x24', 'Brake'], attrs: { thread: '5/8x24', kind: 'brake' },
       offers: [['BRN', 94.99], ['PA', 99.99]] },
   ]),
   ...parts('optic', [
@@ -210,8 +210,6 @@ function rules(b: Build): Issue[] {
   if (thread) out.push(thread);
   if (barrel && (barrel.attrs.length as number) < 16 && stock)
     out.push({ severity: 'warn', slots: ['barrel', 'stock'], message: `A barrel under 16" with a stock makes a short-barreled rifle under the NFA. Approve an ATF Form 1 before assembly, or build it as a pistol without a stock.` });
-  if (barrel && barrel.attrs.caliber === '.300 BLK')
-    out.push({ severity: 'info', slots: ['barrel'], message: '.300 BLK uses standard 5.56 magazines. Mark them clearly: a .300 BLK round fired in a 5.56 rifle can destroy it.' });
   return out;
 }
 
