@@ -1,5 +1,5 @@
 import type { Build, Issue, Part, Platform, Tier } from '../types';
-import { parts, pick } from './helpers';
+import { parts, pick, threadIssue } from './helpers';
 
 /**
  * Double-stack 9mm Glocks (G17, G19, G26). Trigger parts, slide parts, sights and optics
@@ -28,6 +28,7 @@ const slots = [
   { id: 'rsa', name: 'Recoil spring assembly', group: 'Upper', required: true, hint: 'Gen3 frames use a single spring; Gen4/5 use dual.' },
   { id: 'sights', name: 'Sights', group: 'Upper', required: true, hint: 'Suppressor height co-witnesses with most optics.' },
   { id: 'optic', name: 'Optic', group: 'Accessories', required: false, hint: 'Footprint must match the slide cut.' },
+  { id: 'muzzle', name: 'Muzzle device', group: 'Accessories', required: false, hint: 'Screws onto a threaded barrel. The thread size and direction must match exactly.' },
   { id: 'mag', name: 'Magazine', group: 'Accessories', required: false, hint: 'Longer Glock 9mm mags fit shorter grips and stick out below.' },
 ];
 
@@ -60,8 +61,10 @@ function modelParts(M: Model): Part[] {
     ...parts('barrel', [
       { id: `g${n}-bbl-oem34`, brand: 'Glock', name: t('{M} Barrel, Gen3/4 (OEM)'), specs: ['Gen3/4', 'Polygonal rifling'], attrs: { family: 'Gen3/4', threaded: false },
         offers: [['GS', 119.99]], pick: pick('budget', 'Factory barrel. Fits a Gen3/4 slide with no fitting.') },
-      { id: `g${n}-bbl-lw`, brand: 'Lone Wolf', name: t('AlphaWolf {M} Barrel, Threaded 1/2x28'), specs: ['Gen3/4', 'Threaded 1/2x28', 'Conventional rifling'], attrs: { family: 'Gen3/4', threaded: true },
+      { id: `g${n}-bbl-lw`, brand: 'Lone Wolf', name: t('AlphaWolf {M} Barrel, Threaded 1/2x28'), specs: ['Gen3/4', 'Threaded 1/2x28', 'Conventional rifling'], attrs: { family: 'Gen3/4', threaded: true, thread: '1/2x28' },
         offers: [['BRN', 124.99 + d], ['MID', 129.99 + d]] },
+      { id: `g${n}-bbl-lwm`, brand: 'Lone Wolf', name: t('AlphaWolf {M} Barrel, Threaded M13.5x1 LH'), specs: ['Gen3/4', 'Threaded M13.5x1 LH', 'Metric, left-hand'], attrs: { family: 'Gen3/4', threaded: true, thread: 'M13.5x1 LH' },
+        offers: [['BRN', 129.99 + d]] },
       { id: `g${n}-bbl-faxon`, brand: 'Faxon', name: t('{M} Duty Series Barrel'), specs: ['Gen3/4', 'Match grade', 'Nitride'], attrs: { family: 'Gen3/4', threaded: false },
         offers: [['BRN', 169.99 + d], ['OP', 164.99 + d]], pick: pick('value', 'Match-grade accuracy for less than most aftermarket barrels.') },
       { id: `g${n}-bbl-oem5`, brand: 'Glock', name: t('{M} Gen5 Marksman Barrel (OEM)'), specs: ['Gen5', 'Marksman rifling'], attrs: { family: 'Gen5', threaded: false },
@@ -118,6 +121,14 @@ const shared: Part[] = [
     { id: 'g-opt-acro', brand: 'Aimpoint', name: 'Acro P-2', specs: ['Acro footprint', 'Enclosed emitter'], attrs: { footprint: 'acro' },
       offers: [['BRN', 519.0], ['OP', 509.99]] },
   ]),
+  ...parts('muzzle', [
+    { id: 'g-mz-tp12', brand: 'Lone Wolf', name: 'Thread Protector, 1/2x28', specs: ['1/2x28', 'Thread protector'], attrs: { thread: '1/2x28', kind: 'protector' },
+      offers: [['BRN', 14.99]] },
+    { id: 'g-mz-tpm', brand: 'Lone Wolf', name: 'Thread Protector, M13.5x1 LH', specs: ['M13.5x1 LH', 'Thread protector'], attrs: { thread: 'M13.5x1 LH', kind: 'protector' },
+      offers: [['BRN', 14.99]] },
+    { id: 'g-mz-tcomp', brand: 'Tyrant Designs', name: 'T-Comp Compensator, 1/2x28', specs: ['1/2x28', 'Compensator'], attrs: { thread: '1/2x28', kind: 'comp' },
+      offers: [['BRN', 119.99], ['OP', 114.99]] },
+  ]),
   ...parts('mag', [
     { id: 'g-mag-oem17', brand: 'Glock', name: 'G17 17-Round Magazine (OEM)', specs: ['17 rd', 'G17 length'], attrs: { size: 3 },
       offers: [['GS', 28.99], ['PA', 27.99], ['BRN', 29.99]] },
@@ -137,7 +148,9 @@ const shared: Part[] = [
 function rulesFor(M: Model) {
   return (b: Build): Issue[] => {
     const out: Issue[] = [];
-    const { frame, fcg, slide, spk, barrel, rsa, sights, optic, mag } = b;
+    const { frame, fcg, slide, spk, barrel, rsa, sights, optic, muzzle, mag } = b;
+    const thread = threadIssue(barrel, muzzle);
+    if (thread) out.push(thread);
     const frameFam = frame ? family(frame.attrs.gen) : undefined;
     if (frame && fcg && fcg.attrs.family !== frameFam)
       out.push({ severity: 'error', slots: ['frame', 'fcg'], message: `A ${frameFam} frame needs ${frameFam} trigger and frame parts.` });

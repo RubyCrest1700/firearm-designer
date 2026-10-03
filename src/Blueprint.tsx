@@ -28,6 +28,8 @@ interface Scene {
   center: [number, number, number];
   /** Dimension lines: [x0, x1, y, label] */
   dims: [number, number, number, string][];
+  /** Vertical dimension lines: [x, y0, y1, label] */
+  vdims?: [number, number, number, string][];
   rows: [number, number];
   /** Short spec line for the title block */
   spec: string;
@@ -240,141 +242,281 @@ function rifle(platform: Platform, b: Build): Scene {
 
 /* ================================================================= pistols */
 
-interface Dims { slide: number; dust: number; grip: number; mag: number; brand: 'glock' | 'sig' }
+/**
+ * Factory dimensions, in inches, from the manufacturers' published spec tables
+ * (us.glock.com technical data; Sig Sauer specs as listed for each size).
+ * `oal` is overall length, `height` is top of the rear sight to the bottom of a flush magazine.
+ */
+interface PistolModel {
+  brand: 'glock' | 'sig';
+  slide: number; oal: number; barrel: number;
+  /** Slide height, top flat to frame */
+  sh: number;
+  /** Grip angle as inches of rearward run per inch of drop */
+  rake: number;
+  /** Trigger distance: back strap to trigger face */
+  reach: number;
+}
 
-const GLOCK: Record<string, [number, number]> = { glock17: [7.28, 3.55], glock19: [6.85, 3.1], glock26: [6.3, 2.3] };
-const GLOCK_MAG: Record<number, number> = { 3: 3.55, 2: 3.1, 1: 2.3 };
-const SLIM: Record<string, number> = { '43X': 6.5, '48': 7.28 };
-const P320_SLIDE: Record<string, number> = { full: 7.9, compact: 7.2, subcompact: 6.7 };
-const P320_GRIP: Record<string, [string, number]> = { full: ['full', 3.55], carry: ['compact', 3.55], compact: ['compact', 3.35], subcompact: ['subcompact', 2.75] };
-const P365_SLIDE: Record<string, number> = { std: 5.8, xl: 6.6 };
-const P365_GRIP: Record<string, number> = { std: 2.35, xl: 2.85 };
-const P365_MAG: Record<string, number> = { std: 2.35, xl: 2.85, ext: 3.2 };
+const G = (slide: number, oal: number, barrel: number, sh: number, reach: number): PistolModel =>
+  ({ brand: 'glock', slide, oal, barrel, sh, rake: 0.4, reach });
+const S9 = (slide: number, oal: number, barrel: number, sh: number, reach: number): PistolModel =>
+  ({ brand: 'sig', slide, oal, barrel, sh, rake: 0.33, reach });
 
-function pistolDims(platform: Platform, b: Build): Dims {
+const MODELS: Record<string, PistolModel> = {
+  glock17: G(7.32, 8.03, 4.49, 1.12, 2.83),
+  glock19: G(6.85, 7.36, 4.02, 1.12, 2.8),
+  glock26: G(6.26, 6.5, 3.43, 1.12, 2.83),
+  g43x: G(6.06, 6.5, 3.41, 1.02, 2.64),
+  g48: G(6.85, 7.28, 4.17, 1.02, 2.64),
+  p320full: S9(7.55, 8.0, 4.7, 1.18, 2.85),
+  p320compact: S9(6.75, 7.2, 3.9, 1.18, 2.85),
+  p320subcompact: S9(6.25, 6.7, 3.6, 1.18, 2.85),
+  p365std: S9(5.4, 5.8, 3.1, 0.98, 2.6),
+  p365xl: S9(6.2, 6.6, 3.7, 0.98, 2.6),
+};
+
+/** Published height with a flush magazine, by grip size / magazine size. */
+const GLOCK_H: Record<string, number> = { glock17: 5.47, glock19: 5.04, glock26: 4.17 };
+const GLOCK_MAG_H: Record<number, number> = { 3: 5.47, 2: 5.04, 1: 4.17 };
+const P320_H: Record<string, number> = { full: 5.5, carry: 5.5, compact: 5.3, subcompact: 4.7 };
+const P320_DUST: Record<string, string> = { full: 'full', carry: 'compact', compact: 'compact', subcompact: 'subcompact' };
+const P365_H: Record<string, number> = { std: 4.3, xl: 4.8, ext: 5.2 };
+const SIGHT = 0.2; // standard rear sight height above the slide
+const BASE = 0.16; // magazine floor plate below the grip
+
+interface PistolSpec {
+  m: PistolModel;
+  /** Frame model, which sets the dust cover length */
+  frame: PistolModel;
+  gripH: number;
+  magH: number;
+  grooves: number;
+}
+
+function pistolSpec(platform: Platform, b: Build): PistolSpec {
   const a = (p: Part | undefined, k: string) => p?.attrs[k] as string | undefined;
   switch (platform.id) {
     case 'glock43x': {
-      const slide = SLIM[a(b.slide, 'len') ?? '48'];
-      const frame = SLIM[a(b.frame, 'len') ?? a(b.slide, 'len') ?? '48'];
-      return { slide, dust: frame - 0.62, grip: 3.1, mag: 3.1, brand: 'glock' };
+      const pick = (v?: string) => (v === '43X' ? MODELS.g43x : MODELS.g48);
+      return { m: pick(a(b.slide, 'len') ?? a(b.frame, 'len')), frame: pick(a(b.frame, 'len') ?? a(b.slide, 'len')), gripH: 5.04, magH: 5.04, grooves: 0 };
     }
     case 'p320': {
-      const [dust, grip] = P320_GRIP[a(b.grip, 'size') ?? 'carry'];
-      const slide = P320_SLIDE[a(b.slide, 'length') ?? dust];
+      const size = a(b.grip, 'size') ?? 'carry';
+      const m = MODELS['p320' + (a(b.slide, 'length') ?? P320_DUST[size])];
       const ms = a(b.mag, 'size');
-      return { slide, dust: P320_SLIDE[dust] - 0.62, grip, mag: ms ? P320_GRIP[ms][1] : grip, brand: 'sig' };
+      return { m, frame: MODELS['p320' + P320_DUST[size]], gripH: P320_H[size], magH: ms ? P320_H[ms] : P320_H[size], grooves: 0 };
     }
     case 'p365': {
-      const grip = P365_GRIP[a(b.grip, 'len') ?? 'xl'];
-      const slide = P365_SLIDE[a(b.slide, 'len') ?? 'xl'];
-      const m = a(b.mag, 'len');
-      return { slide, dust: 5.2, grip, mag: m ? P365_MAG[m] : grip, brand: 'sig' };
+      const g = a(b.grip, 'len') ?? 'xl';
+      const m = MODELS['p365' + (a(b.slide, 'len') ?? g)];
+      const ml = a(b.mag, 'len');
+      return { m, frame: MODELS['p365' + g], gripH: P365_H[g], magH: ml ? P365_H[ml] : P365_H[g], grooves: 0 };
     }
     default: {
-      const [slide, grip] = GLOCK[platform.id] ?? GLOCK.glock19;
+      const m = MODELS[platform.id] ?? MODELS.glock19;
       const ms = b.mag?.attrs.size as number | undefined;
-      return { slide, dust: slide - 0.62, grip, mag: ms ? GLOCK_MAG[ms] : grip, brand: 'glock' };
+      const fr = b.frame;
+      const grooved = !fr || (/gen3|gen4/.test(String(fr.attrs.gen)) && !matches(fr, /No finger grooves/));
+      return { m, frame: m, gripH: GLOCK_H[platform.id] ?? 5.04, magH: ms ? GLOCK_MAG_H[ms] : GLOCK_H[platform.id] ?? 5.04, grooves: grooved ? (platform.id === 'glock26' ? 2 : 3) : 0 };
     }
   }
 }
 
 function pistol(platform: Platform, b: Build): Scene {
-  const S = 60;
-  const ox = 170;
-  const oy = 120;
+  const S = 58;
+  const spec = pistolSpec(platform, b);
+  const { m } = spec;
+  const sig = m.brand === 'sig';
+  const micro = m.sh < 1.0;
+  const SL = m.slide;
+  const SH = m.sh;
+  const tang = Math.max(0.4, m.oal - m.slide);
+  const threaded = !!b.barrel?.attrs.threaded;
+  const device = platform.slots.some((s) => s.id === 'muzzle') && b.muzzle ? (b.muzzle.attrs.kind === 'comp' ? 1.25 : 0.5) : 0;
+  const front = SL + Math.max(threaded ? 0.58 : 0, device ? device + 0.04 : 0);
+  // Center the gun on the sheet.
+  const ox = f((720 - (tang + front) * S) / 2 + tang * S);
+  const oy = 112;
   const T = makeT(S, ox, oy);
   const px = (x: number, y: number): [number, number] => [f(ox + x * S), f(oy + y * S)];
-  const d = pistolDims(platform, b);
-  const sig = d.brand === 'sig';
-  const SL = d.slide;
-  const DC = d.dust;
-  const rake = sig ? 0.27 : 0.31; // grip angle, inches back per inch down
-  const GT = 1.74; // where the grip leaves the frame
-  const GB = GT + d.grip; // bottom of grip
-  const bk = (y: number) => f(0.5 - (y - GT) * rake); // back strap x at height y
-  const fr = (y: number) => f(2.32 - (y - GT) * rake); // front strap x at height y
   const has = (id: string) => platform.slots.some((s) => s.id === id);
   const P: Piece[] = [];
 
-  // Frame / grip module
+  // Vertical datums, measured down from the top of the slide.
+  const yRail = SH + (micro ? 0.4 : 0.46); // bottom of the dust cover
+  const yWeb = SH + 0.36; // top of the back strap, under the beavertail
+  const yTrig = SH + 0.8;
+  const gB = SH + (micro ? 1.22 : sig ? 1.4 : 1.36); // bottom of the trigger guard
+  const yGB = spec.gripH - SIGHT - BASE; // bottom of the grip
+  const yMB = spec.magH - SIGHT; // bottom of the magazine floor plate
+
+  // Horizontal datums. The heel of the grip sits just inside the published overall length,
+  // the back strap rises from it at the grip angle, and the trigger sits at the published reach.
+  const heel = -tang + (sig ? 0.1 : 0.06);
+  // The back strap stands a little more upright than the front strap (palm swell at the top).
+  const bk = (y: number) => f(heel + (yGB - y) * m.rake * 0.78);
+  const xt = f(bk(yTrig) + m.reach); // trigger face
+  const frTop = xt - (sig ? 0.4 : 0.42);
+  const fr = (y: number) => f(frTop - (y - yRail) * m.rake);
+  const gF = f(xt + (micro ? 0.86 : sig ? 1.0 : 1.04)); // front of the trigger guard
+  const dust = f(spec.frame.slide - (sig ? 0.42 : 0.58));
+
+  /* Frame or grip module */
   const frameSlot = has('frame') ? 'frame' : 'grip';
-  const guard = sig
-    ? `M2.32,1.72 Q2.32,2.62 2.89,2.64 L3.39,2.64 Q3.84,2.6 3.89,1.72 Z M2.48,1.72 Q2.48,2.48 2.92,2.49 L3.36,2.49 Q3.7,2.46 3.73,1.72 Z`
-    : `M2.32,1.72 L2.34,2.42 Q2.39,2.64 2.64,2.64 L3.48,2.64 Q3.68,2.64 3.72,2.44 L3.84,1.72 Z M2.48,1.72 L2.5,2.34 Q2.53,2.49 2.67,2.49 L3.42,2.49 Q3.55,2.49 3.57,2.35 L3.67,1.72 Z`;
-  P.push({ slot: frameSlot, z: 3, row: 'bottom', target: px((bk(GB - 0.9) + fr(GB - 0.9)) / 2, GB - 0.9),
+  let strap = '';
+  if (spec.grooves) {
+    const y0 = gB + 0.22;
+    const step = (yGB - 0.25 - y0) / spec.grooves;
+    for (let i = 0; i < spec.grooves; i++) {
+      const ya = y0 + step * i;
+      const yb = ya + step;
+      strap += ` Q${f(fr((ya + yb) / 2) - 0.14)},${f((ya + yb) / 2)} ${fr(yb)},${f(yb)}`;
+    }
+    strap += ` L${fr(yGB - 0.1)},${f(yGB - 0.1)}`;
+  } else {
+    strap = ` L${fr(yGB - 0.1)},${f(yGB - 0.1)}`;
+  }
+  const guardOuter = sig
+    ? `L${f(gF - 0.1)},${f(yRail)} Q${f(gF + 0.02)},${f(yRail + 0.1)} ${gF},${f(yRail + 0.35)} Q${f(gF - 0.02)},${f(gB)} ${f(gF - 0.45)},${f(gB)} L${f(fr(gB) + 0.3)},${f(gB)} Q${fr(gB)},${f(gB)} ${fr(gB + 0.18)},${f(gB + 0.18)}`
+    : `L${f(gF - 0.04)},${f(yRail)} L${gF},${f(yRail + 0.08)} L${f(gF - 0.04)},${f(gB - 0.12)} Q${f(gF - 0.06)},${f(gB)} ${f(gF - 0.2)},${f(gB)} L${f(fr(gB) + 0.18)},${f(gB)} Q${fr(gB)},${f(gB)} ${fr(gB + 0.14)},${f(gB + 0.14)}`;
+  const tail = sig
+    ? `L${f(bk(yWeb + 0.22) + 0.02)},${f(yWeb + 0.22)} Q${f(bk(yWeb) - 0.06)},${f(yWeb - 0.02)} ${f(-tang + 0.2)},${f(SH + 0.24)} Q${f(-tang)},${f(SH + 0.22)} ${f(-tang + 0.02)},${f(SH + 0.08)} Q${f(-tang + 0.06)},${SH} ${f(-tang + 0.24)},${SH}`
+    : `L${f(bk(yWeb + 0.2))},${f(yWeb + 0.2)} Q${f(bk(yWeb) - 0.05)},${f(yWeb - 0.04)} ${f(-tang + 0.16)},${f(SH + 0.2)} L${f(-tang)},${f(SH + 0.16)} L${f(-tang + 0.04)},${f(SH + 0.04)} L${f(-tang + 0.2)},${SH}`;
+  const frameD = `M0.3,${SH} L${f(dust - 0.06)},${SH} L${dust},${f(SH + 0.08)} L${dust},${f(yRail - 0.08)} Q${dust},${f(yRail)} ${f(dust - 0.1)},${f(yRail)} ${guardOuter}${strap} Q${fr(yGB)},${f(yGB)} ${f(fr(yGB) - 0.14)},${f(yGB)} L${f(bk(yGB) + 0.1)},${f(yGB)} Q${f(bk(yGB) - 0.04)},${f(yGB)} ${f(bk(yGB - 0.12))},${f(yGB - 0.12)} ${tail} Z`;
+  const hole = sig
+    ? `M${f(fr(yRail) + 0.12)},${f(yRail)} L${f(gF - 0.18)},${f(yRail)} Q${f(gF - 0.14)},${f(gB - 0.14)} ${f(gF - 0.5)},${f(gB - 0.14)} L${f(fr(gB - 0.14) + 0.36)},${f(gB - 0.14)} Q${f(fr(gB - 0.3) + 0.1)},${f(gB - 0.16)} ${f(fr(yRail + 0.3) + 0.12)},${f(yRail + 0.3)} Z`
+    : `M${f(fr(yRail) + 0.12)},${f(yRail)} L${f(gF - 0.16)},${f(yRail)} L${f(gF - 0.2)},${f(gB - 0.24)} Q${f(gF - 0.22)},${f(gB - 0.14)} ${f(gF - 0.32)},${f(gB - 0.14)} L${f(fr(gB - 0.14) + 0.28)},${f(gB - 0.14)} Q${f(fr(gB - 0.14) + 0.12)},${f(gB - 0.16)} ${f(fr(yRail + 0.3) + 0.12)},${f(yRail + 0.3)} Z`;
+  // Grip texture panel, rail slot, magazine release, takedown and slide stop
+  const tex0 = yWeb + 0.5;
+  const tex1 = yGB - 0.2;
+  const panel = `M${f(bk(tex0) + 0.14)},${f(tex0)} L${f(fr(tex0) - (spec.grooves ? 0.3 : 0.16))},${f(tex0)} L${f(fr(tex1) - (spec.grooves ? 0.3 : 0.16))},${f(tex1)} L${f(bk(tex1) + 0.14)},${f(tex1)} Z`;
+  const railSlot = dust - xt > 2.2
+    ? `M${f(dust - 0.9)},${f(yRail - 0.18)} L${f(dust - 0.7)},${f(yRail - 0.18)} L${f(dust - 0.7)},${f(yRail)} M${f(dust - 0.9)},${f(yRail - 0.18)} L${f(dust - 0.9)},${f(yRail)}`
+    : '';
+  const railLine = `M${f(gF + 0.1)},${f(yRail - 0.14)} L${f(dust - 0.06)},${f(yRail - 0.14)}`;
+  const magRel = `M${f(fr(yRail + 0.14) - 0.02)},${f(yRail + 0.1)} L${f(fr(yRail + 0.14) + 0.12)},${f(yRail + 0.1)} L${f(fr(yRail + 0.42) + 0.12)},${f(yRail + 0.38)} L${f(fr(yRail + 0.42) - 0.02)},${f(yRail + 0.38)} Z`;
+  const takedown = sig
+    ? `${O2(xt + 0.32, SH + 0.18, 0.1)} M${f(xt + 0.32)},${f(SH + 0.28)} L${f(xt + 0.22)},${f(SH + 0.4)}`
+    : `M${f(xt - 0.02)},${f(SH + 0.08)} L${f(xt + 0.3)},${f(SH + 0.08)} L${f(xt + 0.3)},${f(SH + 0.22)} L${f(xt - 0.02)},${f(SH + 0.22)} Z`;
+  const stop = sig
+    ? `M${f(xt - 1.3)},${f(SH + 0.04)} L${f(xt + 0.05)},${f(SH + 0.04)} Q${f(xt + 0.12)},${f(SH + 0.1)} ${f(xt + 0.05)},${f(SH + 0.16)} L${f(xt - 1.0)},${f(SH + 0.16)} L${f(xt - 1.2)},${f(SH + 0.3)} L${f(xt - 1.42)},${f(SH + 0.3)} Z`
+    : `M${f(xt - 1.22)},${f(SH + 0.03)} L${f(xt - 0.42)},${f(SH + 0.03)} Q${f(xt - 0.36)},${f(SH + 0.09)} ${f(xt - 0.42)},${f(SH + 0.14)} L${f(xt - 1.22)},${f(SH + 0.14)} Z`;
+  P.push({ slot: frameSlot, z: 3, row: 'bottom', target: px((bk(yGB - 0.9) + fr(yGB - 0.9)) / 2, yGB - 0.9),
     el: <>
-      <path d={T(`M0.16,1.12 L${f(DC - 0.25)},1.12 L${f(DC)},1.2 L${f(DC)},1.56 Q${f(DC)},1.74 ${f(DC - 0.2)},1.74 L2.32,1.74 L${fr(GB - 0.08)},${f(GB - 0.08)} Q${fr(GB)},${f(GB)} ${f(fr(GB) - 0.12)},${f(GB)} L${f(bk(GB) + 0.08)},${f(GB)} Q${f(bk(GB) - 0.06)},${f(GB)} ${f(bk(GB) - 0.04)},${f(GB - 0.12)} L${bk(GT + 0.25)},${f(GT + 0.25)} Q${f(bk(GT) - 0.04)},1.46 0.04,1.38 Q-0.3,1.32 -0.34,1.2 Q-0.3,1.12 0.16,1.12 Z`)} />
-      <path fillRule="evenodd" d={T(guard)} />
-      <path className="detail" d={T(`M${f(DC - 1.9)},1.6 ${repeat(DC - 1.75, DC - 0.6, 0.38, (x) => `M${x},1.6 L${x},1.74`)} ${repeat(GT + 0.6, GB - 0.35, 0.22, (y) => `M${f(bk(y) + 0.22)},${y} L${f(fr(y) - 0.22)},${y}`)} M2.14,1.86 L2.34,1.86 L2.31,2.1 L2.11,2.1 Z M2.7,1.16 L3.4,1.16 L3.4,1.3 L2.7,1.3 Z`)} />
+      <path fillRule="evenodd" d={T(`${frameD} ${hole}`)} />
+      <path className="detail" d={T(`${panel} ${railSlot} ${railLine} ${magRel} ${stop}`) + ''} />
+      <path className="detail" d={T(takedown)} />
     </> });
 
-  // Magazine: hidden inside the grip; any part below the grip is visible
-  const MB = GT + d.mag;
-  const out = MB > GB + 0.02;
-  P.push({ slot: 'mag', z: 2, row: 'bottom', target: px((bk(MB) + fr(MB)) / 2, MB + 0.08),
+  /* Magazine: hidden inside the grip, floor plate and any extension visible */
+  const mTop = yWeb + 0.12;
+  const mIn = Math.min(yMB, yGB);
+  P.push({ slot: 'mag', z: 2, row: 'bottom', target: px((bk(yMB) + fr(yMB)) / 2, yMB - 0.06),
     el: <>
-      <path className="hidden-line" d={T(`M${f(bk(GT + 0.1) + 0.28)},${f(GT + 0.1)} L${f(fr(GT + 0.1) - 0.3)},${f(GT + 0.1)} L${f(fr(Math.min(MB, GB)) - 0.3)},${f(Math.min(MB, GB))} L${f(bk(Math.min(MB, GB)) + 0.28)},${f(Math.min(MB, GB))} Z`)} />
-      <path d={T(`${out ? `M${f(bk(GB) + 0.2)},${f(GB)} L${f(fr(GB) - 0.22)},${f(GB)} L${f(fr(MB) - 0.22)},${f(MB)} L${f(bk(MB) + 0.2)},${f(MB)} Z ` : ''}M${f(bk(MB) + 0.02)},${f(MB)} L${f(fr(MB) - 0.06)},${f(MB)} L${f(fr(MB + 0.18) - 0.1)},${f(MB + 0.18)} L${f(bk(MB + 0.18) + 0.04)},${f(MB + 0.18)} Z`)} />
+      <path className="hidden-line" d={T(`M${f(bk(mTop) + 0.3)},${f(mTop)} L${f(fr(mTop) - 0.34)},${f(mTop)} L${f(fr(mIn) - 0.34)},${f(mIn)} L${f(bk(mIn) + 0.3)},${f(mIn)} Z`)} />
+      <path d={T(`M${f(bk(yGB) + 0.1)},${f(yGB)} L${f(fr(yGB) - 0.1)},${f(yGB)} L${f(fr(yMB - BASE) - 0.14)},${f(yMB - BASE)} Q${f(fr(yMB) + 0.04)},${f(yMB - BASE)} ${f(fr(yMB) - 0.04)},${f(yMB)} L${f(bk(yMB) + 0.04)},${f(yMB)} Q${f(bk(yMB) - 0.04)},${f(yMB - BASE / 2)} ${f(bk(yMB - BASE) + 0.08)},${f(yMB - BASE)} Z`)} />
     </> });
 
-  // Trigger / fire control
+  /* Trigger and fire control */
   const trig = has('fcg') ? 'fcg' : 'fcu';
-  P.push({ slot: trig, z: 5, row: 'bottom', target: px(2.95, 2.2),
+  const flat = trig === 'fcg' ? matches(b.fcg, /flat|Apex/i) : matches(b.fcu, /flat|X-Series/i);
+  const blade = flat
+    ? `M${f(xt + 0.12)},${f(yRail)} L${f(xt + 0.02)},${f(yRail + 0.1)} L${f(xt - 0.02)},${f(yRail + 0.62)} L${f(xt + 0.14)},${f(yRail + 0.62)} L${f(xt + 0.24)},${f(yRail)} Z`
+    : `M${f(xt + 0.14)},${f(yRail)} Q${f(xt - 0.1)},${f(yRail + 0.3)} ${f(xt + 0.02)},${f(yRail + 0.64)} L${f(xt + 0.15)},${f(yRail + 0.6)} Q${f(xt + 0.04)},${f(yRail + 0.3)} ${f(xt + 0.27)},${f(yRail)} Z`;
+  P.push({ slot: trig, z: 5, row: 'bottom', target: px(xt + 0.08, yRail + 0.42),
     el: <>
-      <path d={T('M2.88,1.74 Q2.72,2.06 2.94,2.4 L3.06,2.38 Q2.88,2.06 3.03,1.74 Z')} />
-      {trig === 'fcu' && <path className="hidden-line" d={T('M0.25,1.18 L3.6,1.18 L3.6,1.62 L0.25,1.62 Z M0.6,1.18 L0.6,1.62')} />}
+      <path d={T(blade)} />
+      {!sig && <path className="detail" d={T(`M${f(xt + 0.1)},${f(yRail + 0.12)} L${f(xt + 0.08)},${f(yRail + 0.44)}`)} />}
+      {trig === 'fcu' && <path className="hidden-line" d={T(`M${f(bk(yWeb) + 0.2)},${f(SH + 0.06)} L${f(xt + 0.9)},${f(SH + 0.06)} L${f(xt + 0.9)},${f(yRail - 0.04)} L${f(bk(yWeb) + 0.2)},${f(yRail - 0.04)} Z`)} />}
     </> });
 
-  // Slide
+  /* Slide */
+  const port0 = sig ? (micro ? 1.38 : 1.7) : micro || SH < 1.1 ? 1.42 : 1.55;
+  const port1 = port0 + (micro ? 1.02 : sig ? 1.3 : SH < 1.1 ? 1.1 : 1.28);
   const comp = matches(b.slide, /Comp|Spectre/);
+  const frontSerr = matches(b.slide, /serration|Gen5|MOS|ZEV|Spectre|XFull|M18/i);
+  const cut = (b.slide?.attrs.cut as string | undefined) ?? 'none';
   const slideD = sig
-    ? `M0.12,0 L${f(SL - 0.35)},0 Q${f(SL)},0.02 ${f(SL)},0.38 L${f(SL)},0.86 Q${f(SL - 0.05)},1.12 ${f(SL - 0.3)},1.12 L0.1,1.12 L0,1.0 L0,0.12 Q0,0 0.12,0 Z`
-    : `M0.06,0 L${f(SL - 0.1)},0 Q${f(SL)},0 ${f(SL)},0.12 L${f(SL)},0.74 L${f(SL - 0.34)},1.12 L0.1,1.12 L0,1.02 L0,0.08 Q0,0 0.06,0 Z`;
-  P.push({ slot: 'slide', z: 8, row: 'top', target: px(SL - 1.0, 0.2),
+    ? `M0,0.16 Q0,0 0.16,0 L${f(SL - 0.5)},0 Q${f(SL - 0.04)},0 ${f(SL)},0.36 L${f(SL)},${f(SH - 0.42)} Q${f(SL)},${f(SH - 0.3)} ${f(SL - 0.12)},${f(SH - 0.18)} L${f(SL - 0.3)},${SH} L0.06,${SH} L0,${f(SH - 0.06)} Z`
+    : `M0,0.06 Q0,0 0.06,0 L${f(SL - 0.14)},0 L${SL},0.14 L${SL},${f(SH - 0.42)} L${f(SL - 0.3)},${SH} L0.06,${SH} L0,${f(SH - 0.06)} Z`;
+  const rearSerr = repeat(0.2, sig ? 1.05 : 0.98, sig ? 0.13 : 0.11, (x) => `M${x},${sig ? 0.24 : 0.16} L${f(x - 0.06)},${f(SH - 0.22)}`);
+  const fSerr = frontSerr ? repeat(SL - 1.45, SL - 0.75, 0.12, (x) => `M${x},${sig ? 0.3 : 0.16} L${f(x - 0.06)},${f(SH - 0.28)}`) : '';
+  const lighten = matches(b.slide, /Octane|Lightening/) ? repeat(port1 + 0.35, SL - 1.6, 0.42, (x) => `M${x},0.06 L${f(x + 0.26)},0.06 L${f(x + 0.2)},0.3 L${f(x - 0.06)},0.3 Z`) : '';
+  const ports = comp ? repeat(SL - 0.95, SL - 0.35, 0.22, (x) => `M${x},0 L${f(x + 0.07)},0.26 L${f(x + 0.14)},0`) : '';
+  const edge = `M0.08,${sig ? 0.22 : 0.12} L${f(SL - (sig ? 0.4 : 0.16))},${sig ? 0.22 : 0.12} M0.12,${f(SH - 0.18)} L${f(SL - (sig ? 0.24 : 0.48))},${f(SH - 0.18)}`;
+  const plate = cut !== 'none' ? `M0.86,0 L0.86,0.12 L2.66,0.12 L2.66,0` : '';
+  const extractor = `M${f(port0 - 0.24)},0.28 L${f(port0 - 0.04)},0.28 L${f(port0 - 0.04)},0.42 L${f(port0 - 0.24)},0.42 Z`;
+  P.push({ slot: 'slide', z: 8, row: 'top', target: px(SL - (frontSerr ? 0.6 : 1.0), SH * 0.5),
     el: <>
-      <path d={T(slideD)} />
-      <path className="detail" d={T(`M0.1,0.84 L${f(SL - (sig ? 0.2 : 0.55))},0.84 ${repeat(0.3, 1.0, 0.12, (x) => `M${x},0.12 L${f(x - 0.08)},0.78`)} M1.62,0 L1.62,0.42 L2.92,0.42 L2.92,0 ${comp ? repeat(SL - 1.05, SL - 0.3, 0.25, (x) => `M${x},0 L${f(x + 0.08)},0.3 L${f(x + 0.16)},0`) : ''}`)} />
+      <path fillRule="evenodd" d={T(`${slideD} M${f(port0)},0 L${f(port0)},0.5 L${f(port1)},0.5 L${f(port1)},0 Z`)} />
+      <path className="detail" d={T(`${edge} ${rearSerr} ${fSerr} ${lighten} ${ports} ${plate} ${extractor}`)} />
     </> });
 
-  // Barrel: hood in the ejection port, the rest hidden; threads past the slide
-  const threaded = !!b.barrel?.attrs.threaded;
-  P.push({ slot: 'barrel', z: 9, row: 'top', target: px(2.25, 0.2),
+  /* Barrel: hood shows in the ejection port; the rest is hidden; threads run past the slide */
+  const bc = sig ? 0.42 : 0.36; // bore line
+  const br = micro ? 0.24 : 0.28;
+  const chamber = f(port0 - 0.12);
+  P.push({ slot: 'barrel', z: 9, row: 'top', target: px((port0 + port1) / 2, 0.24),
     el: <>
-      <path d={T('M1.66,0.04 L2.88,0.04 L2.88,0.38 L1.66,0.38 Z')} />
-      <path className="hidden-line" d={T(`M2.88,0.18 L${f(SL)},0.18 M2.88,0.62 L${f(SL)},0.62 M1.5,0.38 L1.5,0.62 L2.88,0.62`)} />
-      {threaded && <path d={T(`M${f(SL)},0.2 L${f(SL + 0.58)},0.2 L${f(SL + 0.58)},0.6 L${f(SL)},0.6 Z ${repeat(SL + 0.1, SL + 0.5, 0.08, (x) => `M${x},0.2 L${x},0.6`)}`)} />}
+      <path d={T(`M${f(port0 + 0.02)},0.06 L${f(port1 - 0.02)},0.06 L${f(port1 - 0.02)},0.48 L${f(port0 + 0.02)},0.48 Z M${f(port0 + 0.16)},0.06 L${f(port0 + 0.16)},0.48`)} />
+      <path className="hidden-line" d={T(`M${f(port1)},${f(bc - br)} L${f(SL)},${f(bc - br)} M${f(port1)},${f(bc + br)} L${f(SL)},${f(bc + br)} M${chamber},${f(bc + br + 0.06)} L${f(port1)},${f(bc + br + 0.06)} M${chamber},${f(bc - br)} L${chamber},${f(bc + br + 0.06)}`)} />
+      {threaded && <path d={T(`M${SL},${f(bc - 0.2)} L${f(SL + 0.58)},${f(bc - 0.2)} L${f(SL + 0.58)},${f(bc + 0.2)} L${SL},${f(bc + 0.2)} Z ${repeat(SL + 0.08, SL + 0.52, 0.07, (x) => `M${x},${f(bc - 0.2)} L${f(x + 0.03)},${f(bc + 0.2)}`)}`)} />}
     </> });
 
+  /* Muzzle device, screwed onto the threads */
+  if (has('muzzle')) {
+    const x0 = SL + 0.04;
+    const comp = b.muzzle?.attrs.kind === 'comp';
+    const md = comp
+      ? `M${f(x0)},0.08 L${f(x0 + 1.1)},0.08 Q${f(x0 + 1.25)},0.08 ${f(x0 + 1.25)},0.24 L${f(x0 + 1.25)},${f(SH - 0.42)} L${f(x0 + 1.0)},${f(SH - 0.3)} L${f(x0)},${f(SH - 0.3)} Z`
+      : `M${f(x0)},${f(bc - 0.26)} L${f(x0 + 0.46)},${f(bc - 0.26)} L${f(x0 + 0.5)},${f(bc - 0.2)} L${f(x0 + 0.5)},${f(bc + 0.2)} L${f(x0 + 0.46)},${f(bc + 0.26)} L${f(x0)},${f(bc + 0.26)} Z`;
+    const mdet = comp
+      ? `${repeat(x0 + 0.25, x0 + 0.85, 0.3, (x) => `M${x},0.08 L${f(x + 0.08)},0.3 L${f(x + 0.18)},0.3 L${f(x + 0.22)},0.08`)} M${f(x0 + 1.25)},${f(bc)} L${f(x0 + 1.1)},${f(bc)}`
+      : repeat(x0 + 0.1, x0 + 0.4, 0.1, (x) => `M${x},${f(bc - 0.26)} L${x},${f(bc + 0.26)}`);
+    P.push({ slot: 'muzzle', z: 9.5, row: 'top', target: px(x0 + (comp ? 0.6 : 0.25), comp ? 0.2 : bc),
+      el: <><path d={T(md)} /><path className="detail" d={T(mdet)} /></> });
+  }
+
+  /* Recoil spring and slide parts (internal) */
   const springSlot = has('rsa') ? 'rsa' : 'spring';
-  P.push({ slot: springSlot, internal: true, z: 20, row: 'top', target: px(SL - 1.3, 0.8),
-    el: <path d={T(`M2.05,0.72 L${f(SL - 0.08)},0.72 L${f(SL - 0.08)},0.88 L2.05,0.88 Z ${repeat(2.3, SL - 0.35, 0.16, (x) => `M${x},0.68 L${f(x + 0.08)},0.92`)}`)} /> });
-  P.push({ slot: 'spk', internal: true, z: 20, row: 'top', target: px(0.6, 0.38),
-    el: <path d={T('M0.04,0.28 L1.9,0.28 L1.9,0.48 L0.04,0.48 Z M0.04,0.18 L0.2,0.18 L0.2,0.58 L0.04,0.58')} /> });
+  const sy = SH - 0.24;
+  P.push({ slot: springSlot, internal: true, z: 20, row: 'top', target: px(SL - 1.5, sy),
+    el: <path d={T(`M${f(port0 + 0.5)},${f(sy - 0.08)} L${f(SL - 0.06)},${f(sy - 0.08)} L${f(SL - 0.06)},${f(sy + 0.08)} L${f(port0 + 0.5)},${f(sy + 0.08)} Z ${repeat(port0 + 0.7, SL - 0.3, 0.15, (x) => `M${x},${f(sy - 0.12)} L${f(x + 0.08)},${f(sy + 0.12)}`)}`)} /> });
+  if (has('spk'))
+    P.push({ slot: 'spk', internal: true, z: 20, row: 'top', target: px(0.6, bc),
+      el: <path d={T(`M0.06,${f(bc - 0.09)} L${f(port0 - 0.3)},${f(bc - 0.09)} L${f(port0 - 0.3)},${f(bc + 0.09)} L0.06,${f(bc + 0.09)} Z M0.06,${f(bc - 0.2)} L0.24,${f(bc - 0.2)} L0.24,${f(bc + 0.2)} L0.06,${f(bc + 0.2)}`)} /> });
 
-  const sh = b.sights?.attrs.height === 'suppressor' ? 0.36 : 0.2;
-  P.push({ slot: 'sights', z: 10, row: 'top', target: px(0.55, -sh),
-    el: <path d={T(`M0.28,0 L0.32,${-sh} L0.82,${-sh} L0.86,0 Z M${f(SL - 0.62)},0 L${f(SL - 0.58)},${f(-sh + 0.02)} L${f(SL - 0.38)},${f(-sh + 0.02)} L${f(SL - 0.34)},0 Z`)} /> });
+  /* Sights */
+  const sh = b.sights?.attrs.height === 'suppressor' ? 0.36 : SIGHT;
+  const sightSlot = has('sights') ? 'sights' : undefined;
+  const sightsD = `M0.2,0 L0.26,${-sh} L0.7,${-sh} L0.74,0 Z M0.38,${-sh} L0.42,${f(-sh + 0.08)} L0.54,${f(-sh + 0.08)} L0.58,${-sh} M${f(SL - 0.62)},0 L${f(SL - 0.56)},${f(-sh + 0.02)} L${f(SL - 0.4)},${f(-sh + 0.02)} L${f(SL - 0.34)},0 Z`;
+  P.push({ slot: sightSlot, z: 10, row: 'top', target: px(0.48, -sh), el: <path d={T(sightsD)} /> });
 
-  const fp = (b.optic?.attrs.footprint as string) ?? 'rmr';
+  /* Optic */
+  const fp = (b.optic?.attrs.footprint as string) ?? (cut === 'none' ? 'rmr' : cut);
   const enclosed = fp === 'acro' || matches(b.optic, /EPS|enclosed/i);
   let od: string;
-  if (enclosed) od = 'M1.0,0 L1.0,-0.86 Q1.0,-1.0 1.14,-1.0 L2.62,-1.0 Q2.76,-1.0 2.76,-0.86 L2.76,0 Z M1.18,-0.18 L1.18,-0.82 L2.58,-0.82 L2.58,-0.18 Z';
-  else if (fp === 'rmsc') od = 'M1.0,0 L1.12,-0.58 Q1.2,-0.8 1.44,-0.8 L2.12,-0.8 Q2.38,-0.8 2.44,-0.56 L2.56,0 Z M1.28,-0.14 L1.38,-0.62 L2.2,-0.62 L2.3,-0.14 Z';
-  else od = 'M1.0,0 L1.1,-0.64 Q1.18,-0.98 1.48,-0.98 L2.28,-0.98 Q2.58,-0.96 2.64,-0.62 L2.76,0 Z M1.28,-0.15 L1.38,-0.78 L2.38,-0.78 L2.5,-0.15 Z';
-  P.push({ slot: 'optic', z: 11, row: 'top', target: px(1.88, -0.9), el: <path fillRule="evenodd" d={T(od)} /> });
+  if (enclosed) od = 'M0.9,0 L0.9,-0.86 Q0.9,-1.0 1.04,-1.0 L2.52,-1.0 Q2.66,-1.0 2.66,-0.86 L2.66,0 Z M1.08,-0.18 L1.08,-0.82 L2.48,-0.82 L2.48,-0.18 Z';
+  else if (fp === 'rmsc' || fp === 'rmrcc') od = 'M0.9,0 L1.0,-0.58 Q1.08,-0.8 1.32,-0.8 L2.0,-0.8 Q2.26,-0.8 2.32,-0.56 L2.44,0 Z M1.16,-0.14 L1.26,-0.62 L2.08,-0.62 L2.18,-0.14 Z';
+  else od = 'M0.9,0 L1.0,-0.66 Q1.08,-1.0 1.38,-1.0 L2.18,-1.0 Q2.48,-0.98 2.54,-0.64 L2.66,0 Z M1.18,-0.15 L1.28,-0.8 L2.28,-0.8 L2.4,-0.15 Z';
+  P.push({ slot: 'optic', z: 11, row: 'top', target: px(1.78, -0.9), el: <path fillRule="evenodd" d={T(od)} /> });
 
-  const rear = Math.min(bk(Math.max(GB, MB)), -0.34);
-  const front = SL + (threaded ? 0.58 : 0);
-  const height = Math.max(MB + 0.18, GB) + (b.optic ? 1.0 : sh);
+  const rear = Math.min(-tang, bk(Math.max(yGB, yMB)));
+  const vx = f(ox + (front + 0.5) * S);
   return {
-    width: 760, height: 560, pieces: P,
-    center: [f(ox + -0.6 * S), f(ox + (front + 0.6) * S), f(oy + 0.4 * S)],
-    dims: [[f(ox + rear * S), f(ox + front * S), 540, `${inch(front - rear)} long · ${inch(height)} tall`]],
-    rows: [26, 496],
-    spec: `${inch(SL)} slide · ${inch(d.grip)} grip`,
+    width: 720, height: 560, pieces: P,
+    center: [f(ox + (-tang - 0.4) * S), f(ox + (front + 0.4) * S), f(oy + bc * S)],
+    dims: [[f(ox + rear * S), f(ox + front * S), 540, `${inch2(front - rear)} overall`]],
+    vdims: [[vx, f(oy - sh * S), f(oy + yMB * S), `${inch2(yMB + sh)} tall`]],
+    rows: [26, 500],
+    spec: `${inch2(m.barrel)} barrel · ${inch2(SL)} slide`,
   };
 }
+
+const inch2 = (n: number) => `${n.toFixed(2)}"`;
+const O2 = (x: number, y: number, r: number) =>
+  `M${f(x - r)},${f(y)} Q${f(x - r)},${f(y - r)} ${f(x)},${f(y - r)} Q${f(x + r)},${f(y - r)} ${f(x + r)},${f(y)} Q${f(x + r)},${f(y + r)} ${f(x)},${f(y + r)} Q${f(x - r)},${f(y + r)} ${f(x - r)},${f(y)} Z`;
 
 /* ================================================================== render */
 
@@ -402,7 +544,7 @@ export function Blueprint({ platform, build, states, active, onPick, onHover, co
   const [cx0, cx1, cy] = scene.center;
   // Thumbnails crop to the drawing itself.
   const viewBox = compact
-    ? (platform.family === 'Rifle' ? `40 60 ${scene.width - 60} ${scene.height - 140}` : `40 40 ${scene.width - 140} ${scene.height - 120}`)
+    ? (platform.family === 'Rifle' ? `40 60 ${scene.width - 60} ${scene.height - 140}` : '90 40 540 400')
     : `0 0 ${scene.width} ${scene.height}`;
 
   return (
@@ -436,14 +578,26 @@ export function Blueprint({ platform, build, states, active, onPick, onHover, co
       {labels.map(({ slot, x, y, tx, ty }) => {
         const dir = y < ty ? 1 : -1;
         return (
-          <g key={'c-' + slot} className={'bp-callout ' + (states[slot] ?? 'empty') + (slot === active ? ' active' : '')} aria-hidden="true">
+          <g key={'c-' + slot} className={'bp-callout ' + (states[slot] ?? 'empty') + (slot === active ? ' active' : '')} aria-hidden="true"
+            onClick={() => onPick?.(slot)} onMouseEnter={() => onHover?.(slot)} onMouseLeave={() => onHover?.(null)}>
             <path d={`M${x},${y + dir * 12} L${x},${y + dir * 22} L${tx},${ty}`} />
             <circle cx={tx} cy={ty} r="2.4" className="tip" />
             <circle cx={x} cy={y} r="12" className="bubble" />
             <text x={x} y={y} dy="0.36em" textAnchor="middle">{numberOf.get(slot)}</text>
+            <circle cx={x} cy={y} r="16" className="hit" />
           </g>
         );
       })}
+      {!compact && scene.vdims?.map(([x, y0, y1, text], i) => (
+        <g key={'v' + i} className="bp-dim" aria-hidden="true">
+          <path d={`M${x - 9},${y0} L${x + 9},${y0} M${x - 9},${y1} L${x + 9},${y1} M${x},${y0} L${x},${y1}`} />
+          <path d={`M${x - 4},${y0 + 9} L${x},${y0} L${x + 4},${y0 + 9} M${x - 4},${y1 - 9} L${x},${y1} L${x + 4},${y1 - 9}`} />
+          <g transform={`translate(${x},${(y0 + y1) / 2}) rotate(-90)`}>
+            <rect x={-text.length * 3.7 - 8} y="-9" width={text.length * 7.4 + 16} height="18" className="bg" />
+            <text dy="0.35em" textAnchor="middle">{text}</text>
+          </g>
+        </g>
+      ))}
       {!compact && scene.dims.map(([x0, x1, y, text], i) => (
         <g key={i} className="bp-dim" aria-hidden="true">
           <path d={`M${x0},${y - 9} L${x0},${y + 9} M${x1},${y - 9} L${x1},${y + 9} M${x0},${y} L${x1},${y}`} />
