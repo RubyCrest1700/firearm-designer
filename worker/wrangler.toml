@@ -1,0 +1,13 @@
+# Community builds API (Cloudflare Workers free plan + D1 free tier).
+# Deployed by .github/workflows/deploy-worker.yml, which creates the database on first run
+# and fills in database_id below.
+name = "firearm-designer-api"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "firearm-designer"
+database_id = "DATABASE_ID"
+migrations_dir = "migrations"
