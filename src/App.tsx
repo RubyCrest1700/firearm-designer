@@ -5,7 +5,7 @@ import {
   bestOffer, candidateIssues, issuesFor, money, presetSelection, priceRange,
   singleRetailerCarts, toBuild, worst, type Selection,
 } from './engine';
-import { Schematic, type RegionState } from './Schematic';
+import { BuildRender, type RegionState } from './Render';
 import type { Build, Issue, Part, Platform, Severity, Slot, Tier } from './types';
 
 const STORE_KEY = 'firearm-designer:v2';
@@ -117,7 +117,7 @@ export default function App() {
 
           <figure className="sheet">
             <figcaption className="sheet-head">
-              <span>Parts diagram</span>
+              <span>Build preview · {platform.name}</span>
               <span className="legend" aria-hidden="true">
                 <span className="lg lg-ok">Selected</span>
                 <span className="lg lg-hidden">Internal</span>
@@ -125,8 +125,8 @@ export default function App() {
                 <span className="lg lg-error">Conflict</span>
               </span>
             </figcaption>
-            <Schematic platform={platform} states={states} active={hover ?? openSlot} onPick={setOpenSlot} onHover={setHover} />
-            <p className="sheet-hint">Select a part on the drawing or in the list below to change it.</p>
+            <BuildRender platform={platform} build={build} states={states} active={hover ?? openSlot} onPick={setOpenSlot} onHover={setHover} />
+            <p className="sheet-hint">The drawing redraws as you choose parts. Select any part, here or in the list, to change it.</p>
           </figure>
 
           <BillOfMaterials
@@ -193,7 +193,7 @@ function groupSlots(slots: Slot[]): [string, Slot[]][] {
 }
 
 function StateTag({ state }: { state: RegionState }) {
-  const text = { static: '', empty: 'Empty', ok: 'Fits', warn: 'Check', error: 'Conflict' }[state];
+  const text = { empty: 'Empty', ok: 'Fits', warn: 'Check', error: 'Conflict' }[state];
   return <span className={'tag ' + state}>{text}</span>;
 }
 

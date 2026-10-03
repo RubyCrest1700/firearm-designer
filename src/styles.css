@@ -22,6 +22,15 @@
   --warn-soft: rgba(224, 170, 69, 0.14);
   --err-soft: rgba(239, 122, 109, 0.14);
   --scrim: rgba(4, 6, 8, 0.62);
+  --metal-hi: #56636c;
+  --metal: #283037;
+  --metal-lo: #14191c;
+  --poly-hi: #3b444a;
+  --poly: #1e2428;
+  --coyote-hi: #b39773;
+  --coyote: #7c6446;
+  --edge: #71838e;
+  --lamp: rgba(207, 163, 91, 0.10);
   --shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
   --f-display: 'Saira Condensed', 'Arial Narrow', 'Roboto Condensed', sans-serif;
   --f-body: 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -37,6 +46,7 @@
     --ok: #217648; --warn: #8f5e08; --err: #b0372c;
     --ok-soft: rgba(33, 118, 72, 0.1); --warn-soft: rgba(143, 94, 8, 0.11); --err-soft: rgba(176, 55, 44, 0.1);
     --scrim: rgba(20, 28, 33, 0.38); --shadow: 0 24px 60px rgba(20, 28, 33, 0.22);
+    --metal-hi: #66727a; --metal: #2f383e; --metal-lo: #1a1f23; --poly-hi: #4d565c; --poly: #2a3135; --coyote-hi: #b49671; --coyote: #866b49; --edge: #0f1519; --lamp: rgba(255, 255, 255, 0.75);
     color-scheme: light;
   }
 }
@@ -47,6 +57,7 @@
   --ok: #217648; --warn: #8f5e08; --err: #b0372c;
   --ok-soft: rgba(33, 118, 72, 0.1); --warn-soft: rgba(143, 94, 8, 0.11); --err-soft: rgba(176, 55, 44, 0.1);
   --scrim: rgba(20, 28, 33, 0.38); --shadow: 0 24px 60px rgba(20, 28, 33, 0.22);
+    --metal-hi: #66727a; --metal: #2f383e; --metal-lo: #1a1f23; --poly-hi: #4d565c; --poly: #2a3135; --coyote-hi: #b49671; --coyote: #866b49; --edge: #0f1519; --lamp: rgba(255, 255, 255, 0.75);
   color-scheme: light;
 }
 
@@ -92,32 +103,44 @@ p { margin: 0; }
 
 /* Drawing sheet */
 .sheet { margin: 0; border: 1px solid var(--line-strong); border-radius: var(--r); background-color: var(--sheet);
-  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 24px 24px; position: relative; }
+  background-image: radial-gradient(ellipse 60% 55% at 50% 45%, var(--lamp), transparent 70%), linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 100% 100%, 24px 24px, 24px 24px; position: relative; }
 .sheet-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px 16px; padding: 10px 14px; border-bottom: 1px solid var(--line); font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .legend { display: flex; gap: 14px; flex-wrap: wrap; }
 .lg { display: inline-flex; align-items: center; gap: 6px; }
 .lg::before { content: ''; width: 18px; height: 0; border-top: 2px solid var(--draw); }
-.lg-ok::before { border-color: var(--accent); }
+.lg-ok::before { border-top: 8px solid var(--metal); height: 8px; box-shadow: 0 0 0 1px var(--edge); width: 14px; }
 .lg-hidden::before { border-top-style: dashed; border-color: var(--accent); }
 .lg-empty::before { border-top: 1.5px dotted var(--muted); }
 .lg-error::before { border-color: var(--err); }
 .sheet-hint { padding: 0 14px 12px; font-size: 13px; color: var(--muted); }
 
-.schematic { display: block; width: 100%; height: auto; max-height: 440px; padding: 4px 8px; overflow: visible; }
-.region { fill: none; stroke: var(--draw); stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; transition: stroke 0.15s, fill 0.15s, opacity 0.15s; }
-.region path, .region rect, .region circle { vector-effect: non-scaling-stroke; }
-.region.static { opacity: 0.35; }
-.region.empty { stroke: var(--muted); stroke-dasharray: 1.5 4; opacity: 0.8; }
-.region.ok { stroke: var(--accent); fill: var(--accent-soft); }
-.region.warn { stroke: var(--warn); fill: var(--warn-soft); }
-.region.error { stroke: var(--err); fill: var(--err-soft); }
-.region.hidden-part, .region .hl { stroke-dasharray: 6 4; fill: none; }
-.region.hidden-part.empty { stroke-dasharray: 1.5 4; }
-.region[role="button"] { cursor: pointer; outline: none; pointer-events: all; }
-.region[role="button"]:hover, .region.active { stroke-width: 2.6; filter: drop-shadow(0 0 6px var(--accent-soft)); }
-.region.empty.active, .region.empty:hover { stroke: var(--ink); opacity: 1; }
-.region.ok.active { fill: color-mix(in srgb, var(--accent) 28%, transparent); }
+.render { display: block; width: 100%; height: auto; max-height: 460px; padding: 4px 8px; overflow: visible; }
+.part path { fill: url(#mat-metal); stroke: var(--edge); stroke-width: 1.1; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; transition: stroke 0.15s, opacity 0.15s; }
+.part.mat-poly path { fill: url(#mat-poly); }
+.part.mat-coyote path { fill: url(#mat-coyote); }
+.part .xray, .part.internal path { fill: none; stroke: var(--accent); stroke-width: 1.3; stroke-dasharray: 5 4; opacity: 0.75; }
+.part.internal .solid { fill: url(#mat-metal); stroke: var(--edge); stroke-dasharray: none; opacity: 1; }
+.part.static { opacity: 0.22; }
+.part .hit { fill: transparent; stroke: none; }
+.part.empty path, .part.empty .xray { fill: none; stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 2 4; opacity: 0.85; }
+.part.warn path:not(.xray) { stroke: var(--warn); stroke-width: 2; }
+.part.error path:not(.xray) { stroke: var(--err); stroke-width: 2.2; }
+.part.error .xray, .part.error.internal path { stroke: var(--err); opacity: 1; }
+.part[role="button"] { cursor: pointer; outline: none; pointer-events: all; }
+.part[role="button"]:hover path, .part.active path { stroke: var(--accent); stroke-width: 2.2; opacity: 1; }
+.part[role="button"]:hover, .part.active { filter: drop-shadow(0 0 6px var(--accent-soft)); }
+.s-metal-hi { stop-color: var(--metal-hi); }
+.s-metal { stop-color: var(--metal); }
+.s-metal-lo { stop-color: var(--metal-lo); }
+.s-poly-hi { stop-color: var(--poly-hi); }
+.s-poly { stop-color: var(--poly); }
+.s-coyote-hi { stop-color: var(--coyote-hi); }
+.s-coyote { stop-color: var(--coyote); }
+.dim path { fill: none; stroke: var(--muted); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.dim-bg { fill: var(--sheet); }
+.dim text { font-family: var(--f-mono); font-size: 13px; fill: var(--ink); letter-spacing: 0.02em; }
+.callout { pointer-events: none; }
 .callout path { fill: none; stroke: var(--line-strong); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .callout .tip { fill: var(--line-strong); }
 .callout .bubble { fill: var(--sheet); stroke: var(--line-strong); stroke-width: 1.2; }
