@@ -230,7 +230,53 @@ function rifle(platform: Platform, b: Build): Scene {
   P.push({ slot: 'optic', z: 14, row: 'top', target: ot,
     el: <><path fillRule="evenodd" d={T(od)} /><path className="detail" d={T(odet)} /></> });
 
-  const front = BX + (mz ? mlen : 0);
+  // Add-ons, drawn only once chosen. Sizes are the makers' published lengths, rounded.
+  const light = b.light;
+  if (light) {
+    // Under the handguard at 6 o'clock, lens a little behind the rail's front end.
+    const len = matches(light, /REIN/) ? 3.6 : matches(light, /M600/) ? 5.3 : 5.4;
+    const x1 = HX - 0.35;
+    const x0 = x1 - len;
+    const y0 = 0.95 + 0.12;
+    const r = 0.5;
+    const hr = 0.62; // bezel
+    const hx = x1 - 1.1;
+    P.push({ slot: 'light', z: 13, row: 'bottom', target: px(x0 + len * 0.45, y0 + r * 2),
+      el: <>
+        <path d={T(`M${f(x0)},${f(y0 + 0.12)} L${f(hx)},${f(y0 + 0.12)} L${f(hx + 0.3)},${f(y0 + r - hr + 0.12)} L${f(x1)},${f(y0 + r - hr + 0.12)} L${f(x1)},${f(y0 + r + hr + 0.12)} L${f(hx + 0.3)},${f(y0 + r + hr + 0.12)} L${f(hx)},${f(y0 + 2 * r + 0.12)} L${f(x0)},${f(y0 + 2 * r + 0.12)} Q${f(x0 - 0.25)},${f(y0 + r + 0.12)} ${f(x0)},${f(y0 + 0.12)} Z`)} />
+        <path className="detail" d={T(`M${f(x0 + 0.8)},${f(y0 - 0.12)} L${f(x0 + 2.0)},${f(y0 - 0.12)} L${f(x0 + 2.0)},${f(y0 + 0.12)} M${f(x0 + 0.8)},${f(y0 - 0.12)} L${f(x0 + 0.8)},${f(y0 + 0.12)} M${f(x1 - 0.12)},${f(y0 + r - hr + 0.2)} L${f(x1 - 0.12)},${f(y0 + r + hr + 0.04)} ${repeat(x0 + 0.5, hx - 0.4, 0.35, (x) => `M${x},${f(y0 + 0.24)} L${x},${f(y0 + 2 * r)}`)}`)} />
+      </> });
+  }
+  const laser = b.laser;
+  if (laser) {
+    // On the handguard's top rail near the front.
+    const combo = matches(laser, /CMR|light/i);
+    const len = combo ? 3.9 : 3.2;
+    const h = combo ? 1.3 : 1.1;
+    const x1 = HX - 0.4;
+    const x0 = x1 - len;
+    const yb = -1.1;
+    P.push({ slot: 'laser', z: 13, row: 'top', target: px(x0 + len / 2, yb - h),
+      el: <>
+        <path d={T(`M${f(x0)},${f(yb)} L${f(x0)},${f(yb - h + 0.15)} Q${f(x0)},${f(yb - h)} ${f(x0 + 0.15)},${f(yb - h)} L${f(x1 - 0.1)},${f(yb - h)} Q${f(x1)},${f(yb - h)} ${f(x1)},${f(yb - h + 0.1)} L${f(x1)},${f(yb - 0.25)} L${f(x1 - 0.5)},${f(yb)} Z`)} />
+        <path className="detail" d={T(`M${f(x1 - 0.18)},${f(yb - h + 0.22)} L${f(x1 - 0.18)},${f(yb - h * 0.45)} M${f(x0 + 0.3)},${f(yb - 0.25)} L${f(x1 - 0.7)},${f(yb - 0.25)}${combo ? ` M${f(x1 - 0.18)},${f(yb - h * 0.4)} L${f(x1 - 0.18)},${f(yb - 0.35)}` : ''}`)} />
+      </> });
+  }
+  const mag3x = b.magnifier;
+  if (mag3x && opt?.attrs.kind === 'dot') {
+    // Behind the red dot on the receiver rail, at the dot's height, flipped up in line.
+    const cy = matches(opt, /reflex|510/i) ? -2.42 : -2.3;
+    const x1 = 1.9;
+    const x0 = x1 - 4.1;
+    const r = 0.72;
+    P.push({ slot: 'magnifier', z: 14, row: 'top', target: px(x0 + 1.6, cy - r),
+      el: <>
+        <path d={T(`M${f(x0)},${f(cy - r + 0.1)} L${f(x0 + 1.0)},${f(cy - r + 0.1)} L${f(x0 + 1.2)},${f(cy - r + 0.2)} L${f(x1 - 0.5)},${f(cy - r + 0.2)} L${f(x1 - 0.3)},${f(cy - r)} L${f(x1)},${f(cy - r)} L${f(x1)},${f(cy + r)} L${f(x1 - 0.3)},${f(cy + r)} L${f(x1 - 0.5)},${f(cy + r - 0.2)} L${f(x0 + 1.2)},${f(cy + r - 0.2)} L${f(x0 + 1.0)},${f(cy + r - 0.1)} L${f(x0)},${f(cy + r - 0.1)} Z`)} />
+        <path className="detail" d={T(`M${f(x0 + 1.6)},${f(cy + r - 0.2)} L${f(x0 + 1.6)},-1.1 L${f(x0 + 3.0)},-1.1 L${f(x0 + 3.0)},${f(cy + r - 0.2)} M${f(x0 + 0.5)},${f(cy - r + 0.1)} L${f(x0 + 0.5)},${f(cy + r - 0.1)}`)} />
+      </> });
+  }
+
+  const front = Math.max(BX + (mz ? mlen : 0), HX);
   return {
     width: 1000, height: 486, pieces: P,
     center: [f(ox + (rear - 0.6) * S), f(ox + (front + 0.6) * S), oy],
@@ -505,12 +551,30 @@ function pistol(platform: Platform, b: Build): Scene {
   else od = 'M0.9,0 L1.0,-0.66 Q1.08,-1.0 1.38,-1.0 L2.18,-1.0 Q2.48,-0.98 2.54,-0.64 L2.66,0 Z M1.18,-0.15 L1.28,-0.8 L2.28,-0.8 L2.4,-0.15 Z';
   P.push({ slot: 'optic', z: 11, row: 'top', target: px(1.78, -0.9), el: <path fillRule="evenodd" d={T(od)} /> });
 
+  /* Weapon light on the dust cover rail, drawn only once chosen */
+  let pFront = front;
+  const pl = b.light;
+  if (pl) {
+    const big = matches(pl, /X300/);
+    const len = big ? 3.25 : matches(pl, /Sub/) ? 2.2 : 2.15;
+    const h = big ? 1.12 : 0.92;
+    const lx1 = Math.max(dust + 0.05, gF + 0.2 + len);
+    const lx0 = lx1 - len;
+    const ly0 = yRail - 0.14;
+    pFront = Math.max(front, lx1);
+    P.push({ slot: 'light', z: 4, row: 'bottom', target: px(lx0 + len * 0.5, ly0 + h),
+      el: <>
+        <path d={T(`M${f(lx0)},${f(ly0)} L${f(lx1 - 0.1)},${f(ly0)} Q${f(lx1)},${f(ly0)} ${f(lx1)},${f(ly0 + 0.1)} L${f(lx1)},${f(ly0 + h - 0.1)} Q${f(lx1)},${f(ly0 + h)} ${f(lx1 - 0.1)},${f(ly0 + h)} L${f(lx0 + 0.35)},${f(ly0 + h)} Q${f(lx0)},${f(ly0 + h)} ${f(lx0)},${f(ly0 + h - 0.3)} Z`)} />
+        <path className="detail" d={T(`M${f(lx1 - 0.1)},${f(ly0 + 0.16)} L${f(lx1 - 0.1)},${f(ly0 + h - 0.16)} M${f(lx0 + 0.15)},${f(ly0 + 0.3)} L${f(lx0 + 0.15)},${f(ly0 + 0.6)} M${f(lx0 + 0.35)},${f(ly0 + 0.12)} L${f(lx1 - 0.4)},${f(ly0 + 0.12)}`)} />
+      </> });
+  }
+
   const rear = Math.min(-tang, bk(Math.max(yGB, yMB)));
-  const vx = f(ox + (front + 0.5) * S);
+  const vx = f(ox + (pFront + 0.5) * S);
   return {
     width: 720, height: 560, pieces: P,
-    center: [f(ox + (-tang - 0.4) * S), f(ox + (front + 0.4) * S), f(oy + bc * S)],
-    dims: [[f(ox + rear * S), f(ox + front * S), 540, `${inch2(front - rear)} overall`]],
+    center: [f(ox + (-tang - 0.4) * S), f(ox + (pFront + 0.4) * S), f(oy + bc * S)],
+    dims: [[f(ox + rear * S), f(ox + pFront * S), 540, `${inch2(pFront - rear)} overall`]],
     vdims: [[vx, f(oy - sh * S), f(oy + yMB * S), `${inch2(yMB + sh)} tall`]],
     rows: [26, 500],
     spec: `${inch2(m.barrel)} barrel · ${inch2(SL)} slide`,

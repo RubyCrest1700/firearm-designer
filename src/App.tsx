@@ -319,49 +319,47 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
           <p className="kicker">{communityOpen ? <>Community build · {communityOpen.name}</> : openSaved ? <>My builds · {openSaved.name}</> : <>{platform.family} build</>}</p>
           <h1>Build your {platform.name}</h1>
           <p className="lede">{platform.blurb}</p>
-          {chosen === 0 && (
-            <div className="start-blank">
-              <p><b>Start with a blank build.</b> Pick parts from the list or the drawing, or start from a ready-made build.</p>
-              <div className="start-actions">
-                {(['budget', 'value', 'premium'] as Tier[]).map((t) => (
-                  <button key={t} className="btn" onClick={() => setSelection(presetSelection(platform, t))}>{TIER_LABEL[t]} starter</button>
-                ))}
-                <button className="btn" onClick={onBrowseFeatured}>Community builds</button>
-              </div>
-            </div>
-          )}
         </div>
 
-        <figure className="blueprint">
-          <div className="bp-strip">
-            <span>DWG FD-{platform.id.toUpperCase()} · Side elevation</span>
-            <span className="bp-legend" aria-hidden="true">
-              <span className="lg lg-sel">Selected</span>
-              <span className="lg lg-hid">Internal</span>
-              <span className="lg lg-emp">Empty</span>
-              <span className="lg lg-err">Conflict</span>
-            </span>
+        <div className="workbench">
+          <div className="wb-center">
+            <div className="bp-toolbar" role="toolbar" aria-label="Build actions">
+              <span className="tb-label">{chosen === 0 ? 'Start from' : 'Start over from'}</span>
+              {(['budget', 'value', 'premium'] as Tier[]).map((t) => (
+                <button key={t} className="chip" onClick={() => { setSelection(presetSelection(platform, t)); setOpenSlot(null); }}>
+                  {TIER_LABEL[t]} <span className="chip-amt">{money(totalOf(platform, toBuild(platform, presetSelection(platform, t))))}</span>
+                </button>
+              ))}
+              <button className="chip" onClick={onBrowseFeatured}>Community builds</button>
+              {chosen > 0 && <button className="chip chip-clear" onClick={() => { setSelection({}); setOpenSlot(null); }}>Clear build</button>}
+            </div>
+            <figure className="blueprint">
+              <div className="bp-strip">
+                <span>DWG FD-{platform.id.toUpperCase()} · Side elevation</span>
+                <span className="bp-legend" aria-hidden="true">
+                  <span className="lg lg-sel">Selected</span>
+                  <span className="lg lg-hid">Internal</span>
+                  <span className="lg lg-emp">Empty</span>
+                  <span className="lg lg-err">Conflict</span>
+                </span>
+              </div>
+              <div className="bp-canvas">
+                <Blueprint platform={platform} build={build} states={states} active={hover ?? openSlot} onPick={setOpenSlot} onHover={setHover} />
+              </div>
+              <figcaption className="title-block">
+                <div><span>Platform</span><b>{platform.name}</b></div>
+                <div><span>Spec</span><b>{scene.spec}</b></div>
+                <div><span>Parts</span><b>{chosen} of {platform.slots.length}</b></div>
+                <div><span>Status</span><b className={'tb-' + status.cls}>{status.text}</b></div>
+                <div><span>Total</span><b>{money(total)}</b></div>
+              </figcaption>
+            </figure>
+            <p className="hint">{chosen === 0 ? 'Blank build. Pick parts from the list or click any part on the drawing, or start from a ready-made build above.' : 'Select any part on the drawing or in the list to change it. The drawing updates with every part you choose.'}</p>
           </div>
-          <div className="bp-canvas">
-            <Blueprint platform={platform} build={build} states={states} active={hover ?? openSlot} onPick={setOpenSlot} onHover={setHover} />
-          </div>
-          <figcaption className="title-block">
-            <div><span>Platform</span><b>{platform.name}</b></div>
-            <div><span>Spec</span><b>{scene.spec}</b></div>
-            <div><span>Parts</span><b>{chosen} of {platform.slots.length}</b></div>
-            <div><span>Status</span><b className={'tb-' + status.cls}>{status.text}</b></div>
-            <div><span>Total</span><b>{money(total)}</b></div>
-          </figcaption>
-        </figure>
-        <p className="hint">Select any part on the drawing or in the list to change it. The drawing updates with every part you choose.</p>
-
-        <div className="builder-grid">
           <PartsList platform={platform} build={build} issues={issues} states={states} hover={hover} onHover={setHover} onOpen={setOpenSlot} onRemove={remove} />
           <Summary
             platform={platform} build={build} issues={issues} aware={awarenessFor(platform, build)} states={states} status={status} total={total}
             openSaved={openSaved} onSave={onSave} onShare={onShare} onCopyLink={onCopyLink} onOpen={setOpenSlot}
-            onPreset={(t) => { setSelection(presetSelection(platform, t)); setOpenSlot(null); }}
-            onClear={() => setSelection({})} onBrowseFeatured={onBrowseFeatured}
           />
         </div>
       </div>
@@ -444,11 +442,10 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
   );
 }
 
-function Summary({ platform, build, issues, aware, states, status, total, openSaved, onSave, onShare, onCopyLink, onOpen, onPreset, onClear, onBrowseFeatured }: {
+function Summary({ platform, build, issues, aware, states, status, total, openSaved, onSave, onShare, onCopyLink, onOpen }: {
   platform: Platform; build: Build; issues: Issue[]; aware: Aware[]; states: Record<string, RegionState>; status: { cls: string; text: string }; total: number;
   openSaved: SavedBuild | null; onSave: (name: string, asNew: boolean) => void; onShare: (name: string, note: string) => Promise<void>;
   onCopyLink: () => void; onOpen: (s: string) => void;
-  onPreset: (t: Tier) => void; onClear: () => void; onBrowseFeatured: () => void;
 }) {
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState('');
@@ -462,7 +459,6 @@ function Summary({ platform, build, issues, aware, states, status, total, openSa
   const retailers = new Set(chosen.map((p) => bestOffer(p)?.retailer)).size;
   const carts = singleRetailerCarts(chosen).slice(0, 4);
   const [dollars, cents] = money(total).split('.');
-  const presetTotal = (t: Tier) => totalOf(platform, toBuild(platform, presetSelection(platform, t)));
 
   const startSave = () => { setName(openSaved?.name ?? `My ${platform.name} build`); setSaving(true); };
   const submit = (asNew: boolean) => { if (name.trim()) { onSave(name.trim(), asNew); setSaving(false); } };
@@ -560,7 +556,7 @@ function Summary({ platform, build, issues, aware, states, status, total, openSa
         </section>
       )}
 
-      <section className="card">
+      {chosen.length > 0 && <section className="card">
         <h2 className="card-title">Buy it all from one store</h2>
         <p className="card-note">Fewer shipments can beat a lower parts total. In-stock parts only.</p>
         <table className="carts">
@@ -574,23 +570,7 @@ function Summary({ platform, build, issues, aware, states, status, total, openSa
             ))}
           </tbody>
         </table>
-      </section>
-
-      <section className="card">
-        <h2 className="card-title">Start from a starter build</h2>
-        <div className="presets">
-          {(['budget', 'value', 'premium'] as Tier[]).map((t) => (
-            <button key={t} className="preset" onClick={() => onPreset(t)}>
-              <span className="preset-name">{TIER_LABEL[t]}</span>
-              <span className="preset-amt">{money(presetTotal(t))}</span>
-            </button>
-          ))}
-        </div>
-        <div className="card-links">
-          <button className="link" onClick={onBrowseFeatured}>See community builds</button>
-          <button className="link dim" onClick={onClear}>Clear this build</button>
-        </div>
-      </section>
+      </section>}
     </aside>
   );
 }
