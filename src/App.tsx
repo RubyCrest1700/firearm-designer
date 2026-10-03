@@ -362,7 +362,7 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
             {slots.map((slot) => {
               const part = build[slot.id];
               const offer = part && bestOffer(part);
-              const rowIssues = issues.filter((i) => i.slots.includes(slot.id) && i.severity !== 'info');
+              const rowIssues = issues.filter((i) => i.severity === 'info' ? i.slots[0] === slot.id : i.slots.includes(slot.id));
               return (
                 <li key={slot.id} className={'part-row ' + states[slot.id] + (hover === slot.id ? ' hover' : '')}
                   onMouseEnter={() => onHover(slot.id)} onMouseLeave={() => onHover(null)}>

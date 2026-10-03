@@ -222,7 +222,7 @@ h1 { font: 700 clamp(28px, 4.2vw, 40px)/1.08 var(--f-head); letter-spacing: -.00
 .brand-dim { color: var(--muted); font-weight: 500; }
 .ffl { font: 700 10.5px/1 var(--f-sans); letter-spacing: .06em; color: var(--blue); border: 1px solid currentColor; padding: 2px 5px; border-radius: 4px; margin-left: 8px; vertical-align: 2px; }
 .row-issue { font-size: 12.5px; line-height: 1.4; margin-top: 3px; color: var(--muted); }
-.row-issue.error { color: var(--err); } .row-issue.warn { color: var(--warn); }
+.row-issue.error { color: var(--err); } .row-issue.warn { color: var(--warn); } .row-issue.info { color: var(--note); }
 .part-price { text-align: right; display: flex; flex-direction: column; }
 .amt { font-weight: 700; font-variant-numeric: tabular-nums; }
 .amt.big { font: 700 22px/1 var(--f-head); }

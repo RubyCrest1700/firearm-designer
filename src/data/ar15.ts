@@ -200,8 +200,10 @@ function rules(b: Build): Issue[] {
   if (handguard && barrel && handguard.attrs.freeFloat) {
     const hg = handguard.attrs.length as number;
     const bl = barrel.attrs.length as number;
-    if (hg >= bl)
-      out.push({ severity: 'info', slots: ['handguard', 'barrel'], message: `The ${hg}" rail runs past the end of the ${bl}" barrel, a popular shrouded look. Install the muzzle device before the rail, and make sure the device fits inside the rail.` });
+    if (hg >= bl && !muzzle)
+      out.push({ severity: 'warn', slots: ['handguard', 'muzzle'], message: `The ${hg}" rail runs ${(hg - bl).toFixed(1)}" past the end of the ${bl}" barrel and there's no muzzle device. The muzzle would sit inside the rail, so blast and fouling hit the rail. Add a muzzle device, installed before the rail.` });
+    else if (hg >= bl)
+      out.push({ severity: 'info', slots: ['handguard', 'barrel'], message: `The ${hg}" rail runs ${(hg - bl).toFixed(1)}" past the end of the ${bl}" barrel, a popular shrouded look. Install the muzzle device before the rail, and make sure it fits inside the rail.` });
     else if (hg > bl - 1)
       out.push({ severity: 'info', slots: ['handguard', 'barrel'], message: `A ${hg}" rail on a ${bl}" barrel ends almost at the muzzle. Install the muzzle device before the rail, since there's little room for a wrench afterwards.` });
     const port = PORT_DISTANCE[barrel.attrs.gas as string];
