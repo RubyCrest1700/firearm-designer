@@ -29,6 +29,17 @@ export const pick = (tier: Tier, note: string) => ({ tier, note });
  * Muzzle threads must match exactly: diameter, pitch and hand. A 1/2x28 device will not go on a
  * 5/8x24 or an M13.5x1 left-hand barrel, even when both parts are sold for the same gun.
  */
+/**
+ * A muzzle device's bore must be bigger than the bullet. A 5.56 device (.224") on a .30 caliber barrel can
+ * thread on when both are 5/8x24, and the bullet then strikes the device.
+ */
+export function boreIssue(barrel?: Part, muzzle?: Part): Issue | undefined {
+  const bullet = barrel?.attrs.bullet as number | undefined;
+  const bore = muzzle?.attrs.bore as number | undefined;
+  if (bullet === undefined || bore === undefined || bore >= bullet) return undefined;
+  return { severity: 'error', slots: ['muzzle', 'barrel'], message: `This muzzle device is made for ${bore.toFixed(3).slice(1)}" bullets but the barrel fires ${bullet.toFixed(3).slice(1)}" bullets. The bullet would strike the device.` };
+}
+
 export function threadIssue(barrel?: Part, muzzle?: Part): Issue | undefined {
   if (!barrel || !muzzle) return undefined;
   const bt = barrel.attrs.thread as string | undefined;

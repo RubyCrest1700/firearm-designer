@@ -1,5 +1,5 @@
 import type { Build, Issue, Platform } from '../types';
-import { parts, pick, threadIssue } from './helpers';
+import { boreIssue, parts, pick, threadIssue } from './helpers';
 
 /** Approximate gas port distance from the receiver face, in inches. */
 const PORT_DISTANCE: Record<string, number> = { pistol: 4.5, carbine: 7.5, midlength: 9.5, rifle: 12.5 };
@@ -91,25 +91,25 @@ const allParts = [
   ]),
   ...parts('barrel', [
     { id: 'ar-bbl-psa16', brand: 'Palmetto State Armory', name: '16" 5.56 NATO Carbine, Nitride', specs: ['16"', '5.56 NATO', 'Carbine gas', '.750 journal', '1:7', '1/2x28 thread'],
-      attrs: { caliber: '5.56', bolt: '5.56', length: 16, gas: 'carbine', journal: '.750', thread: '1/2x28' },
+      attrs: { caliber: '5.56', bolt: '5.56', bullet: .224, length: 16, gas: 'carbine', journal: '.750', thread: '1/2x28' },
       offers: [['PSA', 109.99]], pick: pick('budget', 'Reliable carbine-gas barrel at the lowest price.') },
     { id: 'ar-bbl-ba16', brand: 'Ballistic Advantage', name: '16" 5.56 Midlength Modern Series', specs: ['16"', '5.56 NATO', 'Midlength gas', '.750 journal', '1:7', '1/2x28 thread'],
-      attrs: { caliber: '5.56', bolt: '5.56', length: 16, gas: 'midlength', journal: '.750', thread: '1/2x28' },
+      attrs: { caliber: '5.56', bolt: '5.56', bullet: .224, length: 16, gas: 'midlength', journal: '.750', thread: '1/2x28' },
       offers: [['PA', 159.99], ['BRN', 169.99], ['OP', 164.99]], pick: pick('value', 'Midlength gas runs softer than carbine gas on a 16" barrel.') },
     { id: 'ar-bbl-faxon', brand: 'Faxon', name: '16" Gunner Pencil, 5.56', specs: ['16"', '5.56 NATO', 'Midlength gas', '.625 journal', 'Light profile', '1/2x28 thread'],
-      attrs: { caliber: '5.56', bolt: '5.56', length: 16, gas: 'midlength', journal: '.625', thread: '1/2x28' },
+      attrs: { caliber: '5.56', bolt: '5.56', bullet: .224, length: 16, gas: 'midlength', journal: '.625', thread: '1/2x28' },
       offers: [['BRN', 229.99], ['OP', 219.0]] },
     { id: 'ar-bbl-bcm', brand: 'Bravo Company', name: '16" Mid-16 Standard, 5.56', specs: ['16"', '5.56 NATO', 'Midlength gas', '.750 journal', 'Chrome lined', '1/2x28 thread'],
-      attrs: { caliber: '5.56', bolt: '5.56', length: 16, gas: 'midlength', journal: '.750', thread: '1/2x28' },
+      attrs: { caliber: '5.56', bolt: '5.56', bullet: .224, length: 16, gas: 'midlength', journal: '.750', thread: '1/2x28' },
       offers: [['BRN', 254.95], ['MID', 259.99]], pick: pick('premium', 'Chrome-lined, HPT/MPI tested, duty-grade.') },
     { id: 'ar-bbl-criterion', brand: 'Criterion', name: '18" Hybrid SPR, .223 Wylde', specs: ['18"', '.223 Wylde', 'Rifle gas', '.750 journal', '1:8', '1/2x28 thread'],
-      attrs: { caliber: '.223 Wylde', bolt: '5.56', length: 18, gas: 'rifle', journal: '.750', thread: '1/2x28' },
+      attrs: { caliber: '.223 Wylde', bolt: '5.56', bullet: .224, length: 18, gas: 'rifle', journal: '.750', thread: '1/2x28' },
       offers: [['BRN', 279.0], ['PA', 284.99]] },
     { id: 'ar-bbl-ba10', brand: 'Ballistic Advantage', name: '10.3" 5.56 Carbine Hanson', specs: ['10.3"', '5.56 NATO', 'Carbine gas', '.750 journal', '1/2x28 thread'],
-      attrs: { caliber: '5.56', bolt: '5.56', length: 10.3, gas: 'carbine', journal: '.750', thread: '1/2x28' },
+      attrs: { caliber: '5.56', bolt: '5.56', bullet: .224, length: 10.3, gas: 'carbine', journal: '.750', thread: '1/2x28' },
       offers: [['PA', 164.99], ['OP', 169.99]] },
     { id: 'ar-bbl-300', brand: 'Ballistic Advantage', name: '16" .300 BLK Pistol-Length', specs: ['16"', '.300 Blackout', 'Pistol gas', '.750 journal', '5/8x24'],
-      attrs: { caliber: '.300 BLK', bolt: '5.56', length: 16, gas: 'pistol', journal: '.750', thread: '5/8x24' },
+      attrs: { caliber: '.300 BLK', bolt: '5.56', bullet: .308, length: 16, gas: 'pistol', journal: '.750', thread: '5/8x24' },
       offers: [['PA', 164.99], ['BRN', 174.99]] },
   ]),
   ...parts('gasblock', [
@@ -163,13 +163,13 @@ const allParts = [
       offers: [['BRN', 89.95], ['PA', 89.99], ['OP', 92.95]], pick: pick('premium', 'Fully ambidextrous, works great with optics.') },
   ]),
   ...parts('muzzle', [
-    { id: 'ar-mz-a2', brand: 'Generic', name: 'A2 Birdcage Flash Hider', specs: ['1/2x28', 'Flash hider'], attrs: { thread: '1/2x28', kind: 'flash' },
+    { id: 'ar-mz-a2', brand: 'Generic', name: 'A2 Birdcage Flash Hider', specs: ['1/2x28', 'Flash hider'], attrs: { thread: '1/2x28', kind: 'flash', bore: .224 },
       offers: [['PSA', 9.99], ['BRN', 12.99]], pick: pick('budget', 'Standard flash hider, crush washer included.') },
-    { id: 'ar-mz-lantac', brand: 'Lantac', name: 'Dragon Muzzle Brake 5.56', specs: ['1/2x28', 'Brake'], attrs: { thread: '1/2x28', kind: 'brake' },
+    { id: 'ar-mz-lantac', brand: 'Lantac', name: 'Dragon Muzzle Brake 5.56', specs: ['1/2x28', 'Brake'], attrs: { thread: '1/2x28', kind: 'brake', bore: .224 },
       offers: [['BRN', 89.95], ['PA', 94.99]], pick: pick('value', 'Cuts recoil a lot, with less side blast than most brakes.') },
-    { id: 'ar-mz-warcomp', brand: 'SureFire', name: 'WarComp 5.56', specs: ['1/2x28', 'Flash hider/comp', 'Suppressor mount'], attrs: { thread: '1/2x28', kind: 'flash' },
+    { id: 'ar-mz-warcomp', brand: 'SureFire', name: 'WarComp 5.56', specs: ['1/2x28', 'Flash hider/comp', 'Suppressor mount'], attrs: { thread: '1/2x28', kind: 'flash', bore: .224 },
       offers: [['BRN', 149.0], ['OP', 145.0]], pick: pick('premium', 'Also serves as the mount for a SureFire suppressor.') },
-    { id: 'ar-mz-pa', brand: 'Precision Armament', name: 'M4-72 Severe Duty Brake (5/8x24)', specs: ['5/8x24', 'Brake'], attrs: { thread: '5/8x24', kind: 'brake' },
+    { id: 'ar-mz-pa', brand: 'Precision Armament', name: 'M4-72 Severe Duty Brake (5/8x24)', specs: ['5/8x24', 'Brake'], attrs: { thread: '5/8x24', kind: 'brake', bore: .308 },
       offers: [['BRN', 94.99], ['PA', 99.99]] },
   ]),
   ...parts('optic', [
@@ -214,7 +214,7 @@ function rules(b: Build): Issue[] {
     out.push({ severity: 'error', slots: ['stock', 'buffer'], message: `This stock fits ${(stock.attrs.fits as string[]).join(' or ')} buffer tubes, but the buffer kit is a ${buffer.attrs.tube} tube.` });
   if (bcg && barrel && bcg.attrs.bolt !== barrel.attrs.bolt)
     out.push({ severity: 'error', slots: ['bcg', 'barrel'], message: `A ${barrel.attrs.caliber} barrel needs a ${barrel.attrs.bolt} bolt; this BCG has a ${bcg.attrs.bolt} bolt face.` });
-  const thread = threadIssue(barrel, muzzle);
+  const thread = threadIssue(barrel, muzzle) ?? boreIssue(barrel, muzzle);
   if (thread) out.push(thread);
   if (barrel && (barrel.attrs.length as number) < 16 && stock)
     out.push({ severity: 'warn', slots: ['barrel', 'stock'], message: `A barrel under 16" with a stock makes a short-barreled rifle under the NFA. Approve an ATF Form 1 before assembly, or build it as a pistol without a stock.` });

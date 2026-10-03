@@ -59,7 +59,8 @@ for (const [pid, sa, ka, sb, kb] of IFACES) {
       const flagged = issues.some((i) => i.severity === 'error' && i.slots.includes(sa) && i.slots.includes(sb));
       // Several interfaces can join the same two slots (P320 slide and barrel: length and caliber).
       const differ = IFACES.some(([p2, s2a, k2a, s2b, k2b]) => p2 === pid && s2a === sa && s2b === sb && String(a.attrs[k2a]) !== String(b.attrs[k2b]))
-        || (pid === 'p365' && !!a.attrs.comp && !!b.attrs.threaded); // a comp slide can't clear a threaded barrel
+        || (pid === 'p365' && !!a.attrs.comp && !!b.attrs.threaded) // a comp slide can't clear a threaded barrel
+        || (sa === 'barrel' && sb === 'muzzle' && (b.attrs.bore as number) < (a.attrs.bullet as number)); // device bore smaller than the bullet
       if (flagged !== differ) { console.log(`${pid}: ${a.id} (${ka}=${a.attrs[ka]}) + ${b.id} (${kb}=${b.attrs[kb]}) ${flagged ? 'flagged but match' : 'NOT flagged'}`); bad++; }
     }
 }
@@ -72,6 +73,20 @@ for (const p of PLATFORMS)
       console.log(`${p.id}: ${part.id} names thread ${named} but attrs say ${part.attrs.thread}`); bad++;
     }
   }
+// Every rifle barrel names its bullet diameter and every rifle muzzle device its bore, so the bore check can run.
+for (const p of PLATFORMS.filter((x) => x.family === 'Rifle'))
+  for (const part of p.parts)
+    if ((part.slot === 'barrel' && part.attrs.bullet === undefined) || (part.slot === 'muzzle' && part.attrs.bore === undefined)) {
+      console.log(`${p.id}: ${part.id} is missing its ${part.slot === 'barrel' ? 'bullet diameter' : 'bore'}`); bad++;
+    }
+{
+  // A 5.56 device on a .308 barrel with matching threads must be a conflict.
+  const ar = PLATFORMS.find((x) => x.id === 'ar10')!;
+  const sel = { ...presetSelection(ar, 'value'), muzzle: 'a10-mz-a2' };
+  const fake = toBuild(ar, sel);
+  fake.muzzle = { ...fake.muzzle!, attrs: { ...fake.muzzle!.attrs, bore: 0.224 } };
+  if (!ar.rules(fake).some((i) => i.severity === 'error' && /strike the device/.test(i.message))) { console.log('bore check: 5.56 device on .308 barrel not flagged'); bad++; }
+}
 // Awareness warnings fire on the thresholds agreed in the Build Warnings Proposal.
 {
   const ar = PLATFORMS.find((x) => x.id === 'ar15')!;

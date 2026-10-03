@@ -1,5 +1,5 @@
 import type { Build, Issue, Platform } from '../types';
-import { parts, pick, threadIssue } from './helpers';
+import { boreIssue, parts, pick, threadIssue } from './helpers';
 
 /**
  * AR-10 / LR-308 (.308 Win and 6.5 Creedmoor). Unlike the AR-15 there is no single
@@ -92,16 +92,16 @@ const allParts = [
   ]),
   ...parts('barrel', [
     { id: 'a10-bbl-psa18', brand: 'Palmetto State Armory', name: '18" .308 Win Midlength, Nitride', specs: ['18"', '.308 Win', 'Midlength gas', '.750 journal', '5/8x24'],
-      attrs: { caliber: '.308 Win', length: 18, gas: 'midlength', journal: '.750', thread: '5/8x24', family: 'DPMS' },
+      attrs: { caliber: '.308 Win', bullet: .308, length: 18, gas: 'midlength', journal: '.750', thread: '5/8x24', family: 'DPMS' },
       offers: [['PSA', 179.99]], pick: pick('budget', 'Solid all-round .308 barrel.') },
     { id: 'a10-bbl-ba18', brand: 'Ballistic Advantage', name: '18" .308 Win Rifle-Length Performance', specs: ['18"', '.308 Win', 'Rifle gas', '.750 journal', '5/8x24'],
-      attrs: { caliber: '.308 Win', length: 18, gas: 'rifle', journal: '.750', thread: '5/8x24', family: 'DPMS' },
+      attrs: { caliber: '.308 Win', bullet: .308, length: 18, gas: 'rifle', journal: '.750', thread: '5/8x24', family: 'DPMS' },
       offers: [['PA', 259.99], ['BRN', 269.99]], pick: pick('value', 'Rifle-length gas runs smooth and soft on an 18" .308.') },
     { id: 'a10-bbl-criterion', brand: 'Criterion', name: '20" 6.5 Creedmoor Rifle-Length', specs: ['20"', '6.5 Creedmoor', 'Rifle gas', '.875 journal', '5/8x24'],
-      attrs: { caliber: '6.5 CM', length: 20, gas: 'rifle', journal: '.875', thread: '5/8x24', family: 'DPMS' },
+      attrs: { caliber: '6.5 CM', bullet: .264, length: 20, gas: 'rifle', journal: '.875', thread: '5/8x24', family: 'DPMS' },
       offers: [['BRN', 329.0], ['PA', 334.99]], pick: pick('premium', 'Match-grade 6.5 CM for long-range work.') },
     { id: 'a10-bbl-aero16', brand: 'Aero Precision', name: '16" .308 Win Midlength', specs: ['16"', '.308 Win', 'Midlength gas', '.750 journal', '5/8x24'],
-      attrs: { caliber: '.308 Win', length: 16, gas: 'midlength', journal: '.750', thread: '5/8x24', family: 'DPMS' },
+      attrs: { caliber: '.308 Win', bullet: .308, length: 16, gas: 'midlength', journal: '.750', thread: '5/8x24', family: 'DPMS' },
       offers: [['AERO', 229.99], ['PA', 224.99]] },
   ]),
   ...parts('gasblock', [
@@ -143,11 +143,11 @@ const allParts = [
       offers: [['BRN', 49.99]] },
   ]),
   ...parts('muzzle', [
-    { id: 'a10-mz-pa', brand: 'Precision Armament', name: 'M4-72 Severe Duty Brake (5/8x24)', specs: ['5/8x24', 'Brake'], attrs: { thread: '5/8x24', kind: 'brake' },
+    { id: 'a10-mz-pa', brand: 'Precision Armament', name: 'M4-72 Severe Duty Brake (5/8x24)', specs: ['5/8x24', 'Brake'], attrs: { thread: '5/8x24', kind: 'brake', bore: .308 },
       offers: [['BRN', 94.99], ['PA', 99.99]], pick: pick('value', 'Big recoil reduction for .308.') },
-    { id: 'a10-mz-a2', brand: 'Generic', name: 'A2 Flash Hider .308 (5/8x24)', specs: ['5/8x24', 'Flash hider'], attrs: { thread: '5/8x24', kind: 'flash' },
+    { id: 'a10-mz-a2', brand: 'Generic', name: 'A2 Flash Hider .308 (5/8x24)', specs: ['5/8x24', 'Flash hider'], attrs: { thread: '5/8x24', kind: 'flash', bore: .308 },
       offers: [['PSA', 14.99]], pick: pick('budget', 'Basic flash hider.') },
-    { id: 'a10-mz-a2-556', brand: 'Generic', name: 'A2 Birdcage 5.56 (1/2x28)', specs: ['1/2x28', 'Flash hider'], attrs: { thread: '1/2x28', kind: 'flash' },
+    { id: 'a10-mz-a2-556', brand: 'Generic', name: 'A2 Birdcage 5.56 (1/2x28)', specs: ['1/2x28', 'Flash hider'], attrs: { thread: '1/2x28', kind: 'flash', bore: .224 },
       offers: [['PSA', 9.99]] },
   ]),
   ...parts('mag', [
@@ -196,7 +196,7 @@ function rules(b: Build): Issue[] {
     out.push({ severity: 'error', slots: ['barrel', 'gastube'], message: `The barrel is ${barrel.attrs.gas}-length gas but the gas tube is ${gastube.attrs.length}-length.` });
   if (barrel && gasblock && barrel.attrs.journal !== gasblock.attrs.journal)
     out.push({ severity: 'error', slots: ['barrel', 'gasblock'], message: `The barrel has a ${barrel.attrs.journal}" gas journal but the gas block is ${gasblock.attrs.journal}".` });
-  const thread = threadIssue(barrel, muzzle);
+  const thread = threadIssue(barrel, muzzle) ?? boreIssue(barrel, muzzle);
   if (thread) out.push(thread);
   if (handguard && barrel) {
     const hg = handguard.attrs.length as number;

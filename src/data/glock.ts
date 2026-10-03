@@ -200,12 +200,14 @@ function rulesFor(M: Model) {
       else if (cut === 'mos' && fp === 'rmsc')
         out.push({ severity: 'warn', slots: ['slide', 'optic'], message: 'Glock makes no MOS plate for this small footprint. You need an aftermarket MOS-to-RMSc plate.' });
       else if (cut !== 'mos' && cut !== fp)
-        out.push({ severity: 'error', slots: ['slide', 'optic'], message: `The slide is cut for the ${String(cut).toUpperCase()} footprint, but this optic uses ${String(fp).toUpperCase()}.` });
+        out.push({ severity: 'warn', slots: ['slide', 'optic'], message: `The slide is cut for the ${String(cut).toUpperCase()} footprint, but this optic uses ${String(fp).toUpperCase()}. It won't mount directly; you need an adapter plate from ${String(cut).toUpperCase()} to ${String(fp).toUpperCase()}, which sits the dot a little higher.` });
     }
     if (optic && sights && sights.attrs.height === 'standard')
       out.push({ severity: 'info', slots: ['optic', 'sights'], message: 'Standard-height sights sit below the dot and won\'t co-witness. Suppressor-height sights let you aim through the optic window if it fails.' });
     if (barrel?.attrs.threaded && sights && sights.attrs.height === 'standard')
       out.push({ severity: 'info', slots: ['barrel', 'sights'], message: 'With a threaded barrel, a suppressor will block standard-height sights. Use suppressor-height sights if you plan to run one.' });
+    if (barrel?.attrs.threaded && !muzzle)
+      out.push({ severity: 'info', slots: ['barrel', 'muzzle'], message: `The ${barrel.attrs.thread} threads stick out past the slide with nothing on them. Add a thread protector to keep them from getting dinged.` });
     if (mag) {
       const ms = mag.attrs.size as number;
       if (ms < SIZE[M])

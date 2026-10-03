@@ -164,7 +164,12 @@ function pistol(b: Build): Aware[] {
   const { barrel, slide, muzzle, mag } = b;
   if (slide?.attrs.comp || muzzleKind(muzzle) === 'comp')
     out.push({ level: 'note', title: 'Compensator tradeoffs', basis: slide?.attrs.comp ? `${slide.name}` : `${muzzle!.brand} ${muzzle!.name}`, source: SRC.comp,
-      message: 'Less muzzle rise, but very visible flash in low light, gas toward your face if you fire from close retention, possible ammo sensitivity, and you may need a different holster.' });
+      message: 'Less muzzle rise, but very visible flash in low light, gas toward your face if you fire from close retention, and possible ammo sensitivity.' });
+  const { optic } = b;
+  const extras = [optic ? 'optic' : '', slide?.attrs.comp ? 'built-in compensator' : muzzle ? 'muzzle device' : barrel?.attrs.threaded ? 'threaded barrel' : ''].filter(Boolean);
+  if (extras.length)
+    out.push({ level: 'note', title: 'Holster fit', basis: extras.join(', '),
+      message: 'Holsters are molded for a specific slide length, optic and muzzle. Choose one listed for this exact setup, or one that is cut for an optic and open at the muzzle.' });
   const rounds = magRounds(mag);
   if (barrel?.attrs.threaded || (rounds !== undefined && rounds > 10))
     out.push({ level: 'note', title: 'Check your state', basis: [barrel?.attrs.threaded ? 'Threaded barrel' : '', rounds && rounds > 10 ? `${rounds}-round magazine` : ''].filter(Boolean).join(', '),
