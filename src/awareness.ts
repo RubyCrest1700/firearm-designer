@@ -1,4 +1,5 @@
 import type { Build, Part, Platform } from './types';
+import { buildWeight } from './weight';
 
 /**
  * Awareness warnings: things a builder should know that don't stop the build from working.
@@ -32,6 +33,8 @@ const SRC = {
   chamber: { label: 'NSSF on .223 vs 5.56', url: 'https://www.nssf.org/articles/223-vs-556-are-they-interchangeable/' },
   blkSafety: { label: '.300 BLK safety notes', url: 'https://en.wikipedia.org/wiki/.300_AAC_Blackout' },
   trigger: { label: 'RECOIL AR trigger guide', url: 'https://www.recoilweb.com/ar15triggerguide-175957.html' },
+  weight: { label: 'Daniel Defense DDM4 V7 specs', url: 'https://danieldefense.com/ddm4-v7.html' },
+  weight308: { label: 'KAC SR-25 K3 specs', url: 'https://www.knightarmco.com/38662/shop/commercial-firearms/sr-25/sr-25-k3' },
   comp: { label: 'RECOIL on compensated carry pistols', url: 'https://www.recoilweb.com/compensated-carry-pistols-127670.html' },
 } as const;
 
@@ -148,6 +151,20 @@ function rifle(platform: Platform, b: Build): Aware[] {
   if (lb !== undefined && lb < 3.5)
     out.push({ level: 'note', title: 'Light trigger', basis: `${lb} lb pull`, source: SRC.trigger,
       message: 'Great for precision, but light for a defensive rifle. Mil-spec triggers run 5.5 to 9.5 lb. (The 3.5 lb line is our judgment.)' });
+
+  // Weight, unloaded and without optic or add-ons, against typical factory rifles: AR-15 6.1-6.9 lb (M4, Colt
+  // 6920, DDM4 V7, BCM RECCE-16), AR-10 8.6-8.7 lb (DD5 V4, SR-25 K3). Thresholds are judgment anchored to those.
+  // Heavy-profile and 18"+ barrels are precision builds where weight is intentional, so they're left alone.
+  const big = platform.id === 'ar10';
+  const w = buildWeight(platform, b, true);
+  const weightLb = w.oz / 16;
+  const [noteLb, cautionLb] = big ? [10, 12] : [7.5, 9];
+  if (weightLb > noteLb && L < 18 && !has(barrel, /heavy|bull|HBAR/i)) {
+    const typical = big ? '8.5 to 9 lb' : '6 to 7 lb';
+    out.push({ level: weightLb > cautionLb ? 'caution' : 'note', title: 'Heavier than typical',
+      basis: `About ${weightLb.toFixed(1)} lb unloaded, without optic or add-ons${w.estimated ? ' (some weights estimated)' : ''}`, source: big ? SRC.weight308 : SRC.weight,
+      message: `Typical factory ${big ? 'AR-10s' : 'AR-15s'} weigh ${typical} this way. Expect more fatigue carrying it and shooting offhand. (The ${noteLb} and ${cautionLb} lb lines are our judgment.)` });
+  }
 
   // Legal reminders.
   if (platform.id === 'ar10' && L < 16 && stock)

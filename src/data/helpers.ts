@@ -1,6 +1,7 @@
 import type { Issue, Offer, OfferTuple, Part, Tier } from '../types';
 import prices from '../../data/prices.json';
 import sources from '../../data/sources.json';
+import weights from '../../data/weights.json';
 
 type PartInput = Omit<Part, 'offers'> & { offers: OfferTuple[] };
 
@@ -8,6 +9,8 @@ type PartInput = Omit<Part, 'offers'> & { offers: OfferTuple[] };
 const LIVE = (prices as unknown as { offers: Record<string, Record<string, Offer>> }).offers;
 /** Known product page URLs, so "View" links go to the product even before a live price exists. */
 const URLS = (sources as unknown as { parts: Record<string, Record<string, string>> }).parts;
+/** Part weights in ounces: the maker's or a retailer's listed figure where found, otherwise a typical-figure estimate. */
+const WEIGHTS = (weights as unknown as { parts: Record<string, { oz: number; basis: 'published' | 'estimate'; src: string | null }> }).parts;
 
 /**
  * Builds parts from inline sample offers, then overlays any live prices from data/prices.json.
@@ -19,7 +22,8 @@ export function parts(slot: string, list: Omit<PartInput, 'slot'>[]): Part[] {
       p.offers.map(([retailer, price, inStock]) => [retailer, { retailer, price, inStock: inStock ?? true, url: URLS[p.id]?.[retailer] }]),
     );
     for (const [retailer, live] of Object.entries(LIVE[p.id] ?? {})) byRetailer.set(retailer, { ...live, retailer });
-    return { ...p, slot, offers: [...byRetailer.values()] };
+    const w = WEIGHTS[p.id];
+    return { ...p, slot, offers: [...byRetailer.values()], ...(w ? { weight: { oz: w.oz, published: w.basis === 'published', src: w.src ?? undefined } } : {}) };
   });
 }
 

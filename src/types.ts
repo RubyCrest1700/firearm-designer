@@ -28,6 +28,8 @@ export interface Part {
   pick?: { tier: Tier; note: string };
   /** Serialized part: legally the firearm, ships to an FFL */
   serialized?: boolean;
+  /** Weight as sold, from data/weights.json. `published` is false when it's our typical-figure estimate. */
+  weight?: { oz: number; published: boolean; src?: string };
 }
 
 export interface Slot {
