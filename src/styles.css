@@ -399,3 +399,21 @@ tr:first-child td { border-top: 0; }
   padding: 11px 18px; border-radius: 8px; font-size: 14px; font-weight: 600; box-shadow: 0 8px 24px rgba(0,0,0,.25); max-width: calc(100% - 32px); overflow-wrap: anywhere; }
 @media (max-width: 979px) { .toast { bottom: 84px; } }
 .bp-canvas .bp { max-height: 620px; }
+
+/* ---------------------------------------------------------------- community */
+
+.notice { background: var(--warn-soft); color: var(--ink); border: 1px solid var(--line); border-left: 4px solid var(--warn); border-radius: 8px; padding: 10px 14px; font-size: 14px; margin-bottom: 20px; }
+.community-section { margin-top: 30px; }
+.community-section:first-of-type { margin-top: 0; }
+.section-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.section-head .section-title { margin-bottom: 0; }
+.section-title { font: 700 22px/1.2 var(--f-head); text-transform: uppercase; letter-spacing: .02em; margin-bottom: 12px; }
+.section-note { color: var(--muted); font-size: 14px; margin: -6px 0 14px; }
+.community-stats { display: flex; gap: 14px; font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+.btn.vote { color: var(--blue); }
+.btn.vote.on { background: var(--navy); border-color: var(--navy); color: #fff; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn.wide-row { flex-basis: 100%; }
+.save-form textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--surface); resize: vertical; font: inherit; color: inherit; }
+.form-note { font-size: 12.5px; color: var(--muted); }
+.form-error { font-size: 13.5px; color: var(--err); font-weight: 600; margin-bottom: 10px; }

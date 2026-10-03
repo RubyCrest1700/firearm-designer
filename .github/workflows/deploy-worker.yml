@@ -1,0 +1,60 @@
+# Publishes the community builds API (worker/) to Cloudflare's free Workers plan.
+# Runs only from main, so nothing goes live until a pull request is merged.
+# Needs two repository secrets: CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.
+# On its first run it creates the D1 database and a private salt for hashing visitor IPs.
+name: Deploy community API
+
+on:
+  push:
+    branches: [main]
+    paths: ['worker/**', '.github/workflows/deploy-worker.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-worker
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: worker
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER: npx --yes wrangler@4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check Cloudflare secrets
+        id: secrets
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::notice::Cloudflare secrets are not set yet, so the community API was not deployed."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Find or create the database
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          find_id() { $WRANGLER d1 list --json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const l=JSON.parse(s);const d=l.find(x=>x.name==="firearm-designer");process.stdout.write(d?d.uuid:"")})'; }
+          ID=$(find_id)
+          if [ -z "$ID" ]; then $WRANGLER d1 create firearm-designer; ID=$(find_id); fi
+          test -n "$ID"
+          sed -i "s/DATABASE_ID/$ID/" wrangler.toml
+      - name: Apply database migrations
+        if: steps.secrets.outputs.ready == 'true'
+        run: $WRANGLER d1 migrations apply firearm-designer --remote
+      - name: Deploy
+        if: steps.secrets.outputs.ready == 'true'
+        run: $WRANGLER deploy
+      - name: Set the IP hashing salt (first run only)
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          if ! $WRANGLER secret list | grep -q '"SALT"'; then
+            node -e 'process.stdout.write(require("crypto").randomBytes(32).toString("hex"))' | $WRANGLER secret put SALT
+          fi
