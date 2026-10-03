@@ -228,6 +228,7 @@ export const ar15: Platform = {
   id: 'ar15',
   name: 'AR-15',
   family: 'Rifle',
+  maker: 'AR platform',
   blurb: 'Mil-spec AR-15 / M4 pattern. Build from a stripped lower up.',
   slots,
   parts: [...allParts, ...rifleAddonParts],

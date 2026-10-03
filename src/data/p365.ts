@@ -108,6 +108,7 @@ export const p365: Platform = {
   id: 'p365',
   name: 'Sig P365',
   family: 'Pistol',
+  maker: 'Sig Sauer',
   blurb: 'Micro-compact 9mm on a serialized fire control unit. Mix grips and slides freely.',
   slots,
   parts: [...allParts, ...pistolLights.filter((l) => (l.attrs.rails as string[]).includes('p365')),

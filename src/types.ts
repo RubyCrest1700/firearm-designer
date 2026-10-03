@@ -50,6 +50,8 @@ export interface Platform {
   id: string;
   name: string;
   family: string;
+  /** Maker group in the platform menu, e.g. 'AR platform', 'Glock', 'Sig Sauer'. */
+  maker: string;
   blurb: string;
   slots: Slot[];
   parts: Part[];

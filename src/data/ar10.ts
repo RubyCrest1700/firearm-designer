@@ -226,6 +226,7 @@ export const ar10: Platform = {
   id: 'ar10',
   name: 'AR-10',
   family: 'Rifle',
+  maker: 'AR platform',
   blurb: '.308 Win / 6.5 Creedmoor. Pick DPMS or Armalite pattern first; most parts follow from it.',
   slots,
   parts: [...allParts, ...rifleAddonParts],

@@ -111,6 +111,7 @@ export const glockSlim: Platform = {
   id: 'glock43x',
   name: 'Glock 43X / 48',
   family: 'Pistol',
+  maker: 'Glock',
   blurb: 'Slimline single-stack-width 9mm. The two models share frames, parts and mags.',
   slots,
   parts: [...allParts, ...pistolLights.filter((l) => (l.attrs.rails as string[]).includes('glockslim')),
