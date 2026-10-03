@@ -1,12 +1,12 @@
 {
-  "updatedAt": "2026-10-02T08:28:51.351Z",
+  "updatedAt": "2026-10-03T08:26:52.912Z",
   "offers": {
     "a10-buf-aero": {
       "AERO": {
         "price": 105,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/m5-308-carbine-buffer-kit-1",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "a10-ch-dpms": {
@@ -14,7 +14,7 @@
         "price": 27,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/ar308-charging-handle",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "a10-gb-750": {
@@ -22,7 +22,7 @@
         "price": 40,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/750-low-profile-gas-block-w-aero-logo-nitride",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "a10-hg-atlas": {
@@ -30,7 +30,7 @@
         "price": 225,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/m5-15-atlas-s-one-m-lok-handguard-anodized-black",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "a10-lower-aero": {
@@ -38,7 +38,7 @@
         "price": 170,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/m5-308-stripped-lower-receiver-anodized-black",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "a10-lpk-dpms": {
@@ -46,7 +46,7 @@
         "price": 55,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/m5-308-lower-parts-kit-minus-fcg",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "a10-trig-alg": {
@@ -54,7 +54,7 @@
         "price": 69.99,
         "inStock": true,
         "url": "https://www.primaryarms.com/alg-defense-combat-trigger-act",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "a10-trig-geissele": {
@@ -62,7 +62,7 @@
         "price": 189.99,
         "inStock": true,
         "url": "https://www.primaryarms.com/geissele-automatics-super-semi-automatic-enhanced-ssa-e-two-stage-ar-15-trigger-.154in",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "a10-upper-aero": {
@@ -70,7 +70,7 @@
         "price": 155,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/m5-stripped-upper-receiver-anodized",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "ar-ch-aero": {
@@ -78,7 +78,7 @@
         "price": 24,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/ar15-charging-handle",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "ar-ch-radian": {
@@ -86,7 +86,7 @@
         "price": 104.95,
         "inStock": true,
         "url": "https://www.primaryarms.com/radian-weapons-ar15-m16-raptor-ambidextrous-charging-handle-black",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "ar-gb-aero750": {
@@ -94,7 +94,7 @@
         "price": 40,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/750-low-profile-gas-block-w-aero-logo-nitride",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "ar-gt-carbine": {
@@ -102,7 +102,7 @@
         "price": 20,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/gas-tube-carbine-length-melonite",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "ar-lpk-aero": {
@@ -110,7 +110,7 @@
         "price": 40,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/ar15-lpk-minus",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "ar-stock-moesl": {
@@ -118,7 +118,7 @@
         "price": 69.95,
         "inStock": true,
         "url": "https://magpul.com/moe-sl-carbine-stock-mil-spec.html",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "ar-trig-alg": {
@@ -126,7 +126,7 @@
         "price": 69.99,
         "inStock": true,
         "url": "https://www.primaryarms.com/alg-defense-combat-trigger-act",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "ar-trig-geissele": {
@@ -134,7 +134,7 @@
         "price": 189.99,
         "inStock": true,
         "url": "https://www.primaryarms.com/geissele-automatics-super-semi-automatic-enhanced-ssa-e-two-stage-ar-15-trigger-.154in",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "ar-upper-aero": {
@@ -142,7 +142,7 @@
         "price": 150,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/m4e1-threaded-stripped-upper-receiver-anodized-black",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "g-mag-pmag12": {
@@ -150,7 +150,7 @@
         "price": 14.95,
         "inStock": true,
         "url": "https://magpul.com/pmag-12-gl9-glock-g26.html",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "g-mag-pmag15": {
@@ -158,7 +158,7 @@
         "price": 14.95,
         "inStock": true,
         "url": "https://magpul.com/pmag-15-gl9-glock-g19.html",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "g-mag-pmag17": {
@@ -166,7 +166,7 @@
         "price": 14.95,
         "inStock": true,
         "url": "https://magpul.com/pmag-17-gl9-glock-17.html",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "g-opt-507c": {
@@ -174,7 +174,7 @@
         "price": 232.99,
         "inStock": true,
         "url": "https://www.primaryarms.com/holosun-hs507c-x2-pistol-red-dot-sight-2-moa",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "gs-opt-507k": {
@@ -182,7 +182,7 @@
         "price": 295.99,
         "inStock": true,
         "url": "https://www.primaryarms.com/holosun-hs507k-x2-compact-pistol-red-dot-sight-2-moa",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "p365-mag-10": {
@@ -190,7 +190,7 @@
         "price": 44.99,
         "inStock": true,
         "url": "https://www.primaryarms.com/sig-sauer-9mm-p365-10-round-magazine",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "p365-opt-507k": {
@@ -198,7 +198,7 @@
         "price": 295.99,
         "inStock": true,
         "url": "https://www.primaryarms.com/holosun-hs507k-x2-compact-pistol-red-dot-sight-2-moa",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     },
     "p365-opt-eps": {
@@ -206,7 +206,7 @@
         "price": 399.99,
         "inStock": true,
         "url": "https://www.primaryarms.com/holosun-eps-carry-mrs-enclosed-pistol-sight-multiple-reticle-red-reticle",
-        "checkedAt": "2026-10-02T08:28:51.351Z"
+        "checkedAt": "2026-10-03T08:26:52.912Z"
       }
     }
   }
