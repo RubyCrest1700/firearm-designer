@@ -15,6 +15,7 @@ import {
   type CommunityBuild, type CommunitySort,
 } from './community';
 import { awarenessFor, type Aware } from './awareness';
+import { buildWeight, formatWeight } from './weight';
 import { MOVABLE, SIDE_LABEL, mountsFor, railLength, type Resolved } from './data/addons';
 import type { Build, Issue, Part, Placement, Platform, Severity, Side, Slot, Tier } from './types';
 
@@ -309,6 +310,9 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
   const status = buildStatus(platform, build, issues);
   const total = totalOf(platform, build);
   const chosen = platform.slots.filter((s) => build[s.id]).length;
+  const rifle = platform.family === 'Rifle';
+  const weight = buildWeight(platform, build);
+  const weightTitle = `Unloaded, as built (not counting the case or holster). ${weight.estimated ? `${weight.estimated} of ${weight.counted} part weights are estimates.` : 'All part weights are listed figures.'}`;
   const openSlotObj = platform.slots.find((s) => s.id === openSlot);
 
   const choose = (slot: string, partId: string) => { setSelection({ ...selection, [slot]: partId }); setOpenSlot(null); };
@@ -356,6 +360,7 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
                 <div><span>Spec</span><b>{scene.spec}</b></div>
                 <div><span>Parts</span><b>{chosen} of {platform.slots.length}</b></div>
                 <div><span>Status</span><b className={'tb-' + status.cls}>{status.text}</b></div>
+                <div><span>Weight</span><b title={weightTitle}>{chosen ? `${weight.estimated ? '≈ ' : ''}${formatWeight(weight.oz, rifle)}` : '—'}</b></div>
                 <div><span>Total</span><b>{money(total)}</b></div>
               </figcaption>
             </figure>
@@ -451,6 +456,18 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
   );
 }
 
+function WeightLine({ platform, build }: { platform: Platform; build: Build }) {
+  const rifle = platform.family === 'Rifle';
+  const w = buildWeight(platform, build);
+  const bare = buildWeight(platform, build, true);
+  return (
+    <p className="weight-line">
+      <b>{w.estimated ? 'About ' : ''}{formatWeight(w.oz, rifle)}</b> unloaded{rifle && bare.oz < w.oz ? `, ${formatWeight(bare.oz, rifle)} without optic, magazine and add-ons` : ''}.
+      {w.estimated > 0 && <span className="dim"> {w.estimated === w.counted ? 'Part weights are estimates' : `${w.estimated} of ${w.counted} part weights are estimates`} until we confirm the makers' listings.</span>}
+    </p>
+  );
+}
+
 /** Side and rail position for a light, laser or grip. Dragging it on the drawing does the same. */
 function MountControl({ slot, m, onMount }: { slot: Slot; m: Resolved; onMount: (side: Side, at: number) => void }) {
   const sides = MOVABLE[slot.id].sides;
@@ -510,6 +527,7 @@ function Summary({ platform, build, issues, aware, states, status, total, openSa
           {chosen.length} parts from {retailers} retailer{retailers === 1 ? '' : 's'}
           {highest > total && <> · {money(highest - total)} below the highest prices</>}
         </p>
+        {chosen.length > 0 && <WeightLine platform={platform} build={build} />}
         <div className="segments" aria-hidden="true">
           {platform.slots.map((s) => (
             <button key={s.id} tabIndex={-1} className={'seg ' + states[s.id] + (s.required ? '' : ' optional')} title={s.name} onClick={() => onOpen(s.id)} />
@@ -712,7 +730,7 @@ function Candidate({ part, issues, sev, selected, onChoose, onBuyClick }: {
       <div className="cand-mid">
         <div className="cand-body">
           <h3 className="cand-name"><span className="brand-dim">{part.brand}</span> {part.name}</h3>
-          <ul className="specs">{part.specs.map((s) => <li key={s}>{s}</li>)}</ul>
+          <ul className="specs">{part.specs.map((s) => <li key={s}>{s}</li>)}{part.weight && <li className="spec-weight" title={part.weight.published ? 'Listed weight' : 'Estimated weight'}>{part.weight.published ? '' : '≈ '}{part.weight.oz} oz</li>}</ul>
           {part.pick && <p className="pick-note">{part.pick.note}</p>}
           {issues.map((i, n) => <p key={n} className={'row-issue ' + i.severity}>{i.message}</p>)}
         </div>

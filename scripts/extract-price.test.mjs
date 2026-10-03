@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { extractPrice } from './extract-price.mjs';
+import { extractPrice, extractWeight } from './extract-price.mjs';
 import { parseRobots, isAllowed } from './robots.mjs';
 
 test('reads a JSON-LD Product offer', () => {
@@ -35,4 +35,12 @@ test('robots.txt: longest rule wins, wildcards work', () => {
   assert.equal(isAllowed(rules, '/aero-precision-m4e1-stripped-lower.html'), true);
   assert.equal(isAllowed(rules, '/catalogsearch/result/?q=lower'), false);
   assert.equal(isAllowed(rules, '/rifles.html?price=100-200'), false);
+});
+
+test('reads a listed weight from JSON-LD and spec tables', () => {
+  assert.equal(extractWeight('<script type="application/ld+json">{"@type":"Product","weight":{"@type":"QuantitativeValue","value":"8.6","unitCode":"ONZ"}}</script>'), 8.6);
+  assert.equal(extractWeight('<script type="application/ld+json">{"@type":"Product","additionalProperty":[{"name":"Weight","value":"1.25 lbs"}]}</script>'), 20);
+  assert.equal(extractWeight('<table><tr><th>Weight</th><td>1 lb 10 oz</td></tr></table>'), 26);
+  assert.equal(extractWeight('<dl><dt>Weight:</dt><dd><span>312 g</span></dd></dl>'), 11);
+  assert.equal(extractWeight('<table><tr><th>Shipping Weight</th><td>3 lbs</td></tr></table>'), null);
 });

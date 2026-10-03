@@ -1,0 +1,22 @@
+# Reads listed part weights from tracked product pages and prints them. Nothing is committed: the results
+# are reviewed and added to data/weights.json through a pull request.
+name: Read part weights
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: ['scripts/read-weights.mjs', '.github/workflows/read-weights.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  read:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/read-weights.mjs

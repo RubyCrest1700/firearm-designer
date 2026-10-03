@@ -70,3 +70,44 @@ function toNumber(v) {
   const n = Number(String(v).replace(/[^0-9.]/g, ''));
   return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : null;
 }
+
+/**
+ * Pulls a product's listed weight, in ounces, from schema.org Product data (`weight` or an `additionalProperty`
+ * named Weight) or a spec-table row labeled exactly "Weight". Shipping weights are ignored.
+ * @returns {number | null}
+ */
+export function extractWeight(html) {
+  const blocks = html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
+  for (const [, raw] of blocks) {
+    let data;
+    try {
+      data = JSON.parse(raw.trim());
+    } catch {
+      continue;
+    }
+    for (const node of walk(data)) {
+      if (![].concat(node['@type'] ?? []).includes('Product')) continue;
+      const w = node.weight ?? [].concat(node.additionalProperty ?? []).find((p) => /^(product |item )?weight$/i.test(String(p?.name ?? '')));
+      const oz = w && (typeof w === 'object' ? toOunces(w.value, w.unitCode ?? w.unitText) : toOunces(w));
+      if (oz) return oz;
+    }
+  }
+  const row = html.match(/>\s*(?:Product |Item )?Weight:?\s*<\/(?:th|td|dt|span|strong|b|div)>\s*(?:<[^>]+>\s*)*([\d.,]+\s*(?:oz|ounces?|lbs?|pounds?|g|grams?|kg)\b[^<]{0,30})/i);
+  return row ? toOunces(row[1]) : null;
+}
+
+/** "1 lb 4 oz", "7.5 lbs", "312 g", value + unit code (LBR, ONZ, GRM, KGM). */
+function toOunces(value, unit) {
+  const text = `${value ?? ''} ${unit ?? ''}`.toLowerCase().replace(/,/g, '');
+  const lbOz = text.match(/([\d.]+)\s*(?:lbs?|pounds?)\s*([\d.]+)\s*(?:oz|ounces?)/);
+  let oz = null;
+  if (lbOz) oz = Number(lbOz[1]) * 16 + Number(lbOz[2]);
+  else {
+    const m = text.match(/([\d.]+)\s*(oz|ounces?|onz|lbs?|pounds?|lbr|kgm|kg|kilograms?|grm|g|grams?)?\b/);
+    if (!m) return null;
+    const n = Number(m[1]);
+    const u = m[2] ?? '';
+    oz = /^(lb|pound|lbr)/.test(u) ? n * 16 : /^(kg|kgm|kilogram)/.test(u) ? n * 35.274 : /^(g|grm|gram)/.test(u) ? n / 28.3495 : /^(oz|ounce|onz)/.test(u) ? n : null;
+  }
+  return oz && oz > 0 && oz < 1000 ? Math.round(oz * 10) / 10 : null;
+}

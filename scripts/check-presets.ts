@@ -3,6 +3,7 @@ import { awarenessFor } from '../src/awareness';
 import { PLATFORMS } from '../src/data/index';
 import { issuesFor, placementOf, presetSelection, selectionTokens, toBuild } from '../src/engine';
 import { selectionFromParts } from '../src/store';
+import { buildWeight, formatWeight } from '../src/weight';
 
 let bad = 0;
 for (const p of PLATFORMS) {
@@ -102,6 +103,15 @@ for (const p of PLATFORMS.filter((x) => x.family === 'Rifle'))
   expect({ barrel: 'ar-bbl-psa16' }, 'note:Runs overgassed');
   expect({ muzzle: 'ar-mz-lantac' }, 'caution:Much louder beside you');
   expect({ barrel: 'ar-bbl-300', gastube: 'ar-gt-pistol', muzzle: 'ar-mz-pa' }, 'caution:Keep .300 BLK ammo separate');
+  expect({}, 'note:Heavier than typical', false);
+  // Heavier stock: +n oz on the stock moves a 6.1 lb budget rifle past the 7.5 and 9 lb lines.
+  const heavy = (n: number) => {
+    const b = toBuild(ar, presetSelection(ar, 'budget'));
+    b.stock = { ...b.stock!, weight: { oz: b.stock!.weight!.oz + n, published: false } };
+    return awarenessFor(ar, b).map((w) => `${w.level}:${w.title}`);
+  };
+  if (!heavy(30).includes('note:Heavier than typical')) { console.log('weight: 8 lb AR-15 should get a Note'); bad++; }
+  if (!heavy(60).includes('caution:Heavier than typical')) { console.log('weight: 9.9 lb AR-15 should get a Caution'); bad++; }
 }
 // Add-on fit checks.
 {
@@ -145,6 +155,15 @@ for (const p of PLATFORMS.filter((x) => x.family === 'Rifle'))
     const got = sev(pid, tier, over, slot);
     if (got !== want) { console.log(`add-ons: ${pid}/${tier} ${JSON.stringify(over)} on ${slot}: expected ${want}, got ${got}`); bad++; }
   }
+}
+// Every part has a weight, and preset builds land near factory rifle and pistol weights.
+for (const p of PLATFORMS) {
+  for (const part of p.parts) if (!part.weight) { console.log(`${p.id}: ${part.id} has no weight in data/weights.json`); bad++; }
+  const rifle = p.family === 'Rifle';
+  console.log(`${p.name} weights: ${(['budget', 'value', 'premium'] as const).map((t) => {
+    const b = toBuild(p, presetSelection(p, t));
+    return `${t} ${formatWeight(buildWeight(p, b, true).oz, rifle)} bare / ${formatWeight(buildWeight(p, b).oz, rifle)} as built`;
+  }).join(', ')}`);
 }
 // Placements survive a share link or community post.
 {
