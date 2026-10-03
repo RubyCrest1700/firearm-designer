@@ -36,13 +36,16 @@ const IFACES: Iface[] = [
   ['glock26', 'barrel', 'thread', 'muzzle', 'thread'],
   ['glock19', 'slide', 'family', 'barrel', 'family'],
   ['glock19', 'slide', 'family', 'spk', 'family'],
+  ['glock17', 'slide', 'rsa', 'rsa', 'rsa'],
+  ['glock19', 'slide', 'rsa', 'rsa', 'rsa'],
+  ['glock26', 'slide', 'rsa', 'rsa', 'rsa'],
   ['glock43x', 'slide', 'len', 'barrel', 'len'],
   ['glock43x', 'slide', 'len', 'rsa', 'len'],
   ['p320', 'slide', 'length', 'barrel', 'length'],
   ['p320', 'slide', 'caliber', 'barrel', 'caliber'],
   ['p320', 'slide', 'length', 'spring', 'length'],
-  ['p365', 'slide', 'len', 'barrel', 'len'],
-  ['p365', 'slide', 'len', 'spring', 'len'],
+  ['p365', 'slide', 'barrelLen', 'barrel', 'len'],
+  ['p365', 'slide', 'springLen', 'spring', 'len'],
 ];
 let combos = 0;
 for (const [pid, sa, ka, sb, kb] of IFACES) {

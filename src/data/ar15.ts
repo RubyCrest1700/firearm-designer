@@ -196,6 +196,8 @@ function rules(b: Build): Issue[] {
     const bl = barrel.attrs.length as number;
     if (hg >= bl)
       out.push({ severity: 'warn', slots: ['handguard', 'barrel'], message: `A ${hg}" handguard is as long as the ${bl}" barrel. A muzzle device won't fit and the rail will cover the muzzle.` });
+    else if (hg > bl - 1)
+      out.push({ severity: 'warn', slots: ['handguard', 'barrel'], message: `A ${hg}" handguard on a ${bl}" barrel leaves almost no barrel past the rail to install a muzzle device or wrench. Builders usually go at least 1" shorter than the barrel.` });
     const port = PORT_DISTANCE[barrel.attrs.gas as string];
     if (hg < port + 1)
       out.push({ severity: 'info', slots: ['handguard', 'barrel'], message: `The gas block sits about ${port}" from the receiver, so a ${hg}" handguard leaves it exposed. That works, but looks unfinished.` });

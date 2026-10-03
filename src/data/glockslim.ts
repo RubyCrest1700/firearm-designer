@@ -1,13 +1,16 @@
 import type { Build, Issue, Platform } from '../types';
 import { parts, pick } from './helpers';
 
-/** G43X and G48 share a grip and magazines; the G48 has a longer slide, barrel and dust cover. */
+/**
+ * G43X and G48 use the same frame and magazines; the G48 has a longer slide and barrel.
+ * Source: https://www.activeresponsetraining.net/shooting-the-new-glock-48-and-43x ("The 48 has the same frame as the 43X")
+ */
 const LEN: Record<string, number> = { '43X': 1, '48': 2 };
 
 const slots = [
-  { id: 'frame', name: 'Frame', group: 'Lower', required: true, hint: 'Serialized. The G43X and G48 frames share a grip; the G48 dust cover is longer.' },
+  { id: 'frame', name: 'Frame', group: 'Lower', required: true, hint: 'Serialized. The G43X and G48 use the same frame, so it takes either slide.' },
   { id: 'fcg', name: 'Trigger & frame parts', group: 'Lower', required: true, hint: 'Slimline parts only. Double-stack Glock triggers won\'t fit.' },
-  { id: 'slide', name: 'Slide', group: 'Upper', required: true, hint: 'A G48 slide on a G43X frame is a popular combo. The reverse doesn\'t fit.' },
+  { id: 'slide', name: 'Slide', group: 'Upper', required: true, hint: 'Either slide fits the frame. The barrel and recoil spring must match the slide.' },
   { id: 'spk', name: 'Slide parts kit', group: 'Upper', required: true, hint: 'Same kit for both slides.' },
   { id: 'barrel', name: 'Barrel', group: 'Upper', required: true, hint: 'Must match the slide length.' },
   { id: 'rsa', name: 'Recoil spring assembly', group: 'Upper', required: true, hint: 'Must match the slide length.' },
@@ -18,12 +21,12 @@ const slots = [
 
 const allParts = [
   ...parts('frame', [
-    { id: 'gs-frame-43x', brand: 'Glock', name: 'G43X Frame (OEM, stripped)', specs: ['Slimline', 'Short dust cover', 'Rail-less'], attrs: { len: '43X' }, serialized: true,
-      offers: [['GS', 164.99], ['BRN', 172.99]], pick: pick('value', 'Takes both the G43X and G48 slide, so you can swap later.') },
-    { id: 'gs-frame-43xr', brand: 'Glock', name: 'G43X Rail Frame (OEM, stripped)', specs: ['Slimline', 'Short dust cover', 'Accessory rail'], attrs: { len: '43X' }, serialized: true,
+    { id: 'gs-frame-43x', brand: 'Glock', name: 'G43X Frame (OEM, stripped)', specs: ['Slimline', 'Rail-less', 'Fits G43X and G48 slides'], attrs: {}, serialized: true,
+      offers: [['GS', 164.99], ['BRN', 172.99]], pick: pick('value', 'Takes either slide, so you can swap later.') },
+    { id: 'gs-frame-43xr', brand: 'Glock', name: 'G43X Rail Frame (OEM, stripped)', specs: ['Slimline', 'Accessory rail', 'Fits G43X and G48 slides'], attrs: {}, serialized: true,
       offers: [['GS', 174.99]], pick: pick('premium', 'Adds a rail for a compact weapon light.') },
-    { id: 'gs-frame-48', brand: 'Glock', name: 'G48 Frame (OEM, stripped)', specs: ['Slimline', 'Long dust cover'], attrs: { len: '48' }, serialized: true,
-      offers: [['GS', 164.99], ['BRN', 172.99]], pick: pick('budget', 'Full-length slim pistol, same price as the G43X frame.') },
+    { id: 'gs-frame-48', brand: 'Glock', name: 'G48 Frame (OEM, stripped)', specs: ['Slimline', 'Rail-less', 'Same frame as the G43X'], attrs: {}, serialized: true,
+      offers: [['GS', 164.99], ['BRN', 172.99]], pick: pick('budget', 'The same frame as the G43X, sold with G48 pistols.') },
   ]),
   ...parts('fcg', [
     { id: 'gs-fcg-oem', brand: 'Glock', name: 'OEM Slimline Lower Parts Kit', specs: ['G43X/G48', 'Stock trigger'], attrs: {},
@@ -81,10 +84,8 @@ const allParts = [
 
 function rules(b: Build): Issue[] {
   const out: Issue[] = [];
-  const { frame, slide, barrel, rsa, optic, sights, mag } = b;
-  const L = (p: typeof frame) => (p ? LEN[p.attrs.len as string] : 0);
-  if (frame && slide && L(frame) > L(slide))
-    out.push({ severity: 'error', slots: ['frame', 'slide'], message: 'The G48 frame\'s dust cover sticks out past a G43X slide. Use a G48 slide, or a G43X frame.' });
+  const { slide, barrel, rsa, optic, sights, mag } = b;
+  const L = (p: typeof slide) => (p ? LEN[p.attrs.len as string] : 0);
   if (slide && barrel && L(barrel) !== L(slide))
     out.push({ severity: 'error', slots: ['slide', 'barrel'], message: `A G${slide.attrs.len} slide needs a G${slide.attrs.len} barrel.` });
   if (slide && rsa && L(rsa) !== L(slide))

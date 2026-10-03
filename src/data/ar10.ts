@@ -9,6 +9,12 @@ import { parts, pick, threadIssue } from './helpers';
 const PORT_DISTANCE: Record<string, number> = { carbine: 7.5, midlength: 9.5, rifle: 12.5 };
 const PATTERN_LABEL: Record<string, string> = { 'dpms-high': 'DPMS high-profile', 'dpms-low': 'DPMS low-profile', armalite: 'Armalite' };
 const family = (p: unknown) => (String(p).startsWith('dpms') ? 'DPMS' : 'Armalite');
+/**
+ * DPMS and Armalite differ in barrel nut thread (DPMS 1-7/16"-16, Armalite 1-7/16"-18), barrel extension,
+ * bolt carrier and gas tube length, so none of those cross over. Source:
+ * https://308ar.com/ar-10-308-ar-compatibility-reference-guide/
+ */
+const NUT: Record<string, string> = { DPMS: '1-7/16"-16', Armalite: '1-7/16"-18' };
 
 const slots = [
   { id: 'lower', name: 'Stripped lower receiver', group: 'Lower', required: true, hint: 'Serialized. DPMS or Armalite pattern decides the rest of the build.' },
@@ -21,8 +27,8 @@ const slots = [
   { id: 'barrel', name: 'Barrel', group: 'Upper', required: true, hint: 'Sets caliber, gas length, journal and muzzle threads (usually 5/8x24).' },
   { id: 'gasblock', name: 'Gas block', group: 'Upper', required: true, hint: 'Must match the barrel journal diameter.' },
   { id: 'gastube', name: 'Gas tube', group: 'Upper', required: true, hint: 'Must match the barrel gas system length.' },
-  { id: 'handguard', name: 'Handguard', group: 'Upper', required: true, hint: 'Must match the upper\'s pattern and profile.' },
-  { id: 'bcg', name: 'Bolt carrier group', group: 'Upper', required: true, hint: '.308 BCGs fit both patterns; 6.5 CM uses the same bolt face.' },
+  { id: 'handguard', name: 'Handguard', group: 'Upper', required: true, hint: 'Must match the upper\'s barrel nut thread (DPMS or Armalite).' },
+  { id: 'bcg', name: 'Bolt carrier group', group: 'Upper', required: true, hint: 'DPMS and Armalite bolt carriers differ. 6.5 CM uses the .308 bolt face.' },
   { id: 'charging', name: 'Charging handle', group: 'Upper', required: true, hint: 'DPMS and Armalite charging handles differ.' },
   { id: 'muzzle', name: 'Muzzle device', group: 'Accessories', required: false, hint: 'Most .308 barrels are threaded 5/8x24.' },
   { id: 'mag', name: 'Magazine', group: 'Accessories', required: false, hint: 'DPMS uses SR-25 / PMAG LR mags; Armalite uses its own.' },
@@ -86,16 +92,16 @@ const allParts = [
   ]),
   ...parts('barrel', [
     { id: 'a10-bbl-psa18', brand: 'Palmetto State Armory', name: '18" .308 Win Midlength, Nitride', specs: ['18"', '.308 Win', 'Midlength gas', '.750 journal', '5/8x24'],
-      attrs: { caliber: '.308 Win', length: 18, gas: 'midlength', journal: '.750', thread: '5/8x24' },
+      attrs: { caliber: '.308 Win', length: 18, gas: 'midlength', journal: '.750', thread: '5/8x24', family: 'DPMS' },
       offers: [['PSA', 179.99]], pick: pick('budget', 'Solid all-round .308 barrel.') },
     { id: 'a10-bbl-ba18', brand: 'Ballistic Advantage', name: '18" .308 Win Rifle-Length Performance', specs: ['18"', '.308 Win', 'Rifle gas', '.750 journal', '5/8x24'],
-      attrs: { caliber: '.308 Win', length: 18, gas: 'rifle', journal: '.750', thread: '5/8x24' },
+      attrs: { caliber: '.308 Win', length: 18, gas: 'rifle', journal: '.750', thread: '5/8x24', family: 'DPMS' },
       offers: [['PA', 259.99], ['BRN', 269.99]], pick: pick('value', 'Rifle-length gas runs smooth and soft on an 18" .308.') },
     { id: 'a10-bbl-criterion', brand: 'Criterion', name: '20" 6.5 Creedmoor Rifle-Length', specs: ['20"', '6.5 Creedmoor', 'Rifle gas', '.875 journal', '5/8x24'],
-      attrs: { caliber: '6.5 CM', length: 20, gas: 'rifle', journal: '.875', thread: '5/8x24' },
+      attrs: { caliber: '6.5 CM', length: 20, gas: 'rifle', journal: '.875', thread: '5/8x24', family: 'DPMS' },
       offers: [['BRN', 329.0], ['PA', 334.99]], pick: pick('premium', 'Match-grade 6.5 CM for long-range work.') },
     { id: 'a10-bbl-aero16', brand: 'Aero Precision', name: '16" .308 Win Midlength', specs: ['16"', '.308 Win', 'Midlength gas', '.750 journal', '5/8x24'],
-      attrs: { caliber: '.308 Win', length: 16, gas: 'midlength', journal: '.750', thread: '5/8x24' },
+      attrs: { caliber: '.308 Win', length: 16, gas: 'midlength', journal: '.750', thread: '5/8x24', family: 'DPMS' },
       offers: [['AERO', 229.99], ['PA', 224.99]] },
   ]),
   ...parts('gasblock', [
@@ -107,8 +113,8 @@ const allParts = [
       offers: [['BRN', 89.99], ['OP', 92.0]], pick: pick('premium', 'Tune gas for suppressed or hot loads.') },
   ]),
   ...parts('gastube', [
-    { id: 'a10-gt-mid', brand: 'Aero Precision', name: 'AR-10 Midlength Gas Tube', specs: ['Midlength'], attrs: { length: 'midlength' }, offers: [['AERO', 13.99], ['PSA', 11.99]] },
-    { id: 'a10-gt-rifle', brand: 'Aero Precision', name: 'AR-10 Rifle-Length Gas Tube', specs: ['Rifle length'], attrs: { length: 'rifle' }, offers: [['AERO', 14.99], ['BRN', 16.99]] },
+    { id: 'a10-gt-mid', brand: 'Aero Precision', name: 'AR-10 Midlength Gas Tube', specs: ['Midlength'], attrs: { length: 'midlength', family: 'DPMS' }, offers: [['AERO', 13.99], ['PSA', 11.99]] },
+    { id: 'a10-gt-rifle', brand: 'Aero Precision', name: 'AR-10 Rifle-Length Gas Tube', specs: ['Rifle length'], attrs: { length: 'rifle', family: 'DPMS' }, offers: [['AERO', 14.99], ['BRN', 16.99]] },
   ]),
   ...parts('handguard', [
     { id: 'a10-hg-atlas', brand: 'Aero Precision', name: 'ATLAS S-ONE 15" M-LOK, AR-10', specs: ['15"', 'DPMS high-profile', 'M-LOK'], attrs: { pattern: 'dpms-high', length: 15 },
@@ -121,11 +127,11 @@ const allParts = [
       offers: [['BRN', 199.99]] },
   ]),
   ...parts('bcg', [
-    { id: 'a10-bcg-psa', brand: 'Palmetto State Armory', name: 'PA-10 .308 Nitride BCG', specs: ['.308 / 6.5 CM', 'Nitride'], attrs: {},
+    { id: 'a10-bcg-psa', brand: 'Palmetto State Armory', name: 'PA-10 .308 Nitride BCG', specs: ['.308 / 6.5 CM', 'Nitride'], attrs: { family: 'DPMS' },
       offers: [['PSA', 129.99]], pick: pick('budget', 'Runs .308 and 6.5 CM.') },
-    { id: 'a10-bcg-toolcraft', brand: 'Toolcraft', name: 'AR-10 .308 Nitride BCG', specs: ['.308 / 6.5 CM', 'Nitride', 'MPI'], attrs: {},
+    { id: 'a10-bcg-toolcraft', brand: 'Toolcraft', name: 'AR-10 .308 Nitride BCG', specs: ['.308 / 6.5 CM', 'Nitride', 'MPI'], attrs: { family: 'DPMS' },
       offers: [['BRN', 169.99], ['PA', 164.99]], pick: pick('value', 'Well-made and fairly priced.') },
-    { id: 'a10-bcg-jp', brand: 'JP Enterprises', name: 'LMOS .308 Bolt Carrier', specs: ['.308 / 6.5 CM', 'Low-mass', 'Enhanced bolt'], attrs: {},
+    { id: 'a10-bcg-jp', brand: 'JP Enterprises', name: 'LMOS .308 Bolt Carrier', specs: ['.308 / 6.5 CM', 'Low-mass', 'Enhanced bolt'], attrs: { family: 'DPMS' },
       offers: [['BRN', 349.99]], pick: pick('premium', 'Low-mass carrier for a flatter-shooting precision rifle.') },
   ]),
   ...parts('charging', [
@@ -173,8 +179,15 @@ function rules(b: Build): Issue[] {
   }
   if (lower && lpk && lpk.attrs.family !== family(lower.attrs.pattern))
     out.push({ severity: 'error', slots: ['lower', 'lpk'], message: `A ${family(lower.attrs.pattern)}-pattern lower needs a ${family(lower.attrs.pattern)} parts kit (bolt catch and mag catch differ).` });
-  if (upper && handguard && handguard.attrs.pattern !== upper.attrs.pattern)
-    out.push({ severity: 'error', slots: ['upper', 'handguard'], message: `This handguard is made for ${PATTERN_LABEL[handguard.attrs.pattern as string]} uppers, but the upper is ${PATTERN_LABEL[upper.attrs.pattern as string]}.` });
+  if (upper && handguard && family(handguard.attrs.pattern) !== family(upper.attrs.pattern)) {
+    const u = family(upper.attrs.pattern);
+    const h = family(handguard.attrs.pattern);
+    out.push({ severity: 'error', slots: ['upper', 'handguard'], message: `The ${u} barrel nut is threaded ${NUT[u]}; this handguard is made for the ${h} ${NUT[h]} nut.` });
+  } else if (upper && handguard && handguard.attrs.pattern !== upper.attrs.pattern)
+    out.push({ severity: 'warn', slots: ['upper', 'handguard'], message: `This handguard is made for ${PATTERN_LABEL[handguard.attrs.pattern as string]} uppers. It mounts on a ${PATTERN_LABEL[upper.attrs.pattern as string]} upper, but its top rail won't line up exactly with the receiver rail.` });
+  for (const [slot, part, what] of [['barrel', barrel, 'barrel extension'], ['bcg', b.bcg, 'bolt carrier'], ['gastube', gastube, 'gas tube length']] as const)
+    if (upper && part && part.attrs.family && part.attrs.family !== family(upper.attrs.pattern))
+      out.push({ severity: 'error', slots: ['upper', slot], message: `${family(upper.attrs.pattern)} and ${part.attrs.family} patterns use a different ${what}. This part is ${part.attrs.family} pattern.` });
   if (upper && charging && charging.attrs.family !== family(upper.attrs.pattern))
     out.push({ severity: 'error', slots: ['upper', 'charging'], message: `${family(upper.attrs.pattern)} uppers need a ${family(upper.attrs.pattern)}-pattern charging handle.` });
   if (lower && mag && mag.attrs.family !== family(lower.attrs.pattern))
@@ -190,6 +203,8 @@ function rules(b: Build): Issue[] {
     const bl = barrel.attrs.length as number;
     if (hg >= bl)
       out.push({ severity: 'warn', slots: ['handguard', 'barrel'], message: `A ${hg}" handguard covers the ${bl}" barrel's muzzle.` });
+    else if (hg > bl - 1)
+      out.push({ severity: 'warn', slots: ['handguard', 'barrel'], message: `A ${hg}" handguard on a ${bl}" barrel leaves almost no barrel past the rail to install a muzzle device. Builders usually go at least 1" shorter than the barrel.` });
     const port = PORT_DISTANCE[barrel.attrs.gas as string];
     if (hg < port + 1)
       out.push({ severity: 'info', slots: ['handguard', 'barrel'], message: `The gas block sits about ${port}" out, so a ${hg}" handguard leaves it exposed.` });

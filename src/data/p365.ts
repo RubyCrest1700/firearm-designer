@@ -3,13 +3,14 @@ import { parts, pick } from './helpers';
 
 /** Grip length: standard (micro) < XL. Magazines are sized to a grip. */
 const GRIP_LEN: Record<string, number> = { std: 1, xl: 2 };
-const SLIDE_LABEL: Record<string, string> = { std: '3.1" P365', xl: '3.7" P365XL' };
+const BARREL_LABEL: Record<string, string> = { std: '3.1"', xl: '3.7"' };
+const SPRING_LABEL: Record<string, string> = { std: 'P365', xl: 'P365XL' };
 
 const slots = [
   { id: 'fcu', name: 'Fire control unit', group: 'Core', required: true, hint: 'The serialized chassis. Fits every P365 grip and slide.' },
   { id: 'grip', name: 'Grip module', group: 'Core', required: true, hint: 'Standard (micro) or XL length.' },
   { id: 'slide', name: 'Slide assembly', group: 'Upper', required: true, hint: 'Comes with sights and slide parts. 3.1" or 3.7".' },
-  { id: 'barrel', name: 'Barrel', group: 'Upper', required: true, hint: 'Must match the slide length.' },
+  { id: 'barrel', name: 'Barrel', group: 'Upper', required: true, hint: 'Must be the length the slide is made for.' },
   { id: 'spring', name: 'Recoil spring', group: 'Upper', required: true, hint: 'Must match the slide length.' },
   { id: 'optic', name: 'Optic', group: 'Accessories', required: false, hint: 'Optic-ready P365 slides take the RMSc / Romeo Zero footprint.' },
   { id: 'mag', name: 'Magazine', group: 'Accessories', required: true, hint: 'Match the mag to the grip length for a flush fit.' },
@@ -31,11 +32,13 @@ const allParts = [
       offers: [['BRN', 104.99], ['OP', 99.95]], pick: pick('premium', 'Better texture and a flared magwell for faster reloads.') },
   ]),
   ...parts('slide', [
-    { id: 'p365-slide-std', brand: 'Sig Sauer', name: 'P365 Slide Assembly, 3.1", Optic Ready', specs: ['3.1"', 'RMSc cut', 'X-Ray3 sights'], attrs: { len: 'std', cut: 'rmsc' },
+    { id: 'p365-slide-std', brand: 'Sig Sauer', name: 'P365 Slide Assembly, 3.1", Optic Ready', specs: ['3.1"', 'RMSc cut', 'X-Ray3 sights'], attrs: { len: 'std', barrelLen: 'std', springLen: 'std', cut: 'rmsc' },
       offers: [['SIG', 299.99], ['BRN', 309.99]], pick: pick('budget', 'Short slide that still takes a micro dot.') },
-    { id: 'p365-slide-xl', brand: 'Sig Sauer', name: 'P365XL Slide Assembly, 3.7", Optic Ready', specs: ['3.7"', 'RMSc cut', 'X-Ray3 sights'], attrs: { len: 'xl', cut: 'rmsc' },
+    { id: 'p365-slide-xl', brand: 'Sig Sauer', name: 'P365XL Slide Assembly, 3.7", Optic Ready', specs: ['3.7"', 'RMSc cut', 'X-Ray3 sights'], attrs: { len: 'xl', barrelLen: 'xl', springLen: 'xl', cut: 'rmsc' },
       offers: [['SIG', 319.99], ['BRN', 329.99]], pick: pick('value', 'Longer sight radius and less muzzle flip.') },
-    { id: 'p365-slide-spectre', brand: 'Sig Sauer', name: 'P365XL Spectre Comp Slide Assembly', specs: ['3.7"', 'Integrated comp', 'RMSc cut'], attrs: { len: 'xl', cut: 'rmsc', comp: true },
+    { id: 'p365-slide-spectre', brand: 'Sig Sauer', name: 'P365XL Spectre Comp Slide Assembly', specs: ['XL length', 'Takes 3.1" barrel + XL spring', 'Integrated comp', 'RMSc cut'],
+      // Sig: 3.1" barrel length; fits P365 models with a 3.1" barrel and a P365XL recoil spring assembly.
+      attrs: { len: 'xl', barrelLen: 'std', springLen: 'xl', cut: 'rmsc', comp: true },
       offers: [['SIG', 449.99]], pick: pick('premium', 'Built-in compensator noticeably flattens recoil.') },
   ]),
   ...parts('barrel', [
@@ -75,14 +78,14 @@ const allParts = [
 function rules(b: Build): Issue[] {
   const out: Issue[] = [];
   const { grip, slide, barrel, spring, optic, mag } = b;
-  if (slide && barrel && barrel.attrs.len !== slide.attrs.len)
-    out.push({ severity: 'error', slots: ['slide', 'barrel'], message: `A ${SLIDE_LABEL[slide.attrs.len as string]} slide needs the matching barrel.` });
-  if (slide && spring && spring.attrs.len !== slide.attrs.len)
-    out.push({ severity: 'error', slots: ['slide', 'spring'], message: `A ${SLIDE_LABEL[slide.attrs.len as string]} slide needs the matching recoil spring.` });
+  if (slide && barrel && barrel.attrs.len !== slide.attrs.barrelLen)
+    out.push({ severity: 'error', slots: ['slide', 'barrel'], message: `This slide takes a ${BARREL_LABEL[slide.attrs.barrelLen as string]} barrel; this one is ${BARREL_LABEL[barrel.attrs.len as string]}.` });
+  if (slide && spring && spring.attrs.len !== slide.attrs.springLen)
+    out.push({ severity: 'error', slots: ['slide', 'spring'], message: `This slide takes the ${SPRING_LABEL[slide.attrs.springLen as string]} recoil spring assembly.` });
   if (barrel?.attrs.threaded && slide?.attrs.comp)
     out.push({ severity: 'error', slots: ['slide', 'barrel'], message: 'The Spectre Comp slide has a built-in compensator. A threaded barrel won\'t clear it.' });
   if (slide && optic && slide.attrs.cut !== optic.attrs.footprint)
-    out.push({ severity: 'warn', slots: ['slide', 'optic'], message: 'The RMRcc uses its own footprint. You need an RMRcc adapter plate for the P365 slide (about $50).' });
+    out.push({ severity: 'warn', slots: ['slide', 'optic'], message: `The slide is cut for ${String(slide.attrs.cut).toUpperCase()} and this optic uses the ${String(optic.attrs.footprint).toUpperCase()} footprint. You need an adapter plate.` });
   if (grip && slide && grip.attrs.len === 'xl' && slide.attrs.len === 'std')
     out.push({ severity: 'info', slots: ['grip', 'slide'], message: 'XL grip with the short slide is the P365X layout: full grip, shorter slide.' });
   if (mag && grip) {
@@ -107,6 +110,6 @@ export const p365: Platform = {
   presets: {
     budget: ['p365-fcu', 'p365-grip-std', 'p365-slide-std', 'p365-bbl-std', 'p365-spr-std', 'p365-mag-10'],
     value: ['p365-fcu', 'p365-grip-xl', 'p365-slide-xl', 'p365-bbl-xl', 'p365-spr-xl', 'p365-opt-507k', 'p365-mag-12'],
-    premium: ['p365-fcu-flat', 'p365-grip-wilson', 'p365-slide-spectre', 'p365-bbl-xl', 'p365-spr-xl', 'p365-opt-eps', 'p365-mag-12'],
+    premium: ['p365-fcu-flat', 'p365-grip-wilson', 'p365-slide-spectre', 'p365-bbl-std', 'p365-spr-xl', 'p365-opt-eps', 'p365-mag-12'],
   },
 };

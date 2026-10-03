@@ -309,7 +309,10 @@ function pistolSpec(platform: Platform, b: Build): PistolSpec {
     }
     case 'p365': {
       const g = a(b.grip, 'len') ?? 'xl';
-      const m = MODELS['p365' + (a(b.slide, 'len') ?? g)];
+      const base = MODELS['p365' + (a(b.slide, 'len') ?? g)];
+      // The Spectre Comp slide is XL length but takes the 3.1" barrel; its comp fills the rest.
+      const bl = a(b.slide, 'barrelLen');
+      const m = bl ? { ...base, barrel: MODELS['p365' + bl].barrel } : base;
       const ml = a(b.mag, 'len');
       return { m, frame: MODELS['p365' + g], gripH: P365_H[g], magH: ml ? P365_H[ml] : P365_H[g], grooves: 0 };
     }
