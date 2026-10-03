@@ -1,4 +1,4 @@
-import type { Offer, OfferTuple, Part, Tier } from '../types';
+import type { Issue, Offer, OfferTuple, Part, Tier } from '../types';
 import prices from '../../data/prices.json';
 import sources from '../../data/sources.json';
 
@@ -24,3 +24,18 @@ export function parts(slot: string, list: Omit<PartInput, 'slot'>[]): Part[] {
 }
 
 export const pick = (tier: Tier, note: string) => ({ tier, note });
+
+/**
+ * Muzzle threads must match exactly: diameter, pitch and hand. A 1/2x28 device will not go on a
+ * 5/8x24 or an M13.5x1 left-hand barrel, even when both parts are sold for the same gun.
+ */
+export function threadIssue(barrel?: Part, muzzle?: Part): Issue | undefined {
+  if (!barrel || !muzzle) return undefined;
+  const bt = barrel.attrs.thread as string | undefined;
+  const mt = muzzle.attrs.thread as string;
+  if (!bt)
+    return { severity: 'error', slots: ['muzzle', 'barrel'], message: `This barrel isn't threaded, so the ${mt} muzzle device has nothing to screw onto. Choose a threaded barrel.` };
+  if (bt !== mt)
+    return { severity: 'error', slots: ['muzzle', 'barrel'], message: `The barrel is threaded ${bt} but the muzzle device is ${mt}. They won't screw together.` };
+  return undefined;
+}

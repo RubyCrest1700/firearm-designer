@@ -1,5 +1,5 @@
 import type { Build, Issue, Platform } from '../types';
-import { parts, pick } from './helpers';
+import { parts, pick, threadIssue } from './helpers';
 
 /**
  * AR-10 / LR-308 (.308 Win and 6.5 Creedmoor). Unlike the AR-15 there is no single
@@ -183,8 +183,8 @@ function rules(b: Build): Issue[] {
     out.push({ severity: 'error', slots: ['barrel', 'gastube'], message: `The barrel is ${barrel.attrs.gas}-length gas but the gas tube is ${gastube.attrs.length}-length.` });
   if (barrel && gasblock && barrel.attrs.journal !== gasblock.attrs.journal)
     out.push({ severity: 'error', slots: ['barrel', 'gasblock'], message: `The barrel has a ${barrel.attrs.journal}" gas journal but the gas block is ${gasblock.attrs.journal}".` });
-  if (muzzle && barrel && muzzle.attrs.thread !== barrel.attrs.thread)
-    out.push({ severity: 'error', slots: ['muzzle', 'barrel'], message: `The barrel is threaded ${barrel.attrs.thread} but the muzzle device is ${muzzle.attrs.thread}.` });
+  const thread = threadIssue(barrel, muzzle);
+  if (thread) out.push(thread);
   if (handguard && barrel) {
     const hg = handguard.attrs.length as number;
     const bl = barrel.attrs.length as number;

@@ -43,7 +43,7 @@ const allParts = [
       offers: [['SIG', 109.99]], pick: pick('budget', 'Factory barrel.') },
     { id: 'p365-bbl-xl', brand: 'Sig Sauer', name: 'P365XL Barrel, 3.7"', specs: ['3.7"'], attrs: { len: 'xl' },
       offers: [['SIG', 109.99]], pick: pick('value', 'Factory barrel.') },
-    { id: 'p365-bbl-xlthr', brand: 'Sig Sauer', name: 'P365XL Barrel, 3.7", Threaded', specs: ['3.7"', 'Threaded 1/2x28'], attrs: { len: 'xl', threaded: true },
+    { id: 'p365-bbl-xlthr', brand: 'Sig Sauer', name: 'P365XL Barrel, 3.7", Threaded', specs: ['3.7"', 'Threaded 1/2x28'], attrs: { len: 'xl', threaded: true, thread: '1/2x28' },
       offers: [['SIG', 139.99], ['BRN', 144.99]] },
     { id: 'p365-bbl-tp', brand: 'True Precision', name: 'P365XL Axiom Barrel', specs: ['3.7"', 'Match grade'], attrs: { len: 'xl' },
       offers: [['BRN', 189.99], ['OP', 184.99]] },
