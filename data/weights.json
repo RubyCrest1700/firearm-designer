@@ -546,6 +546,11 @@
    "basis": "estimate",
    "src": null
   },
+  "g-fcg-apex34": {
+   "oz": 1.7,
+   "basis": "estimate",
+   "src": null
+  },
   "g-fcg-apex5": {
    "oz": 1.8,
    "basis": "estimate",
@@ -557,6 +562,11 @@
    "src": null
   },
   "g-fcg-oem5": {
+   "oz": 1.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "g-fcg-timney": {
    "oz": 1.8,
    "basis": "estimate",
    "src": null
@@ -581,6 +591,11 @@
    "basis": "estimate",
    "src": null
   },
+  "g-mag-oem24": {
+   "oz": 3.8,
+   "basis": "estimate",
+   "src": null
+  },
   "g-mag-pmag12": {
    "oz": 2.2,
    "basis": "estimate",
@@ -593,6 +608,11 @@
   },
   "g-mag-pmag17": {
    "oz": 2.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "g-mag-pmag21": {
+   "oz": 3.6,
    "basis": "estimate",
    "src": null
   },
@@ -611,6 +631,11 @@
    "basis": "estimate",
    "src": null
   },
+  "g-opt-407c": {
+   "oz": 1.5,
+   "basis": "estimate",
+   "src": null
+  },
   "g-opt-507c": {
    "oz": 1.5,
    "basis": "estimate",
@@ -626,8 +651,23 @@
    "basis": "estimate",
    "src": null
   },
+  "g-opt-epsc": {
+   "oz": 1.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "g-opt-mps": {
+   "oz": 2.1,
+   "basis": "estimate",
+   "src": null
+  },
   "g-opt-rmr": {
    "oz": 1.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "g-opt-sro": {
+   "oz": 1.6,
    "basis": "estimate",
    "src": null
   },
@@ -641,6 +681,11 @@
    "basis": "estimate",
    "src": null
   },
+  "g-sight-nf": {
+   "oz": 0.4,
+   "basis": "estimate",
+   "src": null
+  },
   "g-sight-oem": {
    "oz": 0.1,
    "basis": "estimate",
@@ -648,6 +693,11 @@
   },
   "g-sight-trijicon": {
    "oz": 0.3,
+   "basis": "estimate",
+   "src": null
+  },
+  "g-sight-truglo": {
+   "oz": 0.4,
    "basis": "estimate",
    "src": null
   },
@@ -666,8 +716,18 @@
    "basis": "estimate",
    "src": null
   },
+  "g17-bbl-ba": {
+   "oz": 4.4,
+   "basis": "estimate",
+   "src": null
+  },
   "g17-bbl-faxon": {
    "oz": 3.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "g17-bbl-faxont": {
+   "oz": 4.1,
    "basis": "estimate",
    "src": null
   },
@@ -731,6 +791,11 @@
    "basis": "estimate",
    "src": null
   },
+  "g17-rsa-g4": {
+   "oz": 1.0,
+   "basis": "estimate",
+   "src": null
+  },
   "g17-rsa-g45": {
    "oz": 1.0,
    "basis": "estimate",
@@ -751,6 +816,21 @@
    "basis": "estimate",
    "src": null
   },
+  "g17-slide-g4": {
+   "oz": 11.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "g17-slide-g5": {
+   "oz": 13.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "g17-slide-ggp": {
+   "oz": 10.6,
+   "basis": "estimate",
+   "src": null
+  },
   "g17-slide-mos": {
    "oz": 13.3,
    "basis": "estimate",
@@ -761,8 +841,18 @@
    "basis": "estimate",
    "src": null
   },
+  "g19-bbl-ba": {
+   "oz": 4.0,
+   "basis": "estimate",
+   "src": null
+  },
   "g19-bbl-faxon": {
    "oz": 3.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "g19-bbl-faxont": {
+   "oz": 3.7,
    "basis": "estimate",
    "src": null
   },
@@ -826,6 +916,11 @@
    "basis": "estimate",
    "src": null
   },
+  "g19-rsa-g4": {
+   "oz": 1.0,
+   "basis": "estimate",
+   "src": null
+  },
   "g19-rsa-g45": {
    "oz": 0.9,
    "basis": "estimate",
@@ -843,6 +938,21 @@
   },
   "g19-slide-g3": {
    "oz": 10.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "g19-slide-g4": {
+   "oz": 11.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "g19-slide-g5": {
+   "oz": 12.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "g19-slide-ggp": {
+   "oz": 10.1,
    "basis": "estimate",
    "src": null
   },
@@ -926,6 +1036,16 @@
    "basis": "estimate",
    "src": null
   },
+  "g26-slide-g4": {
+   "oz": 10.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "g26-slide-g5": {
+   "oz": 11.1,
+   "basis": "estimate",
+   "src": null
+  },
   "g26-slide-mos": {
    "oz": 11.4,
    "basis": "estimate",
@@ -938,6 +1058,11 @@
   },
   "gs-bbl-43x": {
    "oz": 2.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "gs-bbl-43xtp": {
+   "oz": 2.6,
    "basis": "estimate",
    "src": null
   },
@@ -1008,6 +1133,11 @@
   },
   "gs-opt-507k": {
    "oz": 1.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "gs-opt-epsc": {
+   "oz": 1.2,
    "basis": "estimate",
    "src": null
   },
@@ -1091,6 +1221,11 @@
    "basis": "estimate",
    "src": null
   },
+  "p-bbl-tpc": {
+   "oz": 4.0,
+   "basis": "estimate",
+   "src": null
+  },
   "p-case-pelican": {
    "oz": 46.0,
    "basis": "estimate",
@@ -1121,6 +1256,11 @@
    "basis": "estimate",
    "src": null
   },
+  "p-grip-carry": {
+   "oz": 3.9,
+   "basis": "estimate",
+   "src": null
+  },
   "p-grip-compact": {
    "oz": 3.6,
    "basis": "estimate",
@@ -1128,6 +1268,11 @@
   },
   "p-grip-sub": {
    "oz": 3.3,
+   "basis": "estimate",
+   "src": null
+  },
+  "p-grip-wilson": {
+   "oz": 4.6,
    "basis": "estimate",
    "src": null
   },
@@ -1186,6 +1331,11 @@
    "basis": "estimate",
    "src": null
   },
+  "p-opt-407c": {
+   "oz": 1.5,
+   "basis": "estimate",
+   "src": null
+  },
   "p-opt-507c": {
    "oz": 1.5,
    "basis": "estimate",
@@ -1208,6 +1358,11 @@
   },
   "p-slide-compact": {
    "oz": 11.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "p-slide-compor": {
+   "oz": 11.6,
    "basis": "estimate",
    "src": null
   },
@@ -1296,6 +1451,11 @@
    "basis": "estimate",
    "src": null
   },
+  "p365-bbl-tpstd": {
+   "oz": 2.6,
+   "basis": "estimate",
+   "src": null
+  },
   "p365-bbl-xl": {
    "oz": 2.9,
    "basis": "estimate",
@@ -1366,6 +1526,11 @@
    "basis": "estimate",
    "src": null
   },
+  "p365-opt-407k": {
+   "oz": 1.0,
+   "basis": "estimate",
+   "src": null
+  },
   "p365-opt-507k": {
    "oz": 1.0,
    "basis": "estimate",
@@ -1383,6 +1548,11 @@
   },
   "p365-opt-rmrcc": {
    "oz": 1.1,
+   "basis": "estimate",
+   "src": null
+  },
+  "p365-opt-rmsc": {
+   "oz": 0.6,
    "basis": "estimate",
    "src": null
   },
