@@ -185,6 +185,8 @@ h1 { font: 700 clamp(28px, 4.2vw, 40px)/1.08 var(--f-head); letter-spacing: -.00
 .bp-part.error path { stroke: var(--bp-err); fill: rgba(255,139,123,.12); }
 .bp-part[role=button] { cursor: pointer; outline: none; }
 .bp-part[role=button]:hover path, .bp-part.active path, .bp-part[role=button]:focus-visible path { stroke: var(--bp-hi); fill: rgba(255,195,92,.14); }
+.bp-part.movable { cursor: grab; touch-action: none; }
+.bp-part.movable.dragging { cursor: grabbing; }
 .bp-part .hit { fill: transparent; stroke: none; pointer-events: all; }
 .bp-callout { pointer-events: none; }
 .bp-callout .hit { fill: transparent; stroke: none; pointer-events: all; cursor: pointer; }
@@ -211,10 +213,47 @@ h1 { font: 700 clamp(28px, 4.2vw, 40px)/1.08 var(--f-head); letter-spacing: -.00
 .card-note { font-size: 13px; color: var(--muted); margin: -4px 0 10px; }
 .summary > .card { padding: 18px; }
 
-.builder-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 22px; align-items: start; }
-@media (max-width: 979px) { .builder-grid { grid-template-columns: minmax(0, 1fr); } }
-.summary { display: grid; gap: 16px; position: sticky; top: 76px; }
-@media (max-width: 979px) { .summary { position: static; } }
+/* Workbench: the drawing in the middle, parts on the left, totals and warnings on the right. */
+.workbench { display: grid; gap: 20px; align-items: start;
+  grid-template-columns: minmax(0, 1fr); grid-template-areas: 'center' 'parts' 'summary'; }
+.wb-center { grid-area: center; min-width: 0; }
+.workbench > .parts { grid-area: parts; }
+.workbench > .summary { grid-area: summary; }
+.summary { display: grid; gap: 16px; }
+@media (min-width: 980px) {
+  .workbench { grid-template-columns: 330px minmax(0, 1fr); grid-template-areas: 'parts center' 'parts summary'; }
+  .workbench > .parts { position: sticky; top: 76px; max-height: calc(100vh - 92px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+}
+@media (min-width: 1240px) {
+  .wrap { max-width: 1520px; }
+  .workbench { grid-template-columns: 340px minmax(0, 1fr) 310px; grid-template-areas: 'parts center summary'; }
+  .workbench > .summary { position: sticky; top: 76px; max-height: calc(100vh - 92px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+}
+@media (min-width: 980px) {
+  .workbench > .parts .parts-head { display: none; }
+  .workbench > .parts .part-row { grid-template-columns: 30px minmax(0, 1fr) auto; grid-template-areas: 'no main fit' 'no main price'; row-gap: 2px; padding: 10px 12px; }
+  .workbench > .parts .part-no { grid-area: no; align-self: start; }
+  .workbench > .parts .part-main { grid-area: main; }
+  .workbench > .parts .part-fit { grid-area: fit; }
+  .workbench > .parts .part-price { grid-area: price; }
+  .workbench > .parts .part-name { font-size: 14px; }
+  .workbench > .parts .parts-group-title { padding: 14px 12px 6px; }
+  .builder-head { padding: 18px 0 12px; }
+  .builder-head .lede { display: none; }
+  .builder-head h1 { font-size: 30px; }
+  .workbench > .parts .opt { display: none; }
+  .wb-center .hint { margin-bottom: 0; }
+}
+
+/* Toolbar above the drawing */
+.bp-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 10px; }
+.tb-label { font: 600 11px/1 var(--f-sans); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin-right: 4px; }
+.chip { border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); padding: 6px 11px; border-radius: 99px; font-weight: 600; font-size: 13px; white-space: nowrap; }
+.chip:hover { border-color: var(--ink); }
+.chip-amt { color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; margin-left: 2px; }
+@media (max-width: 719px) { .bp-toolbar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -16px 10px; padding: 0 16px; } }
+.chip-clear { margin-left: auto; color: var(--err); border-color: transparent; background: none; }
+.chip-clear:hover { background: var(--err-soft); border-color: transparent; }
 
 /* parts list */
 .parts { overflow: hidden; }
@@ -245,6 +284,11 @@ h1 { font: 700 clamp(28px, 4.2vw, 40px)/1.08 var(--f-head); letter-spacing: -.00
 .amt.dim, .dim { color: var(--faint); }
 .src { font-size: 12px; color: var(--muted); }
 .part-fit { display: flex; justify-content: flex-end; align-items: center; gap: 6px; }
+.mount-ctl { grid-column: 2 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 2px; }
+.segctl.small button { padding: 4px 8px; font-size: 12px; }
+.mount-pos { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); flex: 1 1 160px; min-width: 0; }
+.mount-pos input { flex: 1; min-width: 80px; accent-color: var(--cta); }
+.mount-pos span { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .x { border: 0; background: none; color: var(--faint); font-size: 18px; line-height: 1; padding: 2px 4px; border-radius: 4px; }
 .x:hover { color: var(--err); background: var(--err-soft); }
 @media (max-width: 599px) {
@@ -421,6 +465,7 @@ tr:first-child td { border-top: 0; }
   padding: 11px 18px; border-radius: 8px; font-size: 14px; font-weight: 600; box-shadow: 0 8px 24px rgba(0,0,0,.25); max-width: calc(100% - 32px); overflow-wrap: anywhere; }
 @media (max-width: 979px) { .toast { bottom: 84px; } }
 .bp-canvas .bp { max-height: 620px; }
+@media (min-width: 1240px) { .bp-canvas .bp { max-height: calc(100vh - 380px); min-height: 260px; } }
 
 /* ---------------------------------------------------------------- community */
 

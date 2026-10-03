@@ -1,7 +1,8 @@
 // Verifies every preset build is complete and free of compatibility errors.
 import { awarenessFor } from '../src/awareness';
 import { PLATFORMS } from '../src/data/index';
-import { issuesFor, presetSelection, toBuild } from '../src/engine';
+import { issuesFor, placementOf, presetSelection, selectionTokens, toBuild } from '../src/engine';
+import { selectionFromParts } from '../src/store';
 
 let bad = 0;
 for (const p of PLATFORMS) {
@@ -106,7 +107,8 @@ for (const p of PLATFORMS.filter((x) => x.family === 'Rifle'))
 {
   const sev = (pid: string, tier: 'budget' | 'value' | 'premium', over: Record<string, string>, slot: string) => {
     const p = PLATFORMS.find((x) => x.id === pid)!;
-    const issues = issuesFor(p, toBuild(p, { ...presetSelection(p, tier), ...over })).filter((i) => i.slots.includes(slot));
+    const sel = { ...presetSelection(p, tier), ...over };
+    const issues = issuesFor(p, toBuild(p, sel), placementOf(sel)).filter((i) => i.slots.includes(slot));
     return issues.some((i) => i.severity === 'error') ? 'error' : issues.some((i) => i.severity === 'warn') ? 'warn' : issues.length ? 'info' : 'ok';
   };
   const cases: [string, 'budget' | 'value' | 'premium', Record<string, string>, string, string][] = [
@@ -127,11 +129,28 @@ for (const p of PLATFORMS.filter((x) => x.family === 'Rifle'))
     ['glock43x', 'premium', { light: 'p-light-tlr7sub-g' }, 'light', 'ok'],
     ['p365', 'budget', { holster: 'p365-hol-xl' }, 'holster', 'warn'],
     ['p320', 'value', { light: 'p-light-tlr7a', holster: 'p320-hol-compact-tlr7a' }, 'holster', 'info'],
+    // Foregrips and placement on the rail
+    ['ar15', 'budget', { foregrip: 'r-fg-mvg' }, 'foregrip', 'ok'],
+    ['ar15', 'budget', { foregrip: 'r-fg-afg2' }, 'foregrip', 'warn'],
+    ['ar15', 'budget', { foregrip: 'r-fg-mvg', light: 'r-light-hlx', laser: 'r-laser-ls117', rail: 'r-rail-5' }, 'foregrip', 'ok'],
+    ['ar15', 'budget', { foregrip: 'r-fg-mvg', light: 'r-light-hlx', '@light': 'b40', '@foregrip': 'b40' }, 'foregrip', 'error'],
+    ['ar15', 'budget', { foregrip: 'r-fg-mvg', light: 'r-light-hlx', '@light': 'b90', '@foregrip': 'b20' }, 'foregrip', 'ok'],
+    ['ar15', 'budget', { light: 'r-light-hlx', laser: 'r-laser-cmr301', '@light': 'l80', '@laser': 'l80' }, 'laser', 'error'],
+    ['ar15', 'budget', { light: 'r-light-hlx', laser: 'r-laser-cmr301', '@light': 'l80', '@laser': 'r80' }, 'laser', 'ok'],
+    ['ar15', 'budget', { light: 'r-light-m600', laser: 'r-laser-ls117', rail: 'r-rail-9', '@light': 'l80', '@laser': 'r80' }, 'rail', 'warn'],
+    ['ar15', 'budget', { light: 'r-light-m600', laser: 'r-laser-ls117', rail: 'r-rail-9', '@light': 'r20', '@laser': 'r80' }, 'rail', 'ok'],
+    ['ar10', 'value', { foregrip: 'r-fg-stop', light: 'r-light-rein', '@light': 'b130' }, 'foregrip', 'error'],
   ];
   for (const [pid, tier, over, slot, want] of cases) {
     const got = sev(pid, tier, over, slot);
     if (got !== want) { console.log(`add-ons: ${pid}/${tier} ${JSON.stringify(over)} on ${slot}: expected ${want}, got ${got}`); bad++; }
   }
+}
+// Placements survive a share link or community post.
+{
+  const sel = { ...presetSelection(PLATFORMS[0], 'value'), light: 'r-light-hlx', '@light': 'l85', foregrip: 'r-fg-kag', '@foregrip': 'b24' };
+  const back = selectionFromParts(PLATFORMS[0].id, selectionTokens(sel));
+  if (JSON.stringify(Object.entries(back).sort()) !== JSON.stringify(Object.entries(sel).sort())) { console.log('placement tokens did not round-trip', back); bad++; }
 }
 console.log(`Interface audit: ${combos} part combinations checked across ${IFACES.length} measured interfaces.`);
 process.exit(bad ? 1 : 0);

@@ -12,6 +12,8 @@ const MAX_SHARES_PER_DAY = 10;
 const HIDE_AFTER_REPORTS = 3;
 const PART_ID = /^[a-z0-9][a-z0-9-]{0,47}$/;
 const BUILD_ID = /^[a-z0-9]{10}$/;
+/** Up to 32 parts plus a few `at-<slot>-<code>` accessory placement tokens, which match PART_ID too. */
+const MAX_PARTS = 40;
 
 const json = (data, status, origin) =>
   new Response(JSON.stringify(data), {
@@ -116,7 +118,7 @@ export async function handle(request, env, now = Date.now()) {
       const parts = Array.isArray(body?.parts) ? body.parts : [];
       if (!PLATFORM_IDS.includes(platform)) return json({ error: 'Unknown platform' }, 400, origin);
       if (name.length < 3) return json({ error: 'Give the build a name of at least 3 characters.' }, 400, origin);
-      if (parts.length < 3 || parts.length > 24 || !parts.every((p) => typeof p === 'string' && PART_ID.test(p)))
+      if (parts.length < 3 || parts.length > MAX_PARTS || !parts.every((p) => typeof p === 'string' && PART_ID.test(p)))
         return json({ error: 'That parts list is not valid.' }, 400, origin);
       const who = await visitorHash(request, salt);
       const recent = await db.prepare('SELECT COUNT(*) AS n FROM builds WHERE ip_hash = ? AND created_at > ?').bind(who, now - DAY).first();

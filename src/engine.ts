@@ -1,6 +1,31 @@
-import type { Build, Issue, Offer, Part, Platform, Severity, Tier } from './types';
+import type { Build, Issue, Offer, Part, Placement, Platform, Severity, Side, Tier } from './types';
 
+/**
+ * Slot id -> part id. Accessory placements ride along under `@slot` keys, encoded as a side letter and
+ * tenths of an inch from the receiver: `{ light: 'r-light-hlx', '@light': 'r45' }`.
+ */
 export type Selection = Record<string, string>;
+
+const SIDE_CODE: Record<string, Side> = { t: 'top', r: 'right', l: 'left', b: 'bottom' };
+export const MOUNT_CODE = /^([trlb])(\d{1,3})$/;
+
+export const encodeMount = (side: Side, at: number) => `${side[0]}${Math.round(at * 10)}`;
+
+export function placementOf(sel: Selection): Placement {
+  const out: Placement = {};
+  for (const [k, v] of Object.entries(sel)) {
+    const m = k.startsWith('@') ? v.match(MOUNT_CODE) : null;
+    if (m) out[k.slice(1)] = { side: SIDE_CODE[m[1]], at: Number(m[2]) / 10 };
+  }
+  return out;
+}
+
+/** Part ids only, without placements. */
+export const partIds = (sel: Selection) => Object.entries(sel).filter(([k]) => !k.startsWith('@')).map(([, v]) => v);
+
+/** Part ids plus `at-<slot>-<code>` placement tokens, for share links and community builds. */
+export const selectionTokens = (sel: Selection) =>
+  Object.entries(sel).map(([k, v]) => (k.startsWith('@') ? `at-${k.slice(1)}-${v}` : v));
 
 const RANK: Record<Severity, number> = { info: 1, warn: 2, error: 3 };
 
@@ -13,18 +38,18 @@ export function worst(issues: Issue[]): Severity | undefined {
 export function toBuild(platform: Platform, sel: Selection): Build {
   const byId = new Map(platform.parts.map((p) => [p.id, p]));
   const b: Build = {};
-  for (const [slot, id] of Object.entries(sel)) b[slot] = byId.get(id);
+  for (const [slot, id] of Object.entries(sel)) if (!slot.startsWith('@')) b[slot] = byId.get(id);
   return b;
 }
 
-export function issuesFor(platform: Platform, build: Build): Issue[] {
-  return platform.rules(build).sort((a, b) => RANK[b.severity] - RANK[a.severity]);
+export function issuesFor(platform: Platform, build: Build, place: Placement = {}): Issue[] {
+  return platform.rules(build, place).sort((a, b) => RANK[b.severity] - RANK[a.severity]);
 }
 
 /** Issues the candidate would cause, given everything else in the build. */
-export function candidateIssues(platform: Platform, build: Build, part: Part): Issue[] {
+export function candidateIssues(platform: Platform, build: Build, part: Part, place: Placement = {}): Issue[] {
   const trial = { ...build, [part.slot]: part };
-  return platform.rules(trial).filter((i) => i.slots.includes(part.slot));
+  return platform.rules(trial, place).filter((i) => i.slots.includes(part.slot));
 }
 
 export function bestOffer(part: Part): Offer | undefined {

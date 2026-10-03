@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react';
-import type { Build, Part, Platform } from './types';
+import { useRef, useState, type ReactNode } from 'react';
+import { mountsFor } from './data/addons';
+import type { Build, Part, Placement, Platform } from './types';
 
 /**
  * Blueprint-style side elevation of a build, drawn as our own line art from real-world
@@ -18,6 +19,10 @@ interface Piece {
   target: [number, number];
   row: 'top' | 'bottom';
   el: ReactNode;
+  /** Accessories the builder can drag along the rail: position limits and snap step in inches, px per inch. */
+  move?: { at: number; min: number; max: number; step: number; scale: number };
+  /** Dimension shown while the piece is selected: [x0, x1, y, label] in px. */
+  dim?: [number, number, number, string];
 }
 
 interface Scene {
@@ -56,7 +61,7 @@ function repeat(from: number, to: number, step: number, fn: (x: number) => strin
 
 const GAS_FROM_BOLT: Record<string, number> = { pistol: 4, carbine: 7, midlength: 9, rifle: 12 };
 
-function rifle(platform: Platform, b: Build): Scene {
+function rifle(platform: Platform, b: Build, place: Placement): Scene {
   const S = 22;
   const ox = 300;
   const oy = 170;
@@ -230,7 +235,75 @@ function rifle(platform: Platform, b: Build): Scene {
   P.push({ slot: 'optic', z: 14, row: 'top', target: ot,
     el: <><path fillRule="evenodd" d={T(od)} /><path className="detail" d={T(odet)} /></> });
 
-  const front = BX + (mz ? mlen : 0);
+  // Add-ons, drawn only once chosen. Sizes are the makers' published lengths, rounded.
+  // Lights, lasers and foregrips go where the builder put them: on the top, right, left or bottom of the
+  // handguard, at a distance from the receiver. This is the right-side view, so anything on the left is
+  // hidden behind the handguard and drawn in dashed hidden lines.
+  const mounts = mountsFor(b, place, H);
+  const RAIL_TOP = freeFloat ? -1.1 : -0.98;
+  const RAIL_BOT = freeFloat ? 0.95 : 0.98;
+  const mountPiece = (slot: string, el: ReactNode, x0: number, x1: number, y0: number, y1: number) => {
+    const m = mounts[slot];
+    const outside = m.side === 'bottom' ? y1 + 0.55 : m.side === 'top' ? y0 - 0.55 : RAIL_TOP - 0.45;
+    P.push({ slot, internal: m.side === 'left', z: 13, row: m.side === 'bottom' ? 'bottom' : 'top', target: px((x0 + x1) / 2, m.side === 'bottom' ? y1 : y0),
+      move: { at: m.at, min: m.min, max: m.max, step: m.step, scale: S },
+      dim: [f(ox + RF * S), f(ox + x0 * S), f(oy + outside * S), `${inch(m.at)} from receiver`], el });
+  };
+  if (b.light && mounts.light) {
+    const m = mounts.light;
+    const len = m.len;
+    const r = 0.5, hr = 0.62, gap = 0.24;
+    const cy = m.side === 'bottom' ? RAIL_BOT + gap + r : m.side === 'top' ? RAIL_TOP - gap - r : -0.08;
+    const x0 = RF + m.at, x1 = x0 + len, hx = x1 - 1.1;
+    const tab = m.side === 'bottom' ? `M${f(x0 + 0.8)},${f(RAIL_BOT)} L${f(x0 + 0.8)},${f(cy - r)} M${f(x0 + 2.0)},${f(RAIL_BOT)} L${f(x0 + 2.0)},${f(cy - r)}`
+      : m.side === 'top' ? `M${f(x0 + 0.8)},${f(RAIL_TOP)} L${f(x0 + 0.8)},${f(cy + r)} M${f(x0 + 2.0)},${f(RAIL_TOP)} L${f(x0 + 2.0)},${f(cy + r)}` : '';
+    mountPiece('light', <>
+      <path d={T(`M${f(x0)},${f(cy - r)} L${f(hx)},${f(cy - r)} L${f(hx + 0.3)},${f(cy - hr)} L${f(x1)},${f(cy - hr)} L${f(x1)},${f(cy + hr)} L${f(hx + 0.3)},${f(cy + hr)} L${f(hx)},${f(cy + r)} L${f(x0)},${f(cy + r)} Q${f(x0 - 0.25)},${f(cy)} ${f(x0)},${f(cy - r)} Z`)} />
+      <path className="detail" d={T(`${tab} M${f(x1 - 0.12)},${f(cy - hr + 0.08)} L${f(x1 - 0.12)},${f(cy + hr - 0.08)} ${repeat(x0 + 0.5, hx - 0.4, 0.35, (x) => `M${x},${f(cy - r + 0.12)} L${x},${f(cy + r - 0.12)}`)}`)} />
+    </>, x0, x1, cy - hr, cy + hr);
+  }
+  if (b.laser && mounts.laser) {
+    const m = mounts.laser;
+    const combo = matches(b.laser, /CMR|light/i);
+    const h = combo ? 1.3 : 1.1;
+    const x0 = RF + m.at, x1 = x0 + m.len;
+    const ya = m.side === 'bottom' ? RAIL_BOT : m.side === 'top' ? RAIL_TOP - h : -0.08 - h / 2;
+    const yb = ya + h;
+    mountPiece('laser', <>
+      <path d={T(`M${f(x0)},${f(ya + 0.15)} Q${f(x0)},${f(ya)} ${f(x0 + 0.15)},${f(ya)} L${f(x1 - 0.1)},${f(ya)} Q${f(x1)},${f(ya)} ${f(x1)},${f(ya + 0.1)} L${f(x1)},${f(yb - 0.1)} Q${f(x1)},${f(yb)} ${f(x1 - 0.1)},${f(yb)} L${f(x0 + 0.15)},${f(yb)} Q${f(x0)},${f(yb)} ${f(x0)},${f(yb - 0.15)} Z`)} />
+      <path className="detail" d={T(`M${f(x1 - 0.18)},${f(ya + 0.2)} L${f(x1 - 0.18)},${f(ya + h * 0.5)}${combo ? ` M${f(x1 - 0.18)},${f(ya + h * 0.6)} L${f(x1 - 0.18)},${f(yb - 0.2)}` : ''} M${f(x0 + 0.3)},${f(m.side === 'top' ? yb - 0.25 : ya + 0.25)} L${f(x1 - 0.7)},${f(m.side === 'top' ? yb - 0.25 : ya + 0.25)}`)} />
+    </>, x0, x1, ya, yb);
+  }
+  if (b.foregrip && mounts.foregrip) {
+    const m = mounts.foregrip;
+    const kind = b.foregrip.attrs.kind;
+    const h = (b.foregrip.attrs.h as number) ?? 1;
+    const x0 = RF + m.at, x1 = x0 + m.len, y = RAIL_BOT, yb = y + h;
+    const d = kind === 'vertical'
+      ? `M${f(x0)},${f(y)} L${f(x1)},${f(y)} L${f(x1 - 0.12)},${f(yb - 0.25)} Q${f(x1 - 0.16)},${f(yb)} ${f(x1 - 0.42)},${f(yb)} L${f(x0 + 0.3)},${f(yb)} Q${f(x0 + 0.05)},${f(yb)} ${f(x0 + 0.08)},${f(yb - 0.28)} Z`
+      : kind === 'angled'
+        ? `M${f(x0)},${f(y)} L${f(x1)},${f(y)} L${f(x1 - 0.15)},${f(y + 0.28)} L${f(x0 + 0.55)},${f(yb)} Q${f(x0 + 0.1)},${f(yb + 0.02)} ${f(x0)},${f(yb - 0.35)} Z`
+        : `M${f(x0)},${f(y)} L${f(x1)},${f(y)} L${f(x1)},${f(yb - 0.1)} Q${f(x1)},${f(yb)} ${f(x1 - 0.12)},${f(yb)} L${f(x0 + 0.55)},${f(yb)} L${f(x0)},${f(y + 0.12)} Z`;
+    const det = kind === 'vertical'
+      ? repeat(y + 0.7, yb - 0.4, 0.42, (yy) => `M${f(x0 + 0.2)},${yy} L${f(x1 - 0.2)},${yy}`)
+      : `M${f(x0 + 0.25)},${f(y + 0.12)} L${f(x1 - 0.25)},${f(y + 0.12)}`;
+    mountPiece('foregrip', <><path d={T(d)} /><path className="detail" d={T(det)} /></>, x0, x1, y, yb);
+  }
+  const mag3x = b.magnifier;
+  if (mag3x && opt?.attrs.kind === 'dot') {
+    // Behind the red dot on the receiver rail, at the dot's height, flipped up in line.
+    const cy = matches(opt, /reflex|510/i) ? -2.42 : -2.3;
+    const x1 = 1.9;
+    const x0 = x1 - 4.1;
+    const r = 0.72;
+    P.push({ slot: 'magnifier', z: 14, row: 'top', target: px(x0 + 1.6, cy - r),
+      el: <>
+        <path d={T(`M${f(x0)},${f(cy - r + 0.1)} L${f(x0 + 1.0)},${f(cy - r + 0.1)} L${f(x0 + 1.2)},${f(cy - r + 0.2)} L${f(x1 - 0.5)},${f(cy - r + 0.2)} L${f(x1 - 0.3)},${f(cy - r)} L${f(x1)},${f(cy - r)} L${f(x1)},${f(cy + r)} L${f(x1 - 0.3)},${f(cy + r)} L${f(x1 - 0.5)},${f(cy + r - 0.2)} L${f(x0 + 1.2)},${f(cy + r - 0.2)} L${f(x0 + 1.0)},${f(cy + r - 0.1)} L${f(x0)},${f(cy + r - 0.1)} Z`)} />
+        <path className="detail" d={T(`M${f(x0 + 1.6)},${f(cy + r - 0.2)} L${f(x0 + 1.6)},-1.1 L${f(x0 + 3.0)},-1.1 L${f(x0 + 3.0)},${f(cy + r - 0.2)} M${f(x0 + 0.5)},${f(cy - r + 0.1)} L${f(x0 + 0.5)},${f(cy + r - 0.1)}`)} />
+      </> });
+  }
+
+  const front = Math.max(BX + (mz ? mlen : 0), HX);
   return {
     width: 1000, height: 486, pieces: P,
     center: [f(ox + (rear - 0.6) * S), f(ox + (front + 0.6) * S), oy],
@@ -505,12 +578,30 @@ function pistol(platform: Platform, b: Build): Scene {
   else od = 'M0.9,0 L1.0,-0.66 Q1.08,-1.0 1.38,-1.0 L2.18,-1.0 Q2.48,-0.98 2.54,-0.64 L2.66,0 Z M1.18,-0.15 L1.28,-0.8 L2.28,-0.8 L2.4,-0.15 Z';
   P.push({ slot: 'optic', z: 11, row: 'top', target: px(1.78, -0.9), el: <path fillRule="evenodd" d={T(od)} /> });
 
+  /* Weapon light on the dust cover rail, drawn only once chosen */
+  let pFront = front;
+  const pl = b.light;
+  if (pl) {
+    const big = matches(pl, /X300/);
+    const len = big ? 3.25 : matches(pl, /Sub/) ? 2.2 : 2.15;
+    const h = big ? 1.12 : 0.92;
+    const lx1 = Math.max(dust + 0.05, gF + 0.2 + len);
+    const lx0 = lx1 - len;
+    const ly0 = yRail - 0.14;
+    pFront = Math.max(front, lx1);
+    P.push({ slot: 'light', z: 4, row: 'bottom', target: px(lx0 + len * 0.5, ly0 + h),
+      el: <>
+        <path d={T(`M${f(lx0)},${f(ly0)} L${f(lx1 - 0.1)},${f(ly0)} Q${f(lx1)},${f(ly0)} ${f(lx1)},${f(ly0 + 0.1)} L${f(lx1)},${f(ly0 + h - 0.1)} Q${f(lx1)},${f(ly0 + h)} ${f(lx1 - 0.1)},${f(ly0 + h)} L${f(lx0 + 0.35)},${f(ly0 + h)} Q${f(lx0)},${f(ly0 + h)} ${f(lx0)},${f(ly0 + h - 0.3)} Z`)} />
+        <path className="detail" d={T(`M${f(lx1 - 0.1)},${f(ly0 + 0.16)} L${f(lx1 - 0.1)},${f(ly0 + h - 0.16)} M${f(lx0 + 0.15)},${f(ly0 + 0.3)} L${f(lx0 + 0.15)},${f(ly0 + 0.6)} M${f(lx0 + 0.35)},${f(ly0 + 0.12)} L${f(lx1 - 0.4)},${f(ly0 + 0.12)}`)} />
+      </> });
+  }
+
   const rear = Math.min(-tang, bk(Math.max(yGB, yMB)));
-  const vx = f(ox + (front + 0.5) * S);
+  const vx = f(ox + (pFront + 0.5) * S);
   return {
     width: 720, height: 560, pieces: P,
-    center: [f(ox + (-tang - 0.4) * S), f(ox + (front + 0.4) * S), f(oy + bc * S)],
-    dims: [[f(ox + rear * S), f(ox + front * S), 540, `${inch2(front - rear)} overall`]],
+    center: [f(ox + (-tang - 0.4) * S), f(ox + (pFront + 0.4) * S), f(oy + bc * S)],
+    dims: [[f(ox + rear * S), f(ox + pFront * S), 540, `${inch2(pFront - rear)} overall`]],
     vdims: [[vx, f(oy - sh * S), f(oy + yMB * S), `${inch2(yMB + sh)} tall`]],
     rows: [26, 500],
     spec: `${inch2(m.barrel)} barrel · ${inch2(SL)} slide`,
@@ -523,21 +614,31 @@ const O2 = (x: number, y: number, r: number) =>
 
 /* ================================================================== render */
 
-export function sceneFor(platform: Platform, build: Build): Scene {
-  return platform.family === 'Rifle' ? rifle(platform, build) : pistol(platform, build);
+export function sceneFor(platform: Platform, build: Build, place: Placement = {}): Scene {
+  return platform.family === 'Rifle' ? rifle(platform, build, place) : pistol(platform, build);
 }
 
-export function Blueprint({ platform, build, states, active, onPick, onHover, compact }: {
+export function Blueprint({ platform, build, place, states, active, onPick, onHover, onMove, compact }: {
   platform: Platform;
   build: Build;
+  place?: Placement;
   states: Record<string, RegionState>;
   active?: string | null;
   onPick?: (slot: string) => void;
   onHover?: (slot: string | null) => void;
+  /** Called while a light, laser or grip is dragged along the rail, with its new distance from the receiver. */
+  onMove?: (slot: string, at: number) => void;
   /** Thumbnail mode: no callouts, dimensions or interaction. */
   compact?: boolean;
 }) {
-  const scene = sceneFor(platform, build);
+  const scene = sceneFor(platform, build, place);
+  const drag = useRef<{ slot: string; x: number; at: number; k: number; moved: boolean } | null>(null);
+  const dragged = useRef(false);
+  const [dragging, setDragging] = useState<string | null>(null);
+  const moveTo = (slot: string, m: NonNullable<Piece['move']>, at: number) => {
+    const snapped = m.min + Math.round((at - m.min) / m.step) * m.step;
+    onMove?.(slot, Math.round(Math.min(m.max, Math.max(m.min, snapped)) * 100) / 100);
+  };
   const slotIds = new Set(platform.slots.map((s) => s.id));
   const numberOf = new Map(platform.slots.map((s, i) => [s.id, i + 1]));
   const pieces = scene.pieces
@@ -559,15 +660,36 @@ export function Blueprint({ platform, build, states, active, onPick, onHover, co
         if (!p.slot || compact || !onPick) return <g key={i} className={cls} aria-hidden="true">{p.el}</g>;
         const slot = platform.slots.find((s) => s.id === p.slot)!;
         const part = build[slot.id];
+        const mv = onMove ? p.move : undefined;
         return (
           <g
             key={p.slot}
-            className={cls}
+            className={cls + (mv ? ' movable' : '') + (dragging === slot.id ? ' dragging' : '')}
             role="button"
             tabIndex={0}
-            aria-label={`${numberOf.get(slot.id)}. ${slot.name}${part ? `: ${part.brand} ${part.name}` : ', empty'}`}
-            onClick={() => onPick(slot.id)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPick(slot.id); } }}
+            aria-label={`${numberOf.get(slot.id)}. ${slot.name}${part ? `: ${part.brand} ${part.name}` : ', empty'}${mv ? `, ${mv.at} inches from the receiver. Arrow keys move it along the rail` : ''}`}
+            onClick={() => { if (dragged.current) { dragged.current = false; return; } onPick(slot.id); }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPick(slot.id); }
+              if (mv && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) { e.preventDefault(); moveTo(slot.id, mv, mv.at + (e.key === 'ArrowRight' ? mv.step : -mv.step)); }
+            }}
+            onPointerDown={mv ? (e) => {
+              const k = (e.currentTarget.ownerSVGElement?.getScreenCTM()?.a ?? 1) * mv.scale;
+              drag.current = { slot: slot.id, x: e.clientX, at: mv.at, k, moved: false };
+              dragged.current = false;
+              e.currentTarget.setPointerCapture(e.pointerId);
+            } : undefined}
+            onPointerMove={mv ? (e) => {
+              const d = drag.current;
+              if (!d || d.slot !== slot.id) return;
+              const dx = e.clientX - d.x;
+              if (!d.moved && Math.abs(dx) < 4) return;
+              d.moved = true;
+              setDragging(slot.id);
+              moveTo(slot.id, mv, d.at + dx / d.k);
+            } : undefined}
+            onPointerUp={mv ? () => { dragged.current = !!drag.current?.moved; drag.current = null; setDragging(null); } : undefined}
+            onPointerCancel={mv ? () => { drag.current = null; setDragging(null); } : undefined}
             onMouseEnter={() => onHover?.(slot.id)}
             onMouseLeave={() => onHover?.(null)}
             onFocus={() => onHover?.(slot.id)}
@@ -601,7 +723,7 @@ export function Blueprint({ platform, build, states, active, onPick, onHover, co
           </g>
         </g>
       ))}
-      {!compact && scene.dims.map(([x0, x1, y, text], i) => (
+      {!compact && [...scene.dims, ...pieces.filter((p) => p.dim && p.slot && (p.slot === active || p.slot === dragging)).map((p) => p.dim!)].map(([x0, x1, y, text], i) => (
         <g key={i} className="bp-dim" aria-hidden="true">
           <path d={`M${x0},${y - 9} L${x0},${y + 9} M${x1},${y - 9} L${x1},${y + 9} M${x0},${y} L${x1},${y}`} />
           <path d={`M${x0 + 9},${y - 4} L${x0},${y} L${x0 + 9},${y + 4} M${x1 - 9},${y - 4} L${x1},${y} L${x1 - 9},${y + 4}`} />

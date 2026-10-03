@@ -45,6 +45,8 @@ test('rejects bad input', async () => {
   assert.equal((await share(e, { name: 'x' })).status, 400);
   assert.equal((await share(e, { parts: ['ok-part', 'DROP TABLE builds;--', 'x'] })).status, 400);
   assert.equal((await share(e, { parts: ['a', 'b'] })).status, 400);
+  assert.equal((await share(e, { parts: Array.from({ length: 41 }, (_, i) => `p${i}`) })).status, 400);
+  assert.equal((await share(e, { parts: ['g19-frame-g5', 'g-fcg-apex5', 'g19-slide-mos', 'at-light-r45'] })).status, 201);
 });
 
 test('strips markup and control characters from text', () => {

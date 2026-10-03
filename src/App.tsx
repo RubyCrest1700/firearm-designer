@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { PLATFORMS, PRICES_UPDATED_AT } from './data';
 import { RETAILERS, offerUrl } from './data/retailers';
 import {
-  bestOffer, candidateIssues, issuesFor, money, presetSelection, priceRange,
-  singleRetailerCarts, toBuild, worst, type Selection,
+  bestOffer, candidateIssues, encodeMount, issuesFor, money, partIds, placementOf, presetSelection, priceRange,
+  selectionTokens, singleRetailerCarts, toBuild, worst, type Selection,
 } from './engine';
 import { Blueprint, sceneFor, type RegionState } from './Blueprint';
 import {
@@ -15,7 +15,8 @@ import {
   type CommunityBuild, type CommunitySort,
 } from './community';
 import { awarenessFor, type Aware } from './awareness';
-import type { Build, Issue, Part, Platform, Severity, Slot, Tier } from './types';
+import { MOVABLE, SIDE_LABEL, mountsFor, railLength, type Resolved } from './data/addons';
+import type { Build, Issue, Part, Placement, Platform, Severity, Side, Slot, Tier } from './types';
 
 const STORE_KEY = 'firearm-designer:v2';
 const SEV_LABEL: Record<Severity, string> = { error: 'Conflict', warn: 'Check', info: 'Note' };
@@ -53,8 +54,8 @@ function slotState(build: Build, issues: Issue[], slotId: string): RegionState {
   return w === 'error' ? 'error' : w === 'warn' ? 'warn' : 'ok';
 }
 
-function statesFor(platform: Platform, build: Build) {
-  const issues = issuesFor(platform, build);
+function statesFor(platform: Platform, build: Build, place: Placement = {}) {
+  const issues = issuesFor(platform, build, place);
   const states = Object.fromEntries(platform.slots.map((s) => [s.id, slotState(build, issues, s.id)])) as Record<string, RegionState>;
   return { issues, states };
 }
@@ -117,7 +118,7 @@ export default function App() {
   };
   const share = async (name: string, note: string) => {
     const sel = selections[platformId] ?? {};
-    const b = await shareBuild(platformId, name, note, Object.values(sel));
+    const b = await shareBuild(platformId, name, note, selectionTokens(sel));
     setCommunityOpen(b);
     setToast(`Shared "${b.name}". It's on the Community page now.`);
   };
@@ -300,15 +301,18 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
   const [hover, setHover] = useState<string | null>(null);
   const platform = PLATFORMS.find((p) => p.id === platformId) ?? PLATFORMS[0];
   const build = toBuild(platform, selection);
-  const { issues, states } = statesFor(platform, build);
-  const scene = sceneFor(platform, build);
+  const place = placementOf(selection);
+  const { issues, states } = statesFor(platform, build, place);
+  const scene = sceneFor(platform, build, place);
+  const mounts = platform.family === 'Rifle' ? mountsFor(build, place, railLength(build, platform.id === 'ar10')) : {};
+  const setMount = (slot: string, side: Side, at: number) => setSelection({ ...selection, ['@' + slot]: encodeMount(side, at) });
   const status = buildStatus(platform, build, issues);
   const total = totalOf(platform, build);
   const chosen = platform.slots.filter((s) => build[s.id]).length;
   const openSlotObj = platform.slots.find((s) => s.id === openSlot);
 
   const choose = (slot: string, partId: string) => { setSelection({ ...selection, [slot]: partId }); setOpenSlot(null); };
-  const remove = (slot: string) => { const next = { ...selection }; delete next[slot]; setSelection(next); };
+  const remove = (slot: string) => { const next = { ...selection }; delete next[slot]; delete next['@' + slot]; setSelection(next); };
 
   return (
     <>
@@ -319,49 +323,49 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
           <p className="kicker">{communityOpen ? <>Community build · {communityOpen.name}</> : openSaved ? <>My builds · {openSaved.name}</> : <>{platform.family} build</>}</p>
           <h1>Build your {platform.name}</h1>
           <p className="lede">{platform.blurb}</p>
-          {chosen === 0 && (
-            <div className="start-blank">
-              <p><b>Start with a blank build.</b> Pick parts from the list or the drawing, or start from a ready-made build.</p>
-              <div className="start-actions">
-                {(['budget', 'value', 'premium'] as Tier[]).map((t) => (
-                  <button key={t} className="btn" onClick={() => setSelection(presetSelection(platform, t))}>{TIER_LABEL[t]} starter</button>
-                ))}
-                <button className="btn" onClick={onBrowseFeatured}>Community builds</button>
-              </div>
-            </div>
-          )}
         </div>
 
-        <figure className="blueprint">
-          <div className="bp-strip">
-            <span>DWG FD-{platform.id.toUpperCase()} · Side elevation</span>
-            <span className="bp-legend" aria-hidden="true">
-              <span className="lg lg-sel">Selected</span>
-              <span className="lg lg-hid">Internal</span>
-              <span className="lg lg-emp">Empty</span>
-              <span className="lg lg-err">Conflict</span>
-            </span>
+        <div className="workbench">
+          <div className="wb-center">
+            <div className="bp-toolbar" role="toolbar" aria-label="Build actions">
+              <span className="tb-label">{chosen === 0 ? 'Start from' : 'Start over from'}</span>
+              {(['budget', 'value', 'premium'] as Tier[]).map((t) => (
+                <button key={t} className="chip" onClick={() => { setSelection(presetSelection(platform, t)); setOpenSlot(null); }}>
+                  {TIER_LABEL[t]} <span className="chip-amt">{money(totalOf(platform, toBuild(platform, presetSelection(platform, t))))}</span>
+                </button>
+              ))}
+              <button className="chip" onClick={onBrowseFeatured}>Community builds</button>
+              {chosen > 0 && <button className="chip chip-clear" onClick={() => { setSelection({}); setOpenSlot(null); }}>Clear build</button>}
+            </div>
+            <figure className="blueprint">
+              <div className="bp-strip">
+                <span>DWG FD-{platform.id.toUpperCase()} · Side elevation</span>
+                <span className="bp-legend" aria-hidden="true">
+                  <span className="lg lg-sel">Selected</span>
+                  <span className="lg lg-hid">Internal</span>
+                  <span className="lg lg-emp">Empty</span>
+                  <span className="lg lg-err">Conflict</span>
+                </span>
+              </div>
+              <div className="bp-canvas">
+                <Blueprint platform={platform} build={build} place={place} states={states} active={hover ?? openSlot} onPick={setOpenSlot} onHover={setHover}
+                  onMove={(slot, at) => setMount(slot, mounts[slot]?.side ?? MOVABLE[slot].side, at)} />
+              </div>
+              <figcaption className="title-block">
+                <div><span>Platform</span><b>{platform.name}</b></div>
+                <div><span>Spec</span><b>{scene.spec}</b></div>
+                <div><span>Parts</span><b>{chosen} of {platform.slots.length}</b></div>
+                <div><span>Status</span><b className={'tb-' + status.cls}>{status.text}</b></div>
+                <div><span>Total</span><b>{money(total)}</b></div>
+              </figcaption>
+            </figure>
+            <p className="hint">{chosen === 0 ? 'Blank build. Pick parts from the list or click any part on the drawing, or start from a ready-made build above.' : Object.keys(mounts).length ? 'Select any part to change it. Drag a light, laser or grip along the rail to move it; pick its side in the parts list. Parts on the left side show as dashed lines.' : 'Select any part on the drawing or in the list to change it. The drawing updates with every part you choose.'}</p>
           </div>
-          <div className="bp-canvas">
-            <Blueprint platform={platform} build={build} states={states} active={hover ?? openSlot} onPick={setOpenSlot} onHover={setHover} />
-          </div>
-          <figcaption className="title-block">
-            <div><span>Platform</span><b>{platform.name}</b></div>
-            <div><span>Spec</span><b>{scene.spec}</b></div>
-            <div><span>Parts</span><b>{chosen} of {platform.slots.length}</b></div>
-            <div><span>Status</span><b className={'tb-' + status.cls}>{status.text}</b></div>
-            <div><span>Total</span><b>{money(total)}</b></div>
-          </figcaption>
-        </figure>
-        <p className="hint">Select any part on the drawing or in the list to change it. The drawing updates with every part you choose.</p>
-
-        <div className="builder-grid">
-          <PartsList platform={platform} build={build} issues={issues} states={states} hover={hover} onHover={setHover} onOpen={setOpenSlot} onRemove={remove} />
+          <PartsList platform={platform} build={build} issues={issues} states={states} hover={hover} onHover={setHover} onOpen={setOpenSlot} onRemove={remove}
+            mounts={mounts} onMount={setMount} />
           <Summary
             platform={platform} build={build} issues={issues} aware={awarenessFor(platform, build)} states={states} status={status} total={total}
             openSaved={openSaved} onSave={onSave} onShare={onShare} onCopyLink={onCopyLink} onOpen={setOpenSlot}
-            onPreset={(t) => { setSelection(presetSelection(platform, t)); setOpenSlot(null); }}
-            onClear={() => setSelection({})} onBrowseFeatured={onBrowseFeatured}
           />
         </div>
       </div>
@@ -375,6 +379,7 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
           slot={openSlotObj}
           number={platform.slots.indexOf(openSlotObj) + 1}
           build={build}
+          place={place}
           selectedId={build[openSlotObj.id]?.id}
           onChoose={(id) => choose(openSlotObj.id, id)}
           onRemove={build[openSlotObj.id] && !openSlotObj.required ? () => { remove(openSlotObj.id); setOpenSlot(null); } : undefined}
@@ -397,9 +402,10 @@ function FitTag({ state }: { state: RegionState }) {
   return <span className={'fit-tag ' + state}>{text}</span>;
 }
 
-function PartsList({ platform, build, issues, states, hover, onHover, onOpen, onRemove }: {
+function PartsList({ platform, build, issues, states, hover, onHover, onOpen, onRemove, mounts, onMount }: {
   platform: Platform; build: Build; issues: Issue[]; states: Record<string, RegionState>; hover: string | null;
   onHover: (s: string | null) => void; onOpen: (s: string) => void; onRemove: (s: string) => void;
+  mounts: Record<string, Resolved>; onMount: (slot: string, side: Side, at: number) => void;
 }) {
   return (
     <section className="card parts" aria-label="Parts list">
@@ -434,6 +440,7 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
                     <FitTag state={states[slot.id]} />
                     {part && !slot.required && <button className="x" onClick={() => onRemove(slot.id)} aria-label={`Remove ${slot.name}`} title="Remove">×</button>}
                   </span>
+                  {mounts[slot.id] && <MountControl slot={slot} m={mounts[slot.id]} onMount={(side, at) => onMount(slot.id, side, at)} />}
                 </li>
               );
             })}
@@ -444,11 +451,33 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
   );
 }
 
-function Summary({ platform, build, issues, aware, states, status, total, openSaved, onSave, onShare, onCopyLink, onOpen, onPreset, onClear, onBrowseFeatured }: {
+/** Side and rail position for a light, laser or grip. Dragging it on the drawing does the same. */
+function MountControl({ slot, m, onMount }: { slot: Slot; m: Resolved; onMount: (side: Side, at: number) => void }) {
+  const sides = MOVABLE[slot.id].sides;
+  return (
+    <div className="mount-ctl">
+      {sides.length > 1 && (
+        <div className="segctl small" role="radiogroup" aria-label={`${slot.name} side`}>
+          {sides.map((sd) => (
+            <button key={sd} role="radio" aria-checked={m.side === sd} className={m.side === sd ? 'on' : ''} onClick={() => onMount(sd, m.at)}>{SIDE_LABEL[sd]}</button>
+          ))}
+        </div>
+      )}
+      {m.fits && (
+        <label className="mount-pos">
+          <input type="range" min={m.min} max={m.max} step={m.step} value={m.at} aria-label={`${slot.name} distance from the receiver`}
+            onChange={(e) => onMount(m.side, Number(e.target.value))} />
+          <span>{m.at.toFixed(1)}" from receiver</span>
+        </label>
+      )}
+    </div>
+  );
+}
+
+function Summary({ platform, build, issues, aware, states, status, total, openSaved, onSave, onShare, onCopyLink, onOpen }: {
   platform: Platform; build: Build; issues: Issue[]; aware: Aware[]; states: Record<string, RegionState>; status: { cls: string; text: string }; total: number;
   openSaved: SavedBuild | null; onSave: (name: string, asNew: boolean) => void; onShare: (name: string, note: string) => Promise<void>;
   onCopyLink: () => void; onOpen: (s: string) => void;
-  onPreset: (t: Tier) => void; onClear: () => void; onBrowseFeatured: () => void;
 }) {
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState('');
@@ -462,7 +491,6 @@ function Summary({ platform, build, issues, aware, states, status, total, openSa
   const retailers = new Set(chosen.map((p) => bestOffer(p)?.retailer)).size;
   const carts = singleRetailerCarts(chosen).slice(0, 4);
   const [dollars, cents] = money(total).split('.');
-  const presetTotal = (t: Tier) => totalOf(platform, toBuild(platform, presetSelection(platform, t)));
 
   const startSave = () => { setName(openSaved?.name ?? `My ${platform.name} build`); setSaving(true); };
   const submit = (asNew: boolean) => { if (name.trim()) { onSave(name.trim(), asNew); setSaving(false); } };
@@ -560,7 +588,7 @@ function Summary({ platform, build, issues, aware, states, status, total, openSa
         </section>
       )}
 
-      <section className="card">
+      {chosen.length > 0 && <section className="card">
         <h2 className="card-title">Buy it all from one store</h2>
         <p className="card-note">Fewer shipments can beat a lower parts total. In-stock parts only.</p>
         <table className="carts">
@@ -574,23 +602,7 @@ function Summary({ platform, build, issues, aware, states, status, total, openSa
             ))}
           </tbody>
         </table>
-      </section>
-
-      <section className="card">
-        <h2 className="card-title">Start from a starter build</h2>
-        <div className="presets">
-          {(['budget', 'value', 'premium'] as Tier[]).map((t) => (
-            <button key={t} className="preset" onClick={() => onPreset(t)}>
-              <span className="preset-name">{TIER_LABEL[t]}</span>
-              <span className="preset-amt">{money(presetTotal(t))}</span>
-            </button>
-          ))}
-        </div>
-        <div className="card-links">
-          <button className="link" onClick={onBrowseFeatured}>See community builds</button>
-          <button className="link dim" onClick={onClear}>Clear this build</button>
-        </div>
-      </section>
+      </section>}
     </aside>
   );
 }
@@ -611,8 +623,8 @@ function Dock({ total, status }: { total: number; status: { cls: string; text: s
 
 type SortKey = 'fit' | 'price' | 'picks';
 
-function Picker({ platform, slot, number, build, selectedId, onChoose, onRemove, onClose, onBuyClick }: {
-  platform: Platform; slot: Slot; number: number; build: Build; selectedId?: string;
+function Picker({ platform, slot, number, build, place, selectedId, onChoose, onRemove, onClose, onBuyClick }: {
+  platform: Platform; slot: Slot; number: number; build: Build; place: Placement; selectedId?: string;
   onChoose: (id: string) => void; onRemove?: () => void; onClose: () => void; onBuyClick: () => void;
 }) {
   const [sort, setSort] = useState<SortKey>('fit');
@@ -632,7 +644,7 @@ function Picker({ platform, slot, number, build, selectedId, onChoose, onRemove,
   }, []);
 
   const all = platform.parts.filter((p) => p.slot === slot.id).map((p) => {
-    const iss = candidateIssues(platform, build, p);
+    const iss = candidateIssues(platform, build, p, place);
     return { part: p, issues: iss, sev: worst(iss) ?? ('ok' as const), price: bestOffer(p)?.price ?? Infinity };
   });
   const conflicts = all.filter((c) => c.sev === 'error').length;
@@ -742,13 +754,13 @@ function Candidate({ part, issues, sev, selected, onChoose, onBuyClick }: {
 function BuildCard({ platformId, selection, badge, title, meta, body, actions }: {
   platformId: string; selection: Selection; badge?: ReactNode; title: ReactNode; meta: ReactNode; body?: ReactNode; actions: ReactNode;
 }) {
-  const { platform, build } = buildOf(platformId, selection);
-  const { issues, states } = statesFor(platform, build);
+  const { platform, build, place } = buildOf(platformId, selection);
+  const { issues, states } = statesFor(platform, build, place);
   const status = buildStatus(platform, build, issues);
   return (
     <article className="build-card card">
       <div className="thumb">
-        <Blueprint platform={platform} build={build} states={states} compact />
+        <Blueprint platform={platform} build={build} place={place} states={states} compact />
         {badge}
       </div>
       <div className="build-card-body">
@@ -830,7 +842,7 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onStart, onToast }: {
         selection={sel}
         badge={rank !== undefined ? <span className="tier-badge value">#{rank + 1} this week</span> : undefined}
         title={b.name}
-        meta={<>{platform.name} · {Object.keys(sel).length} parts · Shared {shortDate(b.createdAt, true)}</>}
+        meta={<>{platform.name} · {partIds(sel).length} parts · Shared {shortDate(b.createdAt, true)}</>}
         body={<>
           {b.note && <p className="summary-text">{b.note}</p>}
           <ul className="highlights">{topParts(build).map((p) => <li key={p.id}><span className="brand-dim">{p.brand}</span> {p.name}</li>)}</ul>
@@ -915,7 +927,7 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onStart, onToast }: {
                 selection={fb.selection}
                 badge={<span className={'tier-badge ' + fb.tier}>{TIER_LABEL[fb.tier]}</span>}
                 title={fb.name}
-                meta={<>{fb.platform.family} · {Object.keys(fb.selection).length} parts</>}
+                meta={<>{fb.platform.family} · {partIds(fb.selection).length} parts</>}
                 body={<>
                   <p className="summary-text">{fb.summary}</p>
                   <ul className="highlights">{topParts(build).map((p) => <li key={p.id}><span className="brand-dim">{p.brand}</span> {p.name}</li>)}</ul>
@@ -973,7 +985,7 @@ function SavedPage({ saved, onOpen, onRename, onDuplicate, onDelete, onCopyLink,
                     <button className="btn primary" type="submit">Save</button>
                   </form>
                 ) : s.name}
-                meta={<>{platform.name} · {Object.keys(s.selection).length} parts · Saved {shortDate(s.savedAt, true)}</>}
+                meta={<>{platform.name} · {partIds(s.selection).length} parts · Saved {shortDate(s.savedAt, true)}</>}
                 actions={confirmDelete === s.id ? (
                   <>
                     <span className="confirm">Delete this build?</span>

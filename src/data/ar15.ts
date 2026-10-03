@@ -1,4 +1,4 @@
-import type { Build, Issue, Platform } from '../types';
+import type { Build, Issue, Placement, Platform } from '../types';
 import { boreIssue, parts, pick, threadIssue } from './helpers';
 import { rifleAddonParts, rifleAddonRules, rifleAddonSlots } from './addons';
 
@@ -184,7 +184,7 @@ const allParts = [
   ]),
 ];
 
-function rules(b: Build): Issue[] {
+function rules(b: Build, place: Placement = {}): Issue[] {
   const out: Issue[] = [];
   const { barrel, gasblock, gastube, handguard, stock, buffer, bcg, muzzle } = b;
   if (barrel && gastube && barrel.attrs.gas !== gastube.attrs.length)
@@ -220,7 +220,7 @@ function rules(b: Build): Issue[] {
   if (thread) out.push(thread);
   if (barrel && (barrel.attrs.length as number) < 16 && stock)
     out.push({ severity: 'warn', slots: ['barrel', 'stock'], message: `A barrel under 16" with a stock makes a short-barreled rifle under the NFA. Approve an ATF Form 1 before assembly, or build it as a pistol without a stock.` });
-  out.push(...rifleAddonRules(b, false));
+  out.push(...rifleAddonRules(b, false, place));
   return out;
 }
 
