@@ -7,15 +7,19 @@ import {
 } from './engine';
 import { Blueprint, sceneFor, type RegionState } from './Blueprint';
 import {
-  FEATURED, TIER_LABEL, buildOf, loadSavedBuilds, newId, readSharedBuild, shareUrl, storeSavedBuilds, totalOf,
+  FEATURED, TIER_LABEL, buildOf, loadSavedBuilds, newId, readSharedBuild, selectionFromParts, shareUrl, storeSavedBuilds, totalOf,
   type FeaturedBuild, type SavedBuild,
 } from './store';
+import {
+  communityLive, featuredBuilds, listBuilds, myVotes, recordBuyClick, reportBuild, setVote, shareBuild,
+  type CommunityBuild, type CommunitySort,
+} from './community';
 import type { Build, Issue, Part, Platform, Severity, Slot, Tier } from './types';
 
 const STORE_KEY = 'firearm-designer:v2';
 const SEV_LABEL: Record<Severity, string> = { error: 'Conflict', warn: 'Check', info: 'Note' };
 const FAMILIES = ['Rifle', 'Pistol'];
-type Route = 'build' | 'featured' | 'saved';
+type Route = 'build' | 'community' | 'saved';
 
 interface Persisted { platform: string; selections: Record<string, Selection> }
 
@@ -30,7 +34,8 @@ function loadPersisted(): Persisted | null {
 
 const routeFromHash = (): Route => {
   const h = location.hash.replace('#', '');
-  return h === 'featured' || h === 'saved' ? h : 'build';
+  if (h === 'community' || h === 'featured') return 'community';
+  return h === 'saved' ? 'saved' : 'build';
 };
 
 const shortDate = (iso: string, year = false) =>
@@ -69,6 +74,8 @@ export default function App() {
   const [saved, setSaved] = useState<SavedBuild[]>(loadSavedBuilds);
   /** The saved build open in the builder, so Save can update it instead of adding a copy. */
   const [openSavedId, setOpenSavedId] = useState<string | null>(null);
+  /** The community build open in the builder, so retailer clicks count toward it. Cleared on any edit. */
+  const [communityOpen, setCommunityOpen] = useState<CommunityBuild | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
@@ -92,11 +99,22 @@ export default function App() {
     setRoute(r);
     window.scrollTo(0, 0);
   };
-  const openInBuilder = (pid: string, sel: Selection, savedId: string | null = null) => {
+  const openInBuilder = (pid: string, sel: Selection, savedId: string | null = null, community: CommunityBuild | null = null) => {
     setPlatformId(pid);
     setSelections((s) => ({ ...s, [pid]: { ...sel } }));
     setOpenSavedId(savedId);
+    setCommunityOpen(community);
     go('build');
+  };
+  const saveCopy = (name: string, pid: string, sel: Selection) => {
+    setSaved((list) => [{ id: newId(), name, platform: pid, selection: { ...sel }, savedAt: new Date().toISOString() }, ...list]);
+    setToast(`Saved "${name}" to My builds`);
+  };
+  const share = async (name: string, note: string) => {
+    const sel = selections[platformId] ?? {};
+    const b = await shareBuild(platformId, name, note, Object.values(sel));
+    setCommunityOpen(b);
+    setToast(`Shared "${b.name}". It's on the Community page now.`);
   };
   const saveBuild = (name: string, asNew: boolean) => {
     const sel = selections[platformId] ?? {};
@@ -132,7 +150,7 @@ export default function App() {
           </a>
           <nav className="site-nav" aria-label="Main">
             <NavLink active={route === 'build'} onClick={() => go('build')}>Build</NavLink>
-            <NavLink active={route === 'featured'} onClick={() => go('featured')}>Featured builds</NavLink>
+            <NavLink active={route === 'community'} onClick={() => go('community')}>Community</NavLink>
             <NavLink active={route === 'saved'} onClick={() => go('saved')}>
               My builds{saved.length > 0 && <span className="count">{saved.length}</span>}
             </NavLink>
@@ -148,22 +166,25 @@ export default function App() {
         {route === 'build' && (
           <BuilderPage
             platformId={platformId}
-            setPlatformId={(id) => { setPlatformId(id); setOpenSavedId(null); }}
+            setPlatformId={(id) => { setPlatformId(id); setOpenSavedId(null); setCommunityOpen(null); }}
             selection={selections[platformId] ?? {}}
-            setSelection={(sel) => setSelections((s) => ({ ...s, [platformId]: sel }))}
+            setSelection={(sel) => { setSelections((s) => ({ ...s, [platformId]: sel })); setCommunityOpen(null); }}
             openSaved={openSaved}
+            communityOpen={communityOpen?.platform === platformId ? communityOpen : null}
             onSave={saveBuild}
+            onShare={share}
             onCopyLink={() => copyLink(platformId, selections[platformId] ?? {})}
-            onBrowseFeatured={() => go('featured')}
+            onBuyClick={() => { if (communityOpen) void recordBuyClick(communityOpen.id); }}
+            onBrowseFeatured={() => go('community')}
           />
         )}
-        {route === 'featured' && (
-          <FeaturedPage
-            onOpen={(fb) => openInBuilder(fb.platform.id, fb.selection)}
-            onSave={(fb) => {
-              setSaved((list) => [{ id: newId(), name: fb.name, platform: fb.platform.id, selection: { ...fb.selection }, savedAt: new Date().toISOString() }, ...list]);
-              setToast(`Saved "${fb.name}" to My builds`);
-            }}
+        {route === 'community' && (
+          <CommunityPage
+            onOpen={(b) => openInBuilder(b.platform, selectionFromParts(b.platform, b.parts), null, b)}
+            onOpenStarter={(fb) => openInBuilder(fb.platform.id, fb.selection)}
+            onSave={(name, pid, sel) => saveCopy(name, pid, sel)}
+            onStart={() => go('build')}
+            onToast={setToast}
           />
         )}
         {route === 'saved' && (
@@ -175,7 +196,7 @@ export default function App() {
             onDelete={(id) => { setSaved((list) => list.filter((s) => s.id !== id)); if (id === openSavedId) setOpenSavedId(null); }}
             onCopyLink={(s) => copyLink(s.platform, s.selection)}
             onStart={() => go('build')}
-            onBrowse={() => go('featured')}
+            onBrowse={() => go('community')}
           />
         )}
       </main>
@@ -215,9 +236,10 @@ function Mark() {
 
 /* ================================================================== builder */
 
-function BuilderPage({ platformId, setPlatformId, selection, setSelection, openSaved, onSave, onCopyLink, onBrowseFeatured }: {
+function BuilderPage({ platformId, setPlatformId, selection, setSelection, openSaved, communityOpen, onSave, onShare, onCopyLink, onBuyClick, onBrowseFeatured }: {
   platformId: string; setPlatformId: (id: string) => void; selection: Selection; setSelection: (s: Selection) => void;
-  openSaved: SavedBuild | null; onSave: (name: string, asNew: boolean) => void; onCopyLink: () => void; onBrowseFeatured: () => void;
+  openSaved: SavedBuild | null; communityOpen: CommunityBuild | null; onSave: (name: string, asNew: boolean) => void;
+  onShare: (name: string, note: string) => Promise<void>; onCopyLink: () => void; onBuyClick: () => void; onBrowseFeatured: () => void;
 }) {
   const [openSlot, setOpenSlot] = useState<string | null>(null);
   const [hover, setHover] = useState<string | null>(null);
@@ -253,7 +275,7 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
 
       <div className="wrap builder">
         <div className="builder-head">
-          <p className="kicker">{openSaved ? <>My builds · {openSaved.name}</> : <>{platform.family} build</>}</p>
+          <p className="kicker">{communityOpen ? <>Community build · {communityOpen.name}</> : openSaved ? <>My builds · {openSaved.name}</> : <>{platform.family} build</>}</p>
           <h1>Build your {platform.name}</h1>
           <p className="lede">{platform.blurb}</p>
         </div>
@@ -285,7 +307,7 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
           <PartsList platform={platform} build={build} issues={issues} states={states} hover={hover} onHover={setHover} onOpen={setOpenSlot} onRemove={remove} />
           <Summary
             platform={platform} build={build} issues={issues} states={states} status={status} total={total}
-            openSaved={openSaved} onSave={onSave} onCopyLink={onCopyLink} onOpen={setOpenSlot}
+            openSaved={openSaved} onSave={onSave} onShare={onShare} onCopyLink={onCopyLink} onOpen={setOpenSlot}
             onPreset={(t) => { setSelection(presetSelection(platform, t)); setOpenSlot(null); }}
             onClear={() => setSelection({})} onBrowseFeatured={onBrowseFeatured}
           />
@@ -305,6 +327,7 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
           onChoose={(id) => choose(openSlotObj.id, id)}
           onRemove={build[openSlotObj.id] && !openSlotObj.required ? () => { remove(openSlotObj.id); setOpenSlot(null); } : undefined}
           onClose={() => setOpenSlot(null)}
+          onBuyClick={onBuyClick}
         />
       )}
     </>
@@ -369,13 +392,19 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
   );
 }
 
-function Summary({ platform, build, issues, states, status, total, openSaved, onSave, onCopyLink, onOpen, onPreset, onClear, onBrowseFeatured }: {
+function Summary({ platform, build, issues, states, status, total, openSaved, onSave, onShare, onCopyLink, onOpen, onPreset, onClear, onBrowseFeatured }: {
   platform: Platform; build: Build; issues: Issue[]; states: Record<string, RegionState>; status: { cls: string; text: string }; total: number;
-  openSaved: SavedBuild | null; onSave: (name: string, asNew: boolean) => void; onCopyLink: () => void; onOpen: (s: string) => void;
+  openSaved: SavedBuild | null; onSave: (name: string, asNew: boolean) => void; onShare: (name: string, note: string) => Promise<void>;
+  onCopyLink: () => void; onOpen: (s: string) => void;
   onPreset: (t: Tier) => void; onClear: () => void; onBrowseFeatured: () => void;
 }) {
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState('');
+  const [sharing, setSharing] = useState(false);
+  const [note, setNote] = useState('');
+  const [shareError, setShareError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const canShare = status.cls === 'ok';
   const chosen = platform.slots.map((s) => build[s.id]).filter((p): p is Part => !!p);
   const highest = chosen.reduce((sum, p) => sum + priceRange(p)[1], 0);
   const retailers = new Set(chosen.map((p) => bestOffer(p)?.retailer)).size;
@@ -385,6 +414,12 @@ function Summary({ platform, build, issues, states, status, total, openSaved, on
 
   const startSave = () => { setName(openSaved?.name ?? `My ${platform.name} build`); setSaving(true); };
   const submit = (asNew: boolean) => { if (name.trim()) { onSave(name.trim(), asNew); setSaving(false); } };
+  const startShare = () => { setName(openSaved?.name ?? `My ${platform.name} build`); setNote(''); setShareError(null); setSharing(true); setSaving(false); };
+  const submitShare = async () => {
+    if (name.trim().length < 3) { setShareError('Give the build a name of at least 3 characters.'); return; }
+    setBusy(true);
+    try { await onShare(name.trim(), note.trim()); setSharing(false); } catch (e) { setShareError((e as Error).message); } finally { setBusy(false); }
+  };
 
   return (
     <aside className="summary" id="summary" aria-label="Build summary">
@@ -402,7 +437,20 @@ function Summary({ platform, build, issues, states, status, total, openSaved, on
         </div>
         <p className={'status ' + status.cls}>{status.text}</p>
 
-        {saving ? (
+        {sharing ? (
+          <form className="save-form" onSubmit={(e) => { e.preventDefault(); void submitShare(); }}>
+            <label htmlFor="share-name">Build name</label>
+            <input id="share-name" value={name} onChange={(e) => setName(e.target.value)} autoFocus maxLength={60} />
+            <label htmlFor="share-note">What's it for? <span className="dim">(optional)</span></label>
+            <textarea id="share-note" value={note} onChange={(e) => setNote(e.target.value)} maxLength={280} rows={3} placeholder="Daily carry, competition, home defense…" />
+            <p className="form-note">Shared builds are public on the Community page. Just the name, note and parts list are shared.</p>
+            {shareError && <p className="form-error" role="alert">{shareError}</p>}
+            <div className="save-actions">
+              <button type="submit" className="btn primary" disabled={busy}>{busy ? 'Sharing…' : 'Share build'}</button>
+              <button type="button" className="btn ghost" onClick={() => setSharing(false)}>Cancel</button>
+            </div>
+          </form>
+        ) : saving ? (
           <form className="save-form" onSubmit={(e) => { e.preventDefault(); submit(!openSaved); }}>
             <label htmlFor="build-name">Build name</label>
             <input id="build-name" value={name} onChange={(e) => setName(e.target.value)} autoFocus maxLength={60} />
@@ -420,6 +468,10 @@ function Summary({ platform, build, issues, states, status, total, openSaved, on
           <div className="total-actions">
             <button className="btn primary" onClick={startSave}>{openSaved ? 'Save changes' : 'Save build'}</button>
             <button className="btn" onClick={onCopyLink}>Copy link</button>
+            <button className="btn wide-row" onClick={startShare} disabled={!canShare}
+              title={canShare ? 'Post this build to the Community page' : 'Finish the build and fix any conflicts to share it'}>
+              Share to community
+            </button>
           </div>
         )}
       </section>
@@ -452,7 +504,7 @@ function Summary({ platform, build, issues, states, status, total, openSaved, on
       </section>
 
       <section className="card">
-        <h2 className="card-title">Start from a featured build</h2>
+        <h2 className="card-title">Start from a starter build</h2>
         <div className="presets">
           {(['budget', 'value', 'premium'] as Tier[]).map((t) => (
             <button key={t} className="preset" onClick={() => onPreset(t)}>
@@ -462,7 +514,7 @@ function Summary({ platform, build, issues, states, status, total, openSaved, on
           ))}
         </div>
         <div className="card-links">
-          <button className="link" onClick={onBrowseFeatured}>See all featured builds</button>
+          <button className="link" onClick={onBrowseFeatured}>See community builds</button>
           <button className="link dim" onClick={onClear}>Clear this build</button>
         </div>
       </section>
@@ -486,9 +538,9 @@ function Dock({ total, status }: { total: number; status: { cls: string; text: s
 
 type SortKey = 'fit' | 'price' | 'picks';
 
-function Picker({ platform, slot, number, build, selectedId, onChoose, onRemove, onClose }: {
+function Picker({ platform, slot, number, build, selectedId, onChoose, onRemove, onClose, onBuyClick }: {
   platform: Platform; slot: Slot; number: number; build: Build; selectedId?: string;
-  onChoose: (id: string) => void; onRemove?: () => void; onClose: () => void;
+  onChoose: (id: string) => void; onRemove?: () => void; onClose: () => void; onBuyClick: () => void;
 }) {
   const [sort, setSort] = useState<SortKey>('fit');
   const [hideConflicts, setHideConflicts] = useState(false);
@@ -546,7 +598,7 @@ function Picker({ platform, slot, number, build, selectedId, onChoose, onRemove,
         </div>
         <ul className="cands">
           {candidates.map((c) => (
-            <Candidate key={c.part.id} part={c.part} issues={c.issues} sev={c.sev} selected={c.part.id === selectedId} onChoose={() => onChoose(c.part.id)} />
+            <Candidate key={c.part.id} part={c.part} issues={c.issues} sev={c.sev} selected={c.part.id === selectedId} onChoose={() => onChoose(c.part.id)} onBuyClick={onBuyClick} />
           ))}
           {candidates.length === 0 && <li className="cand-empty">Every option conflicts with your current build. Turn off the filter to see why.</li>}
         </ul>
@@ -556,8 +608,8 @@ function Picker({ platform, slot, number, build, selectedId, onChoose, onRemove,
   );
 }
 
-function Candidate({ part, issues, sev, selected, onChoose }: {
-  part: Part; issues: Issue[]; sev: Severity | 'ok'; selected: boolean; onChoose: () => void;
+function Candidate({ part, issues, sev, selected, onChoose, onBuyClick }: {
+  part: Part; issues: Issue[]; sev: Severity | 'ok'; selected: boolean; onChoose: () => void; onBuyClick: () => void;
 }) {
   const [showPrices, setShowPrices] = useState(false);
   const best = bestOffer(part);
@@ -601,7 +653,7 @@ function Candidate({ part, issues, sev, selected, onChoose }: {
                   <td className="num">{money(o.price)}</td>
                   <td>{o.inStock ? 'In stock' : <span className="oos">Out</span>}</td>
                   <td className="dim">{o.checkedAt ? `Live ${shortDate(o.checkedAt)}` : 'Sample'}</td>
-                  <td className="num"><a href={o.url ?? offerUrl(o.retailer, `${part.brand} ${part.name}`)} target="_blank" rel="noopener noreferrer">{o.url ? 'View ↗' : 'Search ↗'}</a></td>
+                  <td className="num"><a href={o.url ?? offerUrl(o.retailer, `${part.brand} ${part.name}`)} target="_blank" rel="noopener noreferrer" onClick={onBuyClick}>{o.url ? 'View ↗' : 'Search ↗'}</a></td>
                 </tr>
               ))}
             </tbody>
@@ -640,46 +692,170 @@ function BuildCard({ platformId, selection, badge, title, meta, body, actions }:
   );
 }
 
-function FeaturedPage({ onOpen, onSave }: { onOpen: (fb: FeaturedBuild) => void; onSave: (fb: FeaturedBuild) => void }) {
+function topParts(build: Build) {
+  return Object.values(build).filter((p): p is Part => !!p)
+    .sort((a, b) => (bestOffer(b)?.price ?? 0) - (bestOffer(a)?.price ?? 0)).slice(0, 3);
+}
+
+const SORT_LABEL: [CommunitySort, string][] = [['top', 'Top voted'], ['new', 'Newest'], ['bought', 'Most bought']];
+
+function CommunityPage({ onOpen, onOpenStarter, onSave, onStart, onToast }: {
+  onOpen: (b: CommunityBuild) => void; onOpenStarter: (fb: FeaturedBuild) => void;
+  onSave: (name: string, platform: string, sel: Selection) => void; onStart: () => void; onToast: (t: string) => void;
+}) {
   const [filter, setFilter] = useState<string>('all');
-  const list = FEATURED.filter((fb) => filter === 'all' || fb.platform.family === filter || fb.platform.id === filter);
+  const [sort, setSort] = useState<CommunitySort>('top');
+  const [builds, setBuilds] = useState<CommunityBuild[] | null>(null);
+  const [featured, setFeatured] = useState<CommunityBuild[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [votes, setVotes] = useState(myVotes);
+  const [confirmReport, setConfirmReport] = useState<string | null>(null);
+  const isPlatform = PLATFORMS.some((p) => p.id === filter);
+  const matches = (pid: string) => {
+    const p = PLATFORMS.find((x) => x.id === pid);
+    return !!p && (filter === 'all' || p.family === filter || p.id === filter);
+  };
+
+  useEffect(() => {
+    let live = true;
+    setError(null);
+    listBuilds(isPlatform ? filter : null, sort)
+      .then((list) => { if (live) setBuilds(list.filter((b) => matches(b.platform))); })
+      .catch((e: Error) => { if (live) { setBuilds([]); setError(e.message); } });
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter, sort]);
+  useEffect(() => { featuredBuilds().then(setFeatured).catch(() => setFeatured([])); }, []);
+
+  const replace = (b: CommunityBuild | undefined) => {
+    if (!b) return;
+    setBuilds((list) => list?.map((x) => (x.id === b.id ? b : x)) ?? null);
+    setFeatured((list) => list.map((x) => (x.id === b.id ? b : x)));
+  };
+  const toggleVote = async (b: CommunityBuild) => {
+    const on = !votes.has(b.id);
+    try { replace(await setVote(b.id, on)); setVotes(myVotes()); } catch (e) { onToast((e as Error).message); }
+  };
+  const report = async (b: CommunityBuild) => {
+    try {
+      await reportBuild(b.id);
+      setBuilds((list) => list?.filter((x) => x.id !== b.id) ?? null);
+      setFeatured((list) => list.filter((x) => x.id !== b.id));
+      onToast('Thanks. Builds reported by several people are hidden.');
+    } catch (e) { onToast((e as Error).message); }
+    setConfirmReport(null);
+  };
+
+  const card = (b: CommunityBuild, rank?: number) => {
+    const sel = selectionFromParts(b.platform, b.parts);
+    const { platform, build } = buildOf(b.platform, sel);
+    const voted = votes.has(b.id);
+    return (
+      <BuildCard
+        key={b.id}
+        platformId={b.platform}
+        selection={sel}
+        badge={rank !== undefined ? <span className="tier-badge value">#{rank + 1} this week</span> : undefined}
+        title={b.name}
+        meta={<>{platform.name} · {Object.keys(sel).length} parts · Shared {shortDate(b.createdAt, true)}</>}
+        body={<>
+          {b.note && <p className="summary-text">{b.note}</p>}
+          <ul className="highlights">{topParts(build).map((p) => <li key={p.id}><span className="brand-dim">{p.brand}</span> {p.name}</li>)}</ul>
+          <p className="community-stats">
+            <span>{b.votes} vote{b.votes === 1 ? '' : 's'}</span>
+            <span>{b.clicks} buy click{b.clicks === 1 ? '' : 's'}</span>
+          </p>
+        </>}
+        actions={confirmReport === b.id ? (
+          <>
+            <span className="confirm">Report this build?</span>
+            <button className="btn danger" onClick={() => void report(b)}>Report</button>
+            <button className="btn ghost" onClick={() => setConfirmReport(null)}>Cancel</button>
+          </>
+        ) : (
+          <>
+            <button className={'btn vote' + (voted ? ' on' : '')} aria-pressed={voted} onClick={() => void toggleVote(b)}>
+              ▲ {voted ? 'Voted' : 'Vote'}
+            </button>
+            <button className="btn primary" onClick={() => onOpen(b)}>Open in builder</button>
+            <button className="btn ghost" onClick={() => onSave(b.name, b.platform, sel)}>Save</button>
+            <button className="btn ghost" onClick={() => setConfirmReport(b.id)}>Report</button>
+          </>
+        )}
+      />
+    );
+  };
+
+  const starters = FEATURED.filter((fb) => matches(fb.platform.id));
   return (
     <div className="wrap page">
       <div className="page-head">
-        <p className="kicker">Featured builds</p>
-        <h1>Proven parts lists to start from</h1>
-        <p className="lede">Three complete, compatible builds for every platform. Open one in the builder to swap parts, or save it to My builds.</p>
+        <p className="kicker">Community</p>
+        <h1>Builds from the community</h1>
+        <p className="lede">Real builds shared by other builders. Vote for the ones you'd run. The best each week, by votes and by how many people click through to buy the parts, get featured at the top.</p>
       </div>
-      <div className="filters" role="group" aria-label="Filter by platform">
-        {[['all', 'All'], ['Rifle', 'Rifles'], ['Pistol', 'Pistols'], ...PLATFORMS.map((p) => [p.id, p.name])].map(([k, label]) => (
-          <button key={k} className={'chip' + (filter === k ? ' on' : '')} aria-pressed={filter === k} onClick={() => setFilter(k)}>{label}</button>
-        ))}
-      </div>
-      <div className="card-grid">
-        {list.map((fb) => {
-          const { build } = buildOf(fb.platform.id, fb.selection);
-          const top = Object.values(build).filter((p): p is Part => !!p)
-            .sort((a, b) => (bestOffer(b)?.price ?? 0) - (bestOffer(a)?.price ?? 0)).slice(0, 3);
-          return (
-            <BuildCard
-              key={fb.id}
-              platformId={fb.platform.id}
-              selection={fb.selection}
-              badge={<span className={'tier-badge ' + fb.tier}>{TIER_LABEL[fb.tier]}</span>}
-              title={fb.name}
-              meta={<>{fb.platform.family} · {Object.keys(fb.selection).length} parts</>}
-              body={<>
-                <p className="summary-text">{fb.summary}</p>
-                <ul className="highlights">{top.map((p) => <li key={p.id}><span className="brand-dim">{p.brand}</span> {p.name}</li>)}</ul>
-              </>}
-              actions={<>
-                <button className="btn primary" onClick={() => onOpen(fb)}>Open in builder</button>
-                <button className="btn" onClick={() => onSave(fb)}>Save</button>
-              </>}
-            />
-          );
-        })}
-      </div>
+      {!communityLive && (
+        <p className="notice">Preview mode: the community service isn't connected yet, so builds you share here are kept in this browser only.</p>
+      )}
+
+      {featured.length > 0 && (
+        <section className="community-section">
+          <h2 className="section-title">Featured this week</h2>
+          <div className="card-grid">{featured.map((b, i) => card(b, i))}</div>
+        </section>
+      )}
+
+      <section className="community-section">
+        <div className="section-head">
+          <h2 className="section-title">All shared builds</h2>
+          <div className="segctl" role="radiogroup" aria-label="Sort by">
+            {SORT_LABEL.map(([k, label]) => (
+              <button key={k} role="radio" aria-checked={sort === k} className={sort === k ? 'on' : ''} onClick={() => setSort(k)}>{label}</button>
+            ))}
+          </div>
+        </div>
+        <div className="filters" role="group" aria-label="Filter by platform">
+          {[['all', 'All'], ['Rifle', 'Rifles'], ['Pistol', 'Pistols'], ...PLATFORMS.map((p) => [p.id, p.name])].map(([k, label]) => (
+            <button key={k} className={'chip' + (filter === k ? ' on' : '')} aria-pressed={filter === k} onClick={() => setFilter(k)}>{label}</button>
+          ))}
+        </div>
+        {error && <p className="form-error" role="alert">{error}</p>}
+        {builds === null ? <p className="dim">Loading shared builds…</p> : builds.length === 0 ? (
+          <div className="empty card">
+            <h2>No shared builds here yet</h2>
+            <p>Be the first. Put together a complete build, then press Share to community.</p>
+            <div className="build-card-actions"><button className="btn primary" onClick={onStart}>Start a build</button></div>
+          </div>
+        ) : <div className="card-grid">{builds.map((b) => card(b))}</div>}
+      </section>
+
+      <section className="community-section">
+        <h2 className="section-title">Starter builds</h2>
+        <p className="section-note">Our own Budget, Best value and Premium lists for each platform. Complete, compatible and a good place to begin.</p>
+        <div className="card-grid">
+          {starters.map((fb) => {
+            const { build } = buildOf(fb.platform.id, fb.selection);
+            return (
+              <BuildCard
+                key={fb.id}
+                platformId={fb.platform.id}
+                selection={fb.selection}
+                badge={<span className={'tier-badge ' + fb.tier}>{TIER_LABEL[fb.tier]}</span>}
+                title={fb.name}
+                meta={<>{fb.platform.family} · {Object.keys(fb.selection).length} parts</>}
+                body={<>
+                  <p className="summary-text">{fb.summary}</p>
+                  <ul className="highlights">{topParts(build).map((p) => <li key={p.id}><span className="brand-dim">{p.brand}</span> {p.name}</li>)}</ul>
+                </>}
+                actions={<>
+                  <button className="btn primary" onClick={() => onOpenStarter(fb)}>Open in builder</button>
+                  <button className="btn" onClick={() => onSave(fb.name, fb.platform.id, fb.selection)}>Save</button>
+                </>}
+              />
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }
@@ -702,10 +878,10 @@ function SavedPage({ saved, onOpen, onRename, onDuplicate, onDelete, onCopyLink,
       {saved.length === 0 ? (
         <div className="empty card">
           <h2>No saved builds yet</h2>
-          <p>Put a build together and press Save build, or save one of the featured builds to start from.</p>
+          <p>Put a build together and press Save build, or save one from the Community page to start from.</p>
           <div className="build-card-actions">
             <button className="btn primary" onClick={onStart}>Start a build</button>
-            <button className="btn" onClick={onBrowse}>Browse featured builds</button>
+            <button className="btn" onClick={onBrowse}>Browse community builds</button>
           </div>
         </div>
       ) : (

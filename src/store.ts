@@ -47,17 +47,21 @@ export function readSharedBuild(): { platform: string; selection: Selection } | 
     const raw = new URLSearchParams(location.search).get('b');
     if (!raw) return null;
     const [pid, ids = ''] = raw.split('~');
-    const platform = PLATFORMS.find((p) => p.id === pid);
-    if (!platform) return null;
-    const selection: Selection = {};
-    for (const id of ids.split('.')) {
-      const part = platform.parts.find((p) => p.id === id);
-      if (part) selection[part.slot] = part.id;
-    }
-    return { platform: platform.id, selection };
+    return PLATFORMS.some((p) => p.id === pid) ? { platform: pid, selection: selectionFromParts(pid, ids.split('.')) } : null;
   } catch {
     return null;
   }
+}
+
+/** Turns a list of part ids back into a selection, skipping ids the catalog no longer has. */
+export function selectionFromParts(platformId: string, ids: string[]): Selection {
+  const platform = PLATFORMS.find((p) => p.id === platformId);
+  const selection: Selection = {};
+  for (const id of ids) {
+    const part = platform?.parts.find((p) => p.id === id);
+    if (part) selection[part.slot] = part.id;
+  }
+  return selection;
 }
 
 /* ------------------------------------------------------------- featured builds */
@@ -71,6 +75,7 @@ export interface FeaturedBuild {
   selection: Selection;
 }
 
+/** Our own starter builds: three tiers for every platform. */
 export const TIER_LABEL: Record<Tier, string> = { budget: 'Budget', value: 'Best value', premium: 'Premium' };
 
 const TIER_SUMMARY: Record<Tier, (p: Platform) => string> = {
