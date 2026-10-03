@@ -187,9 +187,9 @@
    "src": null
   },
   "a10-stock-moesl": {
-   "oz": 8.6,
-   "basis": "estimate",
-   "src": null
+   "oz": 9.6,
+   "basis": "published",
+   "src": "https://www.primaryarms.com/magpul-moe-slim-line-carbine-stock-mil-spec-black-mag347-blk"
   },
   "a10-stock-psa": {
    "oz": 7.5,
@@ -197,9 +197,9 @@
    "src": null
   },
   "a10-stock-ubr": {
-   "oz": 21.0,
-   "basis": "estimate",
-   "src": null
+   "oz": 21.3,
+   "basis": "published",
+   "src": "https://www.primaryarms.com/Magpul-UBR-GEN2-Collapsible-Stock-Black"
   },
   "a10-trig-alg": {
    "oz": 2.0,
@@ -247,9 +247,9 @@
    "src": null
   },
   "ar-bbl-ba16": {
-   "oz": 30.0,
-   "basis": "estimate",
-   "src": null
+   "oz": 28.0,
+   "basis": "published",
+   "src": "https://www.primaryarms.com/ballistic-advantage-ar-15-5-56-nato-16-mid-length-barrel-1-2x28-babl556015m"
   },
   "ar-bbl-bcm": {
    "oz": 30.0,
@@ -352,9 +352,9 @@
    "src": null
   },
   "ar-grip-k2": {
-   "oz": 3.4,
-   "basis": "estimate",
-   "src": null
+   "oz": 3.1,
+   "basis": "published",
+   "src": "https://www.primaryarms.com/magpul-moe-k2-plus-pistol-grip-black"
   },
   "ar-grip-moe": {
    "oz": 2.6,
@@ -397,14 +397,14 @@
    "src": null
   },
   "ar-hg-mi": {
-   "oz": 11.0,
-   "basis": "estimate",
-   "src": null
+   "oz": 11.4,
+   "basis": "published",
+   "src": "https://www.primaryarms.com/midwest-industries-15in-combat-rail-m-lok-ar-15-handguard-black"
   },
   "ar-hg-mi9": {
-   "oz": 7.5,
-   "basis": "estimate",
-   "src": null
+   "oz": 8.0,
+   "basis": "published",
+   "src": "https://www.primaryarms.com/midwest-industries-9.25in-combat-rail-m-lok-ar-15-handguard-black"
   },
   "ar-hg-moe": {
    "oz": 7.5,
@@ -497,9 +497,9 @@
    "src": null
   },
   "ar-stock-moesl": {
-   "oz": 9.0,
-   "basis": "estimate",
-   "src": null
+   "oz": 9.3,
+   "basis": "published",
+   "src": "https://magpul.com/moe-sl-carbine-stock-mil-spec.html"
   },
   "ar-stock-prs": {
    "oz": 32.0,
@@ -597,19 +597,19 @@
    "src": null
   },
   "g-mag-pmag12": {
-   "oz": 2.2,
-   "basis": "estimate",
-   "src": null
+   "oz": 1.5,
+   "basis": "published",
+   "src": "https://magpul.com/pmag-12-gl9-glock-g26.html"
   },
   "g-mag-pmag15": {
-   "oz": 2.6,
-   "basis": "estimate",
-   "src": null
+   "oz": 1.9,
+   "basis": "published",
+   "src": "https://magpul.com/pmag-15-gl9-glock-g19.html"
   },
   "g-mag-pmag17": {
-   "oz": 2.8,
-   "basis": "estimate",
-   "src": null
+   "oz": 1.7,
+   "basis": "published",
+   "src": "https://magpul.com/pmag-17-gl9-glock-17.html"
   },
   "g-mag-pmag21": {
    "oz": 3.6,
@@ -638,8 +638,8 @@
   },
   "g-opt-507c": {
    "oz": 1.5,
-   "basis": "estimate",
-   "src": null
+   "basis": "published",
+   "src": "https://www.primaryarms.com/holosun-hs507c-x2-pistol-red-dot-sight-2-moa"
   },
   "g-opt-507k": {
    "oz": 1.0,
@@ -1133,8 +1133,8 @@
   },
   "gs-opt-507k": {
    "oz": 1.0,
-   "basis": "estimate",
-   "src": null
+   "basis": "published",
+   "src": "https://www.primaryarms.com/holosun-hs507k-x2-compact-pistol-red-dot-sight-2-moa"
   },
   "gs-opt-epsc": {
    "oz": 1.2,
@@ -1533,13 +1533,13 @@
   },
   "p365-opt-507k": {
    "oz": 1.0,
-   "basis": "estimate",
-   "src": null
+   "basis": "published",
+   "src": "https://www.primaryarms.com/holosun-hs507k-x2-compact-pistol-red-dot-sight-2-moa"
   },
   "p365-opt-eps": {
-   "oz": 1.1,
-   "basis": "estimate",
-   "src": null
+   "oz": 1.0,
+   "basis": "published",
+   "src": "https://www.primaryarms.com/holosun-eps-carry-mrs-enclosed-pistol-sight-multiple-reticle-red-reticle"
   },
   "p365-opt-r0": {
    "oz": 1.0,
@@ -1637,9 +1637,9 @@
    "src": null
   },
   "r-light-hlx": {
-   "oz": 6.2,
-   "basis": "estimate",
-   "src": null
+   "oz": 6.4,
+   "basis": "published",
+   "src": "https://www.primaryarms.com/streamlight-protac-rail-mount-hl-x-1000-lumen-weapon-light-tapeswitch"
   },
   "r-light-m600": {
    "oz": 7.5,
@@ -1652,9 +1652,9 @@
    "src": null
   },
   "r-mag-hm3x": {
-   "oz": 12.5,
-   "basis": "estimate",
-   "src": null
+   "oz": 9.8,
+   "basis": "published",
+   "src": "https://www.primaryarms.com/holosun-hm3x-3x-magnifier"
   },
   "r-mag-vmx3t": {
    "oz": 15.0,
@@ -1663,8 +1663,8 @@
   },
   "r-qd-magpul": {
    "oz": 0.6,
-   "basis": "estimate",
-   "src": null
+   "basis": "published",
+   "src": "https://magpul.com/m-lok-qd-sling-mount.html"
   },
   "r-rail-5": {
    "oz": 0.5,
