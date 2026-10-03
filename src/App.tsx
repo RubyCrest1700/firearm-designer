@@ -24,9 +24,14 @@ type Route = 'build' | 'community' | 'saved';
 
 interface Persisted { platform: string; selections: Record<string, Selection> }
 
+/**
+ * The build in progress lives only for this browser tab (sessionStorage), so a reload keeps it but every new
+ * visit starts blank. Builds are kept only when the user saves them to My builds.
+ */
 function loadPersisted(): Persisted | null {
   try {
-    const raw = localStorage.getItem(STORE_KEY);
+    localStorage.removeItem(STORE_KEY); // older versions kept the draft forever
+    const raw = sessionStorage.getItem(STORE_KEY);
     return raw ? (JSON.parse(raw) as Persisted) : null;
   } catch {
     return null;
@@ -68,7 +73,6 @@ export default function App() {
   const [route, setRoute] = useState<Route>(routeFromHash);
   const [platformId, setPlatformId] = useState(shared?.platform ?? persisted?.platform ?? PLATFORMS[0].id);
   const [selections, setSelections] = useState<Record<string, Selection>>(() => ({
-    ...Object.fromEntries(PLATFORMS.map((p) => [p.id, presetSelection(p, 'value')])),
     ...persisted?.selections,
     ...(shared ? { [shared.platform]: shared.selection } : {}),
   }));
@@ -86,7 +90,7 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHash);
   }, [shared]);
   useEffect(() => {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify({ platform: platformId, selections })); } catch { /* not persisted */ }
+    try { sessionStorage.setItem(STORE_KEY, JSON.stringify({ platform: platformId, selections })); } catch { /* not persisted */ }
   }, [platformId, selections]);
   useEffect(() => { storeSavedBuilds(saved); }, [saved]);
   useEffect(() => {
@@ -221,6 +225,56 @@ export default function App() {
   );
 }
 
+/** Rifles and Pistols menus, each grouped by maker. */
+function PlatformMenu({ current, onPick }: { current: Platform; onPick: (id: string) => void }) {
+  const [open, setOpen] = useState<string | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(null); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(null); };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
+  }, [open]);
+  return (
+    <div className="platform-bar">
+      <div className="wrap platform-row" ref={ref}>
+        {FAMILIES.map((fam) => {
+          const list = PLATFORMS.filter((p) => p.family === fam);
+          const makers = [...new Set(list.map((p) => p.maker))];
+          const here = current.family === fam;
+          return (
+            <div className="pmenu" key={fam}>
+              <button className={'pmenu-btn' + (here ? ' active' : '')} aria-expanded={open === fam} aria-haspopup="true"
+                onClick={() => setOpen(open === fam ? null : fam)}>
+                {fam}s{here && <span className="pmenu-current">{current.name}</span>}
+                <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" /></svg>
+              </button>
+              {open === fam && (
+                <div className="pmenu-panel" role="menu">
+                  {makers.map((m) => (
+                    <div className="pmenu-group" key={m}>
+                      <p className="pmenu-maker">{m}</p>
+                      {list.filter((p) => p.maker === m).map((p) => (
+                        <button key={p.id} role="menuitem" className={'pmenu-item' + (p.id === current.id ? ' active' : '')}
+                          onClick={() => { onPick(p.id); setOpen(null); }}>
+                          <span>{p.name}</span>
+                          <span className="pmenu-blurb">{p.blurb}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function NavLink({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
   return <button className={'nav-link' + (active ? ' active' : '')} aria-current={active ? 'page' : undefined} onClick={onClick}>{children}</button>;
 }
@@ -258,27 +312,24 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
 
   return (
     <>
-      <div className="platform-bar">
-        <div className="wrap platform-row" aria-label="Platform">
-          {FAMILIES.map((fam) => (
-            <div className="platform-group" key={fam}>
-              <span className="platform-label">{fam}s</span>
-              {PLATFORMS.filter((p) => p.family === fam).map((p) => (
-                <button key={p.id} aria-pressed={p.id === platform.id} className={'platform-tab' + (p.id === platform.id ? ' active' : '')}
-                  onClick={() => { setPlatformId(p.id); setOpenSlot(null); }}>
-                  {p.name}
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
+      <PlatformMenu current={platform} onPick={(id) => { setPlatformId(id); setOpenSlot(null); }} />
 
       <div className="wrap builder">
         <div className="builder-head">
           <p className="kicker">{communityOpen ? <>Community build · {communityOpen.name}</> : openSaved ? <>My builds · {openSaved.name}</> : <>{platform.family} build</>}</p>
           <h1>Build your {platform.name}</h1>
           <p className="lede">{platform.blurb}</p>
+          {chosen === 0 && (
+            <div className="start-blank">
+              <p><b>Start with a blank build.</b> Pick parts from the list or the drawing, or start from a ready-made build.</p>
+              <div className="start-actions">
+                {(['budget', 'value', 'premium'] as Tier[]).map((t) => (
+                  <button key={t} className="btn" onClick={() => setSelection(presetSelection(platform, t))}>{TIER_LABEL[t]} starter</button>
+                ))}
+                <button className="btn" onClick={onBrowseFeatured}>Community builds</button>
+              </div>
+            </div>
+          )}
         </div>
 
         <figure className="blueprint">

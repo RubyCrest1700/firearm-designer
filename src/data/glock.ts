@@ -229,6 +229,7 @@ function makeGlock(M: Model, presets: Record<Tier, string[]>): Platform {
     id: `glock${n}`,
     name: `Glock ${n}`,
     family: 'Pistol',
+    maker: 'Glock',
     blurb: MODEL_DESC[M],
     slots,
     parts: [...modelParts(M), ...shared, ...pistolLights.filter((l) => (l.attrs.rails as string[]).includes('glock')),

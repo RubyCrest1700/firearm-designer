@@ -142,6 +142,7 @@ export const p320: Platform = {
   id: 'p320',
   name: 'Sig P320',
   family: 'Pistol',
+  maker: 'Sig Sauer',
   blurb: 'Modular 9mm built around a serialized fire control unit. Swap sizes freely.',
   slots,
   parts: [...allParts, ...pistolLights.filter((l) => (l.attrs.rails as string[]).includes('pic')),
