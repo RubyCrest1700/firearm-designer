@@ -490,15 +490,15 @@ const PROFILE_REF: Record<ProfileKey, { oal: number; h: number; rake: number; po
 const TRIGGERS: Record<ProfileKey, { face: number; curved: (y0: number) => string; flat: (y0: number) => string; line: { curved: string; flat: string } }> = {
   p320: {
     face: 2.86,
-    curved: (y0) => `M2.6,${y0} Q2.36,2.12 2.44,2.42 Q2.53,2.67 2.9,2.72 Q2.98,2.72 2.97,2.66 Q2.79,2.6 2.77,2.4 Q2.74,2.12 2.88,${y0} Z`,
-    flat: (y0) => `M2.6,${y0} L2.5,1.98 L2.5,2.64 Q2.5,2.72 2.58,2.72 L2.8,2.72 Q2.84,2.72 2.84,2.66 L2.84,1.98 L2.9,${y0} Z`,
-    line: { curved: 'M2.82,1.86 Q2.77,2.12 2.8,2.36', flat: 'M2.78,2.0 L2.78,2.64' },
+    curved: (y0) => `M2.66,${y0} Q2.5,2.05 2.6,2.32 Q2.66,2.44 2.84,2.43 Q2.89,2.42 2.87,2.38 Q2.76,2.32 2.76,2.14 Q2.76,1.94 2.86,${y0} Z`,
+    flat: (y0) => `M2.66,${y0} L2.6,1.98 L2.6,2.38 Q2.6,2.43 2.65,2.43 L2.78,2.43 Q2.82,2.43 2.82,2.38 L2.82,1.98 L2.86,${y0} Z`,
+    line: { curved: 'M2.8,1.86 Q2.71,2.08 2.74,2.3', flat: 'M2.71,2.0 L2.71,2.36' },
   },
   p365: {
-    face: 2.84,
-    curved: (y0) => `M2.56,${y0} Q2.56,1.98 2.92,2.27 Q2.99,2.29 3.01,2.22 Q2.84,1.96 2.85,${y0} Z`,
-    flat: (y0) => `M2.58,${y0} L2.62,2.18 Q2.63,2.26 2.7,2.26 L2.84,2.26 Q2.89,2.26 2.88,2.2 L2.85,${y0} Z`,
-    line: { curved: 'M2.8,1.42 Q2.81,1.86 2.94,2.12', flat: 'M2.82,1.44 L2.83,2.16' },
+    face: 2.8,
+    curved: (y0) => `M2.6,${y0} Q2.54,1.72 2.7,1.92 Q2.78,1.98 2.86,1.95 Q2.89,1.92 2.86,1.89 Q2.76,1.76 2.8,${y0} Z`,
+    flat: (y0) => `M2.62,${y0} L2.62,1.9 Q2.62,1.95 2.67,1.95 L2.78,1.95 Q2.82,1.95 2.81,1.9 L2.8,${y0} Z`,
+    line: { curved: 'M2.74,1.4 Q2.72,1.7 2.8,1.88', flat: 'M2.71,1.42 L2.71,1.88' },
   },
   glock: {
     face: 2.98,
@@ -540,6 +540,32 @@ function densify(pts: number[], step: number) {
   }
   return out;
 }
+/** Eases the back strap toward a straight run: points on the back edge (x < 1.2 between y0 and y1) move part of the
+ *  way out to the convex envelope from the beavertail to the heel. The G42's web under the beavertail is deeper than
+ *  the 9mm Glocks'. */
+function fillWeb(pts: number[], y0: number, y1: number, a: number) {
+  const idx: number[] = [];
+  for (let i = 0; i < pts.length; i += 2) if (pts[i] < 1.2 && pts[i + 1] > y0 && pts[i + 1] < y1) idx.push(i);
+  const p = idx.map((i) => [pts[i + 1], pts[i]]).sort((u, v) => u[0] - v[0]);
+  // Envelope on the left: lower hull of the points (y, x).
+  const hull: number[][] = [];
+  for (const q of p) {
+    while (hull.length >= 2) {
+      const [a1, b1] = hull[hull.length - 2], [a2, b2] = hull[hull.length - 1];
+      if ((a2 - a1) * (q[1] - b1) - (b2 - b1) * (q[0] - a1) <= 0) hull.pop(); else break;
+    }
+    hull.push(q);
+  }
+  const env = (y: number) => {
+    for (let k = 1; k < hull.length; k++)
+      if (y <= hull[k][0]) return hull[k - 1][1] + ((y - hull[k - 1][0]) / (hull[k][0] - hull[k - 1][0] || 1)) * (hull[k][1] - hull[k - 1][1]);
+    return hull[hull.length - 1][1];
+  };
+  const out = pts.slice();
+  for (const i of idx) out[i] = pts[i] - a * (pts[i] - env(pts[i + 1]));
+  return out;
+}
+
 /** Where a horizontal line at y crosses a closed polyline. */
 function crossings(pts: number[], y: number) {
   const xs: number[] = [];
@@ -632,7 +658,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   let toe = grip(mk.toe[0], mk.toe[1]);
   const ext = Math.max(0, spec.magH - spec.gripH);
   const hole = pr.frame.hole ? polyPath(scF(pr.frame.hole), frameMap, true) : '';
-  const outlines = pr.frame.outline.map((ol) => (glock ? smooth(densify(scF(ol), 0.05), 2) : ol));
+  const outlines = pr.frame.outline.map((ol) => (glock ? smooth(fillWeb(densify(scF(ol), 0.05), mk.sh + 0.15, mk.gripBottom - 0.1, 0.65), 2) : ol));
   let frameDetail = pr.frame.detail.map((ol) => polyPath(scF(ol), frameMap, false)).join(' ');
   let slideDetail = pr.slide.detail.map((ol) => polyPath(scS(ol), slideMap, false)).join(' ');
   let stipple = '';
