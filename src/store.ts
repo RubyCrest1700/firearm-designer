@@ -1,3 +1,4 @@
+import { SHARE_BASE } from './config';
 import { PLATFORMS } from './data';
 import { MOUNT_CODE, bestOffer, placementOf, presetSelection, selectionTokens, toBuild, type Selection } from './engine';
 import type { Build, Platform, Tier } from './types';
@@ -36,10 +37,27 @@ export const newId = () => Math.random().toString(36).slice(2, 10);
 
 /* ----------------------------------------------------------------- share links */
 
-/** `?b=<platform>~<part>.<part>…` — part ids and placement tokens never contain `.` or `~`. */
-export function shareUrl(platformId: string, sel: Selection) {
-  const base = `${location.origin}${location.pathname}`;
-  return `${base}?b=${encodeURIComponent(`${platformId}~${selectionTokens(sel).join('.')}`)}`;
+let shareLinksLive = false;
+
+/** Checks once that the share service answers, so links never point at it before it's set up. */
+export async function checkShareLinks() {
+  if (!SHARE_BASE) return;
+  try {
+    shareLinksLive = (await fetch(`${SHARE_BASE}/health`, { signal: AbortSignal.timeout(5000) })).ok;
+  } catch {
+    /* plain links */
+  }
+}
+
+/**
+ * `<platform>~<part>.<part>…` — part ids and placement tokens never contain `.` or `~`.
+ * Goes through the share service when it's up, so the link shows a picture card where it's posted;
+ * otherwise a plain `?b=` link to this page. A community build gets its short `/c/<id>` link.
+ */
+export function shareUrl(platformId: string, sel: Selection, communityId?: string) {
+  const code = encodeURIComponent(`${platformId}~${selectionTokens(sel).join('.')}`);
+  if (shareLinksLive) return communityId ? `${SHARE_BASE}/c/${communityId}` : `${SHARE_BASE}/b/${code}`;
+  return `${location.origin}${location.pathname}?b=${code}`;
 }
 
 export function readSharedBuild(): { platform: string; selection: Selection } | null {

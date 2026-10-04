@@ -103,3 +103,60 @@ test('limits how many builds one visitor can share per day', async () => {
   assert.equal((await share(e, { name: 'One too many' })).status, 429);
   assert.equal((await share(e, { name: 'Someone else' }, '5.5.5.5')).status, 201);
 });
+
+/* ------------------------------------------------------------- share links */
+
+const INDEX = {
+  platforms: {
+    glock19: { name: 'Glock 19', parts: { 'g19-frame-g5': ['Glock Gen 5 frame', 200], 'g-fcg-apex5': ['Apex trigger', 150.4], 'g19-slide-mos': ['Glock MOS slide', 300] } },
+  },
+};
+const page = async (e, path, index = INDEX) => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    if (String(url).endsWith('/og/index.json')) return new Response(JSON.stringify(index));
+    return new Response(null, { status: init?.method === 'HEAD' && String(url).includes('/og/c/') ? 404 : 200 });
+  };
+  try {
+    const r = await handle(new Request(`https://share.example${path}`), e);
+    return { status: r.status, type: r.headers.get('content-type'), text: await r.text() };
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+};
+const meta = (text, prop) => text.match(new RegExp(`<meta (?:property|name)="${prop}" content="([^"]*)"`))?.[1];
+
+test('a share link for any build names its platform and best-price total', async () => {
+  const r = await page(env(), '/b/glock19~g19-frame-g5.g-fcg-apex5.g19-slide-mos.at-light-r45');
+  assert.equal(r.status, 200);
+  assert.match(r.type, /text\/html/);
+  assert.equal(meta(r.text, 'og:title'), 'Glock 19 build · $650');
+  assert.match(meta(r.text, 'og:description'), /3 parts · \$650 at the best prices/);
+  assert.equal(meta(r.text, 'og:image'), 'https://dropinbuilds.com/og/glock19.png');
+  assert.equal(meta(r.text, 'twitter:card'), 'summary_large_image');
+  assert.match(r.text, /url=https:\/\/dropinbuilds\.com\/\?b=glock19~g19-frame-g5\.g-fcg-apex5\.g19-slide-mos\.at-light-r45/);
+});
+
+test('a community share link uses the build name and note, escaped', async () => {
+  const e = env();
+  const s = await share(e, { name: 'Carry "G19" & more', note: 'Daily carry' });
+  const r = await page(e, `/c/${s.body.build.id}`);
+  assert.equal(r.status, 200);
+  assert.equal(meta(r.text, 'og:title'), 'Carry &#34;G19&#34; &#38; more');
+  assert.match(meta(r.text, 'og:description'), /^Daily carry Glock 19 · 3 parts · \$650/);
+  // No picture of its own yet, so the platform picture stands in.
+  assert.equal(meta(r.text, 'og:image'), 'https://dropinbuilds.com/og/glock19.png');
+});
+
+test('share links still work when the price index is unreachable', async () => {
+  const r = await page(env(), '/b/glock19~g19-frame-g5', null);
+  assert.equal(r.status, 200);
+  assert.equal(meta(r.text, 'og:title'), 'Glock 19 build');
+});
+
+test('bad share links get the site card and a 404', async () => {
+  assert.equal((await page(env(), '/b/nope~x')).status, 404);
+  assert.equal((await page(env(), '/b/glock19~<script>')).status, 404);
+  assert.equal((await page(env(), '/c/aaaaaaaaaa')).status, 404);
+  assert.equal((await page(env(), '/api/builds')).status, 200);
+});
