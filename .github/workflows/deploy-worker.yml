@@ -58,3 +58,26 @@ jobs:
           if ! $WRANGLER secret list | grep -q '"SALT"'; then
             node -e 'process.stdout.write(require("crypto").randomBytes(32).toString("hex"))' | $WRANGLER secret put SALT
           fi
+      # Share links with picture cards live on share.dropinbuilds.com. This attaches that address to the
+      # Worker when the API token is allowed to; otherwise it says so, and it can be added by hand in the
+      # Cloudflare dashboard (Workers & Pages > firearm-designer-api > Settings > Domains & Routes).
+      - name: Attach share.dropinbuilds.com
+        if: steps.secrets.outputs.ready == 'true'
+        continue-on-error: true
+        run: |
+          API=https://api.cloudflare.com/client/v4
+          AUTH="Authorization: Bearer $CLOUDFLARE_API_TOKEN"
+          ZONE=$(curl -sS -H "$AUTH" "$API/zones?name=dropinbuilds.com" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s);process.stdout.write(r.result?.[0]?.id??"")})')
+          if [ -z "$ZONE" ]; then
+            echo "::warning::The API token can't see the dropinbuilds.com zone. Add share.dropinbuilds.com to the Worker as a custom domain in the Cloudflare dashboard."
+            exit 1
+          fi
+          RES=$(curl -sS -X PUT -H "$AUTH" -H 'content-type: application/json' "$API/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/domains" \
+            --data "{\"hostname\":\"share.dropinbuilds.com\",\"service\":\"firearm-designer-api\",\"zone_id\":\"$ZONE\",\"environment\":\"production\"}")
+          if echo "$RES" | grep -q '"success":true'; then
+            echo "share.dropinbuilds.com is attached to the Worker."
+          else
+            echo "$RES" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).errors)}catch{console.log(s)}})'
+            echo "::warning::Couldn't attach share.dropinbuilds.com. Add it to the Worker as a custom domain in the Cloudflare dashboard."
+            exit 1
+          fi

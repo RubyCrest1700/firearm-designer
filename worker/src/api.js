@@ -1,6 +1,9 @@
 // Community builds API. Runs as a Cloudflare Worker with a D1 database bound as `DB`.
 // Everything is anonymous: visitors are identified only by a salted hash of their IP address,
 // which limits each person to one vote, one report and one counted buy click per build.
+// Share links with picture cards (/c/<id> and /b/<code>) are answered by share.js.
+
+import { sharePage } from './share.js';
 
 /** Keep in sync with the platform ids in src/data. */
 export const PLATFORM_IDS = ['ar15', 'ar10', 'glock17', 'glock19', 'glock26', 'glock43x', 'p320', 'p365'];
@@ -79,6 +82,12 @@ export async function handle(request, env, now = Date.now()) {
   const salt = env.SALT ?? 'firearm-designer';
 
   try {
+    const shared = await sharePage(request, env);
+    if (shared) return shared;
+
+    // GET /health: lets the site check that share links work before handing them out
+    if (request.method === 'GET' && path === '/health') return json({ ok: true }, 200, origin);
+
     // GET /api/builds?platform=glock19&sort=top|new|bought&limit=24
     if (request.method === 'GET' && path === '/api/builds') {
       const platform = url.searchParams.get('platform');

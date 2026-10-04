@@ -7,7 +7,7 @@ import {
 } from './engine';
 import { Blueprint, sceneFor, type RegionState } from './Blueprint';
 import {
-  FEATURED, TIER_LABEL, buildOf, loadSavedBuilds, newId, readSharedBuild, selectionFromParts, shareUrl, storeSavedBuilds, totalOf,
+  FEATURED, TIER_LABEL, buildOf, loadSavedBuilds, newId, readSharedBuild, selectionFromParts, shareUrl, checkShareLinks, storeSavedBuilds, totalOf,
   type FeaturedBuild, type SavedBuild,
 } from './store';
 import {
@@ -85,6 +85,7 @@ export default function App() {
   const [communityOpen, setCommunityOpen] = useState<CommunityBuild | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
+  useEffect(() => { void checkShareLinks(); }, []);
   useEffect(() => {
     const onHash = () => { setRoute(routeFromHash()); window.scrollTo(0, 0); };
     window.addEventListener('hashchange', onHash);
@@ -135,8 +136,8 @@ export default function App() {
     }
     setToast(`Saved "${name}" to My builds`);
   };
-  const copyLink = async (pid: string, sel: Selection) => {
-    const url = shareUrl(pid, sel);
+  const copyLink = async (pid: string, sel: Selection, communityId?: string) => {
+    const url = shareUrl(pid, sel, communityId);
     try {
       await navigator.clipboard.writeText(url);
       setToast('Link copied. Anyone who opens it sees this exact build.');
@@ -180,7 +181,7 @@ export default function App() {
             communityOpen={communityOpen?.platform === platformId ? communityOpen : null}
             onSave={saveBuild}
             onShare={share}
-            onCopyLink={() => copyLink(platformId, selections[platformId] ?? {})}
+            onCopyLink={() => copyLink(platformId, selections[platformId] ?? {}, communityOpen?.platform === platformId ? communityOpen.id : undefined)}
             onBuyClick={() => { if (communityOpen) void recordBuyClick(communityOpen.id); }}
             onBrowseFeatured={() => go('community')}
           />
@@ -190,6 +191,7 @@ export default function App() {
             onOpen={(b) => openInBuilder(b.platform, selectionFromParts(b.platform, b.parts), null, b)}
             onOpenStarter={(fb) => openInBuilder(fb.platform.id, fb.selection)}
             onSave={(name, pid, sel) => saveCopy(name, pid, sel)}
+            onCopyLink={(b) => copyLink(b.platform, selectionFromParts(b.platform, b.parts), b.id)}
             onStart={() => go('build')}
             onToast={setToast}
           />
@@ -814,8 +816,8 @@ function topParts(build: Build) {
 
 const SORT_LABEL: [CommunitySort, string][] = [['top', 'Top voted'], ['new', 'Newest'], ['bought', 'Most bought']];
 
-function CommunityPage({ onOpen, onOpenStarter, onSave, onStart, onToast }: {
-  onOpen: (b: CommunityBuild) => void; onOpenStarter: (fb: FeaturedBuild) => void;
+function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onStart, onToast }: {
+  onOpen: (b: CommunityBuild) => void; onOpenStarter: (fb: FeaturedBuild) => void; onCopyLink: (b: CommunityBuild) => void;
   onSave: (name: string, platform: string, sel: Selection) => void; onStart: () => void; onToast: (t: string) => void;
 }) {
   const [filter, setFilter] = useState<string>('all');
@@ -894,6 +896,7 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onStart, onToast }: {
             </button>
             <button className="btn primary" onClick={() => onOpen(b)}>Open in builder</button>
             <button className="btn ghost" onClick={() => onSave(b.name, b.platform, sel)}>Save</button>
+            <button className="btn ghost" onClick={() => onCopyLink(b)}>Copy link</button>
             <button className="btn ghost" onClick={() => setConfirmReport(b.id)}>Report</button>
           </>
         )}
