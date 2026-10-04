@@ -149,7 +149,7 @@ ${o.jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).re
 <body>
 <header class="site-header"><div class="wrap header-row">
   <a class="brand" href="/">${MARK}<span class="brand-name">Drop-In <b>Builds</b></span></a>
-  <nav><a href="/">Builder</a><a href="/guides/">Guides</a><a href="/#community">Community</a></nav>
+  <nav aria-label="Main"><a href="/#build">Build</a><a href="/#community">Community</a><a href="/guides/" aria-current="page">FAQ</a><a href="/#saved">My builds</a></nav>
 </div></header>
 <main class="wrap">${o.body}</main>
 <footer class="site-footer"><div class="wrap">
@@ -168,7 +168,7 @@ export function guidePage(g: Guide, builtAt: string) {
   const platform = platformOf(g.platform);
   const path = `/guides/${g.slug}/`;
   const body = `
-  <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="/guides/">Guides</a> › <span>${esc(platform.name)}</span></nav>
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="/guides/">FAQ</a> › <span>${esc(platform.name)}</span></nav>
   <article>
     <h1>${esc(g.h1)}</h1>
     <p class="lede">${esc(g.lede)}</p>
@@ -204,7 +204,7 @@ export function guidePage(g: Guide, builtAt: string) {
       { '@context': 'https://schema.org', '@type': 'Article', headline: g.title, description: g.description, dateModified: builtAt, mainEntityOfPage: SITE + path, publisher: { '@type': 'Organization', name: 'Drop-In Builds', url: SITE } },
       { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Home', item: SITE + '/' },
-        { '@type': 'ListItem', position: 2, name: 'Guides', item: SITE + '/guides/' },
+        { '@type': 'ListItem', position: 2, name: 'FAQ', item: SITE + '/guides/' },
         { '@type': 'ListItem', position: 3, name: g.title, item: SITE + path },
       ] },
     ],
@@ -215,30 +215,49 @@ function relatedHtml(g: Guide) {
   const maker = platformOf(g.platform).maker;
   const same = (x: Guide) => Number(platformOf(x.platform).maker === maker);
   const others = GUIDES.filter((x) => x !== g).sort((x, y) => same(y) - same(x)).slice(0, 4);
-  return `<section><h2>More guides</h2><ul class="guide-list">${others.map((x) => `<li><a href="/guides/${x.slug}/">${esc(x.h1)}</a></li>`).join('')}</ul></section>`;
+  return `<section><h2>More fit questions</h2><ul class="guide-list">${others.map((x) => `<li><a href="/guides/${x.slug}/">${esc(x.h1)}</a></li>`).join('')}</ul></section>`;
 }
+
+/** Site questions at the top of the FAQ page. Plain text answers, also published as FAQPage structured data. */
+const GENERAL_FAQ: { q: string; a: string }[] = [
+  { q: 'Is Drop-In Builds a store?', a: "No. We don't sell anything. You plan the build here, and every buy link goes to the retailer or maker, where you check out as usual." },
+  { q: 'How do you know the parts fit?', a: "Each part carries its real measurements and the maker's own fit notes, and the builder checks every part against the rest of your build. Anything that won't fit is marked as a conflict, and anything that needs a second look gets a heads-up. Always confirm fit with the maker before you buy." },
+  { q: 'Where do the prices come from?', a: "We check retailer and maker sites every night where they allow it, and show each part's price at every retailer we track. Prices marked Sample aren't tracked yet, so always confirm the price at the retailer." },
+  { q: 'What does FFL mean on a part?', a: 'FFL marks the serialized part, which is legally the firearm (a pistol frame or an AR lower receiver). It ships to a licensed dealer near you, who handles the transfer. Laws vary by state.' },
+  { q: 'Can I save, share or get price alerts on a build?', a: 'Yes. Save any build to My builds, copy a link that opens the exact build, or share it on the Community page. On My builds you can sign up for one email a day at most when a part in a saved build moves by $20 and 10% or more.' },
+  { q: 'Do you make money from the links?', a: 'Some retailer links may earn us a small commission at no extra cost to you. It never changes which parts we show or how we check fit.' },
+];
 
 export function indexPage(builtAt: string) {
   const makers = [...new Set(GUIDES.map((g) => platformOf(g.platform).maker))];
   const body = `
-  <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <span>Guides</span></nav>
-  <h1>Build guides</h1>
-  <p class="lede">Straight answers to "will this fit?" for the most common pistol and rifle builds. Every chart is checked part against part with the same rules the builder uses.</p>
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <span>FAQ</span></nav>
+  <h1>Frequently asked questions</h1>
+  <p class="lede">How the site works, and straight answers to "will this fit?" for the most common pistol and rifle builds.</p>
+  <section>
+    <h2>About Drop-In Builds</h2>
+    <div class="faq">${GENERAL_FAQ.map((f) => `
+      <details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join('')}
+    </div>
+  </section>
   ${makers.map((m) => `
   <section>
-    <h2>${esc(m)}</h2>
+    <h2>${esc(m)} fit questions</h2>
     <ul class="guide-cards">${GUIDES.filter((g) => platformOf(g.platform).maker === m).map((g) => `
       <li><a href="/guides/${g.slug}/"><b>${esc(g.h1)}</b><span>${esc(g.description)}</span></a></li>`).join('')}
     </ul>
   </section>`).join('')}
-  <p><a class="cta" href="/">Open the builder</a></p>
-  <p class="muted">Updated ${shortDate(builtAt)}.</p>`;
+  <p><a class="cta" href="/#build">Open the builder</a></p>
+  <p class="muted">Every fit chart is checked part against part with the same rules the builder uses. Updated ${shortDate(builtAt)}.</p>`;
   return layout({
-    title: 'Firearm Build Guides: Glock, Sig P320, P365 and AR-15 Parts Compatibility | Drop-In Builds',
-    description: 'Fit charts for Glock, Sig P320, Sig P365 and AR-15 parts: slides, frames, grips, barrels, optics and muzzle devices, checked part against part.',
+    title: 'FAQ: Glock, Sig P320, P365 and AR-15 Parts Compatibility | Drop-In Builds',
+    description: 'How Drop-In Builds works, plus fit charts for Glock, Sig P320, Sig P365 and AR-15 parts: slides, frames, grips, barrels, optics and muzzle devices.',
     path: '/guides/',
     body,
-    jsonLd: [{ '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Build guides', url: SITE + '/guides/' }],
+    jsonLd: [
+      { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'FAQ', url: SITE + '/guides/' },
+      { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: GENERAL_FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+    ],
   });
 }
 
@@ -315,6 +334,12 @@ section{margin:0}
 .starter span{color:var(--muted);font-size:14px}
 .starter:hover{border-color:var(--cta)}
 .sources li,.guide-list li{margin:4px 0}
+.faq{display:grid;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
+.faq summary{cursor:pointer;font-weight:700;padding:14px 16px;list-style-position:inside}
+.faq summary:hover{color:var(--blue)}
+.faq details p{padding:0 16px 14px;color:var(--muted);margin:0}
+.site-header nav a[aria-current]{color:var(--on-navy);background:rgba(255,255,255,.1)}
 .guide-cards{list-style:none;padding:0;margin:0;display:grid;gap:10px}
 .guide-cards a{display:block;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;text-decoration:none;color:var(--ink);box-shadow:var(--shadow)}
 .guide-cards a:hover{border-color:var(--cta)}

@@ -20,12 +20,13 @@ import { daysAgo, hasHistory, partSeries, recentChange, totalSeries } from './da
 import { PriceChart } from './PriceChart';
 import { alertsAvailable, checkAlertSignup, loadAlertSignup, signUpForAlerts, stopAlerts, storeAlertSignup, syncAlertBuilds, type AlertSignup } from './alerts';
 import { MOVABLE, SIDE_LABEL, mountsFor, railLength, type Resolved } from './data/addons';
+import { GUIDES } from './guides/content';
 import type { Build, Issue, Part, Placement, Platform, Severity, Side, Slot, Tier } from './types';
 
 const STORE_KEY = 'firearm-designer:v2';
 const SEV_LABEL: Record<Severity, string> = { error: 'Conflict', warn: 'Check', info: 'Note' };
 const FAMILIES = ['Rifle', 'Pistol'];
-type Route = 'build' | 'community' | 'saved';
+type Route = 'home' | 'build' | 'community' | 'saved';
 
 interface Persisted { platform: string; selections: Record<string, Selection> }
 
@@ -46,7 +47,8 @@ function loadPersisted(): Persisted | null {
 const routeFromHash = (): Route => {
   const h = location.hash.replace('#', '');
   if (h === 'community' || h === 'featured') return 'community';
-  return h === 'saved' ? 'saved' : 'build';
+  if (h === 'saved' || h === 'build') return h;
+  return 'home';
 };
 
 const DROPS_SEEN_KEY = 'firearm-designer:drops-seen:v1';
@@ -77,7 +79,7 @@ function buildStatus(platform: Platform, build: Build, issues: Issue[]) {
 export default function App() {
   const persisted = useMemo(loadPersisted, []);
   const shared = useMemo(readSharedBuild, []);
-  const [route, setRoute] = useState<Route>(routeFromHash);
+  const [route, setRoute] = useState<Route>(() => (shared ? 'build' : routeFromHash()));
   const [platformId, setPlatformId] = useState(shared?.platform ?? persisted?.platform ?? PLATFORMS[0].id);
   const [selections, setSelections] = useState<Record<string, Selection>>(() => ({
     ...persisted?.selections,
@@ -94,7 +96,7 @@ export default function App() {
   useEffect(() => {
     const onHash = () => { setRoute(routeFromHash()); window.scrollTo(0, 0); };
     window.addEventListener('hashchange', onHash);
-    if (shared) history.replaceState(null, '', location.pathname + location.hash);
+    if (shared) history.replaceState(null, '', location.pathname + (location.hash || '#build'));
     return () => window.removeEventListener('hashchange', onHash);
   }, [shared]);
   useEffect(() => {
@@ -133,8 +135,10 @@ export default function App() {
     return () => clearTimeout(t);
   }, [toast]);
 
+  // Each page gets its own history entry, so Back returns to the page before (the hashchange listener follows it).
   const go = (r: Route) => {
-    try { history.replaceState(null, '', r === 'build' ? location.pathname : `#${r}`); } catch { /* sandboxed */ }
+    const url = r === 'home' ? location.pathname : `#${r}`;
+    try { if (r === route) history.replaceState(null, '', url); else history.pushState(null, '', url); } catch { /* sandboxed */ }
     setRoute(r);
     window.scrollTo(0, 0);
   };
@@ -183,18 +187,18 @@ export default function App() {
     <div className="site">
       <header className="site-header">
         <div className="wrap header-row">
-          <a className="brand" href="./" onClick={(e) => { e.preventDefault(); go('build'); }}>
+          <a className="brand" href="./" onClick={(e) => { e.preventDefault(); go('home'); }}>
             <Mark />
             <span className="brand-name">Drop-In <b>Builds</b></span>
           </a>
           <nav className="site-nav" aria-label="Main">
             <NavLink active={route === 'build'} onClick={() => go('build')}>Build</NavLink>
             <NavLink active={route === 'community'} onClick={() => go('community')}>Community</NavLink>
+            <a className="nav-link" href="./guides/">FAQ</a>
             <NavLink active={route === 'saved'} onClick={() => go('saved')}>
               My builds{saved.length > 0 && <span className="count">{saved.length}</span>}
               {dropped.length > 0 && <span className="count drop" title={`Prices dropped on ${dropped.length} saved build${dropped.length > 1 ? 's' : ''}`}>↓</span>}
             </NavLink>
-            <a className="nav-link" href="./guides/">Guides</a>
           </nav>
           <p className="price-status">
             <span className={'pulse' + (PRICES_UPDATED_AT ? ' live' : '')} aria-hidden="true" />
@@ -204,6 +208,13 @@ export default function App() {
       </header>
 
       <main className="site-main">
+        {route === 'home' && (
+          <HomePage
+            onPick={(id) => { setPlatformId(id); setOpenSavedId(null); setCommunityOpen(null); go('build'); }}
+            onStart={() => go('build')}
+            onBrowse={() => go('community')}
+          />
+        )}
         {route === 'build' && (
           <BuilderPage
             platformId={platformId}
@@ -269,52 +280,48 @@ export default function App() {
   );
 }
 
-/** Rifles and Pistols menus, each grouped by maker. */
+/** One "Change platform" button next to the builder's title; its panel lists rifles and pistols side by side, grouped by maker. */
 function PlatformMenu({ current, onPick }: { current: Platform; onPick: (id: string) => void }) {
-  const [open, setOpen] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
-    const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(null); };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(null); };
+    const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
     return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
   }, [open]);
   return (
-    <div className="platform-bar">
-      <div className="wrap platform-row" ref={ref}>
-        {FAMILIES.map((fam) => {
-          const list = PLATFORMS.filter((p) => p.family === fam);
-          const makers = [...new Set(list.map((p) => p.maker))];
-          const here = current.family === fam;
-          return (
-            <div className="pmenu" key={fam}>
-              <button className={'pmenu-btn' + (here ? ' active' : '')} aria-expanded={open === fam} aria-haspopup="true"
-                onClick={() => setOpen(open === fam ? null : fam)}>
-                {fam}s{here && <span className="pmenu-current">{current.name}</span>}
-                <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" /></svg>
-              </button>
-              {open === fam && (
-                <div className="pmenu-panel" role="menu">
-                  {makers.map((m) => (
-                    <div className="pmenu-group" key={m}>
-                      <p className="pmenu-maker">{m}</p>
-                      {list.filter((p) => p.maker === m).map((p) => (
-                        <button key={p.id} role="menuitem" className={'pmenu-item' + (p.id === current.id ? ' active' : '')}
-                          onClick={() => { onPick(p.id); setOpen(null); }}>
-                          <span>{p.name}</span>
-                          <span className="pmenu-blurb">{p.blurb}</span>
-                        </button>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+    <div className="pmenu" ref={ref}>
+      <button className="pmenu-btn" aria-expanded={open} aria-haspopup="true" onClick={() => setOpen(!open)}>
+        Change platform
+        <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" /></svg>
+      </button>
+      {open && (
+        <div className="pmenu-panel" role="menu">
+          {FAMILIES.map((fam) => {
+            const list = PLATFORMS.filter((p) => p.family === fam);
+            return (
+              <div className="pmenu-col" key={fam}>
+                <p className="pmenu-fam">{fam}s</p>
+                {[...new Set(list.map((p) => p.maker))].map((m) => (
+                  <div className="pmenu-group" key={m}>
+                    <p className="pmenu-maker">{m}</p>
+                    {list.filter((p) => p.maker === m).map((p) => (
+                      <button key={p.id} role="menuitem" className={'pmenu-item' + (p.id === current.id ? ' active' : '')}
+                        onClick={() => { onPick(p.id); setOpen(false); }}>
+                        <span>{p.name}</span>
+                        <span className="pmenu-blurb">{p.blurb}</span>
+                      </button>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -333,6 +340,91 @@ function Mark() {
         <rect x="36" y="9" width="7" height="30" rx="1.5" className="fill" />
       </g>
     </svg>
+  );
+}
+
+/* ===================================================================== home */
+
+const FAQ_PICKS = ['glock-19-slide-compatibility', 'glock-red-dot-footprints', 'sig-p365-slide-grip-compatibility', 'ar-15-barrel-compatibility'];
+
+function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string) => void; onStart: () => void; onBrowse: () => void }) {
+  const partCount = PLATFORMS.reduce((n, p) => n + p.parts.length, 0);
+  const hero = buildOf('ar15', presetSelection(PLATFORMS.find((p) => p.id === 'ar15')!, 'value'));
+  const faqs = FAQ_PICKS.map((slug) => GUIDES.find((g) => g.slug === slug)).filter((g): g is (typeof GUIDES)[number] => !!g);
+  return (
+    <div className="home">
+      <section className="hero">
+        <div className="wrap hero-row">
+          <div className="hero-copy">
+            <p className="kicker">Plan it before you buy it</p>
+            <h1>Build your next rifle or pistol, part by part.</h1>
+            <p className="lede">Pick a platform, choose every part, and we check that it all fits and show where each part costs least. We don't sell anything.</p>
+            <div className="hero-actions">
+              <button className="btn primary big" onClick={onStart}>Start a build</button>
+              <button className="btn big" onClick={onBrowse}>Browse community builds</button>
+            </div>
+            <p className="hero-facts">{PLATFORMS.length} platforms · {partCount} parts · {Object.keys(RETAILERS).length} retailers compared</p>
+          </div>
+          <div className="hero-art thumb" aria-hidden="true">
+            <Blueprint platform={hero.platform} build={hero.build} place={hero.place} states={statesFor(hero.platform, hero.build, hero.place).states} compact />
+          </div>
+        </div>
+      </section>
+
+      <div className="wrap">
+        <section className="home-section">
+          <h2 className="home-h2">Pick a platform</h2>
+          {FAMILIES.map((fam) => (
+            <div className="tile-family" key={fam}>
+              <p className="tile-fam">{fam}s</p>
+              <div className={'tile-grid ' + fam.toLowerCase()}>
+                {PLATFORMS.filter((p) => p.family === fam).map((p) => {
+                  const starter = buildOf(p.id, presetSelection(p, 'value'));
+                  const from = totalOf(p, toBuild(p, presetSelection(p, 'budget')));
+                  return (
+                    <button className="tile card" key={p.id} onClick={() => onPick(p.id)}>
+                      <span className="thumb">
+                        <Blueprint platform={p} build={starter.build} place={starter.place} states={statesFor(p, starter.build, starter.place).states} compact />
+                      </span>
+                      <span className="tile-body">
+                        <span className="tile-maker">{p.maker}</span>
+                        <span className="tile-name">{p.name}</span>
+                        <span className="tile-blurb">{p.blurb}</span>
+                        <span className="tile-from">Starter builds from <b>{money(from)}</b></span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </section>
+
+        <section className="home-section">
+          <h2 className="home-h2">How it works</h2>
+          <ol className="steps">
+            <li className="card"><b>Pick a platform</b><span>Start blank, or from a budget, value or premium build that already fits together.</span></li>
+            <li className="card"><b>Choose your parts</b><span>Every part is checked against the rest of the build. Anything that won't fit, or needs a second look, is flagged before you buy.</span></li>
+            <li className="card"><b>Buy at the best price</b><span>See each part's price at every retailer we track, save the build, and get an email if a part drops in price.</span></li>
+          </ol>
+        </section>
+
+        <section className="home-section home-split">
+          <div className="card home-panel">
+            <h2 className="home-h2">Community builds</h2>
+            <p>See what other builders put together, vote for the best ones, and open any build to make it your own.</p>
+            <button className="btn" onClick={onBrowse}>Browse community builds</button>
+          </div>
+          <div className="card home-panel">
+            <h2 className="home-h2">Common questions</h2>
+            <ul className="faq-links">
+              {faqs.map((g) => <li key={g.slug}><a href={`./guides/${g.slug}/`}>{g.h1}</a></li>)}
+            </ul>
+            <a className="link" href="./guides/">See all questions</a>
+          </div>
+        </section>
+      </div>
+    </div>
   );
 }
 
@@ -372,12 +464,13 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
 
   return (
     <>
-      <PlatformMenu current={platform} onPick={(id) => { setPlatformId(id); setOpenSlot(null); }} />
-
       <div className="wrap builder">
         <div className="builder-head">
-          <p className="kicker">{communityOpen ? <>Community build · {communityOpen.name}</> : openSaved ? <>My builds · {openSaved.name}</> : <>{platform.family} build</>}</p>
-          <h1>Build your {platform.name}</h1>
+          <p className="kicker">{communityOpen ? <>Community build · {communityOpen.name}</> : openSaved ? <>My builds · {openSaved.name}</> : <>{platform.family} build · {platform.maker}</>}</p>
+          <div className="title-row">
+            <h1>Build your {platform.name}</h1>
+            <PlatformMenu current={platform} onPick={(id) => { setPlatformId(id); setOpenSlot(null); }} />
+          </div>
           <p className="lede">{platform.blurb}</p>
         </div>
 
