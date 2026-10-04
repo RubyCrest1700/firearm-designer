@@ -162,6 +162,7 @@ export default function App() {
             <NavLink active={route === 'saved'} onClick={() => go('saved')}>
               My builds{saved.length > 0 && <span className="count">{saved.length}</span>}
             </NavLink>
+            <a className="nav-link" href="./guides/">Guides</a>
           </nav>
           <p className="price-status">
             <span className={'pulse' + (PRICES_UPDATED_AT ? ' live' : '')} aria-hidden="true" />

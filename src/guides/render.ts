@@ -1,0 +1,323 @@
+/**
+ * Renders the guide pages to static HTML. Fit charts run the builder's own rules on each pair of
+ * parts, and prices come from the same catalog (sample prices overlaid with the nightly live ones),
+ * so a guide never says something the builder disagrees with.
+ */
+import { PLATFORMS, PRICES_UPDATED_AT } from '../data';
+import { RETAILERS, offerUrl } from '../data/retailers';
+import { bestOffer, money, presetSelection, worst } from '../engine';
+import type { Part, Platform, Severity, Tier } from '../types';
+import { GUIDES, type FitChart, type Guide } from './content';
+
+export const SITE = 'https://dropinbuilds.com';
+const ANALYTICS_TOKEN = '00e0977ba6ee49a7b9a386502da1ef3f';
+
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const label = (p: Part) => (p.name.startsWith(p.brand) ? p.name : `${p.brand} ${p.name}`);
+const platformOf = (id: string) => {
+  const p = PLATFORMS.find((x) => x.id === id);
+  if (!p) throw new Error(`Guide platform ${id} is not in the catalog`);
+  return p;
+};
+/** Opens the builder on a platform, optionally with parts already chosen. */
+const builderUrl = (platform: string, ids: string[] = []) => `/?b=${encodeURIComponent(`${platform}~${ids.join('.')}`)}`;
+
+/* ------------------------------------------------------------------ fit charts */
+
+type Verdict = 'ok' | Severity;
+const VERDICT: Record<Verdict, { text: string; order: number }> = {
+  ok: { text: 'Fits', order: 0 },
+  info: { text: 'Fits, with a note', order: 1 },
+  warn: { text: 'Needs a plate or a check', order: 2 },
+  error: { text: "Won't fit", order: 3 },
+};
+
+/** Every part in slot A against every part in slot B, using only the issues the pair raises between them. */
+export function fitChart(platform: Platform, a: string, b: string) {
+  const left = platform.parts.filter((p) => p.slot === a);
+  const right = platform.parts.filter((p) => p.slot === b);
+  if (!left.length || !right.length) throw new Error(`${platform.id}: no parts in ${a} or ${b}`);
+  return left.map((pa) => {
+    const groups = new Map<string, { verdict: Verdict; reasons: string[]; parts: Part[] }>();
+    for (const pb of right) {
+      const issues = platform.rules({ [a]: pa, [b]: pb }).filter((i) => i.slots.includes(a) && i.slots.includes(b));
+      const verdict: Verdict = worst(issues) ?? 'ok';
+      const reasons = [...new Set(issues.map((i) => i.message))];
+      const key = verdict + '|' + reasons.join('|');
+      const g = groups.get(key) ?? { verdict, reasons, parts: [] };
+      g.parts.push(pb);
+      groups.set(key, g);
+    }
+    return { part: pa, groups: [...groups.values()].sort((x, y) => VERDICT[x.verdict].order - VERDICT[y.verdict].order) };
+  });
+}
+
+function chartHtml(platform: Platform, c: FitChart) {
+  const rows = fitChart(platform, c.a, c.b)
+    .map(({ part, groups }) => `
+      <div class="fit-row">
+        <h4>${esc(label(part))}</h4>
+        <ul>${groups.map((g) => `
+          <li class="v-${g.verdict}"><span class="verdict">${VERDICT[g.verdict].text}</span>
+            <span class="parts">${g.parts.map((p) => esc(label(p))).join('<span class="sep"> · </span>')}</span>
+            ${g.reasons.map((r) => `<span class="why">${esc(r)}</span>`).join('')}</li>`).join('')}
+        </ul>
+      </div>`)
+    .join('');
+  return `
+    <section class="chart">
+      <h2>${esc(c.heading)}</h2>
+      <p class="muted">${esc(c.intro)}</p>
+      ${rows}
+    </section>`;
+}
+
+/* ---------------------------------------------------------------- prices, picks */
+
+const TIER_LABEL: Record<Tier, string> = { budget: 'Budget pick', value: 'Best value', premium: 'Premium pick' };
+const TIERS: Tier[] = ['budget', 'value', 'premium'];
+
+function priceHtml(part: Part) {
+  const o = bestOffer(part);
+  if (!o) return '';
+  const store = RETAILERS[o.retailer]?.name ?? o.retailer;
+  const href = o.url ?? offerUrl(o.retailer, `${part.brand} ${part.name}`);
+  const when = o.checkedAt ? `checked ${shortDate(o.checkedAt)}` : 'sample price';
+  return `<p class="price"><b>${money(o.price)}</b> at <a href="${esc(href)}" rel="nofollow noopener" target="_blank">${esc(store)}</a> <span class="muted">(${when})</span></p>`;
+}
+
+function picksHtml(platform: Platform, slots: string[]) {
+  return slots
+    .map((slot) => {
+      const all = platform.parts.filter((p) => p.slot === slot);
+      const picked = all.filter((p) => p.pick).sort((x, y) => TIERS.indexOf(x.pick!.tier) - TIERS.indexOf(y.pick!.tier));
+      const list = picked.length ? picked : [...all].sort((x, y) => (bestOffer(x)?.price ?? 0) - (bestOffer(y)?.price ?? 0)).slice(0, 3);
+      const name = platform.slots.find((s) => s.id === slot)?.name ?? slot;
+      return `
+      <h3>${esc(name)}</h3>
+      <div class="cards">${list.map((p) => `
+        <div class="card">
+          ${p.pick ? `<p class="tier tier-${p.pick.tier}">${TIER_LABEL[p.pick.tier]}</p>` : ''}
+          <p class="pname">${esc(label(p))}</p>
+          <p class="specs">${p.specs.map(esc).join(' · ')}</p>
+          ${p.pick ? `<p>${esc(p.pick.note)}</p>` : ''}
+          ${priceHtml(p)}
+        </div>`).join('')}
+      </div>`;
+    })
+    .join('');
+}
+
+function startersHtml(platform: Platform) {
+  return TIERS.map((tier) => {
+    const sel = presetSelection(platform, tier);
+    const ids = Object.values(sel);
+    const total = ids.reduce((sum, id) => sum + (bestOffer(platform.parts.find((p) => p.id === id)!)?.price ?? 0), 0);
+    const name = tier === 'value' ? 'Best value' : tier[0].toUpperCase() + tier.slice(1);
+    return `<a class="starter" href="${builderUrl(platform.id, ids)}"><b>${name} ${esc(platform.name)}</b><span>${ids.length} parts, ${money(total)} at the lowest prices we list</span></a>`;
+  }).join('');
+}
+
+/* ---------------------------------------------------------------------- pages */
+
+function shortDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+}
+
+function layout(o: { title: string; description: string; path: string; body: string; jsonLd: object[] }) {
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>${esc(o.title)}</title>
+<meta name="description" content="${esc(o.description)}" />
+<link rel="canonical" href="${SITE}${o.path}" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<meta name="theme-color" content="#0e2a47" />
+<meta property="og:site_name" content="Drop-In Builds" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="${esc(o.title)}" />
+<meta property="og:description" content="${esc(o.description)}" />
+<meta property="og:url" content="${SITE}${o.path}" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Narrow:wght@500;600;700&display=swap" />
+<style>${CSS}</style>
+${o.jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).replace(/</g, '\\u003c')}</script>`).join('\n')}
+</head>
+<body>
+<header class="site-header"><div class="wrap header-row">
+  <a class="brand" href="/">${MARK}<span class="brand-name">Drop-In <b>Builds</b></span></a>
+  <nav><a href="/">Builder</a><a href="/guides/">Guides</a><a href="/#community">Community</a></nav>
+</div></header>
+<main class="wrap">${o.body}</main>
+<footer class="site-footer"><div class="wrap">
+  <p class="brand-name small">Drop-In <b>Builds</b></p>
+  <p>Plan a build part by part, check that everything fits, and see where each part costs least. We don't sell anything.</p>
+  <p>Fit charts come from the same rules the builder uses. Prices marked sample aren't tracked yet; always confirm the price and fit with the retailer and the maker. Parts that are the serialized firearm ship to a licensed dealer, and laws vary by state.</p>
+  <p>Some retailer links may earn us a small commission at no extra cost to you. It never changes which parts we show or how we check fit.</p>
+</div></footer>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "${ANALYTICS_TOKEN}"}'></script>
+</body>
+</html>
+`;
+}
+
+export function guidePage(g: Guide, builtAt: string) {
+  const platform = platformOf(g.platform);
+  const path = `/guides/${g.slug}/`;
+  const body = `
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="/guides/">Guides</a> › <span>${esc(platform.name)}</span></nav>
+  <article>
+    <h1>${esc(g.h1)}</h1>
+    <p class="lede">${esc(g.lede)}</p>
+    <section class="answers">
+      <h2>The short answer</h2>
+      <ul>${g.answers.map((a) => `<li>${a}</li>`).join('')}</ul>
+      <a class="cta" href="${builderUrl(platform.id)}">Check your own ${esc(platform.name)} build</a>
+    </section>
+    ${g.charts.map((c) => chartHtml(platform, c)).join('')}
+    <section>
+      <h2>Parts worth a look</h2>
+      <p class="muted">Our picks from the ${esc(platform.name)} catalog, with the lowest price we list${PRICES_UPDATED_AT ? ` (prices last checked ${shortDate(PRICES_UPDATED_AT)})` : ''}.</p>
+      ${picksHtml(platform, g.picks)}
+    </section>
+    <section>
+      <h2>Start from a complete build</h2>
+      <p class="muted">Every part already checked to fit. Open one in the builder and swap anything you like.</p>
+      <div class="starters">${startersHtml(platform)}</div>
+    </section>
+    <section class="sources">
+      <h2>Sources</h2>
+      <ul>${g.sources.map((s) => `<li><a href="${esc(s.url)}" rel="noopener" target="_blank">${esc(s.label)}</a></li>`).join('')}</ul>
+      <p class="muted">Updated ${shortDate(builtAt)}.</p>
+    </section>
+    ${relatedHtml(g)}
+  </article>`;
+  return layout({
+    title: `${g.title} | Drop-In Builds`,
+    description: g.description,
+    path,
+    body,
+    jsonLd: [
+      { '@context': 'https://schema.org', '@type': 'Article', headline: g.title, description: g.description, dateModified: builtAt, mainEntityOfPage: SITE + path, publisher: { '@type': 'Organization', name: 'Drop-In Builds', url: SITE } },
+      { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: SITE + '/' },
+        { '@type': 'ListItem', position: 2, name: 'Guides', item: SITE + '/guides/' },
+        { '@type': 'ListItem', position: 3, name: g.title, item: SITE + path },
+      ] },
+    ],
+  });
+}
+
+function relatedHtml(g: Guide) {
+  const maker = platformOf(g.platform).maker;
+  const same = (x: Guide) => Number(platformOf(x.platform).maker === maker);
+  const others = GUIDES.filter((x) => x !== g).sort((x, y) => same(y) - same(x)).slice(0, 4);
+  return `<section><h2>More guides</h2><ul class="guide-list">${others.map((x) => `<li><a href="/guides/${x.slug}/">${esc(x.h1)}</a></li>`).join('')}</ul></section>`;
+}
+
+export function indexPage(builtAt: string) {
+  const makers = [...new Set(GUIDES.map((g) => platformOf(g.platform).maker))];
+  const body = `
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <span>Guides</span></nav>
+  <h1>Build guides</h1>
+  <p class="lede">Straight answers to "will this fit?" for the most common pistol and rifle builds. Every chart is checked part against part with the same rules the builder uses.</p>
+  ${makers.map((m) => `
+  <section>
+    <h2>${esc(m)}</h2>
+    <ul class="guide-cards">${GUIDES.filter((g) => platformOf(g.platform).maker === m).map((g) => `
+      <li><a href="/guides/${g.slug}/"><b>${esc(g.h1)}</b><span>${esc(g.description)}</span></a></li>`).join('')}
+    </ul>
+  </section>`).join('')}
+  <p><a class="cta" href="/">Open the builder</a></p>
+  <p class="muted">Updated ${shortDate(builtAt)}.</p>`;
+  return layout({
+    title: 'Firearm Build Guides: Glock, Sig P320, P365 and AR-15 Parts Compatibility | Drop-In Builds',
+    description: 'Fit charts for Glock, Sig P320, Sig P365 and AR-15 parts: slides, frames, grips, barrels, optics and muzzle devices, checked part against part.',
+    path: '/guides/',
+    body,
+    jsonLd: [{ '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Build guides', url: SITE + '/guides/' }],
+  });
+}
+
+export function sitemap(builtAt: string) {
+  const day = builtAt.slice(0, 10);
+  const urls = ['/', '/guides/', ...GUIDES.map((g) => `/guides/${g.slug}/`)];
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.map((u) => `  <url><loc>${SITE}${u}</loc><lastmod>${day}</lastmod></url>`).join('\n')}
+</urlset>
+`;
+}
+
+export const robots = () => `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`;
+
+/* ----------------------------------------------------------------------- style */
+
+const MARK = `<svg class="mark" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 3l18.19 10.5v21L24 45 5.81 34.5v-21z" fill="none" stroke="currentColor" stroke-width="2.5"/><g transform="translate(11.7 10.8) scale(.55)"><path d="M4 9h10a15 15 0 0 1 0 30H4z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><rect x="36" y="9" width="7" height="30" rx="1.5" fill="#d4691e"/></g></svg>`;
+
+const CSS = `
+:root{--bg:#f2f3f0;--surface:#fff;--surface-2:#f7f8f6;--ink:#17212b;--muted:#56616b;--line:#dde2e0;--navy:#0e2a47;--on-navy:#e8eef5;--on-navy-muted:#a9b8c8;--blue:#1e5a91;--cta:#d4691e;--cta-ink:#fff;
+--ok:#2e7d4f;--ok-soft:#e4f2e9;--warn:#a8670a;--warn-soft:#fbefd9;--note:#1d5fa8;--note-soft:#e3eefb;--err:#b8382c;--err-soft:#fbe6e3;--shadow:0 1px 2px rgba(16,30,45,.06),0 4px 14px rgba(16,30,45,.06);
+--f-sans:'Archivo',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--f-head:'Archivo Narrow','Archivo',system-ui,sans-serif;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1318;--surface:#151c23;--surface-2:#1a232c;--ink:#e6ebef;--muted:#a3aeb8;--line:#2a3540;--navy:#0a1f36;--blue:#6aa6dd;--cta:#ec8a45;--cta-ink:#1a0f06;
+--ok:#5fc58a;--ok-soft:rgba(95,197,138,.12);--warn:#e7b04f;--warn-soft:rgba(231,176,79,.13);--note:#79aef0;--note-soft:rgba(121,174,240,.14);--err:#f07a6c;--err-soft:rgba(240,122,108,.13);--shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.25);color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.6 var(--f-sans);-webkit-text-size-adjust:100%}
+a{color:var(--blue)}
+.wrap{max-width:860px;margin:0 auto;padding:0 16px}
+.site-header{background:var(--navy);color:var(--on-navy)}
+.header-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;color:inherit;text-decoration:none;padding:10px 0;margin-right:auto}
+.mark{width:34px;height:34px}
+.brand-name{font:500 19px/1 var(--f-head);letter-spacing:.01em;text-transform:uppercase;margin:0}
+.brand-name b{font-weight:700;color:var(--cta)}
+.brand-name.small{font-size:16px;margin-bottom:8px}
+.site-header nav{display:flex;gap:4px}
+@media (max-width:560px){.header-row{gap:0}.site-header nav{width:100%;margin:0 -10px 4px}}
+.site-header nav a{color:var(--on-navy-muted);text-decoration:none;font-weight:600;font-size:15px;padding:8px 10px;border-radius:6px}
+.site-header nav a:hover{color:var(--on-navy);background:rgba(255,255,255,.08)}
+main.wrap{padding-top:20px;padding-bottom:40px}
+.crumbs{font-size:14px;color:var(--muted);margin-bottom:8px}
+.crumbs a{color:var(--muted)}
+h1{font:700 clamp(28px,5vw,40px)/1.1 var(--f-head);margin:8px 0 12px;letter-spacing:-.01em}
+h2{font:700 24px/1.2 var(--f-head);margin:36px 0 8px}
+h3{font:700 19px/1.2 var(--f-head);margin:20px 0 8px}
+h4{font-size:16px;margin:0 0 6px}
+.lede{font-size:18px;color:var(--muted);margin:0 0 16px}
+.muted{color:var(--muted);font-size:15px}
+section{margin:0}
+.answers{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--cta);border-radius:10px;padding:4px 20px 20px;box-shadow:var(--shadow)}
+.answers h2{margin-top:16px}
+.answers li{margin:6px 0}
+.cta{display:inline-block;background:var(--cta);color:var(--cta-ink);text-decoration:none;font-weight:700;padding:10px 18px;border-radius:8px;margin-top:8px}
+.fit-row{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:10px 0;box-shadow:var(--shadow)}
+.fit-row ul{list-style:none;margin:0;padding:0}
+.fit-row li{padding:8px 10px;border-radius:6px;margin-top:6px;font-size:15px}
+.verdict{display:inline-block;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.03em;margin-right:8px}
+.why{display:block;color:var(--muted);font-size:14px;margin-top:2px}
+.sep{color:var(--muted)}
+.v-ok{background:var(--ok-soft)}.v-ok .verdict{color:var(--ok)}
+.v-info{background:var(--note-soft)}.v-info .verdict{color:var(--note)}
+.v-warn{background:var(--warn-soft)}.v-warn .verdict{color:var(--warn)}
+.v-error{background:var(--err-soft)}.v-error .verdict{color:var(--err)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;box-shadow:var(--shadow);font-size:15px}
+.card p{margin:4px 0}
+.pname{font-weight:700}
+.specs{color:var(--muted);font-size:14px}
+.tier{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--cta)}
+.price b{font-size:17px}
+.starters{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.starter{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;text-decoration:none;color:var(--ink);box-shadow:var(--shadow)}
+.starter span{color:var(--muted);font-size:14px}
+.starter:hover{border-color:var(--cta)}
+.sources li,.guide-list li{margin:4px 0}
+.guide-cards{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.guide-cards a{display:block;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;text-decoration:none;color:var(--ink);box-shadow:var(--shadow)}
+.guide-cards a:hover{border-color:var(--cta)}
+.guide-cards span{display:block;color:var(--muted);font-size:15px;margin-top:2px}
+.site-footer{border-top:1px solid var(--line);padding:24px 0 40px;color:var(--muted);font-size:14px}
+`;
