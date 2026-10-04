@@ -146,7 +146,8 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
   const gFront = grooved
     ? `L${g(1.86, 2.36)} Q${g(1.62, 2.62)} ${g(1.8, 2.86)} Q${g(1.56, 3.18)} ${g(1.62, 3.4)} Q${g(1.38, 3.74)} ${g(1.46, 3.98)} L${g(1.2, 4.62)}`
     : `L${g(1.86, 2.36)} Q${g(1.7, 2.8)} ${g(1.66, 3.06)} L${g(1.2, 4.62)}`;
-  const gripD = `M${g(0.6, 1.42)} L${g(1.98, 1.46)} Q${g(2.1, 1.52)} ${g(2.05, 1.68)} ${gFront} Q${g(1.1, 4.94)} ${g(0.82, 4.96)} L${g(-0.42, 4.88)} Q${g(-0.72, 4.84)} ${g(-0.68, 4.58)} L${g(0.02, 2.5)} Q${g(0.16, 2.0)} ${g(-0.04, 1.66)} Q${g(-0.1, 1.44)} ${g(0.22, 1.42)} Z`;
+  // The top follows the lower receiver's tang, so the beavertail tucks up under it with no gap.
+  const gripD = `M0.35,1.23 Q0.62,1.46 1.15,1.46 L${g(1.98, 1.46)} Q${g(2.1, 1.52)} ${g(2.05, 1.68)} ${gFront} Q${g(1.1, 4.94)} ${g(0.82, 4.96)} L${g(-0.42, 4.88)} Q${g(-0.72, 4.84)} ${g(-0.68, 4.58)} L${g(0.02, 2.5)} Q${g(0.16, 2.0)} ${g(-0.06, 1.62)} Q${g(-0.2, 1.3)} -0.02,1.07 Z`;
   let gripTex = '';
   for (let y = 2.35; y < 4.45; y += 0.14) {
     const xa = 0.02 - (y - 2.5) * 0.338 + 0.22;
@@ -401,6 +402,8 @@ interface PistolSpec {
   gripH: number;
   magH: number;
   grooves: number;
+  /** Breech position from the slide's rear, when the barrel is shorter than the slide calls for (comp slides) */
+  breech?: number;
 }
 
 function pistolSpec(platform: Platform, b: Build): PistolSpec {
@@ -423,7 +426,7 @@ function pistolSpec(platform: Platform, b: Build): PistolSpec {
       const bl = a(b.slide, 'barrelLen');
       const m = bl ? { ...base, barrel: MODELS['p365' + bl].barrel } : base;
       const ml = a(b.mag, 'len');
-      return { m, frame: MODELS['p365' + g], gripH: P365_H[g], magH: ml ? P365_H[ml] : P365_H[g], grooves: 0 };
+      return { m, frame: MODELS['p365' + g], gripH: P365_H[g], magH: ml ? P365_H[ml] : P365_H[g], grooves: 0, breech: base.slide - base.barrel };
     }
     default: {
       const m = MODELS[platform.id] ?? MODELS.glock19;
@@ -525,18 +528,23 @@ function pistol(platform: Platform, b: Build): Scene {
     : `L${f(dust - 0.05)},${SH} L${dust},${f(SH + 0.06)} L${dust},${f(yRail - 0.08)} Q${dust},${f(yRail)} ${f(dust - 0.1)},${f(yRail)}`;
   const frameD = `M${f(-tang + 0.2)},${SH} ${nose} ${guardOuter}${strap} L${f(heelX + 0.08)},${f(yGB)} Q${heelX},${f(yGB)} ${f(bk(yGB - 0.1))},${f(yGB - 0.12)} ${backstrap} ${tail} Z`;
 
-  // Texture panel follows the straps, filled with a stipple grid.
-  const tex0 = yWeb + (sig ? 0.62 : 0.55);
-  const tex1 = yGB - (gen5 ? 0.42 : 0.24);
-  const inF = spec.grooves ? 0.32 : sig ? 0.2 : 0.18;
-  const inB = 0.16;
-  const panel = sig
-    ? `M${f(bk(tex0) + inB)},${f(tex0)} L${f(fr(tex0 + 0.1) - inF - 0.2)},${f(tex0 + 0.1)} L${f(fr(tex0 + 0.4) - inF)},${f(tex0 + 0.4)} L${f(fr(tex1) - inF)},${f(tex1)} L${f(bk(tex1) + inB)},${f(tex1)} Z`
-    : `M${f(bk(tex0) + inB)},${f(tex0)} L${f(fr(tex0) - inF)},${f(tex0)} L${f(fr(tex1) - inF)},${f(tex1)} L${f(bk(tex1) + inB)},${f(tex1)} Z`;
+  // Texture panel follows the real curves of both straps (palm swell, hump, front curve), filled with stipple.
+  const bump = (y: number, c: number, w: number) => Math.max(0, 1 - ((y - c) / w) ** 2);
+  const backX = (y: number) => bk(y) - swellHigh * 0.75 * bump(y, y2, (yGB - yTop) * 0.35) - swellLow * 0.75 * bump(y, y1, (yGB - yTop) * 0.3);
+  const frontX = (y: number) => fr(y) + (spec.grooves ? -0.12 : (sig ? 0.07 : 0.03) * bump(y, (s0 + yGB) / 2, (yGB - s0) / 2));
+  const tex0 = yTop + (sig ? 0.05 : 0.0);
+  const tex1 = yGB - (gen5 ? 0.42 : 0.26);
+  const inF = sig ? 0.2 : 0.18;
+  const inB = 0.17;
+  const ys: number[] = [];
+  for (let y = tex0; y < tex1; y += 0.12) ys.push(y);
+  ys.push(tex1);
+  const fromTop = sig ? 0.42 : 0.0; // Sig modules leave a smooth thumb area at the top front
+  const panel = `M${ys.map((y) => `${f(backX(y) + inB)},${f(y)}`).join(' L')} L${[...ys].reverse().map((y) => `${f(frontX(y) - inF - (y < tex0 + fromTop ? 0.3 * (1 - (y - tex0) / fromTop) : 0))},${f(y)}`).join(' L')} Z`;
   let stipple = '';
-  for (let y = tex0 + 0.14; y < tex1 - 0.06; y += 0.13) {
-    const xa = bk(y) + inB + 0.1;
-    const xb = fr(y) - inF - (sig && y < tex0 + 0.4 ? 0.25 : 0.1);
+  for (let y = tex0 + 0.12; y < tex1 - 0.06; y += 0.13) {
+    const xa = backX(y) + inB + 0.1;
+    const xb = frontX(y) - inF - 0.1 - (y < tex0 + fromTop ? 0.3 * (1 - (y - tex0) / fromTop) : 0);
     const off = Math.round((y - tex0) / 0.13) % 2 ? 0.065 : 0;
     for (let x = xa + off; x < xb; x += 0.13) stipple += `M${f(x)},${f(y)} L${f(x + 0.012)},${f(y)} `;
   }
@@ -573,8 +581,6 @@ function pistol(platform: Platform, b: Build): Scene {
     </> });
 
   /* Magazine: hidden inside the grip; floor plate and any extension visible below it */
-  const mTop = yWeb + 0.12;
-  const mIn = Math.min(yMB, yGB);
   const mb0 = yMB - BASE;
   const fx = fr(yGB) - 0.08;
   const floor = sig
@@ -583,7 +589,6 @@ function pistol(platform: Platform, b: Build): Scene {
   const extLines = yMB - yGB > BASE + 0.25 ? repeat(yGB + 0.2, mb0 - 0.1, 0.22, (y) => `M${f(bk(y) + 0.14)},${y} L${f(fr(y) - 0.18)},${y}`) : '';
   P.push({ slot: 'mag', z: 2, row: 'bottom', target: px((bk(yMB) + fr(yMB)) / 2, yMB - 0.06),
     el: <>
-      <path className="hidden-line" d={T(`M${f(bk(mTop) + 0.3)},${f(mTop)} L${f(fr(mTop) - 0.34)},${f(mTop)} L${f(fr(mIn) - 0.34)},${f(mIn)} L${f(bk(mIn) + 0.3)},${f(mIn)} Z`)} />
       <path d={T(floor)} />
       {extLines && <path className="detail" d={T(extLines)} />}
     </> });
@@ -601,23 +606,24 @@ function pistol(platform: Platform, b: Build): Scene {
     </> });
 
   /* Slide */
-  const port0 = sig ? (micro ? 1.38 : 1.7) : micro || SH < 1.1 ? 1.42 : 1.55;
+  // The ejection port sits over the chamber: the barrel's breech is one barrel length back from the muzzle.
+  const port0 = f((spec.breech ?? SL - m.barrel) - (micro ? 0.12 : 0.16));
   const port1 = port0 + (micro ? 1.02 : sig ? 1.3 : SH < 1.1 ? 1.1 : 1.28);
   const comp = matches(b.slide, /Comp|Spectre/);
   const frontSerr = matches(b.slide, /serration|Gen5|MOS|ZEV|Spectre|XFull|M18/i);
   const cut = (b.slide?.attrs.cut as string | undefined) ?? 'none';
   // Glock: boxy with a beveled nose. Sig: the lower front of the slide sweeps up into a tapered nose,
   // the top front corner is chamfered, and a shoulder line runs the length of the slide.
-  const taper = micro ? 0.75 : 1.05;
+  const taper = micro ? 0.85 : 1.2;
   const slideD = sig
-    ? `M0.02,0.12 Q0.03,0 0.16,0 L${f(SL - 0.26)},0 Q${f(SL - 0.06)},0.02 ${f(SL)},0.22 L${f(SL)},${f(SH * 0.56)} Q${f(SL - 0.02)},${f(SH * 0.66)} ${f(SL - 0.14)},${f(SH * 0.7)} L${f(SL - taper)},${f(SH - 0.06)} Q${f(SL - taper - 0.1)},${SH} ${f(SL - taper - 0.24)},${SH} L0.08,${SH} L0,${f(SH - 0.08)} Z`
+    ? `M0.02,0.14 Q0.03,0 0.18,0 L${f(SL - 0.34)},0 Q${f(SL - 0.08)},0.01 ${f(SL - 0.02)},0.26 L${f(SL)},${f(SH * 0.5)} Q${f(SL - 0.01)},${f(SH * 0.6)} ${f(SL - 0.12)},${f(SH * 0.64)} L${f(SL - taper)},${f(SH - 0.05)} Q${f(SL - taper - 0.08)},${SH} ${f(SL - taper - 0.22)},${SH} L0.08,${SH} L0,${f(SH - 0.08)} Z`
     : `M0,0.07 Q0,0 0.07,0 L${f(SL - 0.2)},0 Q${f(SL - 0.04)},0.01 ${SL},0.16 L${SL},${f(SH - 0.44)} L${f(SL - 0.34)},${f(SH - 0.02)} L${f(SL - 0.4)},${SH} L0.06,${SH} L0,${f(SH - 0.06)} Z`;
   const shoulder = sig
-    ? `M0.06,${f(SH * 0.4)} L${f(SL - 0.05)},${f(SH * 0.4)} M0.1,${f(SH - 0.16)} L${f(SL - taper - 0.2)},${f(SH - 0.16)}`
+    ? `M0.06,0.17 L${f(SL - 0.16)},0.17 M0.04,${f(SH * 0.42)} L${f(SL - 0.02)},${f(SH * 0.42)} M0.1,${f(SH - 0.15)} L${f(SL - taper - 0.12)},${f(SH - 0.15)} M${f(SL - 0.12)},${f(SH * 0.64)} L${f(SL - 0.2)},${f(SH * 0.42)}`
     : `M0.05,0.12 L${f(SL - 0.1)},0.12 M0.1,${f(SH - 0.18)} L${f(SL - 0.48)},${f(SH - 0.18)}`;
   const serrTop = sig ? SH * 0.4 + 0.08 : 0.2;
   const rearSerr = sig
-    ? repeat(0.18, micro ? 0.9 : 1.08, 0.12, (x) => `M${x},${f(serrTop)} L${x},${f(SH - 0.22)}`)
+    ? repeat(0.2, micro ? 0.92 : 1.1, 0.14, (x) => `M${x},${f(serrTop)} L${f(x + 0.05)},${f(SH - 0.22)} M${f(x + 0.05)},${f(serrTop)} L${f(x + 0.1)},${f(SH - 0.22)}`)
     : repeat(0.2, 0.98, 0.11, (x) => `M${x},${f(serrTop)} L${f(x - 0.07)},${f(SH - 0.24)}`);
   const fSerr = frontSerr
     ? sig
@@ -674,8 +680,18 @@ function pistol(platform: Platform, b: Build): Scene {
   /* Sights */
   const sh = b.sights?.attrs.height === 'suppressor' ? 0.36 : SIGHT;
   const sightSlot = has('sights') ? 'sights' : undefined;
-  const sightsD = `M0.2,0 L0.26,${-sh} L0.7,${-sh} L0.74,0 Z M0.38,${-sh} L0.42,${f(-sh + 0.08)} L0.54,${f(-sh + 0.08)} L0.58,${-sh} M${f(SL - 0.62)},0 L${f(SL - 0.56)},${f(-sh + 0.02)} L${f(SL - 0.4)},${f(-sh + 0.02)} L${f(SL - 0.34)},0 Z`;
-  P.push({ slot: sightSlot, z: 10, row: 'top', target: px(0.48, -sh), el: <path d={T(sightsD)} /> });
+  // Rear sight: a block with a sloped face, square notch and the dovetail in the slide; front: a post on its dovetail.
+  // Tritium or fiber inserts show as small circles. Sig rear sights are longer with a sloped back.
+  const r0 = sig ? 0.14 : 0.2, r1 = sig ? 0.86 : 0.74;
+  const fr0 = SL - (sig ? 0.72 : 0.62), fr1 = SL - (sig ? 0.36 : 0.34);
+  const sightsD = (sig
+    ? `M${r0},0 L${f(r0 + 0.12)},${f(-sh)} L${f(r1 - 0.2)},${f(-sh)} L${r1},0 Z`
+    : `M${r0},0 L${f(r0 + 0.04)},${f(-sh)} L${f(r1 - 0.06)},${f(-sh)} L${r1},0 Z`)
+    + ` M${f(fr0)},0 L${f(fr0 + 0.08)},${f(-sh + 0.02)} L${f(fr1 - 0.04)},${f(-sh + 0.02)} L${f(fr1)},0 Z`;
+  const sightDet = `M${f(r0 + 0.04)},0.1 L${f(r1 - 0.04)},0.1 M${f(r0 + 0.04)},0.1 L${f(r0 + 0.1)},0 M${f(r1 - 0.04)},0.1 L${f(r1 - 0.1)},0 `
+    + `M${f((r0 + r1) / 2 - 0.08)},${f(-sh)} L${f((r0 + r1) / 2 - 0.08)},${f(-sh + 0.09)} L${f((r0 + r1) / 2 + 0.08)},${f(-sh + 0.09)} L${f((r0 + r1) / 2 + 0.08)},${f(-sh)} `
+    + O2((r0 + r1) / 2, -sh / 2 + 0.02, 0.045) + ` M${f(fr0 + 0.04)},0.08 L${f(fr1 - 0.04)},0.08 ` + O2((fr0 + fr1) / 2, -sh / 2 + 0.02, 0.045);
+  P.push({ slot: sightSlot, z: 10, row: 'top', target: px((r0 + r1) / 2, -sh), el: <><path d={T(sightsD)} /><path className="detail" d={T(sightDet)} /></> });
 
   /* Optic */
   const fp = (b.optic?.attrs.footprint as string) ?? (cut === 'none' ? 'rmr' : cut);
