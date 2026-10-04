@@ -61,6 +61,8 @@ const allParts = [
       offers: [['BRN', 69.0], ['PA', 69.99]], pick: pick('value', 'The best trigger under $100.') },
     { id: 'a10-trig-geissele', brand: 'Geissele', name: 'SSA-E Two Stage', specs: ['Two stage', '3.5 lb total'], attrs: {},
       offers: [['BRN', 240.0], ['PA', 240.0]], pick: pick('premium', 'A two-stage suits a precision .308.') },
+    { id: 'a10-trig-larue', brand: 'LaRue Tactical', name: 'MBT-2S Two Stage', specs: ['Two stage', '~4.5 lb total'], attrs: {},
+      offers: [['BRN', 99.99], ['OP', 99.95]] },
   ]),
   ...parts('buffer', [
     { id: 'a10-buf-aero', brand: 'Aero Precision', name: 'AR-10 Carbine Buffer Kit', specs: ['Carbine tube', '.308 buffer + spring'], attrs: {},
@@ -75,6 +77,8 @@ const allParts = [
       offers: [['PSA', 19.99]], pick: pick('budget', 'Basic and cheap.') },
     { id: 'a10-stock-ubr', brand: 'Magpul', name: 'UBR Gen2 Collapsible Stock', specs: ['Collapsible', 'Adjustable cheek', 'QD sockets'], attrs: { qd: true },
       offers: [['PA', 239.95], ['BRN', 249.95]], pick: pick('premium', 'Precision-style stock that still collapses.') },
+    { id: 'a10-stock-ctr', brand: 'Magpul', name: 'CTR Carbine Stock', specs: ['Collapsible', 'Friction lock', 'QD socket'], attrs: { qd: true },
+      offers: [['PA', 69.95], ['BRN', 74.95]] },
   ]),
   ...parts('grip', [
     { id: 'a10-grip-moe', brand: 'Magpul', name: 'MOE Grip', specs: ['Polymer'], attrs: {},
@@ -105,6 +109,9 @@ const allParts = [
     { id: 'a10-bbl-aero16', brand: 'Aero Precision', name: '16" .308 Win Midlength', specs: ['16"', '.308 Win', 'Midlength gas', '.750 journal', '5/8x24'],
       attrs: { caliber: '.308 Win', bullet: .308, length: 16, gas: 'midlength', journal: '.750', thread: '5/8x24', family: 'DPMS' },
       offers: [['AERO', 229.99], ['PA', 224.99]] },
+    { id: 'a10-bbl-ba20', brand: 'Ballistic Advantage', name: '20" .308 Win Heavy Rifle-Length, Modern Series', specs: ['20"', '.308 Win', 'Rifle gas', '.750 journal', '1:10', 'Heavy profile', '5/8x24'],
+      attrs: { caliber: '.308 Win', bullet: .308, length: 20, gas: 'rifle', journal: '.750', thread: '5/8x24', family: 'DPMS' },
+      offers: [['PA', 199.99], ['BRN', 209.99]] },
   ]),
   ...parts('gasblock', [
     { id: 'a10-gb-750', brand: 'Aero Precision', name: 'Low Profile Gas Block .750', specs: ['.750', 'Low profile'], attrs: { journal: '.750' },
@@ -153,6 +160,8 @@ const allParts = [
       offers: [['PSA', 14.99]], pick: pick('budget', 'Basic flash hider.') },
     { id: 'a10-mz-a2-556', brand: 'Generic', name: 'A2 Birdcage 5.56 (1/2x28)', specs: ['1/2x28', 'Flash hider'], attrs: { thread: '1/2x28', kind: 'flash', bore: .224 },
       offers: [['PSA', 9.99]] },
+    { id: 'a10-mz-sf3p', brand: 'SureFire', name: 'SOCOM 3-Prong Flash Hider 7.62 (5/8x24)', specs: ['5/8x24', 'Flash hider', 'Suppressor mount'], attrs: { thread: '5/8x24', kind: 'flash', bore: .308 },
+      offers: [['PA', 169.0], ['BRN', 169.0]] },
   ]),
   ...parts('mag', [
     { id: 'a10-mag-pmag', brand: 'Magpul', name: 'PMAG 20 LR/SR Gen M3', specs: ['20 rd', 'SR-25 pattern', 'DPMS and Armalite'], attrs: { family: 'SR-25' },
@@ -165,6 +174,8 @@ const allParts = [
       offers: [['PA', 349.99], ['OP', 359.99]], pick: pick('value', 'Versatile from close range out to 600 yards.') },
     { id: 'a10-opt-venom', brand: 'Vortex', name: 'Venom 5-25x56 FFP + Mount', specs: ['Precision scope', 'FFP'], attrs: { kind: 'scope' },
       offers: [['PA', 649.99], ['OP', 639.99]], pick: pick('premium', 'First-focal-plane scope for long-range 6.5 CM.') },
+    { id: 'a10-opt-slx16', brand: 'Primary Arms', name: 'SLx 1-6x24 SFP Gen IV + Mount', specs: ['LPVO', '1-6x', 'Mount included'], attrs: { kind: 'lpvo' },
+      offers: [['PA', 399.98]] },
   ]),
 ];
 

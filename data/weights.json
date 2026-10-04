@@ -11,6 +11,11 @@
    "basis": "estimate",
    "src": null
   },
+  "a10-bbl-ba20": {
+   "oz": 55.5,
+   "basis": "published",
+   "src": "https://www.ballisticadvantage.com/20-308-heavy-profile-rifle-length-ar-308-barrel-modern-series.html"
+  },
   "a10-bbl-criterion": {
    "oz": 65.0,
    "basis": "estimate",
@@ -176,6 +181,16 @@
    "basis": "estimate",
    "src": null
   },
+  "a10-mz-sf3p": {
+   "oz": 2.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "a10-opt-slx16": {
+   "oz": 17.9,
+   "basis": "published",
+   "src": "https://www.primaryarms.com/KIT-PA-SLX-1-6X24S-NOVA-PADLXSM"
+  },
   "a10-opt-venom": {
    "oz": 39.0,
    "basis": "estimate",
@@ -183,6 +198,11 @@
   },
   "a10-opt-vortex": {
    "oz": 23.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a10-stock-ctr": {
+   "oz": 10.4,
    "basis": "estimate",
    "src": null
   },
@@ -208,6 +228,11 @@
   },
   "a10-trig-geissele": {
    "oz": 2.3,
+   "basis": "estimate",
+   "src": null
+  },
+  "a10-trig-larue": {
+   "oz": 3.0,
    "basis": "estimate",
    "src": null
   },
@@ -241,8 +266,23 @@
    "basis": "estimate",
    "src": null
   },
+  "ar-bbl-aero16": {
+   "oz": 32.0,
+   "basis": "published",
+   "src": "https://www.aeroprecisionusa.com/556-16-mid-cmv-barrel"
+  },
+  "ar-bbl-arc18": {
+   "oz": 41.3,
+   "basis": "published",
+   "src": "https://www.ballisticadvantage.com/18-6mm-arc-spr-rifle-length-ar-15-barrel-premium-series.html"
+  },
   "ar-bbl-ba10": {
    "oz": 22.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "ar-bbl-ba115": {
+   "oz": 20.5,
    "basis": "estimate",
    "src": null
   },
@@ -250,6 +290,26 @@
    "oz": 28.0,
    "basis": "published",
    "src": "https://www.primaryarms.com/ballistic-advantage-ar-15-5-56-nato-16-mid-length-barrel-1-2x28-babl556015m"
+  },
+  "ar-bbl-ba18spr": {
+   "oz": 31.0,
+   "basis": "published",
+   "src": "https://www.ballisticadvantage.com/18-223-wylde-spr-fluted-stainless-steel-rifle-length-ar-15-barrel-premium-series.html"
+  },
+  "ar-bbl-ba20": {
+   "oz": 35.6,
+   "basis": "published",
+   "src": "https://www.ballisticadvantage.com/20-5-56-government-rifle-length-ar-15-barrel-modern-series.html"
+  },
+  "ar-bbl-ba300-9": {
+   "oz": 19.0,
+   "basis": "published",
+   "src": "https://www.ballisticadvantage.com/9-300-blackout-pistol-length-ar-15-barrel-modern-series.html"
+  },
+  "ar-bbl-ba75": {
+   "oz": 22.4,
+   "basis": "published",
+   "src": "https://www.ballisticadvantage.com/7-5-5-56-pistol-length-ar-15-barrel-modern-series.html"
   },
   "ar-bbl-bcm": {
    "oz": 30.0,
@@ -266,8 +326,23 @@
    "basis": "estimate",
    "src": null
   },
+  "ar-bbl-grendel18": {
+   "oz": 40.1,
+   "basis": "published",
+   "src": "https://www.ballisticadvantage.com/18-6-5-grendel-spr-rifle-length-ar-15-barrel-premium-series.html"
+  },
+  "ar-bbl-grendel20": {
+   "oz": 31.7,
+   "basis": "published",
+   "src": "https://faxonfirearms.com/faxon-match-series-20-heavy-fluted-6-5-grendel-rifle-length-416-r-stainless-qpq-nitride-5r-nickel-teflon-extension-ar-15-barrel"
+  },
   "ar-bbl-psa16": {
    "oz": 28.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "ar-bcg-aero": {
+   "oz": 11.5,
    "basis": "estimate",
    "src": null
   },
@@ -321,6 +396,11 @@
    "basis": "estimate",
    "src": null
   },
+  "ar-ch-geissele": {
+   "oz": 1.4,
+   "basis": "estimate",
+   "src": null
+  },
   "ar-ch-radian": {
    "oz": 1.7,
    "basis": "estimate",
@@ -341,13 +421,28 @@
    "basis": "estimate",
    "src": null
   },
+  "ar-gb-sa625": {
+   "oz": 1.4,
+   "basis": "estimate",
+   "src": null
+  },
   "ar-gb-sa750": {
    "oz": 1.4,
    "basis": "estimate",
    "src": null
   },
+  "ar-gb-slr750": {
+   "oz": 1.3,
+   "basis": "estimate",
+   "src": null
+  },
   "ar-grip-bcm": {
    "oz": 2.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "ar-grip-hogue": {
+   "oz": 3.4,
    "basis": "estimate",
    "src": null
   },
@@ -358,6 +453,11 @@
   },
   "ar-grip-moe": {
    "oz": 2.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "ar-grip-moeplus": {
+   "oz": 3.5,
    "basis": "estimate",
    "src": null
   },
@@ -381,6 +481,11 @@
    "basis": "estimate",
    "src": null
   },
+  "ar-hg-aero15": {
+   "oz": 7.95,
+   "basis": "published",
+   "src": "https://www.aeroprecisionusa.com/ar15-15-atlas-s-one-m-lok-handguard-anodized-black"
+  },
   "ar-hg-aero9": {
    "oz": 8.5,
    "basis": "estimate",
@@ -396,10 +501,20 @@
    "basis": "estimate",
    "src": null
   },
+  "ar-hg-geissele": {
+   "oz": 14.9,
+   "basis": "published",
+   "src": "https://geissele.com/13-5-super-modular-rail-mk16-m-lokr.html"
+  },
   "ar-hg-mi": {
    "oz": 11.4,
    "basis": "published",
    "src": "https://www.primaryarms.com/midwest-industries-15in-combat-rail-m-lok-ar-15-handguard-black"
+  },
+  "ar-hg-mi7": {
+   "oz": 7.5,
+   "basis": "estimate",
+   "src": null
   },
   "ar-hg-mi9": {
    "oz": 8.0,
@@ -408,6 +523,16 @@
   },
   "ar-hg-moe": {
    "oz": 7.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "ar-hg-moecarb": {
+   "oz": 7.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "ar-hg-moerifle": {
+   "oz": 10.0,
    "basis": "estimate",
    "src": null
   },
@@ -436,6 +561,11 @@
    "basis": "estimate",
    "src": null
   },
+  "ar-lower-spikes": {
+   "oz": 8.5,
+   "basis": "estimate",
+   "src": null
+  },
   "ar-lpk-aero": {
    "oz": 5.0,
    "basis": "estimate",
@@ -443,6 +573,11 @@
   },
   "ar-lpk-bcm": {
    "oz": 5.3,
+   "basis": "estimate",
+   "src": null
+  },
+  "ar-lpk-cmmg": {
+   "oz": 4.5,
    "basis": "estimate",
    "src": null
   },
@@ -456,6 +591,11 @@
    "basis": "estimate",
    "src": null
   },
+  "ar-mz-a2-30": {
+   "oz": 2.2,
+   "basis": "estimate",
+   "src": null
+  },
   "ar-mz-lantac": {
    "oz": 2.6,
    "basis": "estimate",
@@ -465,6 +605,21 @@
    "oz": 2.9,
    "basis": "estimate",
    "src": null
+  },
+  "ar-mz-sf3p": {
+   "oz": 2.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "ar-mz-sf3p30": {
+   "oz": 2.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "ar-mz-vg6": {
+   "oz": 2.1,
+   "basis": "published",
+   "src": "https://www.at3tactical.com/products/vg6-precision-gamma-556-muzzle-brake"
   },
   "ar-mz-warcomp": {
    "oz": 2.7,
@@ -476,10 +631,25 @@
    "basis": "estimate",
    "src": null
   },
+  "ar-opt-exps3": {
+   "oz": 11.2,
+   "basis": "estimate",
+   "src": null
+  },
   "ar-opt-holosun": {
    "oz": 8.9,
    "basis": "estimate",
    "src": null
+  },
+  "ar-opt-romeo5x": {
+   "oz": 5.6,
+   "basis": "published",
+   "src": "https://www.sigsauer.com/romeo5x-1x20-mm.html"
+  },
+  "ar-opt-slx16": {
+   "oz": 17.9,
+   "basis": "published",
+   "src": "https://www.primaryarms.com/KIT-PA-SLX-1-6X24S-NOVA-PADLXSM"
   },
   "ar-opt-vortex": {
    "oz": 24.5,
@@ -491,8 +661,23 @@
    "basis": "estimate",
    "src": null
   },
+  "ar-stock-b5": {
+   "oz": 8.5,
+   "basis": "estimate",
+   "src": null
+  },
   "ar-stock-bcm": {
    "oz": 6.9,
+   "basis": "estimate",
+   "src": null
+  },
+  "ar-stock-ctr": {
+   "oz": 10.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "ar-stock-moerifle": {
+   "oz": 17.0,
    "basis": "estimate",
    "src": null
   },
@@ -511,13 +696,28 @@
    "basis": "estimate",
    "src": null
   },
+  "ar-stock-ubr": {
+   "oz": 21.3,
+   "basis": "published",
+   "src": "https://www.primaryarms.com/Magpul-UBR-GEN2-Collapsible-Stock-Black"
+  },
   "ar-trig-alg": {
    "oz": 2.3,
    "basis": "estimate",
    "src": null
   },
+  "ar-trig-cmc": {
+   "oz": 3.4,
+   "basis": "estimate",
+   "src": null
+  },
   "ar-trig-geissele": {
    "oz": 2.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "ar-trig-larue": {
+   "oz": 3.0,
    "basis": "estimate",
    "src": null
   },
@@ -533,6 +733,11 @@
   },
   "ar-upper-aero": {
    "oz": 7.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "ar-upper-anderson": {
+   "oz": 6.5,
    "basis": "estimate",
    "src": null
   },

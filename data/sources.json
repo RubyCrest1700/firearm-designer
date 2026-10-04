@@ -359,6 +359,30 @@
     },
     "r-sling-ms4": {
       "MAGPUL": "https://magpul.com/ms4-dual-qd-sling-gen-2.html"
+    },
+    "ar-bbl-aero16": {
+      "AERO": "https://www.aeroprecisionusa.com/556-16-mid-cmv-barrel"
+    },
+    "ar-hg-aero15": {
+      "AERO": "https://www.aeroprecisionusa.com/ar15-15-atlas-s-one-m-lok-handguard-anodized-black"
+    },
+    "ar-hg-geissele": {
+      "OP": "https://www.opticsplanet.com/geissele-mk16-super-m-lok-13-5in-modular-rail.html"
+    },
+    "ar-mz-sf3p": {
+      "PA": "https://www.primaryarms.com/surefire-3-prong-flash-hider-silencer-mount-sf3p-556-1-2-28"
+    },
+    "ar-opt-romeo5x": {
+      "SIG": "https://www.sigsauer.com/romeo5x-1x20-mm.html"
+    },
+    "ar-opt-slx16": {
+      "PA": "https://www.primaryarms.com/KIT-PA-SLX-1-6X24S-NOVA-PADLXSM"
+    },
+    "a10-opt-slx16": {
+      "PA": "https://www.primaryarms.com/KIT-PA-SLX-1-6X24S-NOVA-PADLXSM"
+    },
+    "a10-bbl-ba20": {
+      "PA": "https://www.primaryarms.com/ballistic-advantage-ar-10-308-20-rifle-barrel-5-8x24-babl308006m"
     }
   }
 }
