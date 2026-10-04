@@ -9,6 +9,9 @@ Build AR-15 blueprint profiles from public US patent drawings.
       https://patents.google.com/patent/US10184737B2
   30-round magazine (Magpul PMAG Gen M3):                US D712,500 S, FIG. 2
       https://patents.google.com/patent/USD712500S1
+  Stocks: MOE SL US D736,336 S FIG. 4; CTR US D676,921 S FIG. 3; MOE rifle US D688,768 S FIG. 3;
+      PRS Gen3 US D831,149 S FIG. 5; UBR Gen2 US D792,936 S FIG. 4; A2 US 6,779,289 B2 FIG. 1 (outline only)
+  MOE drop-in handguard US D656,215 S FIG. 3; 3-prong flash hider US D577,410 S FIG. 1; ported brake US D285,238 S FIG. 1
 
 Coordinates are inches in the rifle drawing's frame: x forward from the upper receiver's rear face (plus 0.05),
 y down from the bore axis. The upper is scaled to a 7.0" receiver. The lower drawing is scaled and placed so its
@@ -28,6 +31,16 @@ SRC = {
   'upper': dict(pdf='https://patentimages.storage.googleapis.com/38/95/c8/889b261042483f/US8910406.pdf', page=2, im='', blur=1.4, th=200),
   'lower': dict(pdf='https://patentimages.storage.googleapis.com/f6/8e/b1/9b09bd89ccbb32/US10184737.pdf', page=4, im='-rotate 90', blur=0, th=170),
   'pmag': dict(pdf='https://patentimages.storage.googleapis.com/64/38/8c/37a9f9b5f75a25/USD712500.pdf', page=4, im='', blur=0, th=170),
+  # Stocks, handguard and muzzle devices: turned so the butt (or the barrel end) is on the left.
+  'moesl': dict(pdf='https://patentimages.storage.googleapis.com/05/ba/18/6fb61cdc29703c/USD736336.pdf', page=6, im='-rotate 90', blur=0, th=170),
+  'ctr': dict(pdf='https://patentimages.storage.googleapis.com/f9/00/57/e904c04850c4e0/USD676921.pdf', page=5, im='-rotate 90 -flop', blur=0, th=170),
+  'moerifle': dict(pdf='https://patentimages.storage.googleapis.com/29/bb/df/ae8adfcd258a5f/USD688768.pdf', page=4, im='-rotate 90', blur=0, th=170),
+  'prs': dict(pdf='https://patentimages.storage.googleapis.com/42/6f/42/f38e5e72702e77/USD831149.pdf', page=8, im='-rotate 90', blur=0, th=170),
+  'ubr': dict(pdf='https://patentimages.storage.googleapis.com/f1/2d/d0/ff477e27f6fe86/USD792936.pdf', page=7, im='-rotate 90', blur=0, th=170),
+  'a2': dict(pdf='https://patentimages.storage.googleapis.com/pdfs/US6779289.pdf', page=2, im='', blur=0, th=170),
+  'moehg': dict(pdf='https://patentimages.storage.googleapis.com/pdfs/USD656215.pdf', page=5, im='-rotate 90', blur=0, th=170),
+  'prong': dict(pdf='https://patentimages.storage.googleapis.com/pdfs/USD577410.pdf', page=2, im='', blur=0, th=170),
+  'brake': dict(pdf='https://patentimages.storage.googleapis.com/pdfs/USD285238.pdf', page=2, im='-flop', blur=0, th=170),
 }
 
 # Upper: rear face at x=592 px, front face 1822 px (7.0"); bore = centre of the barrel-nut threads, y=836 px.
@@ -65,6 +78,18 @@ PIECES = {
     clip=[[(2150, 1102), (2240, 1102), (2240, 1240), (2150, 1240)]], seal=[[(2165, 1103), (2228, 1103)], [(2196, 1238), (2224, 1238)]],
     ink_erase=[[(2193, 1150), (2215, 1150), (2260, 1215), (2245, 1252), (2215, 1252), (2214, 1200)]], erase=[]),
   'pmag': dict(src='pmag', tf=None, k=7, open_k=5, clip=[[(700, 450), (1900, 450), (1900, 3000), (700, 3000)]], erase=[]),
+  # Accessories, each in its own frame: x forward from its rear end, y down from its top, in inches.
+  # fit: ('h', inches) scales by overall height, ('w', inches) by overall length, ('b', length, height) to both.
+  'stockMoeSl': dict(min_seg=30, src='moesl', fit=('h', 5.1), k=9, open_k=7, clip=[[(500, 450), (2675, 450), (2675, 2075), (500, 2075)]], erase=[]),
+  'stockCtr': dict(min_seg=30, src='ctr', fit=('h', 5.1), k=9, open_k=7, clip=[[(776, 520), (2760, 520), (2760, 2070), (776, 2070)]], seal=[[(790, 556), (790, 800)], [(2748, 556), (2748, 680)], [(790, 558), (2748, 558)]], erase=[]),
+  'stockMoeRifle': dict(min_seg=30, src='moerifle', fit=('w', 10.3), k=9, open_k=7, clip=[[(262, 600), (3488, 600), (3488, 1850), (262, 1850)]], erase=[]),
+  'stockPrs': dict(min_seg=30, src='prs', fit=('w', 10.8), k=9, open_k=7, clip=[[(370, 650), (2660, 650), (2660, 1760), (370, 1760)]], seal=[[(2655, 678), (2655, 1097)], [(385, 678), (2655, 678)], [(2000, 1097), (2655, 1097)]], erase=[]),
+  'stockUbr': dict(min_seg=30, src='ubr', fit=('w', 7.2), k=9, open_k=7, clip=[[(475, 538), (2775, 538), (2775, 1325), (2600, 1325), (2600, 2275), (475, 2275)]], erase=[]),
+  'stockA2': dict(min_seg=30, src='a2', fit=('w', 10.3), k=9, open_k=7, clip=[[(445, 470), (2045, 470), (2045, 1295), (445, 1295)]],
+    erase=[[(445, 470), (2045, 470), (2045, 1295), (445, 1295)]]),
+  'handguardMoe': dict(min_seg=30, src='moehg', fit=('w', 6.9), k=9, open_k=7, clip=[[(630, 410), (2540, 410), (2540, 1150), (2150, 1150), (2150, 1105), (630, 1105)]], erase=[]),
+  'muzzleProng': dict(src='prong', fit=('b', 2.2, 0.95), k=7, open_k=5, clip=[[(380, 760), (2120, 760), (2120, 1480), (380, 1480)]], erase=[]),
+  'muzzleBrake': dict(src='brake', fit=('b', 2.25, 0.875), k=7, open_k=5, clip=[[(880, 500), (2220, 500), (2220, 880), (880, 880)]], erase=[]),
 }
 
 
@@ -124,7 +149,7 @@ def piece(name, p, ink_full):
             if x >= 0 and not edge[y, x]:
                 seg.append((x, y))
                 continue
-            if len(seg) >= 14:
+            if len(seg) >= p.get('min_seg', 14):
                 det.append(seg)
             seg = []
     return sil, cs, det
@@ -133,9 +158,21 @@ def piece(name, p, ink_full):
 def main():
     inks = {k: fetch(k, c) for k, c in SRC.items()}
     out = {}
+    only = os.environ.get('ONLY')
     for name, p in PIECES.items():
+        if only and name not in only.split(','):
+            continue
         sil, cs, det = piece(name, p, inks[p['src']])
-        if p['tf']:
+        if p.get('fit'):
+            ys, xs = np.nonzero(sil)
+            mode, val = p['fit'][:2]
+            s = (xs.max() - xs.min() if mode in 'wb' else ys.max() - ys.min()) / val
+            # 'b' (box) also scales the height on its own, to the part's real diameter.
+            t = (ys.max() - ys.min()) / p['fit'][2] if mode == 'b' else s
+            x0, y0 = xs.min(), ys.min()
+            m = (lambda x0, y0, s, t: lambda x, y: (round(float((x - x0) / s), 3), round(float((y - y0) / t), 3)))(x0, y0, s, t)
+            out.setdefault('marks', {})[name + 'H'] = round(float((ys.max() - y0) / t), 3)
+        elif p['tf']:
             m = mapper(p['tf'])
         else:
             # Magazine: scaled to 7.6" tall; x from the rear of its top, y from the stop ledge (the body's widest step).
@@ -148,15 +185,19 @@ def main():
             m = lambda x, y: (round(float((x - x0) / s), 3), round(float((y - ledge) / s), 3))  # noqa: E731
             out.setdefault('marks', {})['pmagTop'] = round(float((top - ledge) / s), 3)
         outline = [flat([m(x, y) for x, y in cv2.approxPolyDP(c.astype(np.float32), 1.2, True).reshape(-1, 2)]) for c in cs if cv2.contourArea(c) > 3000]
-        detail = [flat([m(x, y) for x, y in cv2.approxPolyDP(np.array(seg, np.float32), 1.0, False).reshape(-1, 2)]) for seg in det]
+        detail = [flat([m(x, y) for x, y in cv2.approxPolyDP(np.array(seg, np.float32), 1.6 if p.get('fit') else 1.0, False).reshape(-1, 2)]) for seg in det]
         out[name] = {'outline': outline, 'detail': detail}
         if os.environ.get('DEBUG'):
             dbg = cv2.cvtColor((~inks[p['src']]).astype(np.uint8) * 255, cv2.COLOR_GRAY2BGR)
             cv2.drawContours(dbg, cs, -1, (0, 0, 255), 3)
             for seg in det:
                 cv2.polylines(dbg, [np.array(seg, np.int32)], False, (255, 0, 0), 2)
-            ys_, xs_ = np.nonzero(sil)
-            cv2.imwrite(os.path.join(os.environ['DEBUG'], name + '.png'), dbg[max(0, ys_.min() - 40):ys_.max() + 40, max(0, xs_.min() - 40):xs_.max() + 40])
+            cp = np.array([q for c in p['clip'] for q in c])
+            cv2.polylines(dbg, [np.array(c, np.int32) for c in p['clip']], True, (0, 160, 0), 2)
+            x0_, y0_ = cp.min(0) - 40
+            x1_, y1_ = cp.max(0) + 40
+            cv2.imwrite(os.path.join(os.environ['DEBUG'], name + '.png'), dbg[max(0, y0_):y1_, max(0, x0_):x1_])
+            print(name, 'debug offset', max(0, x0_), max(0, y0_), file=sys.stderr)
         xs = outline[0][0::2]; ys = outline[0][1::2]
         print(name, 'x', min(xs), max(xs), 'y', min(ys), max(ys), len(detail), file=sys.stderr)
     body = json.dumps(out, separators=(',', ':'))
@@ -164,7 +205,8 @@ def main():
         fh.write('/* Generated by scripts/pistol-profiles/ar.py from AR-15 patent drawings. Do not edit by hand. */\n')
         fh.write('/* Inches: x forward from the upper receiver\'s rear, y down from the bore axis (the magazine has its own frame). */\n')
         fh.write('export interface ArPiece { outline: number[][]; detail: number[][] }\n\n')
-        fh.write(f'export const AR_PROFILES: {{ upper: ArPiece; lower: ArPiece; grip: ArPiece; stock: ArPiece; trigger: ArPiece; pmag: ArPiece; marks: Record<string, number> }} = {body};\n')
+        keys = '; '.join(k + ': ArPiece' for k in out if k != 'marks')
+        fh.write(f'export const AR_PROFILES: {{ {keys}; marks: Record<string, number> }} = {body};\n')
     print('wrote', OUT, len(body), 'bytes', file=sys.stderr)
 
 

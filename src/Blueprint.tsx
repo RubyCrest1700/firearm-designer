@@ -77,6 +77,7 @@ const MAG_X = 4.2, MAG_Y = 3.0;
 const AR_RAIL = Math.min(...AR_PROFILES.upper.outline[0].filter((_, i) => i % 2));
 /** Rear of the stock's butt in the traced drawing, which shows it on a carbine buffer tube. */
 const AR_STOCK_REAR = Math.min(...AR_PROFILES.stock.outline[0].filter((_, i) => !(i % 2)));
+type ArStockKey = 'stockA2' | 'stockPrs' | 'stockMoeRifle' | 'stockUbr' | 'stockMoeSl' | 'stockCtr';
 const same: Map2 = (x, y) => [x, y];
 /** Outline and detail paths of a traced AR piece. */
 function arPaths(pc: ArPiece, map: Map2 = same) {
@@ -128,28 +129,30 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
   let sd: string;
   let traced: { o: string; d: string } | null = null;
   let rear: number;
+  // Stocks traced from patent drawings (see scripts/pistol-profiles/ar.py), each placed by its butt and its top.
+  const fixedStock = matches(stock, /A2|PRS|Precision|Rifle Stock/);
+  rear = fixedStock ? TE - 0.65 : TE - 0.73;
+  const traceStock = (key: ArStockKey, top: number) => {
+    traced = arPaths(AR_PROFILES[key], (x, y) => [x + rear, y + top]);
+    return traced.o;
+  };
   if (matches(stock, /A2/)) {
-    const r = TE - 0.25;
-    rear = r - 0.4;
-    sd = `M${r},-1.2 Q${f(r + 0.4)},-1.27 ${f(r + 1.4)},-1.17 L${f(r + 9.35)},-0.64 L${f(r + 9.75)},-0.64 L${f(r + 9.75)},0.66 L${f(r + 9.3)},0.78 L${f(r + 2.4)},4.0 Q${f(r + 1.2)},4.45 ${r},4.5 Z M${f(rear)},-1.25 L${r},-1.22 L${r},4.52 L${f(rear)},4.48 Z M${f(r + 1.3)},3.6 Q${f(r + 3)},2.4 ${f(r + 6.2)},1.1`;
-  } else if (matches(stock, /PRS|Precision/)) {
-    const r = TE - 0.3;
-    rear = r - 0.4;
-    sd = `M${r},-1.95 L${f(r + 6.9)},-1.95 Q${f(r + 7.6)},-1.95 ${f(r + 7.9)},-1.35 L${f(r + 8.4)},-0.66 L${f(r + 9.6)},-0.66 L${f(r + 9.6)},0.66 L${f(r + 5.4)},1.05 L${f(r + 5.2)},2.75 L${f(r + 3.6)},2.75 L${f(r + 3.4)},1.95 L${f(r + 1.6)},4.25 Q${f(r + 1.2)},4.5 ${r},4.5 Z M${f(rear)},-1.98 L${r},-1.95 L${r},4.5 L${f(rear)},4.46 Z M${f(r + 0.6)},-1.35 L${f(r + 6.8)},-1.35 M${f(r + 3.7)},2.35 L${f(r + 5.1)},2.35`;
-  } else if (matches(stock, /UBR/)) {
-    const r = TE - 0.15;
-    rear = r - 0.4;
-    sd = `M${r},-1.35 L${f(r + 6.4)},-0.95 Q${f(r + 6.8)},-0.92 ${f(r + 6.8)},-0.6 L${f(r + 6.8)},0.7 Q${f(r + 6.8)},0.95 ${f(r + 6.4)},1.0 L${f(r + 2.6)},1.45 L${f(r + 0.9)},4.25 Q${f(r + 0.7)},4.45 ${r},4.45 Z M${f(rear)},-1.4 L${r},-1.35 L${r},4.45 L${f(rear)},4.4 Z M${f(r + 0.6)},-0.7 L${f(r + 5.9)},-0.45 M${f(r + 1.6)},3.4 L${f(r + 2.8)},1.6`;
-  } else {
-    // Collapsible stocks: the M4 stock traced from US 10,184,737 FIG. 2A, pushed in so its nose sits just behind the castle nut.
-    rear = TE - 0.73;
+    // The A2 drawing is a hatched section, so only its outline is traced; the butt plate seam is drawn here.
+    sd = traceStock('stockA2', -1.0);
+    traced!.d = `M${f(rear + 0.42)},-0.94 L${f(rear + 0.42)},4.1`;
+  }
+  else if (matches(stock, /PRS|Precision/)) sd = traceStock('stockPrs', -1.3);
+  else if (matches(stock, /MOE Rifle/)) sd = traceStock('stockMoeRifle', -1.0);
+  else if (matches(stock, /UBR/)) sd = traceStock('stockUbr', -1.4);
+  else if (matches(stock, /MOE SL/)) sd = traceStock('stockMoeSl', -1.05);
+  else if (matches(stock, /CTR/)) sd = traceStock('stockCtr', -1.05);
+  else {
+    // Other collapsible stocks: the M4 stock traced from US 10,184,737 FIG. 2A, pushed in so its nose sits just behind the castle nut.
     const dx = rear - AR_STOCK_REAR;
     traced = arPaths(AR_PROFILES.stock, (x, y) => [x + dx, y]);
     sd = traced.o;
   }
-  const padTop = matches(stock, /PRS|Precision/) ? -1.9 : matches(stock, /A2/) ? -1.15 : matches(stock, /UBR/) ? -1.3 : -1.08;
-  const padBot = matches(stock, /PRS|Precision|A2/) ? 4.42 : matches(stock, /UBR/) ? 4.36 : 4.12;
-  const stockDet = traced ? traced.d : `${repeat(padTop + 0.25, padBot - 0.2, 0.22, (y) => `M${f(rear + 0.08)},${y} L${f(rear + 0.32)},${y}`)} ${O2(rear + 1.3, padTop + 0.55, 0.16)} ${O2(rear + 1.3, padTop + 0.55, 0.07)}`;
+  const stockDet = traced!.d;
   P.push({ slot: 'stock', z: 2, row: 'bottom', target: px(rear + 2.2, 1.6), el: <><path d={T(sd)} /><path className="detail" d={T(stockDet)} /></> });
 
   // Lower receiver, A2-style grip and trigger: traced from US 10,184,737 FIG. 2A (see scripts/pistol-profiles/ar.py).
@@ -239,19 +242,32 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
         <path className="detail" d={T(` ${repeat(RF + 1.1, HX - 1.6, 1.6, (x) => `M${x},-0.2 L${f(x + 1.1)},-0.2 Q${f(x + 1.27)},-0.2 ${f(x + 1.27)},-0.03 Q${f(x + 1.27)},0.14 ${f(x + 1.1)},0.14 L${x},0.14 Q${f(x - 0.17)},0.14 ${f(x - 0.17)},-0.03 Q${f(x - 0.17)},-0.2 ${x},-0.2 Z`)} M${f(RF + 0.15)},${f(RAIL + 0.2)} L${f(RF + 0.15)},0.95`)} />
       </> });
   } else {
+    // Drop-in handguard: the Magpul MOE carbine handguard traced from US D656,215 FIG. 3, between the delta ring
+    // and the front sight base. Longer ones keep the end caps and stretch the middle.
+    const L0 = 6.9, end = 1.3, hx0 = RF + 0.45, L = HX - hx0;
+    const mid = (L - 2 * end) / (L0 - 2 * end);
+    const cy = AR_PROFILES.marks.handguardMoeH / 2 - 0.15;
+    const hgm: Map2 = (x, y) => [hx0 + (x < end ? x : x > L0 - end ? L - (L0 - x) : end + (x - end) * mid), y - cy];
+    const moe = arPaths(AR_PROFILES.handguardMoe, hgm);
     P.push({ slot: 'handguard', z: 11, row: 'top', target: px(RF + H * 0.5, -0.86),
       el: <>
-        <path d={T(`M${f(RF)},-0.98 L${f(RF + 0.45)},-0.98 L${f(RF + 0.45)},0.98 L${f(RF)},0.98 Z M${f(RF + 0.5)},-0.72 Q${f(RF + 0.6)},-0.88 ${f(RF + 0.95)},-0.88 L${f(HX - 0.75)},-0.86 Q${f(HX - 0.45)},-0.84 ${f(HX - 0.45)},-0.55 L${f(HX - 0.45)},0.6 Q${f(HX - 0.45)},0.88 ${f(HX - 0.75)},0.9 L${f(RF + 0.95)},0.92 Q${f(RF + 0.6)},0.92 ${f(RF + 0.5)},0.74 Z M${f(HX - 0.45)},-0.66 L${f(HX)},-0.6 L${f(HX)},0.62 L${f(HX - 0.45)},0.68`)} />
-        <path className="detail" d={T(repeat(RF + 1.2, HX - 1.0, 0.42, (x) => `M${x},-0.62 L${x},0.66`))} />
+        <path d={T(`M${f(RF)},-0.98 L${f(RF + 0.45)},-0.98 L${f(RF + 0.45)},0.98 L${f(RF)},0.98 Z ${moe.o}`)} />
+        <path className="detail" d={T(moe.d)} />
       </> });
   }
 
   const mz = b.muzzle;
   let md: string;
+  let mdet = '';
   let mlen: number;
-  if (matches(mz, /brake/i)) {
-    mlen = 2.4;
-    md = `M${f(BX)},-0.47 L${f(BX + mlen - 0.1)},-0.47 Q${f(BX + mlen)},-0.47 ${f(BX + mlen)},-0.37 L${f(BX + mlen)},0.37 Q${f(BX + mlen)},0.47 ${f(BX + mlen - 0.1)},0.47 L${f(BX)},0.47 Z ${repeat(BX + 0.55, BX + mlen - 0.45, 0.42, (x) => `M${x},-0.3 L${f(x + 0.22)},-0.3 L${f(x + 0.22)},0.3 L${x},0.3 Z`)}`;
+  // Brakes: a ported brake traced from US D285,238 FIG. 1; 3-prong hiders: US D577,410 FIG. 1 (collar and prongs).
+  const mzTrace = matches(mz, /brake/i) ? 'muzzleBrake' as const : matches(mz, /prong/i) ? 'muzzleProng' as const : null;
+  if (mzTrace) {
+    const h = AR_PROFILES.marks[mzTrace + 'H'];
+    const t = arPaths(AR_PROFILES[mzTrace], (x, y) => [BX + x, y - h / 2]);
+    mlen = mzTrace === 'muzzleBrake' ? 2.25 : 2.2;
+    md = t.o;
+    mdet = t.d;
   } else if (matches(mz, /comp/i)) {
     mlen = 2.0;
     md = `M${f(BX)},-0.45 L${f(BX + mlen)},-0.45 L${f(BX + mlen)},0.45 L${f(BX)},0.45 Z ${repeat(BX + 0.5, BX + 1.6, 0.36, (x) => `M${x},-0.45 L${f(x + 0.1)},-0.15 L${f(x + 0.22)},-0.45`)}`;
@@ -259,7 +275,7 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
     mlen = 2.25;
     md = `M${f(BX)},-0.4 L${f(BX + 0.4)},-0.4 L${f(BX + 0.55)},-0.45 L${f(BX + mlen)},-0.45 L${f(BX + mlen)},0.45 L${f(BX + 0.55)},0.45 L${f(BX + 0.4)},0.4 L${f(BX)},0.4 Z ${repeat(BX + 0.85, BX + 1.95, 0.27, (x) => `M${x},-0.45 L${x},-0.08`)}`;
   }
-  P.push({ slot: 'muzzle', z: 12, row: 'top', target: px(BX + mlen / 2, -0.45), el: <path d={T(md)} /> });
+  P.push({ slot: 'muzzle', z: 12, row: 'top', target: px(BX + mlen / 2, -0.45), el: <><path d={T(md)} />{mdet && <path className="detail" d={T(mdet)} />}</> });
 
   // Optic, mounted on the upper's rail
   const opt = b.optic;
