@@ -2,6 +2,7 @@
 # Runs only from main, so nothing goes live until a pull request is merged.
 # Needs two repository secrets: CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.
 # On its first run it creates the D1 database and a private salt for hashing visitor IPs.
+# Optional secrets RESEND_API_KEY and MAILING_ADDRESS turn on price alert emails.
 name: Deploy community API
 
 on:
@@ -57,6 +58,19 @@ jobs:
         run: |
           if ! $WRANGLER secret list | grep -q '"SALT"'; then
             node -e 'process.stdout.write(require("crypto").randomBytes(32).toString("hex"))' | $WRANGLER secret put SALT
+          fi
+      # Price alert emails stay off until both of these repository secrets exist (see worker/src/alerts.js).
+      - name: Set the price alert email settings
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          MAILING_ADDRESS: ${{ secrets.MAILING_ADDRESS }}
+        run: |
+          if [ -n "$RESEND_API_KEY" ] && [ -n "$MAILING_ADDRESS" ]; then
+            printf '%s' "$RESEND_API_KEY" | $WRANGLER secret put RESEND_API_KEY
+            printf '%s' "$MAILING_ADDRESS" | $WRANGLER secret put MAILING_ADDRESS
+          else
+            echo "::notice::RESEND_API_KEY and MAILING_ADDRESS aren't both set, so price alert emails stay off."
           fi
       # Share links with picture cards live on share.dropinbuilds.com. This attaches that address to the
       # Worker when the API token is allowed to; otherwise it says so, and it can be added by hand in the

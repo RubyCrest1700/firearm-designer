@@ -16,7 +16,9 @@ import {
 } from './community';
 import { awarenessFor, type Aware } from './awareness';
 import { buildWeight, formatWeight } from './weight';
-import { recentDrop } from './data/history';
+import { daysAgo, hasHistory, partSeries, recentChange, totalSeries } from './data/history';
+import { PriceChart } from './PriceChart';
+import { alertsAvailable, checkAlertSignup, loadAlertSignup, signUpForAlerts, stopAlerts, storeAlertSignup, syncAlertBuilds, type AlertSignup } from './alerts';
 import { MOVABLE, SIDE_LABEL, mountsFor, railLength, type Resolved } from './data/addons';
 import type { Build, Issue, Part, Placement, Platform, Severity, Side, Slot, Tier } from './types';
 
@@ -100,6 +102,22 @@ export default function App() {
   }, [platformId, selections]);
   useEffect(() => { storeSavedBuilds(saved); }, [saved]);
   const dropped = useMemo(() => droppedBuilds(saved), [saved]);
+  const [alertsOn, setAlertsOn] = useState(false);
+  const [signup, setSignup] = useState<AlertSignup | null>(loadAlertSignup);
+  useEffect(() => { storeAlertSignup(signup); }, [signup]);
+  useEffect(() => {
+    void alertsAvailable().then(setAlertsOn);
+    const s = loadAlertSignup();
+    if (s) void checkAlertSignup(s).then(setSignup);
+  }, []);
+  // Keep the emailed list in step with My builds; a signup that was unsubscribed by email is forgotten.
+  const firstSync = useRef(true);
+  useEffect(() => {
+    if (firstSync.current) { firstSync.current = false; return; }
+    if (!signup) return;
+    const t = setTimeout(() => { void syncAlertBuilds(signup, saved).then((ok) => { if (!ok) setSignup(null); }); }, 1000);
+    return () => clearTimeout(t);
+  }, [saved]);
   // Tell a returning visitor once when a saved build gets cheaper; a new drop tells them again.
   useEffect(() => {
     const seen = dropped.map((s) => `${s.id}:${priceChanges(s).drop.toFixed(2)}`).sort().join(',');
@@ -214,6 +232,12 @@ export default function App() {
         {route === 'saved' && (
           <SavedPage
             saved={saved}
+            alerts={alertsOn ? (
+              <AlertsPanel signup={signup} hasBuilds={saved.length > 0}
+                onSignUp={async (email) => { const s = await signUpForAlerts(email, saved); setSignup(s); }}
+                onRefresh={() => { if (signup) void checkAlertSignup(signup).then(setSignup); }}
+                onStop={async () => { if (signup) await stopAlerts(signup); setSignup(null); setToast('Price alert emails are off.'); }} />
+            ) : null}
             onOpen={(s) => openInBuilder(s.platform, s.selection, s.id)}
             onRename={(id, name) => setSaved((list) => list.map((s) => (s.id === id ? { ...s, name } : s)))}
             onDuplicate={(s) => setSaved((list) => [{ ...s, id: newId(), name: `${s.name} (copy)`, savedAt: new Date().toISOString() }, ...list])}
@@ -468,7 +492,7 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
                     {rowIssues.map((i, k) => <span key={k} className={'row-issue ' + i.severity}>{i.message}</span>)}
                   </button>
                   <span className="part-price">
-                    {offer ? <><span className="amt">{money(offer.price)}</span><span className="src">{RETAILERS[offer.retailer].name}</span>{part && <DropChip part={part} />}</> : <span className="amt dim">—</span>}
+                    {offer ? <><span className="amt">{money(offer.price)}</span><span className="src">{RETAILERS[offer.retailer].name}</span>{part && <ChangeChip part={part} />}</> : <span className="amt dim">—</span>}
                   </span>
                   <span className="part-fit">
                     <FitTag state={states[slot.id]} />
@@ -485,9 +509,15 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
   );
 }
 
-function DropChip({ part }: { part: Part }) {
-  const drop = recentDrop(part);
-  return drop ? <span className="drop-chip" title={`Was ${money(drop.was)} in the last 30 days`}>↓ {money(drop.by)}</span> : null;
+/** Price move over the last 30 days: green when it fell, amber when it rose. */
+function ChangeChip({ part, long }: { part: Part; long?: boolean }) {
+  const c = recentChange(part);
+  if (!c) return null;
+  return (
+    <span className={'change-chip ' + (c.by > 0 ? 'down' : 'up')} title={`${money(c.was)} 30 days ago`}>
+      {c.by > 0 ? '↓' : '↑'} {money(Math.abs(c.by))}{long && ' this month'}
+    </span>
+  );
 }
 
 function WeightLine({ platform, build }: { platform: Platform; build: Build }) {
@@ -753,7 +783,6 @@ function Candidate({ part, issues, sev, selected, onChoose, onBuyClick }: {
   const [lo, hi] = priceRange(part);
   const fit: RegionState = sev === 'ok' || sev === 'info' ? 'ok' : sev;
   const live = part.offers.some((o) => o.checkedAt);
-  const drop = recentDrop(part);
   return (
     <li className={'cand ' + fit + (selected ? ' selected' : '')}>
       <div className="cand-top">
@@ -772,7 +801,7 @@ function Candidate({ part, issues, sev, selected, onChoose, onBuyClick }: {
         <div className="cand-buy">
           {best && <span className="amt">{money(best.price)}</span>}
           {best && <span className="src">{RETAILERS[best.retailer].name}{live ? '' : ' · sample'}</span>}
-          {drop && <span className="drop-chip" title={`Was ${money(drop.was)} in the last 30 days`}>↓ {money(drop.by)} this month</span>}
+          <ChangeChip part={part} long />
           {!selected && <button className="btn primary" onClick={onChoose}>Add to build</button>}
         </div>
       </div>
@@ -783,6 +812,7 @@ function Candidate({ part, issues, sev, selected, onChoose, onBuyClick }: {
       </button>
       {showPrices && (
         <div className="offers-wrap">
+          {hasHistory(part) && <PriceChart points={partSeries(part, daysAgo(90))} label="Best price, last 90 days" />}
           <table className="offers">
             <thead><tr><th>Retailer</th><th className="num">Price</th><th>Stock</th><th>Checked</th><th /></tr></thead>
             <tbody>
@@ -1000,13 +1030,62 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onStart, onT
   );
 }
 
+/** Email alerts for every saved build in this browser: sign up, waiting to confirm, or on. */
+function AlertsPanel({ signup, hasBuilds, onSignUp, onRefresh, onStop }: {
+  signup: AlertSignup | null; hasBuilds: boolean; onSignUp: (email: string) => Promise<void>; onRefresh: () => void; onStop: () => Promise<void>;
+}) {
+  const [email, setEmail] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!signup || signup.confirmed) return;
+    const onFocus = () => onRefresh();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [signup, onRefresh]);
+
+  if (signup) return (
+    <section className="alerts-panel card on">
+      <div>
+        <h2>{signup.confirmed ? 'Price alert emails are on' : 'Check your inbox'}</h2>
+        <p>{signup.confirmed
+          ? <>We'll email <b>{signup.email}</b> when parts in your saved builds go up or down in price, at most once a day. Builds you save here are added automatically.</>
+          : <>We sent a link to <b>{signup.email}</b>. Press it to turn on price alerts.</>}</p>
+      </div>
+      <button className="btn ghost" disabled={busy} onClick={async () => { setBusy(true); await onStop(); setBusy(false); }}>{signup.confirmed ? 'Turn off' : 'Cancel'}</button>
+    </section>
+  );
+  return (
+    <section className="alerts-panel card">
+      <div>
+        <h2>Get price alerts by email</h2>
+        <p>{hasBuilds ? 'We\'ll email you when parts in your saved builds get cheaper or more expensive.' : 'Save a build, then get an email when its parts get cheaper or more expensive.'} One email a day at most, only when something changed. We only use your address for these alerts.</p>
+      </div>
+      <form onSubmit={async (e) => {
+        e.preventDefault();
+        setBusy(true); setError(null);
+        try { await onSignUp(email.trim()); } catch (err) { setError((err as Error).message); }
+        setBusy(false);
+      }}>
+        <label className="sr" htmlFor="alert-email">Email address</label>
+        <input id="alert-email" type="email" required autoComplete="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={254} />
+        <button className="btn primary" type="submit" disabled={busy}>{busy ? 'Sending…' : 'Email me'}</button>
+        {error && <p className="form-error" role="alert">{error}</p>}
+      </form>
+    </section>
+  );
+}
+
 /** What the build's parts cost now against when it was saved: the net change and the biggest movers. */
 function PriceSinceSaved({ s }: { s: SavedBuild }) {
   const { changes, drop } = priceChanges(s);
   if (!s.prices || !Object.keys(s.prices).length) return null;
-  if (Math.abs(drop) < 1) return <p className="since-saved flat">Same price as when you saved it</p>;
+  const { build } = buildOf(s.platform, s.selection);
+  const chart = <PriceChart points={totalSeries(Object.values(build).filter((p): p is Part => !!p), s.savedAt.slice(0, 10))} label="Build total since you saved it" />;
+  if (Math.abs(drop) < 1) return <><p className="since-saved flat">Same price as when you saved it</p>{chart}</>;
   return (
     <div className={'since-saved ' + (drop > 0 ? 'down' : 'up')}>
+      {chart}
       <p className="since-total">{drop > 0 ? <>↓ {money(drop)} less than when you saved it</> : <>↑ {money(-drop)} more than when you saved it</>}</p>
       <ul>
         {changes.slice(0, 3).map((c) => (
@@ -1018,8 +1097,8 @@ function PriceSinceSaved({ s }: { s: SavedBuild }) {
   );
 }
 
-function SavedPage({ saved, onOpen, onRename, onDuplicate, onDelete, onCopyLink, onStart, onBrowse }: {
-  saved: SavedBuild[]; onOpen: (s: SavedBuild) => void; onRename: (id: string, name: string) => void;
+function SavedPage({ saved, alerts, onOpen, onRename, onDuplicate, onDelete, onCopyLink, onStart, onBrowse }: {
+  saved: SavedBuild[]; alerts: ReactNode; onOpen: (s: SavedBuild) => void; onRename: (id: string, name: string) => void;
   onDuplicate: (s: SavedBuild) => void; onDelete: (id: string) => void; onCopyLink: (s: SavedBuild) => void;
   onStart: () => void; onBrowse: () => void;
 }) {
@@ -1033,6 +1112,7 @@ function SavedPage({ saved, onOpen, onRename, onDuplicate, onDelete, onCopyLink,
         <h1>Your saved builds</h1>
         <p className="lede">Builds are saved in this browser. We check prices every night, and each build shows what changed since you saved it. Use Copy link to open one on another device or send it to someone.</p>
       </div>
+      {alerts}
       {saved.length === 0 ? (
         <div className="empty-state card">
           <h2>No saved builds yet</h2>
