@@ -618,17 +618,24 @@ function glockGrip(traced: number[], o: { SH: number; hole: number[]; slim: bool
   if (gen5) q([front(yF), yF], [front(yGB - 0.08) + 0.01, yGB - 0.1], [toeX + 0.07, yGB - 0.03], 5);
   q([pts[pts.length - 2], pts[pts.length - 1]], [toeX + 0.04, yGB], [toeX - 0.08, yGB], 3);
   pts.push(hx + 0.08, yGB);
-  // Back strap, heel up to the web; Gen3/4 hump low down, a slight palm swell on the others.
+  // Back strap, heel up to the web; Gen3/4 hump low down. It runs straight above that, so the web can carry its line on.
   const wx = -tang + (slim ? 0.57 : 0.59), wy = SH + 0.74;
   q([hx + 0.08, yGB], [hx, yGB], [hx - 0.01, yGB - 0.1], 3);
-  const yb0 = yGB - 0.1;
-  for (let y = yb0 - 0.05; y > wy; y -= 0.05) {
+  const yb0 = yGB - 0.1, sx = (wx - hx + 0.01) / (yb0 - wy);
+  const bx = (y: number) => hx - 0.01 + sx * (yb0 - y);
+  const yw = SH + 1.05;
+  for (let y = yb0 - 0.05; y > yw + 0.02; y -= 0.05) {
     const t = (yb0 - y) / (yb0 - wy);
-    const bump = n ? 0.09 * Math.exp(-(((t - 0.3) / 0.16) ** 2)) : 0.035 * Math.exp(-(((t - 0.62) / 0.2) ** 2));
-    pts.push(hx - 0.01 + (wx - hx + 0.01) * t - bump, y);
+    pts.push(bx(y) - (n ? 0.09 * Math.exp(-(((t - 0.3) / 0.16) ** 2)) : 0), y);
   }
-  // Web: a shallow curve up and back into the underside of the beavertail, then its rounded tip.
-  q([wx, wy], [wx + 0.04, SH + 0.36], [-tang + 0.16, SH + 0.24]);
+  // Web: one cubic that leaves along the back strap's line and arrives level under the beavertail.
+  const P0 = [bx(yw), yw], P3 = [-tang + 0.16, SH + 0.24];
+  const dl = Math.hypot(sx, 1), L = 0.3;
+  const P1 = [P0[0] + (sx / dl) * L, P0[1] - L / dl], P2 = [P3[0] + 0.42, P3[1] + 0.04];
+  for (let j = 1; j <= 14; j++) {
+    const t = j / 14, u = 1 - t, a = u * u * u, b = 3 * u * u * t, c = 3 * u * t * t, d = t * t * t;
+    pts.push(a * P0[0] + b * P1[0] + c * P2[0] + d * P3[0], a * P0[1] + b * P1[1] + c * P2[1] + d * P3[1]);
+  }
   q([-tang + 0.16, SH + 0.24], [-tang, SH + 0.24], [-tang, SH + 0.14], 4);
   q([-tang, SH + 0.14], [-tang + 0.01, SH + 0.01], [-tang + 0.2, SH], 4);
   return { pts, heel: [hx, yGB] as [number, number], toe: [toeX, yGB] as [number, number], tang, h1x };
