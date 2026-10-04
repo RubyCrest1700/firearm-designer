@@ -282,12 +282,14 @@ function NavLink({ active, onClick, children }: { active: boolean; onClick: () =
 }
 
 function Mark() {
-  /* Drop-In Builds mark: a part dropping into a receiver channel. Same drawing as public/favicon.svg. */
+  /* Drop-In Builds header mark (P1): DI monogram inside a hex patch outline. The tab icon (public/favicon.svg) is the solid patch (P2). */
   return (
     <svg className="mark" viewBox="0 0 48 48" aria-hidden="true">
-      <path d="M7 20v20h34V20" className="channel" />
-      <rect x="16" y="14" width="16" height="22" rx="2" className="fill" />
-      <path d="M19 5l5 5 5-5" className="drop" />
+      <path d="M24 3l18.19 10.5v21L24 45 5.81 34.5v-21z" className="hex" />
+      <g transform="translate(11.7 10.8) scale(.55)">
+        <path d="M4 9h10a15 15 0 0 1 0 30H4z" className="d" />
+        <rect x="36" y="9" width="7" height="30" rx="1.5" className="fill" />
+      </g>
     </svg>
   );
 }
