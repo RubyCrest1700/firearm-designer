@@ -51,6 +51,13 @@ function makeT(S: number, ox: number, oy: number) {
 const matches = (p: Part | undefined, re: RegExp) => !!p && re.test(`${p.name} ${p.specs.join(' ')}`);
 const inch = (n: number) => `${n.toFixed(1).replace(/\.0$/, '')}"`;
 
+/** Picatinny rail cross slots along a top edge at y, from x0 to x1 (inches, 0.394" pitch). */
+function pic(x0: number, x1: number, y: number) {
+  let d = '';
+  for (let x = x0; x + 0.206 <= x1 + 1e-6; x += 0.394) d += `M${f(x)},${f(y)} L${f(x)},${f(y + 0.1)} L${f(x + 0.206)},${f(y + 0.1)} L${f(x + 0.206)},${f(y)} `;
+  return d;
+}
+
 function repeat(from: number, to: number, step: number, fn: (x: number) => string) {
   let d = '';
   for (let x = from; x <= to + 1e-6; x += step) d += fn(f(x)) + ' ';
@@ -88,6 +95,7 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
   P.push({ slot: 'buffer', z: 1, row: 'bottom', target: px(TE + tubeLen * 0.62, 0.55),
     el: <>
       <path d={T(`M${f(TE)},-0.57 L${f(-0.95 * kx)},-0.57 L${f(-0.95 * kx)},-0.7 L${f(-0.58 * kx)},-0.7 L${f(-0.58 * kx)},0.7 L${f(-0.95 * kx)},0.7 L${f(-0.95 * kx)},0.57 L${f(TE)},0.57 Z`)} />
+      <path d={T(`M${f(-0.95 * kx - 0.42)},-0.66 L${f(-0.95 * kx)},-0.66 L${f(-0.95 * kx)},0.66 L${f(-0.95 * kx - 0.42)},0.66 Z ${repeat(-0.95 * kx - 0.34, -0.95 * kx - 0.1, 0.12, (x) => `M${x},-0.66 L${x},-0.54`)}`)} />
       <path d={T(`M${f(-0.75 * kx)},-0.7 L${f(-0.75 * kx)},0.7 M${f(TE + 0.25)},-0.57 L${f(TE + 0.25)},0.57 ${tubeKind === 'rifle' ? '' : repeat(TE + 0.8, TE + 5.6, 0.65, (x) => `M${x},0.57 L${x},0.4`)}`)} className="detail" />
     </> });
 
@@ -111,7 +119,10 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
       ? `M${r},-1.35 L${f(r + 6.4)},-0.95 Q${f(r + 6.8)},-0.92 ${f(r + 6.8)},-0.6 L${f(r + 6.8)},0.7 Q${f(r + 6.8)},0.95 ${f(r + 6.4)},1.0 L${f(r + 2.6)},1.45 L${f(r + 0.9)},4.25 Q${f(r + 0.7)},4.45 ${r},4.45 Z M${f(rear)},-1.4 L${r},-1.35 L${r},4.45 L${f(rear)},4.4 Z M${f(r + 0.6)},-0.7 L${f(r + 5.9)},-0.45 M${f(r + 1.6)},3.4 L${f(r + 2.8)},1.6`
       : `M${r},-1.12 L${f(r + 0.55)},-1.12 L${f(r + 5.6)},-0.84 Q${f(r + 5.95)},-0.82 ${f(r + 5.95)},-0.55 L${f(r + 5.95)},0.64 Q${f(r + 5.9)},0.88 ${f(r + 5.55)},0.9 L${f(r + 3.25)},1.12 Q${f(r + 2.45)},1.26 ${f(r + 1.9)},1.95 L${f(r + 0.8)},3.95 Q${f(r + 0.62)},4.2 ${f(r + 0.3)},4.2 L${r},4.2 Z M${f(rear)},-1.16 L${r},-1.12 L${r},4.2 L${f(rear)},4.16 Z M${f(r + 1.2)},-0.62 L${f(r + 4.9)},-0.48 M${f(r + 3.6)},0.95 L${f(r + 4.4)},1.25 L${f(r + 4.9)},0.88`;
   }
-  P.push({ slot: 'stock', z: 2, row: 'bottom', target: px(rear + 2.2, 1.6), el: <path d={T(sd)} /> });
+  const padTop = matches(stock, /PRS|Precision/) ? -1.9 : matches(stock, /A2/) ? -1.15 : matches(stock, /UBR/) ? -1.3 : -1.08;
+  const padBot = matches(stock, /PRS|Precision|A2/) ? 4.42 : matches(stock, /UBR/) ? 4.36 : 4.12;
+  const stockDet = `${repeat(padTop + 0.25, padBot - 0.2, 0.22, (y) => `M${f(rear + 0.08)},${y} L${f(rear + 0.32)},${y}`)} ${O2(rear + 1.3, padTop + 0.55, 0.16)} ${O2(rear + 1.3, padTop + 0.55, 0.07)}`;
+  P.push({ slot: 'stock', z: 2, row: 'bottom', target: px(rear + 2.2, 1.6), el: <><path d={T(sd)} /><path className="detail" d={T(stockDet)} /></> });
 
   // Lower receiver
   P.push({ slot: 'lower', z: 4, row: 'bottom', target: px(5.3 * kx, 2.3 * ky),
@@ -126,11 +137,28 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
   P.push({ slot: 'trigger', z: 6, row: 'bottom', target: px(2.82 * kx, 1.9 * ky),
     el: <path d={R('M2.72,1.45 Q2.6,1.75 2.78,2.0 L2.9,1.98 Q2.76,1.75 2.87,1.45 Z')} /> });
 
-  // Pistol grip
-  P.push({ slot: 'grip', z: 5, row: 'bottom', target: px(0.6 * kx, 3.3 * ky),
+  // Pistol grip: drawn at its own angle (steeper grips stand more upright), with a beavertail at the top,
+  // a palm swell on the back strap, a stippled panel and the bottom plug. Finger-groove grips get grooves.
+  const gr = b.grip;
+  const sh = matches(gr, /vertical/i) ? 0.15 : matches(gr, /steep/i) ? 0.08 : 0;
+  const grooved = matches(gr, /finger groove/i);
+  const g = (x: number, y: number) => `${f(x + (y - 1.42) * sh)},${f(y)}`;
+  const gFront = grooved
+    ? `L${g(1.86, 2.36)} Q${g(1.62, 2.62)} ${g(1.8, 2.86)} Q${g(1.56, 3.18)} ${g(1.62, 3.4)} Q${g(1.38, 3.74)} ${g(1.46, 3.98)} L${g(1.2, 4.62)}`
+    : `L${g(1.86, 2.36)} Q${g(1.7, 2.8)} ${g(1.66, 3.06)} L${g(1.2, 4.62)}`;
+  const gripD = `M${g(0.6, 1.42)} L${g(1.98, 1.46)} Q${g(2.1, 1.52)} ${g(2.05, 1.68)} ${gFront} Q${g(1.1, 4.94)} ${g(0.82, 4.96)} L${g(-0.42, 4.88)} Q${g(-0.72, 4.84)} ${g(-0.68, 4.58)} L${g(0.02, 2.5)} Q${g(0.16, 2.0)} ${g(-0.04, 1.66)} Q${g(-0.1, 1.44)} ${g(0.22, 1.42)} Z`;
+  let gripTex = '';
+  for (let y = 2.35; y < 4.45; y += 0.14) {
+    const xa = 0.02 - (y - 2.5) * 0.338 + 0.22;
+    const xb = (y < 3.06 ? 1.66 : 1.66 - (y - 3.06) * 0.29) - (grooved ? 0.34 : 0.22);
+    const off = Math.round((y - 2.35) / 0.14) % 2 ? 0.07 : 0;
+    for (let x = xa + off; x < xb; x += 0.14) gripTex += `M${g(x, y)} L${g(x + 0.015, y)} `;
+  }
+  P.push({ slot: 'grip', z: 5, row: 'bottom', target: px((0.6 + 2.0 * sh) * kx, 3.3 * ky),
     el: <>
-      <path d={R('M0.55,1.4 L1.95,1.45 Q2.07,1.5 2.02,1.66 L1.72,2.6 Q1.57,2.86 1.64,3.06 L1.1,4.76 Q1.0,4.96 0.79,4.95 L-0.45,4.86 Q-0.72,4.8 -0.66,4.58 L0.25,1.76 Q0.35,1.44 0.55,1.4 Z')} />
-      <path className="detail" d={R('M0.3,2.3 L1.6,2.38 M0.05,3.1 L1.4,3.18 M-0.2,3.9 L1.15,3.98')} />
+      <path d={R(gripD)} />
+      <path className="detail" d={R(`M${g(-0.58, 4.62)} L${g(1.16, 4.72)} M${g(0.1, 2.2)} L${g(1.7, 2.24)}`)} />
+      <path className="detail stipple" d={R(gripTex)} />
     </> });
 
   // Magazine
@@ -143,7 +171,7 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
   P.push({ slot: 'upper', z: 7, row: 'top', target: px(1.4 * kx, -0.55 * ky),
     el: <>
       <path d={R('M0.05,-1.1 L6.95,-1.1 L6.95,-0.9 L6.95,0.55 L6.6,0.72 L0.9,0.72 L0.9,0.4 L0.05,0.4 Z')} />
-      <path className="detail" d={R(`M0.05,-0.9 L6.95,-0.9 ${repeat(0.3, 6.8, 0.394, (x) => `M${x},-1.1 L${x},-0.98`)} M2.3,-0.38 L5.0,-0.38 L5.0,0.3 L2.3,0.3 Z M0.75,-0.58 Q1.65,-0.62 1.95,-0.2 L1.95,0.12 Q1.55,0.36 0.75,0.32`) + O(1.12, -0.12, 0.17)} />
+      <path className="detail" d={R(`M0.05,-0.9 L6.95,-0.9 ${pic(0.25, 6.85, -1.1)} M2.3,-0.38 L5.0,-0.38 L5.0,0.3 L2.3,0.3 Z M2.3,0.2 L5.0,0.2 M4.55,-0.38 L4.55,-0.18 L4.8,-0.18 L4.8,-0.38 M0.75,-0.58 Q1.65,-0.62 1.95,-0.2 L1.95,0.12 Q1.55,0.36 0.75,0.32 M2.05,-0.58 Q2.25,-0.62 2.25,-0.38 M0.1,0.4 L0.1,0.12 M6.25,-0.9 L6.25,0.55 M6.45,0.15 L6.95,0.15`) + O(1.12, -0.12, 0.17) + O(1.12, -0.12, 0.08)} />
     </> });
   P.push({ slot: 'charging', z: 8, row: 'top', target: px(-0.55 * kx, -0.62 * ky),
     el: <path d={R('M-0.78,-0.76 L0.05,-0.76 L0.05,-0.5 L-0.78,-0.5 Q-0.98,-0.53 -0.98,-0.63 Q-0.98,-0.73 -0.78,-0.76 Z')} /> });
@@ -180,7 +208,8 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
     P.push({ slot: 'handguard', z: 11, row: 'top', target: px(RF + H * 0.45, -1.1),
       el: <>
         <path d={T(`M${f(RF)},-1.1 L${f(HX - 0.25)},-1.1 Q${f(HX)},-1.1 ${f(HX)},-0.85 L${f(HX)},0.7 Q${f(HX)},0.95 ${f(HX - 0.25)},0.95 L${f(RF)},0.95 Z`)} />
-        <path className="detail" d={T(`M${f(RF)},-0.9 L${f(HX - 0.1)},-0.9 ${repeat(RF + 0.25, HX - 0.3, 0.394, (x) => `M${x},-1.1 L${x},-0.98`)} ${repeat(RF + 1.1, HX - 1.6, 1.6, (x) => `M${x},-0.2 L${f(x + 1.1)},-0.2 Q${f(x + 1.27)},-0.2 ${f(x + 1.27)},-0.03 Q${f(x + 1.27)},0.14 ${f(x + 1.1)},0.14 L${x},0.14 Q${f(x - 0.17)},0.14 ${f(x - 0.17)},-0.03 Q${f(x - 0.17)},-0.2 ${x},-0.2 Z`)} M${f(RF + 0.15)},-0.9 L${f(RF + 0.15)},0.95`)} />
+        <path className="detail" d={T(`M${f(RF)},-0.9 L${f(HX - 0.1)},-0.9 ${pic(RF + 0.25, HX - 0.3, -1.1)} M${f(HX - 0.35)},-0.9 L${f(HX - 0.35)},0.95 M${f(RF)},0.62 L${f(HX - 0.35)},0.62 M${f(RF + 0.55)},0.62 L${f(RF + 0.55)},0.95 ${repeat(RF + 1.1, HX - 1.6, 1.6, (x) => `M${x},0.72 L${f(x + 0.9)},0.72`)}`) + O(RF / kx + 0.95 / kx, 0.38 / ky, 0.12) + O((HX - 0.75) / kx, 0.38 / ky, 0.12)} />
+        <path className="detail" d={T(` ${repeat(RF + 1.1, HX - 1.6, 1.6, (x) => `M${x},-0.2 L${f(x + 1.1)},-0.2 Q${f(x + 1.27)},-0.2 ${f(x + 1.27)},-0.03 Q${f(x + 1.27)},0.14 ${f(x + 1.1)},0.14 L${x},0.14 Q${f(x - 0.17)},0.14 ${f(x - 0.17)},-0.03 Q${f(x - 0.17)},-0.2 ${x},-0.2 Z`)} M${f(RF + 0.15)},-0.9 L${f(RF + 0.15)},0.95`)} />
       </> });
   } else {
     P.push({ slot: 'handguard', z: 11, row: 'top', target: px(RF + H * 0.5, -0.86),
@@ -221,15 +250,22 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
     const o0 = x1 - (big56 ? 3.6 : 2.3);
     od = `M${x0},${f(cy - 0.85)} L${f(e1 - 0.35)},${f(cy - 0.85)} Q${f(e1)},${f(cy - 0.85)} ${f(e1 + 0.2)},${f(cy - tubeR)} L${f(o0)},${f(cy - tubeR)} L${f(o0 + 0.9)},${f(cy - ob)} L${x1},${f(cy - ob)} L${x1},${f(cy + ob)} L${f(o0 + 0.9)},${f(cy + ob)} L${f(o0)},${f(cy + tubeR)} L${f(e1 + 0.2)},${f(cy + tubeR)} Q${f(e1)},${f(cy + 0.85)} ${f(e1 - 0.35)},${f(cy + 0.85)} L${x0},${f(cy + 0.85)} Z M${f(e1 + 1.7)},${f(cy - tubeR)} L${f(e1 + 1.7)},${f(cy - 1.25)} L${f(e1 + 2.9)},${f(cy - 1.25)} L${f(e1 + 2.9)},${f(cy - tubeR)}`;
     odet = `M${f(e1 + 0.5)},${f(cy + tubeR)} L${f(e1 + 0.5)},-1.1 L${f(e1 + 1.1)},-1.1 L${f(e1 + 1.1)},${f(cy + tubeR)} M${f(o0 - 1.0)},${f(cy + tubeR)} L${f(o0 - 1.0)},-1.1 L${f(o0 - 0.4)},-1.1 L${f(o0 - 0.4)},${f(cy + tubeR)} M${f(e1 + 0.2)},-1.25 L${f(o0 - 0.2)},-1.25 L${f(o0 - 0.2)},-1.1 M${f(x0 + 0.6)},${f(cy - 0.85)} L${f(x0 + 0.6)},${f(cy + 0.85)} M${f(x0 + 1.3)},${f(cy - 0.85)} L${f(x0 + 1.3)},${f(cy + 0.85)}`;
+    const tc = (e1 + 1.1 + o0 - 1.0) / 2;
+    const tTop = cy - tubeR - 0.62;
+    od += ` M${f(tc - 0.42)},${f(cy - tubeR)} L${f(tc - 0.42)},${f(tTop + 0.08)} Q${f(tc - 0.42)},${f(tTop)} ${f(tc - 0.34)},${f(tTop)} L${f(tc + 0.34)},${f(tTop)} Q${f(tc + 0.42)},${f(tTop)} ${f(tc + 0.42)},${f(tTop + 0.08)} L${f(tc + 0.42)},${f(cy - tubeR)}`;
+    odet += ` ${repeat(tc - 0.32, tc + 0.32, 0.08, (x) => `M${x},${f(tTop + 0.06)} L${x},${f(tTop + 0.3)}`)} M${f(tc - 0.42)},${f(tTop + 0.36)} L${f(tc + 0.42)},${f(tTop + 0.36)}`
+      + ` ${O2(tc, cy, 0.4)} ${O2(tc, cy, 0.3)} ${O2(tc, cy, 0.06)}`
+      + ` ${repeat(x0 + 1.75, x0 + 2.55, 0.1, (x) => `M${x},${f(cy - 0.85)} L${x},${f(cy - 0.62)} M${x},${f(cy + 0.62)} L${x},${f(cy + 0.85)}`)} M${f(x0 + 2.1)},${f(cy + 0.85)} L${f(x0 + 2.1)},${f(cy + 1.05)} L${f(x0 + 2.3)},${f(cy + 1.05)} L${f(x0 + 2.3)},${f(cy + 0.85)}`
+      + ` ${O2(e1 + 0.8, cy - tubeR - 0.12, 0.05)} ${O2(o0 - 0.7, cy - tubeR - 0.12, 0.05)} M${f(o0 + 0.9)},${f(cy - ob + 0.18)} L${f(x1 - 0.12)},${f(cy - ob + 0.18)} M${f(x1 - 0.12)},${f(cy - ob)} L${f(x1 - 0.12)},${f(cy + ob)}`;
     ot = px(e1 + 2.3, cy - 1.25);
   } else if (matches(opt, /reflex|510/i)) {
     od = 'M2.8,-1.1 L2.8,-1.6 L3.3,-1.6 L3.62,-3.0 Q3.7,-3.25 3.96,-3.25 L5.6,-3.25 Q5.86,-3.25 5.9,-3.0 L6.0,-1.6 L6.0,-1.1 Z M3.86,-1.75 L4.06,-2.97 L5.5,-2.97 L5.64,-1.75 Z';
-    odet = 'M3.0,-1.35 L5.8,-1.35';
+    odet = `M3.0,-1.35 L5.8,-1.35 M3.95,-2.97 L3.86,-1.75 M4.4,-1.48 L4.75,-1.48 L4.75,-1.25 L4.4,-1.25 Z M4.95,-1.48 L5.3,-1.48 L5.3,-1.25 L4.95,-1.25 Z ${O2(3.35, -1.85, 0.12)}`;
     ot = px(4.7, -3.25);
   } else {
     const cy = -2.3;
     od = `M2.6,${f(cy - 0.8)} L7.2,${f(cy - 0.8)} Q7.45,${f(cy - 0.8)} 7.45,${f(cy - 0.55)} L7.45,${f(cy + 0.55)} Q7.45,${f(cy + 0.8)} 7.2,${f(cy + 0.8)} L2.6,${f(cy + 0.8)} Q2.35,${f(cy + 0.8)} 2.35,${f(cy + 0.55)} L2.35,${f(cy - 0.55)} Q2.35,${f(cy - 0.8)} 2.6,${f(cy - 0.8)} Z M4.4,${f(cy - 0.8)} L4.4,${f(cy - 1.2)} L5.2,${f(cy - 1.2)} L5.2,${f(cy - 0.8)}`;
-    odet = `M3.4,${f(cy + 0.8)} L3.4,-1.1 L6.4,-1.1 L6.4,${f(cy + 0.8)} M2.8,${f(cy - 0.8)} L2.8,${f(cy + 0.8)} M7.0,${f(cy - 0.8)} L7.0,${f(cy + 0.8)}`;
+    odet = `M3.4,${f(cy + 0.8)} L3.4,-1.1 L6.4,-1.1 L6.4,${f(cy + 0.8)} M2.8,${f(cy - 0.8)} L2.8,${f(cy + 0.8)} M7.0,${f(cy - 0.8)} L7.0,${f(cy + 0.8)} ${O2(4.8, cy, 0.34)} ${O2(4.8, cy, 0.22)} ${repeat(4.45, 5.15, 0.1, (x) => `M${x},${f(cy - 1.15)} L${x},${f(cy - 0.85)}`)} M5.6,-1.25 L6.5,-1.45 L6.6,-1.32 L5.75,-1.15 ${repeat(2.45, 2.7, 0.08, (x) => `M${x},${f(cy - 0.7)} L${x},${f(cy + 0.7)}`)}`;
     ot = px(4.8, cy - 1.2);
   }
   P.push({ slot: 'optic', z: 14, row: 'top', target: ot,
@@ -440,60 +476,117 @@ function pistol(platform: Platform, b: Build): Scene {
 
   /* Frame or grip module */
   const frameSlot = has('frame') ? 'frame' : 'grip';
+  const gen5 = !sig && !spec.grooves;
+  // Front strap: finger grooves on Gen3/4 frames, a gentle forward curve on the Sig grip modules.
   let strap = '';
+  const s0 = gB + (sig ? 0.3 : 0.22);
   if (spec.grooves) {
-    const y0 = gB + 0.22;
-    const step = (yGB - 0.25 - y0) / spec.grooves;
+    const step = (yGB - 0.3 - s0) / spec.grooves;
     for (let i = 0; i < spec.grooves; i++) {
-      const ya = y0 + step * i;
+      const ya = s0 + step * i;
       const yb = ya + step;
-      strap += ` Q${f(fr((ya + yb) / 2) - 0.14)},${f((ya + yb) / 2)} ${fr(yb)},${f(yb)}`;
+      strap += ` Q${f(fr((ya + yb) / 2) - 0.16)},${f((ya + yb) / 2)} ${fr(yb)},${f(yb)}`;
     }
-    strap += ` L${fr(yGB - 0.1)},${f(yGB - 0.1)}`;
   } else {
-    strap = ` L${fr(yGB - 0.1)},${f(yGB - 0.1)}`;
+    const ym = (s0 + yGB) / 2;
+    strap += ` Q${f(fr(ym) + (sig ? 0.07 : 0.03))},${f(ym)} ${fr(yGB - 0.3)},${f(yGB - 0.3)}`;
   }
+  // Mag well: Gen5 and the Sig modules flare at the bottom; Gen5 has the front scallop for stripping a mag.
+  const flare = sig ? 0.06 : gen5 ? 0.08 : 0.03;
+  strap += gen5
+    ? ` Q${f(fr(yGB - 0.12) + flare)},${f(yGB - 0.12)} ${f(fr(yGB) + flare - 0.02)},${f(yGB - 0.04)} L${f(fr(yGB) - 0.06)},${f(yGB)}`
+    : ` Q${f(fr(yGB - 0.12) + flare)},${f(yGB - 0.12)} ${f(fr(yGB) + flare - 0.06)},${f(yGB)}`;
+
+  // Trigger guard: square-fronted on the Glock, rounded and roomier on the Sig.
   const guardOuter = sig
-    ? `L${f(gF - 0.1)},${f(yRail)} Q${f(gF + 0.02)},${f(yRail + 0.1)} ${gF},${f(yRail + 0.35)} Q${f(gF - 0.02)},${f(gB)} ${f(gF - 0.45)},${f(gB)} L${f(fr(gB) + 0.3)},${f(gB)} Q${fr(gB)},${f(gB)} ${fr(gB + 0.18)},${f(gB + 0.18)}`
-    : `L${f(gF - 0.04)},${f(yRail)} L${gF},${f(yRail + 0.08)} L${f(gF - 0.04)},${f(gB - 0.12)} Q${f(gF - 0.06)},${f(gB)} ${f(gF - 0.2)},${f(gB)} L${f(fr(gB) + 0.18)},${f(gB)} Q${fr(gB)},${f(gB)} ${fr(gB + 0.14)},${f(gB + 0.14)}`;
-  const tail = sig
-    ? `L${f(bk(yWeb + 0.22) + 0.02)},${f(yWeb + 0.22)} Q${f(bk(yWeb) - 0.06)},${f(yWeb - 0.02)} ${f(-tang + 0.2)},${f(SH + 0.24)} Q${f(-tang)},${f(SH + 0.22)} ${f(-tang + 0.02)},${f(SH + 0.08)} Q${f(-tang + 0.06)},${SH} ${f(-tang + 0.24)},${SH}`
-    : `L${f(bk(yWeb + 0.2))},${f(yWeb + 0.2)} Q${f(bk(yWeb) - 0.05)},${f(yWeb - 0.04)} ${f(-tang + 0.16)},${f(SH + 0.2)} L${f(-tang)},${f(SH + 0.16)} L${f(-tang + 0.04)},${f(SH + 0.04)} L${f(-tang + 0.2)},${SH}`;
-  const frameD = `M0.3,${SH} L${f(dust - 0.06)},${SH} L${dust},${f(SH + 0.08)} L${dust},${f(yRail - 0.08)} Q${dust},${f(yRail)} ${f(dust - 0.1)},${f(yRail)} ${guardOuter}${strap} Q${fr(yGB)},${f(yGB)} ${f(fr(yGB) - 0.14)},${f(yGB)} L${f(bk(yGB) + 0.1)},${f(yGB)} Q${f(bk(yGB) - 0.04)},${f(yGB)} ${f(bk(yGB - 0.12))},${f(yGB - 0.12)} ${tail} Z`;
+    ? `L${f(gF - 0.16)},${f(yRail)} Q${f(gF + 0.04)},${f(yRail + 0.02)} ${f(gF + 0.05)},${f(yRail + 0.3)} Q${f(gF + 0.04)},${f(gB)} ${f(gF - 0.4)},${f(gB)} L${f(fr(gB) + 0.42)},${f(gB)} Q${f(fr(gB) + 0.02)},${f(gB + 0.01)} ${fr(s0)},${f(s0)}`
+    : `L${f(gF - 0.06)},${f(yRail)} L${f(gF + 0.02)},${f(yRail + 0.1)} L${f(gF + 0.06)},${f(gB - 0.14)} Q${f(gF + 0.05)},${f(gB)} ${f(gF - 0.12)},${f(gB)} L${f(fr(gB) + 0.26)},${f(gB)} Q${f(fr(gB) + 0.02)},${f(gB + 0.01)} ${fr(s0)},${f(s0)}`;
   const hole = sig
-    ? `M${f(fr(yRail) + 0.12)},${f(yRail)} L${f(gF - 0.18)},${f(yRail)} Q${f(gF - 0.14)},${f(gB - 0.14)} ${f(gF - 0.5)},${f(gB - 0.14)} L${f(fr(gB - 0.14) + 0.36)},${f(gB - 0.14)} Q${f(fr(gB - 0.3) + 0.1)},${f(gB - 0.16)} ${f(fr(yRail + 0.3) + 0.12)},${f(yRail + 0.3)} Z`
-    : `M${f(fr(yRail) + 0.12)},${f(yRail)} L${f(gF - 0.16)},${f(yRail)} L${f(gF - 0.2)},${f(gB - 0.24)} Q${f(gF - 0.22)},${f(gB - 0.14)} ${f(gF - 0.32)},${f(gB - 0.14)} L${f(fr(gB - 0.14) + 0.28)},${f(gB - 0.14)} Q${f(fr(gB - 0.14) + 0.12)},${f(gB - 0.16)} ${f(fr(yRail + 0.3) + 0.12)},${f(yRail + 0.3)} Z`;
-  // Grip texture panel, rail slot, magazine release, takedown and slide stop
-  const tex0 = yWeb + 0.5;
-  const tex1 = yGB - 0.2;
-  const panel = `M${f(bk(tex0) + 0.14)},${f(tex0)} L${f(fr(tex0) - (spec.grooves ? 0.3 : 0.16))},${f(tex0)} L${f(fr(tex1) - (spec.grooves ? 0.3 : 0.16))},${f(tex1)} L${f(bk(tex1) + 0.14)},${f(tex1)} Z`;
-  const railSlot = dust - xt > 2.2
-    ? `M${f(dust - 0.9)},${f(yRail - 0.18)} L${f(dust - 0.7)},${f(yRail - 0.18)} L${f(dust - 0.7)},${f(yRail)} M${f(dust - 0.9)},${f(yRail - 0.18)} L${f(dust - 0.9)},${f(yRail)}`
-    : '';
-  const railLine = `M${f(gF + 0.1)},${f(yRail - 0.14)} L${f(dust - 0.06)},${f(yRail - 0.14)}`;
-  const magRel = `M${f(fr(yRail + 0.14) - 0.02)},${f(yRail + 0.1)} L${f(fr(yRail + 0.14) + 0.12)},${f(yRail + 0.1)} L${f(fr(yRail + 0.42) + 0.12)},${f(yRail + 0.38)} L${f(fr(yRail + 0.42) - 0.02)},${f(yRail + 0.38)} Z`;
-  const takedown = sig
-    ? `${O2(xt + 0.32, SH + 0.18, 0.1)} M${f(xt + 0.32)},${f(SH + 0.28)} L${f(xt + 0.22)},${f(SH + 0.4)}`
-    : `M${f(xt - 0.02)},${f(SH + 0.08)} L${f(xt + 0.3)},${f(SH + 0.08)} L${f(xt + 0.3)},${f(SH + 0.22)} L${f(xt - 0.02)},${f(SH + 0.22)} Z`;
-  const stop = sig
-    ? `M${f(xt - 1.3)},${f(SH + 0.04)} L${f(xt + 0.05)},${f(SH + 0.04)} Q${f(xt + 0.12)},${f(SH + 0.1)} ${f(xt + 0.05)},${f(SH + 0.16)} L${f(xt - 1.0)},${f(SH + 0.16)} L${f(xt - 1.2)},${f(SH + 0.3)} L${f(xt - 1.42)},${f(SH + 0.3)} Z`
-    : `M${f(xt - 1.22)},${f(SH + 0.03)} L${f(xt - 0.42)},${f(SH + 0.03)} Q${f(xt - 0.36)},${f(SH + 0.09)} ${f(xt - 0.42)},${f(SH + 0.14)} L${f(xt - 1.22)},${f(SH + 0.14)} Z`;
+    ? `M${f(fr(yRail) + 0.14)},${f(yRail)} L${f(gF - 0.2)},${f(yRail)} Q${f(gF - 0.1)},${f(yRail + 0.04)} ${f(gF - 0.1)},${f(yRail + 0.3)} Q${f(gF - 0.11)},${f(gB - 0.15)} ${f(gF - 0.44)},${f(gB - 0.15)} L${f(fr(gB) + 0.46)},${f(gB - 0.15)} Q${f(fr(gB - 0.3) + 0.1)},${f(gB - 0.17)} ${f(fr(yRail + 0.32) + 0.12)},${f(yRail + 0.32)} Z`
+    : `M${f(fr(yRail) + 0.12)},${f(yRail)} L${f(gF - 0.12)},${f(yRail)} L${f(gF - 0.09)},${f(yRail + 0.08)} L${f(gF - 0.07)},${f(gB - 0.22)} Q${f(gF - 0.08)},${f(gB - 0.13)} ${f(gF - 0.2)},${f(gB - 0.13)} L${f(fr(gB - 0.13) + 0.3)},${f(gB - 0.13)} Q${f(fr(gB - 0.13) + 0.12)},${f(gB - 0.15)} ${f(fr(yRail + 0.3) + 0.12)},${f(yRail + 0.3)} Z`;
+
+  // Back strap: palm swell high on the Sig, the Glock "hump" low on Gen3/4 frames, then the beavertail.
+  // The web: a long, smooth radius from the back strap up into the underside of the beavertail.
+  const yTop = yWeb + (sig ? 0.62 : 0.55);
+  const y1 = yGB - (yGB - yTop) * (sig ? 0.3 : 0.38);
+  const y2 = yTop + (yGB - yTop) * (sig ? 0.25 : 0.3);
+  const swellLow = sig ? 0.02 : gen5 ? 0.05 : 0.12;
+  const swellHigh = sig ? 0.12 : 0.03;
+  const tailDrop = sig ? (micro ? 0.27 : 0.33) : 0.22;
+  const backstrap = `C${f(bk(y1) - swellLow)},${f(y1)} ${f(bk(y2) - swellHigh)},${f(y2)} ${f(bk(yTop))},${f(yTop)}`;
+  const tx0 = -tang + (sig ? 0.42 : 0.3);
+  const web = `C${f(bk(yWeb + 0.12))},${f(yWeb + 0.12)} ${f(tx0 + (sig ? 0.5 : 0.4))},${f(SH + tailDrop + 0.02)} ${f(tx0)},${f(SH + tailDrop)}`;
+  const tail = sig
+    ? `${web} Q${f(-tang + 0.02)},${f(SH + tailDrop)} ${f(-tang)},${f(SH + 0.13)} Q${f(-tang + 0.02)},${SH} ${f(-tang + 0.2)},${SH}`
+    : `${web} Q${f(-tang + 0.03)},${f(SH + tailDrop - 0.02)} ${f(-tang)},${f(SH + 0.1)} L${f(-tang + 0.05)},${f(SH + 0.02)} L${f(-tang + 0.2)},${SH}`;
+  const heelX = f(bk(yGB) - (sig ? 0.04 : 0.02));
+  const nose = sig
+    ? `L${f(dust - 0.12)},${SH} L${dust},${f(SH + 0.12)} L${f(dust - 0.05)},${f(yRail - 0.06)} Q${f(dust - 0.06)},${f(yRail)} ${f(dust - 0.16)},${f(yRail)}`
+    : `L${f(dust - 0.05)},${SH} L${dust},${f(SH + 0.06)} L${dust},${f(yRail - 0.08)} Q${dust},${f(yRail)} ${f(dust - 0.1)},${f(yRail)}`;
+  const frameD = `M${f(-tang + 0.2)},${SH} ${nose} ${guardOuter}${strap} L${f(heelX + 0.08)},${f(yGB)} Q${heelX},${f(yGB)} ${f(bk(yGB - 0.1))},${f(yGB - 0.12)} ${backstrap} ${tail} Z`;
+
+  // Texture panel follows the straps, filled with a stipple grid.
+  const tex0 = yWeb + (sig ? 0.62 : 0.55);
+  const tex1 = yGB - (gen5 ? 0.42 : 0.24);
+  const inF = spec.grooves ? 0.32 : sig ? 0.2 : 0.18;
+  const inB = 0.16;
+  const panel = sig
+    ? `M${f(bk(tex0) + inB)},${f(tex0)} L${f(fr(tex0 + 0.1) - inF - 0.2)},${f(tex0 + 0.1)} L${f(fr(tex0 + 0.4) - inF)},${f(tex0 + 0.4)} L${f(fr(tex1) - inF)},${f(tex1)} L${f(bk(tex1) + inB)},${f(tex1)} Z`
+    : `M${f(bk(tex0) + inB)},${f(tex0)} L${f(fr(tex0) - inF)},${f(tex0)} L${f(fr(tex1) - inF)},${f(tex1)} L${f(bk(tex1) + inB)},${f(tex1)} Z`;
+  let stipple = '';
+  for (let y = tex0 + 0.14; y < tex1 - 0.06; y += 0.13) {
+    const xa = bk(y) + inB + 0.1;
+    const xb = fr(y) - inF - (sig && y < tex0 + 0.4 ? 0.25 : 0.1);
+    const off = Math.round((y - tex0) / 0.13) % 2 ? 0.065 : 0;
+    for (let x = xa + off; x < xb; x += 0.13) stipple += `M${f(x)},${f(y)} L${f(x + 0.012)},${f(y)} `;
+  }
+
+  // Accessory rail on the dust cover: one slot on the Glocks and the P365, three on the P320.
+  const railSlots = micro ? 1 : sig ? 3 : 1;
+  const railLen = dust - (gF + 0.25);
+  let rail = `M${f(gF + 0.12)},${f(yRail - 0.14)} L${f(dust - 0.08)},${f(yRail - 0.14)}`;
+  if (railLen > 0.6)
+    for (let i = 0; i < railSlots; i++) {
+      const x = dust - 0.42 - i * 0.394;
+      if (x - 0.16 < gF + 0.15) break;
+      rail += ` M${f(x - 0.16)},${f(yRail - 0.14)} L${f(x - 0.16)},${f(yRail)} M${f(x)},${f(yRail - 0.14)} L${f(x)},${f(yRail)}`;
+    }
+  // Frame rail line under the slide, and the guard's checkering on Glocks.
+  const frameLine = `M${f(-tang + 0.3)},${f(SH + 0.06)} L${f(dust - 0.2)},${f(SH + 0.06)}`;
+  const guardCheck = sig ? '' : repeat(yRail + 0.2, gB - 0.24, 0.1, (y) => `M${f(gF + 0.025)},${y} L${f(gF + 0.075)},${y}`);
+  const magRel = sig
+    ? O2(fr(yRail + 0.3) + 0.02, yRail + 0.22, 0.13)
+    : `M${f(fr(yRail + 0.14) - 0.02)},${f(yRail + 0.08)} L${f(fr(yRail + 0.14) + 0.12)},${f(yRail + 0.08)} L${f(fr(yRail + 0.42) + 0.12)},${f(yRail + 0.38)} L${f(fr(yRail + 0.42) - 0.02)},${f(yRail + 0.38)} Z`;
+  // Controls: Glock slide stop, takedown tab and three pins; Sig slide catch with thumb pad and takedown lever.
+  const controls = sig
+    ? `${O2(xt + 0.5, SH + 0.24, 0.1)} M${f(xt + 0.44)},${f(SH + 0.32)} L${f(xt + 0.02)},${f(SH + 0.42)} Q${f(xt - 0.08)},${f(SH + 0.42)} ${f(xt - 0.06)},${f(SH + 0.33)} L${f(xt + 0.4)},${f(SH + 0.17)}`
+      + ` M${f(xt + 0.22)},${f(SH + 0.07)} L${f(bk(yWeb) + 0.82)},${f(SH + 0.07)} Q${f(bk(yWeb) + 0.62)},${f(SH + 0.08)} ${f(bk(yWeb) + 0.56)},${f(SH + 0.26)} Q${f(bk(yWeb) + 0.5)},${f(SH + 0.4)} ${f(bk(yWeb) + 0.36)},${f(SH + 0.36)} Q${f(bk(yWeb) + 0.24)},${f(SH + 0.3)} ${f(bk(yWeb) + 0.32)},${f(SH + 0.18)} L${f(xt + 0.22)},${f(SH + 0.18)} Z`
+    : `M${f(xt - 1.22)},${f(SH + 0.04)} L${f(xt - 0.4)},${f(SH + 0.04)} Q${f(xt - 0.33)},${f(SH + 0.1)} ${f(xt - 0.4)},${f(SH + 0.16)} L${f(xt - 1.1)},${f(SH + 0.16)} L${f(xt - 1.22)},${f(SH + 0.1)} Z`
+      + ` M${f(xt + 0.02)},${f(SH + 0.08)} L${f(xt + 0.32)},${f(SH + 0.08)} L${f(xt + 0.32)},${f(SH + 0.22)} L${f(xt + 0.02)},${f(SH + 0.22)} Z M${f(xt + 0.08)},${f(SH + 0.12)} L${f(xt + 0.26)},${f(SH + 0.12)} M${f(xt + 0.08)},${f(SH + 0.17)} L${f(xt + 0.26)},${f(SH + 0.17)}`
+      + O2(xt - 0.22, SH + 0.3, 0.05) + O2(xt + 0.66, SH + 0.3, 0.05) + O2(bk(yWeb) + 0.48, SH + 0.2, 0.05);
   P.push({ slot: frameSlot, z: 3, row: 'bottom', target: px((bk(yGB - 0.9) + fr(yGB - 0.9)) / 2, yGB - 0.9),
     el: <>
       <path fillRule="evenodd" d={T(`${frameD} ${hole}`)} />
-      <path className="detail" d={T(`${panel} ${railSlot} ${railLine} ${magRel} ${stop}`) + ''} />
-      <path className="detail" d={T(takedown)} />
+      <path className="detail" d={T(`${panel} ${rail} ${frameLine} ${guardCheck} ${magRel}`)} />
+      <path className="detail" d={T(controls)} />
+      <path className="detail stipple" d={T(stipple)} />
     </> });
 
-  /* Magazine: hidden inside the grip, floor plate and any extension visible */
+  /* Magazine: hidden inside the grip; floor plate and any extension visible below it */
   const mTop = yWeb + 0.12;
   const mIn = Math.min(yMB, yGB);
+  const mb0 = yMB - BASE;
+  const fx = fr(yGB) - 0.08;
+  const floor = sig
+    ? `M${f(bk(yGB) + 0.06)},${f(yGB)} L${f(fx)},${f(yGB)} L${f(fr(mb0) - 0.04)},${f(mb0)} Q${f(fr(yMB) + 0.1)},${f(mb0 + 0.02)} ${f(fr(yMB) + 0.02)},${f(yMB)} L${f(bk(yMB) + 0.06)},${f(yMB)} Q${f(bk(yMB) - 0.06)},${f(yMB - 0.03)} ${f(bk(mb0))},${f(mb0)} Z`
+    : `M${f(bk(yGB) + 0.08)},${f(yGB)} L${f(fx)},${f(yGB)} L${f(fr(mb0) - 0.12)},${f(mb0)} L${f(fr(mb0) - 0.02)},${f(mb0 + 0.04)} L${f(fr(yMB) - 0.06)},${f(yMB)} L${f(bk(yMB) + 0.1)},${f(yMB)} L${f(bk(yMB) + 0.02)},${f(yMB - 0.06)} L${f(bk(mb0) + 0.06)},${f(mb0)} Z`;
+  const extLines = yMB - yGB > BASE + 0.25 ? repeat(yGB + 0.2, mb0 - 0.1, 0.22, (y) => `M${f(bk(y) + 0.14)},${y} L${f(fr(y) - 0.18)},${y}`) : '';
   P.push({ slot: 'mag', z: 2, row: 'bottom', target: px((bk(yMB) + fr(yMB)) / 2, yMB - 0.06),
     el: <>
       <path className="hidden-line" d={T(`M${f(bk(mTop) + 0.3)},${f(mTop)} L${f(fr(mTop) - 0.34)},${f(mTop)} L${f(fr(mIn) - 0.34)},${f(mIn)} L${f(bk(mIn) + 0.3)},${f(mIn)} Z`)} />
-      <path d={T(`M${f(bk(yGB) + 0.1)},${f(yGB)} L${f(fr(yGB) - 0.1)},${f(yGB)} L${f(fr(yMB - BASE) - 0.14)},${f(yMB - BASE)} Q${f(fr(yMB) + 0.04)},${f(yMB - BASE)} ${f(fr(yMB) - 0.04)},${f(yMB)} L${f(bk(yMB) + 0.04)},${f(yMB)} Q${f(bk(yMB) - 0.04)},${f(yMB - BASE / 2)} ${f(bk(yMB - BASE) + 0.08)},${f(yMB - BASE)} Z`)} />
+      <path d={T(floor)} />
+      {extLines && <path className="detail" d={T(extLines)} />}
     </> });
-
   /* Trigger and fire control */
   const trig = has('fcg') ? 'fcg' : 'fcu';
   const flat = trig === 'fcg' ? matches(b.fcg, /flat|Apex/i) : matches(b.fcu, /flat|X-Series/i);
@@ -513,24 +606,39 @@ function pistol(platform: Platform, b: Build): Scene {
   const comp = matches(b.slide, /Comp|Spectre/);
   const frontSerr = matches(b.slide, /serration|Gen5|MOS|ZEV|Spectre|XFull|M18/i);
   const cut = (b.slide?.attrs.cut as string | undefined) ?? 'none';
+  // Glock: boxy with a beveled nose. Sig: the lower front of the slide sweeps up into a tapered nose,
+  // the top front corner is chamfered, and a shoulder line runs the length of the slide.
+  const taper = micro ? 0.75 : 1.05;
   const slideD = sig
-    ? `M0,0.16 Q0,0 0.16,0 L${f(SL - 0.5)},0 Q${f(SL - 0.04)},0 ${f(SL)},0.36 L${f(SL)},${f(SH - 0.42)} Q${f(SL)},${f(SH - 0.3)} ${f(SL - 0.12)},${f(SH - 0.18)} L${f(SL - 0.3)},${SH} L0.06,${SH} L0,${f(SH - 0.06)} Z`
-    : `M0,0.06 Q0,0 0.06,0 L${f(SL - 0.14)},0 L${SL},0.14 L${SL},${f(SH - 0.42)} L${f(SL - 0.3)},${SH} L0.06,${SH} L0,${f(SH - 0.06)} Z`;
-  const rearSerr = repeat(0.2, sig ? 1.05 : 0.98, sig ? 0.13 : 0.11, (x) => `M${x},${sig ? 0.24 : 0.16} L${f(x - 0.06)},${f(SH - 0.22)}`);
-  const fSerr = frontSerr ? repeat(SL - 1.45, SL - 0.75, 0.12, (x) => `M${x},${sig ? 0.3 : 0.16} L${f(x - 0.06)},${f(SH - 0.28)}`) : '';
+    ? `M0.02,0.12 Q0.03,0 0.16,0 L${f(SL - 0.26)},0 Q${f(SL - 0.06)},0.02 ${f(SL)},0.22 L${f(SL)},${f(SH * 0.56)} Q${f(SL - 0.02)},${f(SH * 0.66)} ${f(SL - 0.14)},${f(SH * 0.7)} L${f(SL - taper)},${f(SH - 0.06)} Q${f(SL - taper - 0.1)},${SH} ${f(SL - taper - 0.24)},${SH} L0.08,${SH} L0,${f(SH - 0.08)} Z`
+    : `M0,0.07 Q0,0 0.07,0 L${f(SL - 0.2)},0 Q${f(SL - 0.04)},0.01 ${SL},0.16 L${SL},${f(SH - 0.44)} L${f(SL - 0.34)},${f(SH - 0.02)} L${f(SL - 0.4)},${SH} L0.06,${SH} L0,${f(SH - 0.06)} Z`;
+  const shoulder = sig
+    ? `M0.06,${f(SH * 0.4)} L${f(SL - 0.05)},${f(SH * 0.4)} M0.1,${f(SH - 0.16)} L${f(SL - taper - 0.2)},${f(SH - 0.16)}`
+    : `M0.05,0.12 L${f(SL - 0.1)},0.12 M0.1,${f(SH - 0.18)} L${f(SL - 0.48)},${f(SH - 0.18)}`;
+  const serrTop = sig ? SH * 0.4 + 0.08 : 0.2;
+  const rearSerr = sig
+    ? repeat(0.18, micro ? 0.9 : 1.08, 0.12, (x) => `M${x},${f(serrTop)} L${x},${f(SH - 0.22)}`)
+    : repeat(0.2, 0.98, 0.11, (x) => `M${x},${f(serrTop)} L${f(x - 0.07)},${f(SH - 0.24)}`);
+  const fSerr = frontSerr
+    ? sig
+      ? repeat(SL - taper - 0.85, SL - taper - 0.15, 0.12, (x) => `M${x},${f(serrTop)} L${x},${f(SH - 0.22)}`)
+      : repeat(SL - 1.45, SL - 0.8, 0.12, (x) => `M${x},0.2 L${f(x - 0.07)},${f(SH - 0.3)}`)
+    : '';
   const lighten = matches(b.slide, /Octane|Lightening/) ? repeat(port1 + 0.35, SL - 1.6, 0.42, (x) => `M${x},0.06 L${f(x + 0.26)},0.06 L${f(x + 0.2)},0.3 L${f(x - 0.06)},0.3 Z`) : '';
   const ports = comp ? repeat(SL - 0.95, SL - 0.35, 0.22, (x) => `M${x},0 L${f(x + 0.07)},0.26 L${f(x + 0.14)},0`) : '';
-  const edge = `M0.08,${sig ? 0.22 : 0.12} L${f(SL - (sig ? 0.4 : 0.16))},${sig ? 0.22 : 0.12} M0.12,${f(SH - 0.18)} L${f(SL - (sig ? 0.24 : 0.48))},${f(SH - 0.18)}`;
   const plate = cut !== 'none' ? `M0.86,0 L0.86,0.12 L2.66,0.12 L2.66,0` : '';
-  const extractor = `M${f(port0 - 0.24)},0.28 L${f(port0 - 0.04)},0.28 L${f(port0 - 0.04)},0.42 L${f(port0 - 0.24)},0.42 Z`;
+  const extractor = sig
+    ? `M${f(port0 - 0.3)},0.26 L${f(port0 - 0.04)},0.26 L${f(port0 - 0.04)},0.38 L${f(port0 - 0.3)},0.38 Z`
+    : `M${f(port0 - 0.42)},0.26 L${f(port0 - 0.04)},0.26 L${f(port0 - 0.04)},0.4 L${f(port0 - 0.42)},0.4 Z`;
+  // Muzzle face with the bore and the recoil spring guide visible through the nose.
+  const bc = sig ? 0.42 : 0.36; // bore line
+  const muzzleFace = `M${f(SL - 0.05)},${f(bc - 0.2)} L${f(SL - 0.05)},${f(bc + 0.2)}`;
   P.push({ slot: 'slide', z: 8, row: 'top', target: px(SL - (frontSerr ? 0.6 : 1.0), SH * 0.5),
     el: <>
       <path fillRule="evenodd" d={T(`${slideD} M${f(port0)},0 L${f(port0)},0.5 L${f(port1)},0.5 L${f(port1)},0 Z`)} />
-      <path className="detail" d={T(`${edge} ${rearSerr} ${fSerr} ${lighten} ${ports} ${plate} ${extractor}`)} />
+      <path className="detail" d={T(`${shoulder} ${rearSerr} ${fSerr} ${lighten} ${ports} ${plate} ${extractor} ${muzzleFace}`)} />
     </> });
-
   /* Barrel: hood shows in the ejection port; the rest is hidden; threads run past the slide */
-  const bc = sig ? 0.42 : 0.36; // bore line
   const br = micro ? 0.24 : 0.28;
   const chamber = f(port0 - 0.12);
   P.push({ slot: 'barrel', z: 9, row: 'top', target: px((port0 + port1) / 2, 0.24),
