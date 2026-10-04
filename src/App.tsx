@@ -153,7 +153,7 @@ export default function App() {
         <div className="wrap header-row">
           <a className="brand" href="./" onClick={(e) => { e.preventDefault(); go('build'); }}>
             <Mark />
-            <span className="brand-name">Firearm<b>Designer</b></span>
+            <span className="brand-name">Drop-In <b>Builds</b></span>
           </a>
           <nav className="site-nav" aria-label="Main">
             <NavLink active={route === 'build'} onClick={() => go('build')}>Build</NavLink>
@@ -211,7 +211,7 @@ export default function App() {
       <footer className="site-footer">
         <div className="wrap footer-row">
           <div>
-            <p className="brand-name small">Firearm<b>Designer</b></p>
+            <p className="brand-name small">Drop-In <b>Builds</b></p>
             <p>Plan a build part by part, check that everything fits, and see where each part costs least. We don't sell anything.</p>
           </div>
           <div>
@@ -282,11 +282,14 @@ function NavLink({ active, onClick, children }: { active: boolean; onClick: () =
 }
 
 function Mark() {
+  /* Drop-In Builds header mark (P1): DI monogram inside a hex patch outline. The tab icon (public/favicon.svg) is the solid patch (P2). */
   return (
-    <svg className="mark" viewBox="0 0 32 32" aria-hidden="true">
-      <circle cx="16" cy="16" r="10.5" />
-      <circle cx="16" cy="16" r="2.2" className="fill" />
-      <path d="M16 1v8M16 23v8M1 16h8M23 16h8" />
+    <svg className="mark" viewBox="0 0 48 48" aria-hidden="true">
+      <path d="M24 3l18.19 10.5v21L24 45 5.81 34.5v-21z" className="hex" />
+      <g transform="translate(11.7 10.8) scale(.55)">
+        <path d="M4 9h10a15 15 0 0 1 0 30H4z" className="d" />
+        <rect x="36" y="9" width="7" height="30" rx="1.5" className="fill" />
+      </g>
     </svg>
   );
 }

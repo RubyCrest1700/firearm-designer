@@ -1,4 +1,4 @@
-# Firearm Designer
+# Drop-In Builds
 
 A PCPartPicker-style build planner for modular firearm platforms. Pick a platform, choose a part for
 each slot, and the app checks compatibility, compares retailer prices, and suggests budget,
