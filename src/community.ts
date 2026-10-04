@@ -45,10 +45,15 @@ function setMyVote(id: string, on: boolean) {
 }
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(COMMUNITY_API.replace(/\/$/, '') + path, {
-    ...init,
-    headers: init?.body ? { 'content-type': 'application/json' } : undefined,
-  });
+  let res: Response;
+  try {
+    res = await fetch(COMMUNITY_API.replace(/\/$/, '') + path, {
+      ...init,
+      headers: init?.body ? { 'content-type': 'application/json' } : undefined,
+    });
+  } catch {
+    throw new Error("Couldn't reach the community service. Check your connection and try again.");
+  }
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(body.error ?? 'The community service is not responding. Please try again.');
   return body as T;
