@@ -218,6 +218,7 @@ export default function App() {
             <p className="foot-title">Good to know</p>
             <p>Prices marked Sample aren't tracked yet. Always confirm the price at the retailer.</p>
             <p>Parts marked FFL are serialized. They are legally the firearm and ship to a licensed dealer. Laws vary by state.</p>
+            <p>Some retailer links may earn us a small commission at no extra cost to you. It never changes which parts we show or how we check fit.</p>
           </div>
         </div>
       </footer>

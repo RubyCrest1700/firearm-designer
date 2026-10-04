@@ -5,7 +5,7 @@
 /** Keep in sync with the platform ids in src/data. */
 export const PLATFORM_IDS = ['ar15', 'ar10', 'glock17', 'glock19', 'glock26', 'glock43x', 'p320', 'p365'];
 
-const ALLOWED_ORIGINS = ['https://rubycrest1700.github.io', 'http://localhost:5173', 'http://localhost:4173'];
+const ALLOWED_ORIGINS = ['https://rubycrest1700.github.io', 'https://dropinbuilds.com', 'https://www.dropinbuilds.com', 'http://localhost:5173', 'http://localhost:4173'];
 const DAY = 86_400_000;
 const WEEK = 7 * DAY;
 const MAX_SHARES_PER_DAY = 10;
