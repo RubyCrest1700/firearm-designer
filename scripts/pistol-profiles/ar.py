@@ -60,8 +60,10 @@ PIECES = {
     clip=[[(310, 680), (1402, 680), (1402, 968), (1240, 1000), (940, 1088), (490, 1283), (452, 1470), (310, 1470)]],
     seal=[[(486, 1266), (458, 1452)]],
     erase=[[(880, 1000), (1100, 1000), (1100, 1080), (880, 1080)], [(640, 1160), (700, 1160), (765, 1325), (700, 1325)]]),
-  'trigger': dict(src='lower', tf=LOWER_TF, k=5, open_k=0,
-    clip=[[(2150, 1102), (2240, 1102), (2240, 1252), (2150, 1252)]], seal=[[(2160, 1103), (2236, 1103)]], erase=[]),
+  'trigger': dict(src='lower', tf=LOWER_TF, k=5, open_k=5,
+    # The guard's leader (80) starts on the blade's back edge, so it is cut out of the ink before filling.
+    clip=[[(2150, 1102), (2240, 1102), (2240, 1240), (2150, 1240)]], seal=[[(2165, 1103), (2228, 1103)], [(2196, 1238), (2224, 1238)]],
+    ink_erase=[[(2193, 1150), (2215, 1150), (2260, 1215), (2245, 1252), (2215, 1252), (2214, 1200)]], erase=[]),
   'pmag': dict(src='pmag', tf=None, k=7, open_k=5, clip=[[(700, 450), (1900, 450), (1900, 3000), (700, 3000)]], erase=[]),
 }
 
@@ -97,6 +99,8 @@ def mapper(tf):
 def piece(name, p, ink_full):
     H, W = ink_full.shape
     clip = polymask((H, W), p['clip'])
+    if p.get('ink_erase'):
+        clip &= ~polymask((H, W), p['ink_erase'])
     ink = ink_full & clip
     u8 = ink.astype(np.uint8) * 255
     for a, b in p.get('seal', []):
