@@ -566,6 +566,74 @@ function fillWeb(pts: number[], y0: number, y1: number, a: number) {
   return out;
 }
 
+/** The Glock grip, built to the 9mm Glocks' proportions rather than the G42's: a short beavertail about 0.38" behind the slide,
+ *  the web sits at the published trigger distance (about 2.8") behind the trigger, the back strap runs from there down
+ *  and back to a heel about 0.25" behind the beavertail, the front strap is raked a little more, and the mag well is
+ *  about 2.1" front to back at the bottom (1.85" on the slimline). Gen3/4 frames have the hump low on the back strap
+ *  and finger grooves; Gen5 frames have a flared mag well. The traced G42 outline is kept from the top of the frame
+ *  over the dust cover and around the trigger guard. Coordinates are final inches. */
+function glockGrip(traced: number[], o: { SH: number; hole: number[]; slim: boolean; grooves: number; yGB: number }) {
+  const { SH, slim, grooves: n, yGB } = o;
+  const [h0x, , h1x, h1y] = o.hole;
+  const N = traced.length / 2;
+  const X = (i: number) => traced[2 * (((i % N) + N) % N)], Y = (i: number) => traced[2 * (((i % N) + N) % N) + 1];
+  // Splice points: B on the frame's top edge behind the slide stop, A under the rear of the trigger guard.
+  let iB = 0, iA = 0, bd = Infinity, ay = -Infinity;
+  for (let i = 0; i < N; i++) {
+    if (Math.abs(Y(i) - SH) < 0.08 && Math.abs(X(i) - 0.6) < bd) { bd = Math.abs(X(i) - 0.6); iB = i; }
+    if (X(i) > h0x + 0.15 && X(i) < h0x + 0.4 && Y(i) > h1y && Y(i) > ay) { ay = Y(i); iA = i; }
+  }
+  const dir = X(iB + 1) > X(iB) ? 1 : -1;
+  const pts: number[] = [];
+  for (let i = iB; ; i += dir) {
+    pts.push(X(i), Y(i));
+    if (((i % N) + N) % N === iA) break;
+  }
+  const q = (p0: number[], c: number[], p1: number[], k = 8) => {
+    for (let j = 1; j <= k; j++) {
+      const t = j / k, u = 1 - t;
+      pts.push(u * u * p0[0] + 2 * u * t * c[0] + t * t * p1[0], u * u * p0[1] + 2 * u * t * c[1] + t * t * p1[1]);
+    }
+  };
+  const tang = slim ? 0.36 : 0.38;
+  const gw = slim ? 1.85 : 2.08;
+  const hx = -tang - 0.25;
+  const toeX = hx + gw;
+  const fs = 0.31; // front strap rake, inches back per inch down
+  const front = (y: number) => toeX + fs * (yGB - y);
+  const A = [X(iA), Y(iA)];
+  const fy = A[1] + 0.24;
+  // Under the guard: a tight radius from the guard's bottom into the front strap.
+  q(A, [front(fy) + 0.03, A[1]], [front(fy), fy]);
+  const gen5 = !n && !slim;
+  const yF = yGB - (gen5 ? 0.28 : 0.12);
+  // Finger grooves need about 0.6" each; a short grip (G26) fits fewer.
+  const g0 = fy + 0.1, g1 = yGB - 0.4;
+  const ng = Math.min(n, Math.floor((g1 - g0) / 0.6));
+  for (let y = fy + 0.04; y < yF; y += 0.04) {
+    const t = (y - g0) / (g1 - g0);
+    const groove = ng && t > 0 && t < 1 ? 0.08 * Math.sin(Math.PI * ng * t) ** 2 : 0;
+    pts.push(front(y) - groove, y);
+  }
+  if (gen5) q([front(yF), yF], [front(yGB - 0.08) + 0.01, yGB - 0.1], [toeX + 0.07, yGB - 0.03], 5);
+  q([pts[pts.length - 2], pts[pts.length - 1]], [toeX + 0.04, yGB], [toeX - 0.08, yGB], 3);
+  pts.push(hx + 0.08, yGB);
+  // Back strap, heel up to the web; Gen3/4 hump low down, a slight palm swell on the others.
+  const wx = -tang + (slim ? 0.57 : 0.59), wy = SH + 0.74;
+  q([hx + 0.08, yGB], [hx, yGB], [hx - 0.01, yGB - 0.1], 3);
+  const yb0 = yGB - 0.1;
+  for (let y = yb0 - 0.05; y > wy; y -= 0.05) {
+    const t = (yb0 - y) / (yb0 - wy);
+    const bump = n ? 0.09 * Math.exp(-(((t - 0.3) / 0.16) ** 2)) : 0.035 * Math.exp(-(((t - 0.62) / 0.2) ** 2));
+    pts.push(hx - 0.01 + (wx - hx + 0.01) * t - bump, y);
+  }
+  // Web: a shallow curve up and back into the underside of the beavertail, then its rounded tip.
+  q([wx, wy], [wx + 0.04, SH + 0.36], [-tang + 0.16, SH + 0.24]);
+  q([-tang + 0.16, SH + 0.24], [-tang, SH + 0.24], [-tang, SH + 0.14], 4);
+  q([-tang, SH + 0.14], [-tang + 0.01, SH + 0.01], [-tang + 0.2, SH], 4);
+  return { pts, heel: [hx, yGB] as [number, number], toe: [toeX, yGB] as [number, number], tang, h1x };
+}
+
 /** Where a horizontal line at y crosses a closed polyline. */
 function crossings(pts: number[], y: number) {
   const xs: number[] = [];
@@ -664,16 +732,16 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   let stipple = '';
   let tang = -mk.tang;
   const gF = fx(h1x + 0.15), dust = fx(mk.dust);
+  let mapped: number[] = [];
   if (glock) {
     // The G42 drawing's detail lines are dotted CAD shading; draw Glock's own details on the traced outline instead.
-    const mapped = outlines[0].flatMap((_, i, a) => (i % 2 ? [] : frameMap(a[i], a[i + 1])));
-    tang = -Math.min(...mapped.filter((_, i) => i % 2 === 0));
-    // The G42's grip ends square across the bottom: the floor plate sits under its full width.
-    const yB = Math.max(...mapped.filter((_, i) => i % 2));
-    const low = mapped.filter((_, i, a) => i % 2 === 0 && a[i + 1] > yB - 0.06);
-    heel = [Math.min(...low), yB];
-    toe = [Math.max(...low), yB];
+    const traced = outlines[0].flatMap((_, i, a) => (i % 2 ? [] : frameMap(a[i], a[i + 1])));
     const SH = mk.sh, yRail = mk.railBottom;
+    const grip9 = glockGrip(traced, { SH, hole: mk.hole, slim: o.slim, grooves: spec.grooves, yGB: spec.gripH - SIGHT - BASE });
+    mapped = grip9.pts;
+    heel = grip9.heel;
+    toe = grip9.toe;
+    tang = grip9.tang;
     const M = (pts: number[]) => polyPath(pts, frameMap, false);
     // Frame rail line under the slide, the accessory rail with its slot, and checkering down the front of the guard.
     let rail = `M${f(fx(h1x + 0.1))},${f(yRail - 0.14)} L${f(dust - 0.08)},${f(yRail - 0.14)}`;
@@ -693,7 +761,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     const frameLine = M([0.3, SH + 0.06, mk.dust - 0.2, SH + 0.06]);
     // Grip texture: a panel inset from both straps (so it follows the finger grooves and the grip angle), stippled.
     const ys: number[] = [];
-    const tex0 = grip(0, g0 + 0.15)[1], tex1 = heel[1] - 0.3;
+    const tex0 = h1y + 0.32, tex1 = heel[1] - 0.24;
     for (let y = tex0; y < tex1; y += 0.1) ys.push(y);
     ys.push(tex1);
     const edge = ys.map((y) => { const xs = crossings(mapped, y); return [xs[0] + 0.17, xs[xs.length - 1] - 0.17]; });
@@ -721,7 +789,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     trigLine: scD(o.flat ? TRIGGERS[key].line.flat : TRIGGERS[key].line.curved),
     gF, dust, railY: mk.railBottom,
     heel, toe, yGB, yMB: yGB + ext + BASE, ext,
-    frameD: outlines.map((ol) => polyPath(ol, frameMap, true)).join(' ') + ' ' + hole,
+    frameD: (glock ? polyPath(mapped, (x, y) => [x, y], true) : outlines.map((ol) => polyPath(ol, frameMap, true)).join(' ')) + ' ' + hole,
     frameDetail, stipple,
     slideD: pr.slide.outline.map((ol) => polyPath(scS(ol), slideMap, true)).join(' '),
     slideDetail,
