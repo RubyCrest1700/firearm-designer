@@ -89,6 +89,7 @@ a { color: var(--blue); }
 .site-nav { display: flex; gap: 2px; margin-right: auto; overflow-x: auto; scrollbar-width: none; }
 .nav-link { background: none; border: 0; color: var(--on-navy-muted); padding: 19px 12px 17px; font-weight: 600; font-size: 14.5px;
   border-bottom: 3px solid transparent; white-space: nowrap; display: flex; align-items: center; gap: 7px; }
+a.nav-link { text-decoration: none; }
 .nav-link:hover { color: #fff; }
 .nav-link.active { color: #fff; border-bottom-color: var(--cta); }
 .count { background: var(--cta); color: #fff; font-size: 11.5px; line-height: 1; padding: 3px 6px; border-radius: 99px; }
