@@ -29,7 +29,9 @@ REFS = {
     slide=[(560, 380), (2700, 380), (2700, 838), (2389, 838), (2391, 703), (560, 703)],
     guard_seed=(1500, 1060),
     # The M17 in the drawing has the military thumb safety; commercial P320s don't, so its lines are left out.
-    erase=[(810, 705, 965, 840)],
+    # Also a short frame tick and the safety's front curve.
+    erase=[(745, 688, 965, 840), (1015, 950, 1055, 1035), (795, 668, 840, 679), (840, 655, 935, 673), (935, 664, 958, 679)],
+    patch=[[(790, 681), (958, 681)]],
     marks=dict(slideFront=2612, muzzle=2636, bore=592, spring=795, slideBottom=703, nose=838,
                rearSerr=1180, frontSerr=2050, port0=1290, port1=1700, rail0=1830, dust=2388, railBottom=920),
   ),
@@ -40,6 +42,8 @@ REFS = {
     x0=500, y0=1097, sx=299.0, sy=288.6, bottom=2236, th=40, merge=7,
     slide=[(380, 1000), (2200, 1000), (2200, 1322), (380, 1322)],
     guard_seed=(1450, 1650),
+    # Two stray shading strokes on the slide.
+    erase=[(1130, 1190, 1160, 1290), (1250, 1180, 1280, 1260)],
     marks=dict(slideFront=2132, muzzle=2150, bore=1210, spring=1380, slideBottom=1322, nose=1322,
                rearSerr=855, frontSerr=1650, port0=None, port1=None, rail0=1580, dust=2133, railBottom=1478),
   ),
@@ -226,6 +230,16 @@ def run(key, c):
         if name == 'frame':
             piece['hole'] = flat([(X(x), Y(y)) for x, y in cv2.approxPolyDP(hole_c.astype(np.float32), 1.2, True).reshape(-1, 2)])
         out[name] = piece
+
+    if os.environ.get('DEBUG'):
+        dbg = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+        for name, reg in (('slide', slide), ('frame', frame)):
+            cs, _ = cv2.findContours(reg.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            cv2.drawContours(dbg, cs, -1, (0, 0, 255), 3)
+        for ln in sk_lines:
+            if len(ln) >= 8:
+                cv2.polylines(dbg, [np.array(ln, np.int32)], False, (255, 0, 0), 3)
+        cv2.imwrite(os.path.join(os.environ['DEBUG'], 'pistol-' + key + '.png'), dbg)
 
     m = c['marks']
     hx, hy, hw, hh = cv2.boundingRect(hole_c)

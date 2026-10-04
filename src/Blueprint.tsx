@@ -270,10 +270,13 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
     mdet = t.d;
   } else if (matches(mz, /comp/i)) {
     mlen = 2.0;
-    md = `M${f(BX)},-0.45 L${f(BX + mlen)},-0.45 L${f(BX + mlen)},0.45 L${f(BX)},0.45 Z ${repeat(BX + 0.5, BX + 1.6, 0.36, (x) => `M${x},-0.45 L${f(x + 0.1)},-0.15 L${f(x + 0.22)},-0.45`)}`;
+    md = `M${f(BX)},-0.42 L${f(BX + mlen - 0.08)},-0.42 L${f(BX + mlen)},-0.34 L${f(BX + mlen)},0.34 L${f(BX + mlen - 0.08)},0.42 L${f(BX)},0.42 Z M${f(BX + 0.45)},-0.42 L${f(BX + 0.45)},0.42 ${repeat(BX + 0.75, BX + 1.6, 0.34, (x) => `M${x},-0.42 L${x},-0.27 Q${f(x + 0.1)},-0.15 ${f(x + 0.2)},-0.27 L${f(x + 0.2)},-0.42`)}`;
   } else {
     mlen = 2.25;
-    md = `M${f(BX)},-0.4 L${f(BX + 0.4)},-0.4 L${f(BX + 0.55)},-0.45 L${f(BX + mlen)},-0.45 L${f(BX + mlen)},0.45 L${f(BX + 0.55)},0.45 L${f(BX + 0.4)},0.4 L${f(BX)},0.4 Z ${repeat(BX + 0.85, BX + 1.95, 0.27, (x) => `M${x},-0.45 L${x},-0.08`)}`;
+    // A2 birdcage: lengthwise slots around the top and sides; the bottom is closed.
+    const slot = (y: number) => `M${f(BX + 0.9)},${f(y - 0.05)} L${f(BX + 1.95)},${f(y - 0.05)} Q${f(BX + 2.0)},${f(y)} ${f(BX + 1.95)},${f(y + 0.05)} L${f(BX + 0.9)},${f(y + 0.05)} Q${f(BX + 0.85)},${f(y)} ${f(BX + 0.9)},${f(y - 0.05)} Z`;
+    md = `M${f(BX)},-0.4 L${f(BX + 0.4)},-0.4 L${f(BX + 0.55)},-0.45 L${f(BX + mlen)},-0.45 L${f(BX + mlen)},0.45 L${f(BX + 0.55)},0.45 L${f(BX + 0.4)},0.4 L${f(BX)},0.4 Z`;
+    mdet = `M${f(BX + 0.55)},-0.45 L${f(BX + 0.55)},0.45 ${slot(-0.3)} ${slot(-0.08)} ${slot(0.14)}`;
   }
   P.push({ slot: 'muzzle', z: 12, row: 'top', target: px(BX + mlen / 2, -0.45), el: <><path d={T(md)} />{mdet && <path className="detail" d={T(mdet)} />}</> });
 
@@ -882,7 +885,7 @@ function profilePieces(P: Piece[], g: ProfileGeo, o: {
   /* Slide: patent outline and details, the ejection port cut through it, plus the chosen slide's own cuts */
   const port = `M${f(g.port0)},0 L${f(g.port0)},${f(g.portH)} L${f(g.port1)},${f(g.portH)} L${f(g.port1)},0 Z`;
   const lightCuts = o.lighten ? repeat(g.port1 + 0.35, SL - 1.6, 0.42, (x) => `M${x},0.06 L${f(x + 0.26)},0.06 L${f(x + 0.2)},0.3 L${f(x - 0.06)},0.3 Z`) : '';
-  const ports = o.comp ? repeat(SL - 0.95, SL - 0.35, 0.22, (x) => `M${x},0 L${f(x + 0.07)},0.26 L${f(x + 0.14)},0`) : '';
+  const ports = o.comp ? repeat(SL - 0.95, SL - 0.35, 0.22, (x) => `M${x},0 L${x},0.13 Q${f(x + 0.07)},0.22 ${f(x + 0.14)},0.13 L${f(x + 0.14)},0`) : '';
   const plate = o.cut !== 'none' ? `M0.86,0 L0.86,0.12 L2.66,0.12 L2.66,0` : '';
   const extractor = g.key === 'p365' ? `M${f(g.port0 - 0.3)},0.24 L${f(g.port0 - 0.04)},0.24 L${f(g.port0 - 0.04)},0.34 L${f(g.port0 - 0.3)},0.34 Z` : '';
   P.push({ slot: 'slide', z: 8, row: 'top', target: px(SL - 1.0, g.sh * 0.5),
