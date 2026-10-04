@@ -43,6 +43,29 @@ REFS = {
     marks=dict(slideFront=2132, muzzle=2150, bore=1210, spring=1380, slideBottom=1322, nose=1322,
                rearSerr=855, frontSerr=1650, port0=None, port1=None, rail0=1580, dust=2133, railBottom=1478),
   ),
+  'glock': dict(
+    pdf='https://patentimages.storage.googleapis.com/1f/a4/0c/1eeea340adfda1/US9316455.pdf', page=4,
+    im='-crop 1900x1250+380+700 +repage -flop',
+    # Glock's own US 9,316,455 FIG. 4: a G42 drawn in fine dotted CAD lines, mirrored to face right. The rear of the
+    # frame is shown cut away to expose the trigger housing, so that area is erased and its outline (slide rear,
+    # beavertail and web) is filled in by hand from the same drawing. Fitted to the G42's 5.94" length, 4.13" height.
+    x0=290, y0=122, sx=266.5, sy=264.0, bottom=1104, th=60, merge=5, blur=2.2,
+    erase_ink=[[(205, 225), (560, 225), (560, 330), (355, 330), (345, 640), (205, 640)]],
+    patch=[[(292, 225), (292, 345), (262, 350), (236, 366), (232, 392), (255, 418), (300, 448), (340, 495), (368, 545),
+             (386, 600), (392, 650), (388, 690)], [(292, 330), (560, 330)]],
+    add_sil=[[(292, 122), (292, 345), (262, 350), (236, 366), (232, 392), (255, 418), (300, 448), (340, 495), (368, 545),
+              (386, 600), (392, 650), (388, 690), (460, 690), (460, 330), (292, 300)]],
+    sil_r=8,
+    # Internal parts behind the cut-away and the trigger (drawn from part data) are left out of the detail lines.
+    detail_erase=[[(205, 330), (880, 330), (880, 640), (640, 700), (205, 700)], [(900, 500), (1390, 500), (1390, 765), (900, 765)]],
+    # The guard opening's dotted outline has wide gaps, so it is taken point by point from the drawing.
+    hole_poly=[(915, 640), (925, 575), (960, 535), (1010, 512), (1100, 505), (1250, 505), (1330, 515), (1375, 560),
+               (1385, 640), (1380, 720), (1350, 752), (1150, 758), (1000, 752), (940, 725), (918, 690)],
+    slide=[(200, 60), (1900, 60), (1900, 340), (200, 340)],
+    guard_seed=(1250, 640),
+    marks=dict(slideFront=1798, muzzle=1830, bore=215, spring=300, slideBottom=340, nose=340,
+               rearSerr=640, frontSerr=1745, port0=None, port1=None, rail0=1500, dust=1820, railBottom=478),
+  ),
 }
 
 
@@ -94,8 +117,16 @@ def trace_skeleton(sk):
     return lines
 
 
-def silhouette(img, k=9):
+def silhouette(img, k=9, r=0):
     ink = (img < 170).astype(np.uint8) * 255
+    if r:
+        # Dotted outlines leak: grow the lines to seal the gaps, fill, then shrink back.
+        ker = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * r + 1, 2 * r + 1))
+        ff = cv2.dilate(ink, ker)
+        cv2.floodFill(ff, np.zeros((ff.shape[0] + 2, ff.shape[1] + 2), np.uint8), (0, 0), 128)
+        sil = cv2.erode((ff != 128).astype(np.uint8) * 255, ker) > 0
+        n, lab, st, _ = cv2.connectedComponentsWithStats(sil.astype(np.uint8))
+        return lab == 1 + np.argmax(st[1:, cv2.CC_STAT_AREA])
     closed = cv2.morphologyEx(ink, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k)))
     ff = closed.copy()
     cv2.floodFill(ff, np.zeros((ff.shape[0] + 2, ff.shape[1] + 2), np.uint8), (0, 0), 128)
@@ -120,6 +151,13 @@ def run(key, c):
     Y = lambda v: round((float(v) - y0) / sy, 3)
 
     # Solid lines only: drop the dotted shading and short dashes.
+    if c.get('blur'):
+        # Dotted CAD lines: blur the dots together into solid lines.
+        img = np.where(cv2.GaussianBlur(img, (0, 0), c['blur']) < 200, 0, 255).astype(np.uint8)
+    for poly in c.get('erase_ink', []):
+        cv2.fillPoly(img, [np.array(poly, np.int32)], 255)
+    for line in c.get('patch', []):
+        cv2.polylines(img, [np.array(line, np.int32)], False, 0, 4)
     ink = (img < 170).astype(np.uint8)
     n, lab, st, _ = cv2.connectedComponentsWithStats(ink, connectivity=8)
     keep = np.maximum(st[:, 2], st[:, 3]) >= c['th']; keep[0] = False
@@ -127,7 +165,9 @@ def run(key, c):
     for x_a, y_a, x_b, y_b in c.get('erase', []):
         lines[y_a:y_b, x_a:x_b] = False
 
-    sil = silhouette(img)
+    sil = silhouette(img, r=c.get('sil_r', 0))
+    if c.get('add_sil'):
+        sil |= polymask(sil.shape, c['add_sil'])
     sil[c['bottom']:, :] = False
     sil[:y0, :] = False  # sights are drawn separately
     smask = polymask((H, W), [c['slide']])
@@ -141,9 +181,16 @@ def run(key, c):
 
     # Trigger guard opening: flood the closed line drawing from a point inside the guard.
     closed = cv2.morphologyEx(lines.astype(np.uint8) * 255, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
+    hr = c.get('hole_r', 0)
+    if hr:
+        closed = cv2.dilate(closed, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * hr + 1, 2 * hr + 1)))
     ff = closed.copy()
     cv2.floodFill(ff, np.zeros((H + 2, W + 2), np.uint8), c['guard_seed'], 128)
+    if hr:
+        ff = np.where(cv2.dilate((ff == 128).astype(np.uint8), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * hr + 1, 2 * hr + 1))) > 0, 128, 0)
     hole = smooth(cv2.morphologyEx((ff == 128).astype(np.uint8), cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))) > 0, blur=2.5)
+    if c.get('hole_poly'):
+        hole = smooth(polymask((H, W), [c['hole_poly']]), blur=6)
     hc, _ = cv2.findContours(hole.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     hole_c = max(hc, key=cv2.contourArea)
 
@@ -160,6 +207,8 @@ def run(key, c):
         cv2.drawContours(edge, cs, -1, 255, 9)
         if name == 'frame':
             cv2.drawContours(edge, [hole_c], -1, 255, 9)
+        if c.get('detail_erase'):
+            r8 = r8 & ~polymask((H, W), c['detail_erase']).astype(np.uint8)
         det = []
         for ln in sk_lines:
             seg = []
@@ -220,11 +269,11 @@ def main():
     data = {k: run(k, c) for k, c in REFS.items()}
     body = json.dumps(data, separators=(',', ':'))
     with open(OUT, 'w') as fh:
-        fh.write('/* Generated by scripts/pistol-profiles/trace.py from Sig Sauer design patents. Do not edit by hand. */\n')
+        fh.write('/* Generated by scripts/pistol-profiles/trace.py from Sig Sauer and Glock patent drawings. Do not edit by hand. */\n')
         fh.write('/* Inches: x from the slide rear, y down from the slide top. Polylines are flat [x, y, x, y, ...] arrays. */\n')
         fh.write('export interface ProfilePiece { outline: number[][]; detail: number[][]; hole?: number[] }\n')
         fh.write('export interface PistolProfile { slide: ProfilePiece; frame: ProfilePiece; marks: Record<string, number | null | number[]> }\n\n')
-        fh.write(f'export const PROFILES: Record<\'p320\' | \'p365\', PistolProfile> = {body};\n')
+        fh.write(f'export const PROFILES: Record<\'p320\' | \'p365\' | \'glock\', PistolProfile> = {body};\n')
     print('wrote', OUT, len(body), 'bytes', file=sys.stderr)
 
 
