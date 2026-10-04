@@ -206,6 +206,7 @@ h1 { font: 700 clamp(28px, 4.2vw, 40px)/1.08 var(--f-head); letter-spacing: -.00
 .bp-center { stroke: rgba(234,243,255,.35); stroke-width: 1; stroke-dasharray: 18 4 3 4; fill: none; }
 .bp-part path { fill: rgba(234,243,255,.05); stroke: var(--bp-ink); stroke-width: 1.3; stroke-linejoin: round; stroke-linecap: round; transition: stroke .12s, fill .12s; }
 .bp-part .detail { fill: none; stroke-width: .8; opacity: .8; }
+.bp-part .stipple { stroke-linecap: round; stroke-width: 1.6; opacity: .5; }
 .bp-part .hidden-line, .bp-part.internal path { fill: none; stroke-dasharray: 5 3.5; stroke-width: 1; opacity: .75; }
 .bp-part.static { opacity: .4; }
 .bp-part.empty path { fill: none; stroke: rgba(234,243,255,.5); stroke-dasharray: 2 3; }
@@ -213,6 +214,7 @@ h1 { font: 700 clamp(28px, 4.2vw, 40px)/1.08 var(--f-head); letter-spacing: -.00
 .bp-part.error path { stroke: var(--bp-err); fill: rgba(255,139,123,.12); }
 .bp-part[role=button] { cursor: pointer; outline: none; }
 .bp-part[role=button]:hover path, .bp-part.active path, .bp-part[role=button]:focus-visible path { stroke: var(--bp-hi); fill: rgba(255,195,92,.14); }
+.bp-part[role=button]:hover .detail, .bp-part.active .detail, .bp-part[role=button]:focus-visible .detail { fill: none; }
 .bp-part.movable { cursor: grab; touch-action: none; }
 .bp-part.movable.dragging { cursor: grabbing; }
 .bp-part .hit { fill: transparent; stroke: none; pointer-events: all; }
