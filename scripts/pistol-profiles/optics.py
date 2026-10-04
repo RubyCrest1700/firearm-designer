@@ -22,11 +22,13 @@ REFS = {
   'holo': dict(
     pdf='https://patentimages.storage.googleapis.com/01/7c/b6/f12311ee6aa803/USD662566.pdf', page=13, im='-flop',
     # Crop to the figure; 3.8" long (EXPS3 published length), base of the mount at the bottom of the crop.
-    box=(395, 790, 2165, 2132), length=3.8, axis=1040, th=40, merge=3,
+    box=(395, 790, 2165, 2132), length=3.8, axis=1040, th=50, merge=3,
+    # Shine marks on the knob, buttons and rear window glass.
+    erase=[(620, 1465, 700, 1505), (560, 1740, 700, 1790), (780, 1740, 910, 1790), (1690, 1425, 1780, 1745)],
   ),
   'micro': dict(
     pdf='https://patentimages.storage.googleapis.com/5d/5f/f6/ad523606690034/USD856458.pdf', page=6, im='-rotate 90',
-    box=(765, 555, 2335, 1772), length=2.47, axis=1080, th=70, merge=3,
+    box=(765, 555, 2335, 1772), length=2.47, axis=1080, th=70, merge=3, strokes=130,
   ),
 }
 
@@ -54,7 +56,16 @@ def run(key, c):
     ink = (img < 170).astype(np.uint8)
     n, lab, st, _ = cv2.connectedComponentsWithStats(ink, connectivity=8)
     keep = np.maximum(st[:, 2], st[:, 3]) >= c['th']; keep[0] = False
+    if c.get('strokes'):
+        # Shading strokes: thin straight or slightly curved pieces shorter than this many pixels.
+        for i in np.nonzero(keep)[0]:
+            if max(st[i, 2], st[i, 3]) < c['strokes']:
+                pts = np.column_stack(np.nonzero(lab[st[i, 1]:st[i, 1] + st[i, 3], st[i, 0]:st[i, 0] + st[i, 2]] == i)).astype(np.float32)
+                if min(cv2.minAreaRect(pts)[1]) < 9:
+                    keep[i] = False
     lines = keep[lab]
+    for ex0, ey0, ex1, ey1 in c.get('erase', []):
+        lines[ey0:ey1, ex0:ex1] = False
     sil = silhouette(np.where(lines, 0, 255).astype(np.uint8))
     sil = smooth(sil, blur=1.2)
     ys, xs = np.nonzero(sil)
@@ -79,6 +90,12 @@ def run(key, c):
             if len(seg) >= 10:
                 det.append(seg)
             seg = []
+    if os.environ.get('DEBUG'):
+        dbg = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+        cv2.drawContours(dbg, cs, -1, (0, 0, 255), 3)
+        for seg in det:
+            cv2.polylines(dbg, [np.array(seg, np.int32)], False, (255, 0, 0), 3)
+        cv2.imwrite(os.path.join(os.environ['DEBUG'], 'optic-' + key + '.png'), dbg[by0:by1, bx0:bx1])
     detail = []
     for seg in det:
         p = cv2.approxPolyDP(np.array(seg, np.float32), 1.0, False).reshape(-1, 2)
