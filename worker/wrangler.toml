@@ -6,6 +6,10 @@ main = "src/index.js"
 compatibility_date = "2025-09-01"
 workers_dev = true
 
+# Price alert emails, daily at 11:00 UTC (7am Eastern), after the ~4am price refresh and site rebuild.
+[triggers]
+crons = ["0 11 * * *"]
+
 [[d1_databases]]
 binding = "DB"
 database_name = "firearm-designer"

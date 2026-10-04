@@ -4,6 +4,7 @@
 // Share links with picture cards (/c/<id> and /b/<code>) are answered by share.js.
 
 import { sharePage } from './share.js';
+import { alertsRoute } from './alerts.js';
 
 /** Keep in sync with the platform ids in src/data. */
 export const PLATFORM_IDS = ['ar15', 'ar10', 'glock17', 'glock19', 'glock26', 'glock43x', 'p320', 'p365'];
@@ -31,7 +32,7 @@ const json = (data, status, origin) =>
 function cors(origin) {
   return {
     'access-control-allow-origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
-    'access-control-allow-methods': 'GET, POST, OPTIONS',
+    'access-control-allow-methods': 'GET, POST, PUT, OPTIONS',
     'access-control-allow-headers': 'content-type',
     vary: 'origin',
   };
@@ -163,6 +164,9 @@ export async function handle(request, env, now = Date.now()) {
       const row = await db.prepare('SELECT * FROM builds WHERE id = ?').bind(id).first();
       return json({ build: toBuild(row), hidden: !!row.hidden }, 200, origin);
     }
+
+    const alerts = await alertsRoute(request, env, { path, url, now, json: (d, s) => json(d, s, origin), who: () => visitorHash(request, salt) });
+    if (alerts) return alerts;
 
     return json({ error: 'Not found' }, 404, origin);
   } catch (err) {

@@ -1,13 +1,13 @@
 // Tests the community API against an in-memory SQLite database shaped like Cloudflare D1.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { cleanText, handle } from './src/api.js';
 
 function fakeD1() {
   const db = new DatabaseSync(':memory:');
-  db.exec(readFileSync(new URL('./migrations/0001_init.sql', import.meta.url), 'utf8'));
+  for (const f of readdirSync(new URL('./migrations/', import.meta.url)).sort()) db.exec(readFileSync(new URL(`./migrations/${f}`, import.meta.url), 'utf8'));
   const stmt = (sql, args = []) => ({
     bind: (...a) => stmt(sql, a),
     all: async () => ({ results: db.prepare(sql).all(...args) }),
@@ -159,4 +159,109 @@ test('bad share links get the site card and a 404', async () => {
   assert.equal((await page(env(), '/b/glock19~<script>')).status, 404);
   assert.equal((await page(env(), '/c/aaaaaaaaaa')).status, 404);
   assert.equal((await page(env(), '/api/builds')).status, 200);
+});
+
+/* ------------------------------------------------------------- price alerts */
+
+import { runAlerts } from './src/alerts.js';
+
+const ALERT_INDEX = (apex = 150, slide = 300) => ({
+  platforms: { glock19: { name: 'Glock 19', parts: { 'g19-frame-g5': ['Glock Gen 5 frame', 200], 'g-fcg-apex5': ['Apex trigger', apex], 'g19-slide-mos': ['Glock MOS slide', slide] } } },
+});
+const alertEnv = () => {
+  const outbox = [];
+  return { ...env(), RESEND_API_KEY: 'k', MAILING_ADDRESS: 'PO Box 1, Town, ST 00000', sendEmail: async (m) => { outbox.push(m); }, outbox };
+};
+const withIndex = async (index, fn) => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify(index));
+  try { return await fn(); } finally { globalThis.fetch = realFetch; }
+};
+const G19 = { name: 'Carry G19', platform: 'glock19', parts: ['g19-frame-g5', 'g-fcg-apex5', 'g19-slide-mos'] };
+const signup = (e, email = 'Me@Example.com', builds = [G19], ip) => withIndex(ALERT_INDEX(), () => call(e, 'POST', '/api/alerts', { email, builds }, ip));
+const visit = (e, method, path) => handle(new Request(`https://share.example${path}`, { method }), e);
+
+test('alerts stay off until Resend and a mailing address are set', async () => {
+  const e = env();
+  assert.deepEqual((await call(e, 'GET', '/api/alerts/status')).body, { enabled: false });
+  assert.equal((await signup(e)).status, 503);
+  assert.deepEqual((await call(alertEnv(), 'GET', '/api/alerts/status')).body, { enabled: true });
+});
+
+test('signing up sends a confirmation email and rejects bad input', async () => {
+  const e = alertEnv();
+  const r = await signup(e);
+  assert.equal(r.status, 201);
+  assert.match(r.body.token, /^[a-f0-9]{32}$/);
+  assert.equal(r.body.email, 'me@example.com');
+  assert.equal(e.outbox.length, 1);
+  assert.match(e.outbox[0].html, new RegExp(`/alerts/confirm\\?t=${r.body.token}`));
+  assert.match(e.outbox[0].html, /PO Box 1/);
+  assert.match(e.outbox[0].headers['List-Unsubscribe'], /alerts\/stop/);
+  assert.equal((await signup(e, 'not an email')).status, 400);
+  assert.equal((await signup(e, 'a@b.co', [{ platform: 'nope', parts: [] }])).status, 400);
+  assert.equal((await call(e, 'GET', `/api/alerts/${r.body.token}`)).body.confirmed, false);
+});
+
+test('limits signups per visitor per day', async () => {
+  const e = alertEnv();
+  for (let i = 0; i < 5; i++) assert.equal((await signup(e, `x${i}@example.com`)).status, 201);
+  assert.equal((await signup(e, 'y@example.com')).status, 429);
+});
+
+test('emails confirmed signups when prices move, once, then stays quiet', async () => {
+  const e = alertEnv();
+  const { token } = (await signup(e)).body;
+  // Unconfirmed: nothing goes out
+  await withIndex(ALERT_INDEX(120), () => runAlerts(e));
+  assert.equal(e.outbox.length, 1);
+  assert.match(await (await visit(e, 'GET', `/alerts/confirm?t=${token}`)).text(), /Price alerts are on/);
+  // Apex down $30, slide up $25 (both over a dollar and 3%)
+  const r = await withIndex(ALERT_INDEX(120, 325), () => runAlerts(e));
+  assert.equal(r.sent, 1);
+  const mail = e.outbox[1];
+  assert.equal(mail.to[0], 'me@example.com');
+  assert.equal(mail.subject, 'Prices changed on "Carry G19"');
+  assert.match(mail.html, /Apex trigger[\s\S]*\$150\.00[\s\S]*↓ \$120\.00/);
+  assert.match(mail.html, /MOS slide[\s\S]*↑ \$325\.00/);
+  assert.match(mail.text, /dropinbuilds\.com\/\?b=glock19~/);
+  // Same prices the next day: no email. A 50 cent wiggle: no email.
+  await withIndex(ALERT_INDEX(120, 325), () => runAlerts(e));
+  await withIndex(ALERT_INDEX(119.5, 325), () => runAlerts(e));
+  assert.equal(e.outbox.length, 2);
+});
+
+test('one email per address covers every browser and build it watches', async () => {
+  const e = alertEnv();
+  const a = (await signup(e, 'me@example.com', [G19], '1.0.0.1')).body.token;
+  const b = (await signup(e, 'me@example.com', [{ ...G19, name: 'Range G19', parts: ['g-fcg-apex5'] }], '1.0.0.2')).body.token;
+  for (const t of [a, b]) await visit(e, 'GET', `/alerts/confirm?t=${t}`);
+  await withIndex(ALERT_INDEX(120), () => runAlerts(e));
+  assert.equal(e.outbox.length, 3);
+  assert.equal(e.outbox[2].subject, 'Price drop on 2 of your builds');
+});
+
+test('the site keeps the watched builds in sync', async () => {
+  const e = alertEnv();
+  const { token } = (await signup(e)).body;
+  await visit(e, 'GET', `/alerts/confirm?t=${token}`);
+  // Apex already fell before this update; the new build's slide starts from today's price
+  const put = await withIndex(ALERT_INDEX(120, 290), () => call(e, 'PUT', `/api/alerts/${token}`, { builds: [G19, { ...G19, name: 'Second' }] }));
+  assert.equal(put.status, 200);
+  await withIndex(ALERT_INDEX(120, 290), () => runAlerts(e));
+  const mail = e.outbox.at(-1);
+  assert.match(mail.html, /Apex trigger/);
+  assert.match(mail.html, /MOS slide/); // the original build's slide was seen at $300
+  assert.equal((await call(e, 'PUT', `/api/alerts/${'0'.repeat(32)}`, { builds: [] })).status, 404);
+});
+
+test('unsubscribing removes every signup for the address, including one-click', async () => {
+  const e = alertEnv();
+  const a = (await signup(e, 'me@example.com', [G19], '1.0.0.1')).body.token;
+  const b = (await signup(e, 'me@example.com', [G19], '1.0.0.2')).body.token;
+  assert.match(await (await visit(e, 'GET', `/alerts/stop?t=${a}`)).text(), /unsubscribed/);
+  assert.equal((await call(e, 'GET', `/api/alerts/${b}`)).status, 404);
+  const c = (await signup(e, 'you@example.com', [G19], '1.0.0.3')).body.token;
+  assert.equal((await visit(e, 'POST', `/alerts/stop?t=${c}`)).status, 204);
+  assert.equal((await call(e, 'GET', `/api/alerts/${c}`)).status, 404);
 });
