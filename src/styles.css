@@ -214,6 +214,7 @@ h1 { font: 700 clamp(28px, 4.2vw, 40px)/1.08 var(--f-head); letter-spacing: -.00
 .bp-part.error path { stroke: var(--bp-err); fill: rgba(255,139,123,.12); }
 .bp-part[role=button] { cursor: pointer; outline: none; }
 .bp-part[role=button]:hover path, .bp-part.active path, .bp-part[role=button]:focus-visible path { stroke: var(--bp-hi); fill: rgba(255,195,92,.14); }
+.bp-part[role=button]:hover .detail, .bp-part.active .detail, .bp-part[role=button]:focus-visible .detail { fill: none; }
 .bp-part.movable { cursor: grab; touch-action: none; }
 .bp-part.movable.dragging { cursor: grabbing; }
 .bp-part .hit { fill: transparent; stroke: none; pointer-events: all; }
