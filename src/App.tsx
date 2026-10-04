@@ -300,7 +300,14 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
 }) {
   const [openSlot, setOpenSlot] = useState<string | null>(null);
   const [hover, setHover] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(false);
+  const canvasRef = useRef<HTMLDivElement>(null);
   const platform = PLATFORMS.find((p) => p.id === platformId) ?? PLATFORMS[0];
+  // Zooming in on a phone widens the drawing; start the view on its middle.
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (el) el.scrollLeft = zoom ? (el.scrollWidth - el.clientWidth) / 2 : 0;
+  }, [zoom, platformId]);
   const build = toBuild(platform, selection);
   const place = placementOf(selection);
   const { issues, states } = statesFor(platform, build, place);
@@ -344,6 +351,7 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
             <figure className="blueprint">
               <div className="bp-strip">
                 <span>DWG FD-{platform.id.toUpperCase()} · Side elevation</span>
+                <button className="bp-zoom" aria-pressed={zoom} onClick={() => setZoom(!zoom)}>{zoom ? 'Fit drawing' : 'Zoom in'}</button>
                 <span className="bp-legend" aria-hidden="true">
                   <span className="lg lg-sel">Selected</span>
                   <span className="lg lg-hid">Internal</span>
@@ -351,7 +359,7 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
                   <span className="lg lg-err">Conflict</span>
                 </span>
               </div>
-              <div className="bp-canvas">
+              <div className={'bp-canvas' + (zoom ? ' zoomed ' + platform.family.toLowerCase() : '')} ref={canvasRef}>
                 <Blueprint platform={platform} build={build} place={place} states={states} active={hover ?? openSlot} onPick={setOpenSlot} onHover={setHover}
                   onMove={(slot, at) => setMount(slot, mounts[slot]?.side ?? MOVABLE[slot].side, at)} />
               </div>
@@ -364,7 +372,7 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
                 <div><span>Total</span><b>{money(total)}</b></div>
               </figcaption>
             </figure>
-            <p className="hint">{chosen === 0 ? 'Blank build. Pick parts from the list or click any part on the drawing, or start from a ready-made build above.' : Object.keys(mounts).length ? 'Select any part to change it. Drag a light, laser or grip along the rail to move it; pick its side in the parts list. Parts on the left side show as dashed lines.' : 'Select any part on the drawing or in the list to change it. The drawing updates with every part you choose.'}</p>
+            <p className="hint">{zoom ? 'Zoomed in. Swipe the drawing sideways to see the rest, or tap a part to change it. ' : ''}{chosen === 0 ? 'Blank build. Pick parts from the list or click any part on the drawing, or start from a ready-made build above.' : Object.keys(mounts).length ? 'Select any part to change it. Drag a light, laser or grip along the rail to move it; pick its side in the parts list. Parts on the left side show as dashed lines.' : 'Select any part on the drawing or in the list to change it. The drawing updates with every part you choose.'}</p>
           </div>
           <PartsList platform={platform} build={build} issues={issues} states={states} hover={hover} onHover={setHover} onOpen={setOpenSlot} onRemove={remove}
             mounts={mounts} onMount={setMount} />
@@ -769,14 +777,14 @@ function Candidate({ part, issues, sev, selected, onChoose, onBuyClick }: {
 
 /* ================================================================ cards */
 
-function BuildCard({ platformId, selection, badge, title, meta, body, actions }: {
-  platformId: string; selection: Selection; badge?: ReactNode; title: ReactNode; meta: ReactNode; body?: ReactNode; actions: ReactNode;
+function BuildCard({ platformId, selection, badge, title, meta, body, actions, className }: {
+  platformId: string; selection: Selection; badge?: ReactNode; title: ReactNode; meta: ReactNode; body?: ReactNode; actions: ReactNode; className?: string;
 }) {
   const { platform, build, place } = buildOf(platformId, selection);
   const { issues, states } = statesFor(platform, build, place);
   const status = buildStatus(platform, build, issues);
   return (
-    <article className="build-card card">
+    <article className={'build-card card' + (className ? ' ' + className : '')}>
       <div className="thumb">
         <Blueprint platform={platform} build={build} place={place} states={states} compact />
         {badge}
@@ -941,6 +949,7 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onStart, onToast }: {
             return (
               <BuildCard
                 key={fb.id}
+                className="starter"
                 platformId={fb.platform.id}
                 selection={fb.selection}
                 badge={<span className={'tier-badge ' + fb.tier}>{TIER_LABEL[fb.tier]}</span>}
