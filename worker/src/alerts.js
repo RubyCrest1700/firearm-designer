@@ -23,8 +23,13 @@ const MAX_ALERT_EMAILS_PER_RUN = 80;
 
 export const alertsEnabled = (env) => !!(env.RESEND_API_KEY && env.MAILING_ADDRESS);
 
-/** Same rule as the site's badges: at least a dollar and 3% of the price. */
-export const worthTelling = (was, now) => Math.abs(was - now) >= Math.max(1, was * 0.03);
+/**
+ * Bar for a part to make it into an email: at least $10 and 5% of the price. Higher than the site's
+ * ↑/↓ tags ($1 and 3%) so cheap parts like magazines don't send email over pocket change.
+ */
+export const EMAIL_MIN_DOLLARS = 10;
+export const EMAIL_MIN_SHARE = 0.05;
+export const worthTelling = (was, now) => Math.abs(was - now) >= Math.max(EMAIL_MIN_DOLLARS, was * EMAIL_MIN_SHARE);
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const money = (n) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });

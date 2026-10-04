@@ -225,10 +225,14 @@ test('emails confirmed signups when prices move, once, then stays quiet', async 
   assert.match(mail.html, /Apex trigger[\s\S]*\$150\.00[\s\S]*↓ \$120\.00/);
   assert.match(mail.html, /MOS slide[\s\S]*↑ \$325\.00/);
   assert.match(mail.text, /dropinbuilds\.com\/\?b=glock19~/);
-  // Same prices the next day: no email. A 50 cent wiggle: no email.
+  // Same prices the next day: no email. Moves under $10 or 5%: no email.
   await withIndex(ALERT_INDEX(120, 325), () => runAlerts(e));
-  await withIndex(ALERT_INDEX(119.5, 325), () => runAlerts(e));
+  await withIndex(ALERT_INDEX(114, 335), () => runAlerts(e));
   assert.equal(e.outbox.length, 2);
+  // ...but small moves add up: the apex is now $12 under what we last reported
+  await withIndex(ALERT_INDEX(108, 325), () => runAlerts(e));
+  assert.equal(e.outbox.length, 3);
+  assert.match(e.outbox[2].html, /Apex trigger[\s\S]*\$120\.00[\s\S]*↓ \$108\.00/);
 });
 
 test('one email per address covers every browser and build it watches', async () => {
@@ -246,9 +250,9 @@ test('the site keeps the watched builds in sync', async () => {
   const { token } = (await signup(e)).body;
   await visit(e, 'GET', `/alerts/confirm?t=${token}`);
   // Apex already fell before this update; the new build's slide starts from today's price
-  const put = await withIndex(ALERT_INDEX(120, 290), () => call(e, 'PUT', `/api/alerts/${token}`, { builds: [G19, { ...G19, name: 'Second' }] }));
+  const put = await withIndex(ALERT_INDEX(120, 280), () => call(e, 'PUT', `/api/alerts/${token}`, { builds: [G19, { ...G19, name: 'Second' }] }));
   assert.equal(put.status, 200);
-  await withIndex(ALERT_INDEX(120, 290), () => runAlerts(e));
+  await withIndex(ALERT_INDEX(120, 280), () => runAlerts(e));
   const mail = e.outbox.at(-1);
   assert.match(mail.html, /Apex trigger/);
   assert.match(mail.html, /MOS slide/); // the original build's slide was seen at $300
