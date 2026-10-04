@@ -153,7 +153,7 @@ export default function App() {
         <div className="wrap header-row">
           <a className="brand" href="./" onClick={(e) => { e.preventDefault(); go('build'); }}>
             <Mark />
-            <span className="brand-name">Firearm<b>Designer</b></span>
+            <span className="brand-name">Drop-In <b>Builds</b></span>
           </a>
           <nav className="site-nav" aria-label="Main">
             <NavLink active={route === 'build'} onClick={() => go('build')}>Build</NavLink>
@@ -211,7 +211,7 @@ export default function App() {
       <footer className="site-footer">
         <div className="wrap footer-row">
           <div>
-            <p className="brand-name small">Firearm<b>Designer</b></p>
+            <p className="brand-name small">Drop-In <b>Builds</b></p>
             <p>Plan a build part by part, check that everything fits, and see where each part costs least. We don't sell anything.</p>
           </div>
           <div>
@@ -282,11 +282,12 @@ function NavLink({ active, onClick, children }: { active: boolean; onClick: () =
 }
 
 function Mark() {
+  /* Drop-In Builds mark: a part dropping into a receiver channel. Same drawing as public/favicon.svg. */
   return (
-    <svg className="mark" viewBox="0 0 32 32" aria-hidden="true">
-      <circle cx="16" cy="16" r="10.5" />
-      <circle cx="16" cy="16" r="2.2" className="fill" />
-      <path d="M16 1v8M16 23v8M1 16h8M23 16h8" />
+    <svg className="mark" viewBox="0 0 48 48" aria-hidden="true">
+      <path d="M7 20v20h34V20" className="channel" />
+      <rect x="16" y="14" width="16" height="22" rx="2" className="fill" />
+      <path d="M19 5l5 5 5-5" className="drop" />
     </svg>
   );
 }
