@@ -7,7 +7,7 @@ import {
 } from './engine';
 import { Blueprint, sceneFor, type RegionState } from './Blueprint';
 import {
-  FEATURED, TIER_LABEL, buildOf, loadSavedBuilds, newId, readSharedBuild, selectionFromParts, shareUrl, checkShareLinks, storeSavedBuilds, totalOf,
+  FEATURED, TIER_LABEL, buildOf, droppedBuilds, loadSavedBuilds, priceChanges, priceSnapshot, newId, readSharedBuild, selectionFromParts, shareUrl, checkShareLinks, storeSavedBuilds, totalOf,
   type FeaturedBuild, type SavedBuild,
 } from './store';
 import {
@@ -16,6 +16,7 @@ import {
 } from './community';
 import { awarenessFor, type Aware } from './awareness';
 import { buildWeight, formatWeight } from './weight';
+import { recentDrop } from './data/history';
 import { MOVABLE, SIDE_LABEL, mountsFor, railLength, type Resolved } from './data/addons';
 import type { Build, Issue, Part, Placement, Platform, Severity, Side, Slot, Tier } from './types';
 
@@ -45,6 +46,8 @@ const routeFromHash = (): Route => {
   if (h === 'community' || h === 'featured') return 'community';
   return h === 'saved' ? 'saved' : 'build';
 };
+
+const DROPS_SEEN_KEY = 'firearm-designer:drops-seen:v1';
 
 const shortDate = (iso: string, year = false) =>
   new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(year ? { year: 'numeric' } : {}) });
@@ -96,6 +99,16 @@ export default function App() {
     try { sessionStorage.setItem(STORE_KEY, JSON.stringify({ platform: platformId, selections })); } catch { /* not persisted */ }
   }, [platformId, selections]);
   useEffect(() => { storeSavedBuilds(saved); }, [saved]);
+  const dropped = useMemo(() => droppedBuilds(saved), [saved]);
+  // Tell a returning visitor once when a saved build gets cheaper; a new drop tells them again.
+  useEffect(() => {
+    const seen = dropped.map((s) => `${s.id}:${priceChanges(s).drop.toFixed(2)}`).sort().join(',');
+    try {
+      if (!seen || localStorage.getItem(DROPS_SEEN_KEY) === seen) return;
+      localStorage.setItem(DROPS_SEEN_KEY, seen);
+    } catch { return; }
+    setToast(dropped.length === 1 ? `Price drop: "${dropped[0].name}" costs less than when you saved it. See My builds.` : `Price drop: ${dropped.length} of your saved builds cost less than when you saved them. See My builds.`);
+  }, []);
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(null), 2800);
@@ -115,7 +128,7 @@ export default function App() {
     go('build');
   };
   const saveCopy = (name: string, pid: string, sel: Selection) => {
-    setSaved((list) => [{ id: newId(), name, platform: pid, selection: { ...sel }, savedAt: new Date().toISOString() }, ...list]);
+    setSaved((list) => [{ id: newId(), name, platform: pid, selection: { ...sel }, savedAt: new Date().toISOString(), prices: priceSnapshot(pid, sel) }, ...list]);
     setToast(`Saved "${name}" to My builds`);
   };
   const share = async (name: string, note: string) => {
@@ -128,10 +141,10 @@ export default function App() {
     const sel = selections[platformId] ?? {};
     const now = new Date().toISOString();
     if (!asNew && openSavedId && saved.some((s) => s.id === openSavedId)) {
-      setSaved((list) => list.map((s) => (s.id === openSavedId ? { ...s, name, selection: { ...sel }, savedAt: now } : s)));
+      setSaved((list) => list.map((s) => (s.id === openSavedId ? { ...s, name, selection: { ...sel }, savedAt: now, prices: priceSnapshot(platformId, sel, s.prices) } : s)));
     } else {
       const id = newId();
-      setSaved((list) => [{ id, name, platform: platformId, selection: { ...sel }, savedAt: now }, ...list]);
+      setSaved((list) => [{ id, name, platform: platformId, selection: { ...sel }, savedAt: now, prices: priceSnapshot(platformId, sel) }, ...list]);
       setOpenSavedId(id);
     }
     setToast(`Saved "${name}" to My builds`);
@@ -161,6 +174,7 @@ export default function App() {
             <NavLink active={route === 'community'} onClick={() => go('community')}>Community</NavLink>
             <NavLink active={route === 'saved'} onClick={() => go('saved')}>
               My builds{saved.length > 0 && <span className="count">{saved.length}</span>}
+              {dropped.length > 0 && <span className="count drop" title={`Prices dropped on ${dropped.length} saved build${dropped.length > 1 ? 's' : ''}`}>↓</span>}
             </NavLink>
             <a className="nav-link" href="./guides/">Guides</a>
           </nav>
@@ -454,7 +468,7 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
                     {rowIssues.map((i, k) => <span key={k} className={'row-issue ' + i.severity}>{i.message}</span>)}
                   </button>
                   <span className="part-price">
-                    {offer ? <><span className="amt">{money(offer.price)}</span><span className="src">{RETAILERS[offer.retailer].name}</span></> : <span className="amt dim">—</span>}
+                    {offer ? <><span className="amt">{money(offer.price)}</span><span className="src">{RETAILERS[offer.retailer].name}</span>{part && <DropChip part={part} />}</> : <span className="amt dim">—</span>}
                   </span>
                   <span className="part-fit">
                     <FitTag state={states[slot.id]} />
@@ -469,6 +483,11 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
       ))}
     </section>
   );
+}
+
+function DropChip({ part }: { part: Part }) {
+  const drop = recentDrop(part);
+  return drop ? <span className="drop-chip" title={`Was ${money(drop.was)} in the last 30 days`}>↓ {money(drop.by)}</span> : null;
 }
 
 function WeightLine({ platform, build }: { platform: Platform; build: Build }) {
@@ -734,6 +753,7 @@ function Candidate({ part, issues, sev, selected, onChoose, onBuyClick }: {
   const [lo, hi] = priceRange(part);
   const fit: RegionState = sev === 'ok' || sev === 'info' ? 'ok' : sev;
   const live = part.offers.some((o) => o.checkedAt);
+  const drop = recentDrop(part);
   return (
     <li className={'cand ' + fit + (selected ? ' selected' : '')}>
       <div className="cand-top">
@@ -752,6 +772,7 @@ function Candidate({ part, issues, sev, selected, onChoose, onBuyClick }: {
         <div className="cand-buy">
           {best && <span className="amt">{money(best.price)}</span>}
           {best && <span className="src">{RETAILERS[best.retailer].name}{live ? '' : ' · sample'}</span>}
+          {drop && <span className="drop-chip" title={`Was ${money(drop.was)} in the last 30 days`}>↓ {money(drop.by)} this month</span>}
           {!selected && <button className="btn primary" onClick={onChoose}>Add to build</button>}
         </div>
       </div>
@@ -841,7 +862,6 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onStart, onT
       .then((list) => { if (live) setBuilds(list.filter((b) => matches(b.platform))); })
       .catch((e: Error) => { if (live) { setBuilds([]); setError(e.message); } });
     return () => { live = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, sort]);
   useEffect(() => { featuredBuilds().then(setFeatured).catch(() => setFeatured([])); }, []);
 
@@ -980,6 +1000,24 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onStart, onT
   );
 }
 
+/** What the build's parts cost now against when it was saved: the net change and the biggest movers. */
+function PriceSinceSaved({ s }: { s: SavedBuild }) {
+  const { changes, drop } = priceChanges(s);
+  if (!s.prices || !Object.keys(s.prices).length) return null;
+  if (Math.abs(drop) < 1) return <p className="since-saved flat">Same price as when you saved it</p>;
+  return (
+    <div className={'since-saved ' + (drop > 0 ? 'down' : 'up')}>
+      <p className="since-total">{drop > 0 ? <>↓ {money(drop)} less than when you saved it</> : <>↑ {money(-drop)} more than when you saved it</>}</p>
+      <ul>
+        {changes.slice(0, 3).map((c) => (
+          <li key={c.part.id}><span>{c.part.brand} {c.part.name}</span><s>{money(c.was)}</s><b>{money(c.now)}</b></li>
+        ))}
+        {changes.length > 3 && <li className="more">and {changes.length - 3} more</li>}
+      </ul>
+    </div>
+  );
+}
+
 function SavedPage({ saved, onOpen, onRename, onDuplicate, onDelete, onCopyLink, onStart, onBrowse }: {
   saved: SavedBuild[]; onOpen: (s: SavedBuild) => void; onRename: (id: string, name: string) => void;
   onDuplicate: (s: SavedBuild) => void; onDelete: (id: string) => void; onCopyLink: (s: SavedBuild) => void;
@@ -993,7 +1031,7 @@ function SavedPage({ saved, onOpen, onRename, onDuplicate, onDelete, onCopyLink,
       <div className="page-head">
         <p className="kicker">My builds</p>
         <h1>Your saved builds</h1>
-        <p className="lede">Builds are saved in this browser. Use Copy link to open one on another device or send it to someone.</p>
+        <p className="lede">Builds are saved in this browser. We check prices every night, and each build shows what changed since you saved it. Use Copy link to open one on another device or send it to someone.</p>
       </div>
       {saved.length === 0 ? (
         <div className="empty-state card">
@@ -1021,6 +1059,7 @@ function SavedPage({ saved, onOpen, onRename, onDuplicate, onDelete, onCopyLink,
                   </form>
                 ) : s.name}
                 meta={<>{platform.name} · {partIds(s.selection).length} parts · Saved {shortDate(s.savedAt, true)}</>}
+                body={<PriceSinceSaved s={s} />}
                 actions={confirmDelete === s.id ? (
                   <>
                     <span className="confirm">Delete this build?</span>

@@ -8,6 +8,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { extractPrice } from './extract-price.mjs';
 import { parseRobots, isAllowed } from './robots.mjs';
+import { recordHistory, formatHistory } from './price-history.mjs';
 
 const USER_AGENT = 'FirearmDesignerPriceBot/0.1 (+https://github.com/RubyCrest1700/firearm-designer)';
 const HOST_DELAY_MS = 5000;
@@ -81,4 +82,13 @@ for (const [partId, byRetailer] of Object.entries(sources)) {
 
 const out = { updatedAt: report.ok ? now.toISOString() : previous.updatedAt ?? null, offers };
 console.log(`\nDone: ${report.ok} updated, ${report.kept} kept from last run, ${report.failed} failed, ${report.blocked} blocked by robots.txt`);
-if (!dryRun) writeFileSync('data/prices.json', JSON.stringify(out, null, 2) + '\n');
+if (!dryRun) {
+  writeFileSync('data/prices.json', JSON.stringify(out, null, 2) + '\n');
+  // Only fresh reads go into the history; a price kept from an earlier night is already recorded.
+  const fresh = Object.fromEntries(
+    Object.entries(offers).map(([id, byR]) => [id, Object.fromEntries(Object.entries(byR).filter(([, o]) => o.checkedAt === now.toISOString()))]),
+  );
+  let history = null;
+  try { history = JSON.parse(readFileSync('data/price-history.json', 'utf8')); } catch { /* first run */ }
+  writeFileSync('data/price-history.json', formatHistory(recordHistory(history, fresh, now)));
+}
