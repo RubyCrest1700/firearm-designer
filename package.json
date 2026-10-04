@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && npm run guides",
     "check-data": "esbuild scripts/check-presets.ts --bundle --platform=node --log-level=warning --outfile=node_modules/.cache/check.cjs && node node_modules/.cache/check.cjs",
     "artifact": "node scripts/make-artifact.mjs",
     "test": "node --test scripts/extract-price.test.mjs worker/api.test.mjs",
-    "update-prices": "node scripts/update-prices.mjs"
+    "update-prices": "node scripts/update-prices.mjs",
+    "guides": "esbuild scripts/build-guides.ts --bundle --platform=node --log-level=warning --outfile=node_modules/.cache/guides.cjs && node node_modules/.cache/guides.cjs"
   },
   "dependencies": {
     "react": "^18.3.1",
