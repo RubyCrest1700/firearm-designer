@@ -89,6 +89,20 @@ for (const p of PLATFORMS.filter((x) => x.family === 'Rifle'))
   fake.muzzle = { ...fake.muzzle!, attrs: { ...fake.muzzle!.attrs, bore: 0.224 } };
   if (!ar.rules(fake).some((i) => i.severity === 'error' && /strike the device/.test(i.message))) { console.log('bore check: 5.56 device on .308 barrel not flagged'); bad++; }
 }
+// Full builds made from catalog parts beyond the presets come out free of conflicts.
+{
+  const ar = PLATFORMS.find((x) => x.id === 'ar15')!;
+  const builds: Record<string, string>[] = [
+    { barrel: 'ar-bbl-grendel18', bcg: 'ar-bcg-grendel', gastube: 'ar-gt-rifle', muzzle: 'ar-mz-a2-30' },
+    { barrel: 'ar-bbl-arc18', bcg: 'ar-bcg-grendel', gastube: 'ar-gt-rifle', muzzle: 'ar-mz-sf3p30' },
+    { barrel: 'ar-bbl-ba20', gastube: 'ar-gt-rifle', gasblock: 'ar-gb-fsb', handguard: 'ar-hg-moerifle', buffer: 'ar-buf-rifle', stock: 'ar-stock-moerifle' },
+    { barrel: 'ar-bbl-ba300-9', gastube: 'ar-gt-pistol', handguard: 'ar-hg-mi7', muzzle: 'ar-mz-sf3p30' },
+  ];
+  for (const over of builds) {
+    const errs = issuesFor(ar, toBuild(ar, { ...presetSelection(ar, 'value'), ...over })).filter((i) => i.severity === 'error');
+    if (errs.length) { console.log(`catalog build ${JSON.stringify(over)}: ${errs.map((i) => i.message).join(' | ')}`); bad++; }
+  }
+}
 // Awareness warnings fire on the thresholds agreed in the Build Warnings Proposal.
 {
   const ar = PLATFORMS.find((x) => x.id === 'ar15')!;
