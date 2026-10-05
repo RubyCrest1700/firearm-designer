@@ -92,6 +92,75 @@ function inside(pts: number[], x: number, y: number) {
   return c;
 }
 
+/**
+ * A rifle optic drawn on a Picatinny rail whose top is at y = -1.1, centred near x = 4.9 (inches). Returns the outline,
+ * detail and the callout anchor in inches; callers move it onto their rail.
+ */
+function rifleOptic(opt: Part | undefined): { od: string; odet: string; ot: [number, number] } {
+  let od: string;
+  let odet = '';
+  let ot: [number, number]; // inches
+  if (matches(opt, /\d+-\d+x/i)) {
+    const big56 = matches(opt, /x5\d/);
+    const cy = big56 ? -2.95 : -2.6;
+    const ob = big56 ? 1.18 : 0.72;
+    const x0 = big56 ? -1.2 : -0.6;
+    const x1 = big56 ? 12.8 : 9.9;
+    const tubeR = big56 ? 0.67 : 0.59;
+    const e1 = x0 + 2.9;
+    const o0 = x1 - (big56 ? 3.6 : 2.3);
+    od = `M${x0},${f(cy - 0.85)} L${f(e1 - 0.35)},${f(cy - 0.85)} Q${f(e1)},${f(cy - 0.85)} ${f(e1 + 0.2)},${f(cy - tubeR)} L${f(o0)},${f(cy - tubeR)} L${f(o0 + 0.9)},${f(cy - ob)} L${x1},${f(cy - ob)} L${x1},${f(cy + ob)} L${f(o0 + 0.9)},${f(cy + ob)} L${f(o0)},${f(cy + tubeR)} L${f(e1 + 0.2)},${f(cy + tubeR)} Q${f(e1)},${f(cy + 0.85)} ${f(e1 - 0.35)},${f(cy + 0.85)} L${x0},${f(cy + 0.85)} Z M${f(e1 + 1.7)},${f(cy - tubeR)} L${f(e1 + 1.7)},${f(cy - 1.25)} L${f(e1 + 2.9)},${f(cy - 1.25)} L${f(e1 + 2.9)},${f(cy - tubeR)}`;
+    odet = `M${f(e1 + 0.5)},${f(cy + tubeR)} L${f(e1 + 0.5)},-1.1 L${f(e1 + 1.1)},-1.1 L${f(e1 + 1.1)},${f(cy + tubeR)} M${f(o0 - 1.0)},${f(cy + tubeR)} L${f(o0 - 1.0)},-1.1 L${f(o0 - 0.4)},-1.1 L${f(o0 - 0.4)},${f(cy + tubeR)} M${f(e1 + 0.2)},-1.25 L${f(o0 - 0.2)},-1.25 L${f(o0 - 0.2)},-1.1 M${f(x0 + 0.6)},${f(cy - 0.85)} L${f(x0 + 0.6)},${f(cy + 0.85)} M${f(x0 + 1.3)},${f(cy - 0.85)} L${f(x0 + 1.3)},${f(cy + 0.85)}`;
+    const tc = (e1 + 1.1 + o0 - 1.0) / 2;
+    const tTop = cy - tubeR - 0.62;
+    od += ` M${f(tc - 0.42)},${f(cy - tubeR)} L${f(tc - 0.42)},${f(tTop + 0.08)} Q${f(tc - 0.42)},${f(tTop)} ${f(tc - 0.34)},${f(tTop)} L${f(tc + 0.34)},${f(tTop)} Q${f(tc + 0.42)},${f(tTop)} ${f(tc + 0.42)},${f(tTop + 0.08)} L${f(tc + 0.42)},${f(cy - tubeR)}`;
+    odet += ` ${repeat(tc - 0.32, tc + 0.32, 0.08, (x) => `M${x},${f(tTop + 0.06)} L${x},${f(tTop + 0.3)}`)} M${f(tc - 0.42)},${f(tTop + 0.36)} L${f(tc + 0.42)},${f(tTop + 0.36)}`
+      + ` ${O2(tc, cy, 0.4)} ${O2(tc, cy, 0.3)} ${O2(tc, cy, 0.06)}`
+      + ` ${repeat(x0 + 1.75, x0 + 2.55, 0.1, (x) => `M${x},${f(cy - 0.85)} L${x},${f(cy - 0.62)} M${x},${f(cy + 0.62)} L${x},${f(cy + 0.85)}`)} M${f(x0 + 2.1)},${f(cy + 0.85)} L${f(x0 + 2.1)},${f(cy + 1.05)} L${f(x0 + 2.3)},${f(cy + 1.05)} L${f(x0 + 2.3)},${f(cy + 0.85)}`
+      + ` ${O2(e1 + 0.8, cy - tubeR - 0.12, 0.05)} ${O2(o0 - 0.7, cy - tubeR - 0.12, 0.05)} M${f(o0 + 0.9)},${f(cy - ob + 0.18)} L${f(x1 - 0.12)},${f(cy - ob + 0.18)} M${f(x1 - 0.12)},${f(cy - ob)} L${f(x1 - 0.12)},${f(cy + ob)}`;
+    ot = [e1 + 2.3, cy - 1.25];
+  } else if (matches(opt, /reflex|510/i)) {
+    // Open reflex (HS510C): QD base on the rail, low emitter housing at the rear, and the window inside a
+    // protective hood at the front with the solar panel on top.
+    od = 'M2.8,-1.1 L2.8,-1.62 L2.95,-1.62 L2.95,-1.88 Q2.95,-2.0 3.07,-2.0 L3.62,-2.0 L3.86,-3.06 Q3.92,-3.28 4.14,-3.28 L5.62,-3.28 Q5.86,-3.28 5.9,-3.04 L6.0,-1.62 L6.0,-1.1 Z'
+      + ' M4.04,-1.78 L4.16,-2.94 Q4.18,-3.04 4.28,-3.04 L5.52,-3.04 Q5.62,-3.04 5.63,-2.94 L5.7,-1.78 Z';
+    odet = 'M2.8,-1.36 L6.0,-1.36 M2.95,-1.62 L6.0,-1.62 M3.9,-3.18 L5.84,-3.18 M4.2,-3.12 L5.56,-3.12'
+      + ` ${repeat(4.3, 5.4, 0.22, (x) => `M${x},-3.18 L${x},-3.12`)}`
+      + ' M5.7,-1.78 L5.6,-3.0 M5.62,-1.78 L5.53,-2.98'
+      + ` ${O2(3.32, -1.8, 0.1)} M3.26,-1.8 L3.38,-1.8 ${O2(3.86, -2.3, 0.07)}`
+      + ' M4.3,-1.5 L4.3,-1.7 L4.62,-1.7 L4.62,-1.5 Z M4.72,-1.5 L4.72,-1.7 L5.04,-1.7 L5.04,-1.5 Z'
+      + ` M3.0,-1.1 L3.0,-1.3 L3.6,-1.3 L3.6,-1.1 ${O2(3.3, -1.22, 0.06)} M5.2,-1.24 L5.86,-1.24`;
+    ot = [4.9, -3.28];
+  } else if (matches(opt, /EXPS|holographic/i) || matches(opt, /ROMEO5|PRO Patrol|Micro T-2/i)) {
+    // Traced from the makers' design-patent side views (see scripts/pistol-profiles/optics.py). The micro dot drawing
+    // stands in for the full-size Aimpoint PRO, scaled to its length; risers lift each to its published sight height.
+    const holo = matches(opt, /EXPS|holographic/i);
+    const pr = OPTIC_PROFILES[holo ? 'holo' : 'micro'];
+    const want = Number(opt?.attrs.height ?? 0);
+    const k = holo ? 1 : matches(opt, /PRO Patrol/i) ? 1.3 : 1;
+    const riser = want ? Math.max(0, want - pr.axis * k) : 0;
+    const x0 = 4.9 - (pr.w * k) / 2, rail = -1.1;
+    const map = (x: number, y: number): [number, number] => [x0 + x * k, rail - riser + y * k];
+    od = pr.outline.map((ol) => polyPath(ol, map, true)).join(' ');
+    odet = pr.detail.map((ol) => polyPath(ol, map, false)).join(' ');
+    if (riser > 0.02) {
+      // The mount's foot, from the drawing's lowest points, stood on a riser block.
+      let a = Infinity, z = -Infinity;
+      for (const ol of pr.outline) for (let i = 0; i < ol.length; i += 2) if (ol[i + 1] > -0.03) { a = Math.min(a, ol[i]); z = Math.max(z, ol[i]); }
+      const xa = x0 + a * k, xz = x0 + z * k;
+      od += ` M${f(xa)},${rail} L${f(xa)},${f(rail - riser)} L${f(xz)},${f(rail - riser)} L${f(xz)},${rail} Z`;
+      odet += ` M${f(xa + 0.08)},${f(rail - riser / 2)} L${f(xz - 0.08)},${f(rail - riser / 2)}`;
+    }
+    ot = [4.9, rail - riser - pr.h * k];
+  } else {
+    const cy = -2.3;
+    od = `M2.6,${f(cy - 0.8)} L7.2,${f(cy - 0.8)} Q7.45,${f(cy - 0.8)} 7.45,${f(cy - 0.55)} L7.45,${f(cy + 0.55)} Q7.45,${f(cy + 0.8)} 7.2,${f(cy + 0.8)} L2.6,${f(cy + 0.8)} Q2.35,${f(cy + 0.8)} 2.35,${f(cy + 0.55)} L2.35,${f(cy - 0.55)} Q2.35,${f(cy - 0.8)} 2.6,${f(cy - 0.8)} Z M4.4,${f(cy - 0.8)} L4.4,${f(cy - 1.2)} L5.2,${f(cy - 1.2)} L5.2,${f(cy - 0.8)}`;
+    odet = `M3.4,${f(cy + 0.8)} L3.4,-1.1 L6.4,-1.1 L6.4,${f(cy + 0.8)} M2.8,${f(cy - 0.8)} L2.8,${f(cy + 0.8)} M7.0,${f(cy - 0.8)} L7.0,${f(cy + 0.8)} ${O2(4.8, cy, 0.34)} ${O2(4.8, cy, 0.22)} ${repeat(4.45, 5.15, 0.1, (x) => `M${x},${f(cy - 1.15)} L${x},${f(cy - 0.85)}`)} M5.6,-1.25 L6.5,-1.45 L6.6,-1.32 L5.75,-1.15 ${repeat(2.45, 2.7, 0.08, (x) => `M${x},${f(cy - 0.7)} L${x},${f(cy + 0.7)}`)}`;
+    ot = [4.8, cy - 1.2];
+  }
+  return { od, odet, ot };
+}
+
 function rifle(platform: Platform, b: Build, place: Placement): Scene {
   const S = 22;
   const ox = 300;
@@ -282,67 +351,8 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
 
   // Optic, mounted on the upper's rail
   const opt = b.optic;
-  let od: string;
-  let odet = '';
-  let ot: [number, number];
-  if (matches(opt, /\d+-\d+x/i)) {
-    const big56 = matches(opt, /x5\d/);
-    const cy = big56 ? -2.95 : -2.6;
-    const ob = big56 ? 1.18 : 0.72;
-    const x0 = big56 ? -1.2 : -0.6;
-    const x1 = big56 ? 12.8 : 9.9;
-    const tubeR = big56 ? 0.67 : 0.59;
-    const e1 = x0 + 2.9;
-    const o0 = x1 - (big56 ? 3.6 : 2.3);
-    od = `M${x0},${f(cy - 0.85)} L${f(e1 - 0.35)},${f(cy - 0.85)} Q${f(e1)},${f(cy - 0.85)} ${f(e1 + 0.2)},${f(cy - tubeR)} L${f(o0)},${f(cy - tubeR)} L${f(o0 + 0.9)},${f(cy - ob)} L${x1},${f(cy - ob)} L${x1},${f(cy + ob)} L${f(o0 + 0.9)},${f(cy + ob)} L${f(o0)},${f(cy + tubeR)} L${f(e1 + 0.2)},${f(cy + tubeR)} Q${f(e1)},${f(cy + 0.85)} ${f(e1 - 0.35)},${f(cy + 0.85)} L${x0},${f(cy + 0.85)} Z M${f(e1 + 1.7)},${f(cy - tubeR)} L${f(e1 + 1.7)},${f(cy - 1.25)} L${f(e1 + 2.9)},${f(cy - 1.25)} L${f(e1 + 2.9)},${f(cy - tubeR)}`;
-    odet = `M${f(e1 + 0.5)},${f(cy + tubeR)} L${f(e1 + 0.5)},-1.1 L${f(e1 + 1.1)},-1.1 L${f(e1 + 1.1)},${f(cy + tubeR)} M${f(o0 - 1.0)},${f(cy + tubeR)} L${f(o0 - 1.0)},-1.1 L${f(o0 - 0.4)},-1.1 L${f(o0 - 0.4)},${f(cy + tubeR)} M${f(e1 + 0.2)},-1.25 L${f(o0 - 0.2)},-1.25 L${f(o0 - 0.2)},-1.1 M${f(x0 + 0.6)},${f(cy - 0.85)} L${f(x0 + 0.6)},${f(cy + 0.85)} M${f(x0 + 1.3)},${f(cy - 0.85)} L${f(x0 + 1.3)},${f(cy + 0.85)}`;
-    const tc = (e1 + 1.1 + o0 - 1.0) / 2;
-    const tTop = cy - tubeR - 0.62;
-    od += ` M${f(tc - 0.42)},${f(cy - tubeR)} L${f(tc - 0.42)},${f(tTop + 0.08)} Q${f(tc - 0.42)},${f(tTop)} ${f(tc - 0.34)},${f(tTop)} L${f(tc + 0.34)},${f(tTop)} Q${f(tc + 0.42)},${f(tTop)} ${f(tc + 0.42)},${f(tTop + 0.08)} L${f(tc + 0.42)},${f(cy - tubeR)}`;
-    odet += ` ${repeat(tc - 0.32, tc + 0.32, 0.08, (x) => `M${x},${f(tTop + 0.06)} L${x},${f(tTop + 0.3)}`)} M${f(tc - 0.42)},${f(tTop + 0.36)} L${f(tc + 0.42)},${f(tTop + 0.36)}`
-      + ` ${O2(tc, cy, 0.4)} ${O2(tc, cy, 0.3)} ${O2(tc, cy, 0.06)}`
-      + ` ${repeat(x0 + 1.75, x0 + 2.55, 0.1, (x) => `M${x},${f(cy - 0.85)} L${x},${f(cy - 0.62)} M${x},${f(cy + 0.62)} L${x},${f(cy + 0.85)}`)} M${f(x0 + 2.1)},${f(cy + 0.85)} L${f(x0 + 2.1)},${f(cy + 1.05)} L${f(x0 + 2.3)},${f(cy + 1.05)} L${f(x0 + 2.3)},${f(cy + 0.85)}`
-      + ` ${O2(e1 + 0.8, cy - tubeR - 0.12, 0.05)} ${O2(o0 - 0.7, cy - tubeR - 0.12, 0.05)} M${f(o0 + 0.9)},${f(cy - ob + 0.18)} L${f(x1 - 0.12)},${f(cy - ob + 0.18)} M${f(x1 - 0.12)},${f(cy - ob)} L${f(x1 - 0.12)},${f(cy + ob)}`;
-    ot = px(e1 + 2.3, cy - 1.25);
-  } else if (matches(opt, /reflex|510/i)) {
-    // Open reflex (HS510C): QD base on the rail, low emitter housing at the rear, and the window inside a
-    // protective hood at the front with the solar panel on top.
-    od = 'M2.8,-1.1 L2.8,-1.62 L2.95,-1.62 L2.95,-1.88 Q2.95,-2.0 3.07,-2.0 L3.62,-2.0 L3.86,-3.06 Q3.92,-3.28 4.14,-3.28 L5.62,-3.28 Q5.86,-3.28 5.9,-3.04 L6.0,-1.62 L6.0,-1.1 Z'
-      + ' M4.04,-1.78 L4.16,-2.94 Q4.18,-3.04 4.28,-3.04 L5.52,-3.04 Q5.62,-3.04 5.63,-2.94 L5.7,-1.78 Z';
-    odet = 'M2.8,-1.36 L6.0,-1.36 M2.95,-1.62 L6.0,-1.62 M3.9,-3.18 L5.84,-3.18 M4.2,-3.12 L5.56,-3.12'
-      + ` ${repeat(4.3, 5.4, 0.22, (x) => `M${x},-3.18 L${x},-3.12`)}`
-      + ' M5.7,-1.78 L5.6,-3.0 M5.62,-1.78 L5.53,-2.98'
-      + ` ${O2(3.32, -1.8, 0.1)} M3.26,-1.8 L3.38,-1.8 ${O2(3.86, -2.3, 0.07)}`
-      + ' M4.3,-1.5 L4.3,-1.7 L4.62,-1.7 L4.62,-1.5 Z M4.72,-1.5 L4.72,-1.7 L5.04,-1.7 L5.04,-1.5 Z'
-      + ` M3.0,-1.1 L3.0,-1.3 L3.6,-1.3 L3.6,-1.1 ${O2(3.3, -1.22, 0.06)} M5.2,-1.24 L5.86,-1.24`;
-    ot = px(4.9, -3.28);
-  } else if (matches(opt, /EXPS|holographic/i) || matches(opt, /ROMEO5|PRO Patrol/i)) {
-    // Traced from the makers' design-patent side views (see scripts/pistol-profiles/optics.py). The micro dot drawing
-    // stands in for the full-size Aimpoint PRO, scaled to its length; risers lift each to its published sight height.
-    const holo = matches(opt, /EXPS|holographic/i);
-    const pr = OPTIC_PROFILES[holo ? 'holo' : 'micro'];
-    const want = Number(opt?.attrs.height ?? 0);
-    const k = holo ? 1 : matches(opt, /PRO Patrol/i) ? 1.3 : 1;
-    const riser = want ? Math.max(0, want - pr.axis * k) : 0;
-    const x0 = 4.9 - (pr.w * k) / 2, rail = -1.1;
-    const map = (x: number, y: number): [number, number] => [x0 + x * k, rail - riser + y * k];
-    od = pr.outline.map((ol) => polyPath(ol, map, true)).join(' ');
-    odet = pr.detail.map((ol) => polyPath(ol, map, false)).join(' ');
-    if (riser > 0.02) {
-      // The mount's foot, from the drawing's lowest points, stood on a riser block.
-      let a = Infinity, z = -Infinity;
-      for (const ol of pr.outline) for (let i = 0; i < ol.length; i += 2) if (ol[i + 1] > -0.03) { a = Math.min(a, ol[i]); z = Math.max(z, ol[i]); }
-      const xa = x0 + a * k, xz = x0 + z * k;
-      od += ` M${f(xa)},${rail} L${f(xa)},${f(rail - riser)} L${f(xz)},${f(rail - riser)} L${f(xz)},${rail} Z`;
-      odet += ` M${f(xa + 0.08)},${f(rail - riser / 2)} L${f(xz - 0.08)},${f(rail - riser / 2)}`;
-    }
-    ot = px(4.9, rail - riser - pr.h * k);
-  } else {
-    const cy = -2.3;
-    od = `M2.6,${f(cy - 0.8)} L7.2,${f(cy - 0.8)} Q7.45,${f(cy - 0.8)} 7.45,${f(cy - 0.55)} L7.45,${f(cy + 0.55)} Q7.45,${f(cy + 0.8)} 7.2,${f(cy + 0.8)} L2.6,${f(cy + 0.8)} Q2.35,${f(cy + 0.8)} 2.35,${f(cy + 0.55)} L2.35,${f(cy - 0.55)} Q2.35,${f(cy - 0.8)} 2.6,${f(cy - 0.8)} Z M4.4,${f(cy - 0.8)} L4.4,${f(cy - 1.2)} L5.2,${f(cy - 1.2)} L5.2,${f(cy - 0.8)}`;
-    odet = `M3.4,${f(cy + 0.8)} L3.4,-1.1 L6.4,-1.1 L6.4,${f(cy + 0.8)} M2.8,${f(cy - 0.8)} L2.8,${f(cy + 0.8)} M7.0,${f(cy - 0.8)} L7.0,${f(cy + 0.8)} ${O2(4.8, cy, 0.34)} ${O2(4.8, cy, 0.22)} ${repeat(4.45, 5.15, 0.1, (x) => `M${x},${f(cy - 1.15)} L${x},${f(cy - 0.85)}`)} M5.6,-1.25 L6.5,-1.45 L6.6,-1.32 L5.75,-1.15 ${repeat(2.45, 2.7, 0.08, (x) => `M${x},${f(cy - 0.7)} L${x},${f(cy + 0.7)}`)}`;
-    ot = px(4.8, cy - 1.2);
-  }
+  const { od, odet, ot: oti } = rifleOptic(opt);
+  const ot = px(oti[0], oti[1]);
   P.push({ slot: 'optic', z: 14, row: 'top', target: [ot[0], f(ot[1] + (RAIL + 1.1) * S)],
     el: <><path fillRule="evenodd" d={T(movePath(od, 0, RAIL + 1.1))} /><path className="detail" d={T(movePath(odet, 0, RAIL + 1.1))} /></> });
 
@@ -1177,9 +1187,221 @@ const OC = (x: number, y: number, r: number) => {
 const O2 = (x: number, y: number, r: number) =>
   `M${f(x - r)},${f(y)} Q${f(x - r)},${f(y - r)} ${f(x)},${f(y - r)} Q${f(x + r)},${f(y - r)} ${f(x + r)},${f(y)} Q${f(x + r)},${f(y + r)} ${f(x)},${f(y + r)} Q${f(x - r)},${f(y + r)} ${f(x - r)},${f(y)} Z`;
 
+/* ===================================================================== AKs */
+
+/**
+ * AKM and AK-74, right side. Proportions follow the general view in Kalashnikov's own patent drawing (WO 99/05467
+ * FIG. 1, an AK-74M), measured off the figure and scaled to the rifle's published 37.1" length; its sketched lines
+ * are redrawn straight here. Upgrade furniture, mounts and muzzle devices are drawn to the makers' published sizes.
+ * Inches, bore on y = 0, receiver rear at x = 0.
+ */
+const AK_CHAMBER = 8.6;
+/** A Picatinny rail block from x0 to x1, top at y and bottom at yb, with its cross slots. */
+function akRail(x0: number, x1: number, y: number, yb: number) {
+  return `M${f(x0)},${f(y)} L${f(x1)},${f(y)} L${f(x1)},${f(yb)} L${f(x0)},${f(yb)} Z ` + pic(x0 + 0.12, x1 - 0.12, y);
+}
+const stadium = (x0: number, x1: number, y: number, h: number) => {
+  const r = h / 2;
+  return `M${f(x0 + r)},${f(y - r)} L${f(x1 - r)},${f(y - r)} Q${f(x1)},${f(y - r)} ${f(x1)},${f(y)} Q${f(x1)},${f(y + r)} ${f(x1 - r)},${f(y + r)} L${f(x0 + r)},${f(y + r)} Q${f(x0)},${f(y + r)} ${f(x0)},${f(y)} Q${f(x0)},${f(y - r)} ${f(x0 + r)},${f(y - r)} Z`;
+};
+
+function ak(platform: Platform, b: Build): Scene {
+  const S = 22, ox = 300, oy = 165;
+  const T = makeT(S, ox, oy);
+  const px = (x: number, y: number): [number, number] => [f(ox + x * S), f(oy + y * S)];
+  const P: Piece[] = [];
+  const rifle = b.rifle;
+  /** An upgrade slot left empty shows the factory part, which belongs to the base rifle. */
+  const own = (slot: string) => (b[slot] ? slot : 'rifle');
+  const cal = platform.id === 'akm' ? 'akm' : 'ak74';
+  const L = typeof rifle?.attrs.barrel === 'number' ? rifle.attrs.barrel : 16.3;
+  const BX = AK_CHAMBER + L;
+  const thread = (rifle?.attrs.thread as string | undefined) ?? (cal === 'akm' ? 'M14x1 LH' : 'M24x1.5');
+  const mountKind = b.mount?.attrs.kind as string | undefined;
+  const hgFull = b.handguard?.attrs.kind === 'full';
+  const RF = 10.45; // receiver front
+
+  // Receiver: the stamped body, dust cover, rear sight, selector, charging handle, trigger guard and mag catch.
+  const cover = mountKind !== 'cover';
+  const rivets = [[0.55, 0.3], [1.15, 0.3], [3.0, 0.72], [5.15, 0.72], [9.25, 0.15], [9.95, 0.15], [9.6, 0.55]].map(([x, y]) => OC(x, y, 0.07)).join(' ');
+  P.push({ slot: 'rifle', z: 4, row: 'bottom', target: px(7.2, 0.45), el: <>
+    <path d={T(`M0,-0.62 L${RF},-0.62 L${RF},0.95 L0,0.95 Z`)} />
+    {cover && <path d={T('M0,-0.62 L0,-0.7 L0.55,-1.25 Q0.95,-1.68 1.5,-1.72 L8.95,-1.72 L8.95,-0.62 Z M0.42,-1.2 L0.42,-1.4 Q0.42,-1.46 0.48,-1.46 L0.62,-1.46 Q0.68,-1.46 0.68,-1.4 L0.68,-1.36')} />}
+    <path d={T(`M8.95,-1.72 L9.9,-1.72 L11.3,-1.05 L11.3,-0.62 L8.95,-0.62 Z ${cover ? 'M9.0,-1.72 L10.2,-1.95 L10.28,-1.72 M9.35,-1.72 L9.35,-1.9 L9.7,-1.9 L9.7,-1.72' : ''}`)} />
+    <path d={T('M0.62,-0.58 L6.2,-0.6 Q6.3,-0.6 6.3,-0.5 L6.25,-0.12 Q6.22,-0.04 6.12,-0.05 L5.85,-0.08 L5.7,-0.42 L1.2,-0.18 Q0.62,-0.16 0.62,-0.4 Z')} />
+    <path d={T('M7.8,-0.92 L8.5,-0.92 Q8.62,-0.92 8.62,-0.8 L8.62,-0.58 Q8.62,-0.48 8.5,-0.48 L7.8,-0.48 Q7.68,-0.48 7.68,-0.6 L7.68,-0.8 Q7.68,-0.92 7.8,-0.92 Z')} />
+    <path fillRule="evenodd" d={T('M2.85,0.95 L2.85,1.88 Q2.85,2.15 3.12,2.15 L4.9,2.15 Q5.15,2.15 5.15,1.88 L5.15,0.95 Z M3.05,0.95 L3.05,1.8 Q3.05,1.95 3.2,1.95 L4.82,1.95 Q4.95,1.95 4.95,1.8 L4.95,0.95 Z')} />
+    <path d={T('M3.6,0.95 Q3.92,1.32 3.76,1.86 L3.86,1.88 Q4.06,1.3 3.78,0.95 Z M5.5,0.95 L5.5,1.62 Q5.54,1.86 5.8,1.86 L6.2,1.86 L6.2,1.7 L5.84,1.7 Q5.72,1.7 5.72,1.58 L5.72,0.95')} />
+    <path className="detail" d={T(`${OC(0.9, -0.38, 0.12)} M5.75,-0.6 L7.55,-0.6 L7.55,-0.3 L5.95,-0.3 ${rivets} ${OC(3.4, 0.42, 0.09)} ${OC(4.55, 0.28, 0.09)} M7.9,-0.7 L8.4,-0.7`)} />
+  </> });
+
+  // Barrel, gas system, front sight and the parts that stay with the rifle.
+  const fs0 = BX - 1.5, fs1 = BX - 0.15;
+  P.push({ slot: 'rifle', z: 4.2, row: 'top', target: px(BX - 3, -0.3), el: <>
+    <path d={T(`M17.25,-0.33 L${f(BX)},-0.28 L${f(BX)},0.28 L17.25,0.33 Z M17.25,-1.22 L19.75,-1.22 L19.75,-0.82 L17.25,-0.82 Z M17.25,0.48 L${f(fs0 + 0.2)},0.48 L${f(fs0 + 0.2)},0.6 L17.25,0.6 Z`)} />
+    <path className="hidden-line" d={T(`M${AK_CHAMBER},-0.38 L17.25,-0.33 M${AK_CHAMBER},0.38 L17.25,0.33`)} />
+    <path d={T('M19.75,-1.3 L20.6,-1.3 Q20.95,-1.3 20.95,-0.95 L20.95,0.42 L20.7,0.42 L20.7,0.88 L20.0,0.88 L20.0,0.42 L19.75,0.42 Z')} />
+    <path d={T(`M${f(fs0)},-0.45 L${f(fs0 + 0.3)},-0.45 L${f(fs0 + 0.55)},-1.7 Q${f(fs0 + 0.7)},-1.95 ${f(fs0 + 0.95)},-1.85 L${f(fs1 - 0.15)},-1.0 L${f(fs1)},-0.45 L${f(fs1)},0.45 L${f(fs1 - 0.4)},0.45 L${f(fs1 - 0.45)},0.8 L${f(fs0 + 0.2)},0.8 L${f(fs0 + 0.2)},0.45 L${f(fs0)},0.45 Z`)} />
+    <path className="detail" d={T(`M19.75,-0.42 L20.95,-0.42 ${OC(20.35, 0.62, 0.08)} M${f(fs0 + 0.78)},-1.6 L${f(fs0 + 0.78)},-0.95 M${f(fs0 + 0.3)},-0.45 L${f(fs1)},-0.45`)} />
+    <path d={T('M16.8,-0.95 L17.25,-0.95 L17.25,0.85 L16.8,0.85 Z')} />
+    <path className="detail" d={T('M16.8,-0.1 L17.25,-0.1')} />
+  </> });
+
+  // Upper handguard over the gas tube, unless a full-length handguard or a gas tube rail replaces it.
+  if (!hgFull && mountKind !== 'gastube')
+    P.push({ slot: 'rifle', z: 5, row: 'top', target: px(14, -1.35), el: <>
+      <path d={T('M11.3,-1.05 L11.3,-1.4 Q11.4,-1.55 11.75,-1.55 L16.6,-1.3 Q16.8,-1.28 16.8,-1.1 L16.8,-0.82 L11.3,-0.82 Z')} />
+      <path className="detail" d={T('M11.75,-1.42 L16.6,-1.18')} />
+    </> });
+
+  // Lower handguard
+  const hg = b.handguard;
+  const hgSlot = own('handguard');
+  if (!hg)
+    P.push({ slot: hgSlot, z: 6, row: 'bottom', target: px(14, 0.72), el: <>
+      <path d={T(`M${RF},-0.82 L16.8,-0.82 L16.8,0.72 L12.3,0.72 Q11.75,0.74 11.5,1.05 Q11.2,1.32 10.8,1.12 Q${RF},0.92 ${RF},0.55 Z`)} />
+    </> });
+  else if (hg.attrs.kind === 'full')
+    P.push({ slot: 'handguard', z: 6, row: 'bottom', target: px(14, 0.9), el: <>
+      <path d={T(`M10.9,-1.55 L16.6,-1.55 Q16.85,-1.55 16.85,-1.3 L16.85,0.65 Q16.85,0.9 16.6,0.9 L11.3,0.9 Q${RF},0.85 ${RF},0.2 L${RF},-1.1 Q${RF},-1.55 10.9,-1.55 Z`)} />
+      <path className="detail" d={T(`${[11.5, 13.2, 14.9].map((x) => stadium(x, x + 1.3, -0.95, 0.3) + ' ' + stadium(x, x + 1.3, 0.28, 0.3)).join(' ')} M10.9,-1.3 L16.6,-1.3 M11.0,-0.33 L16.6,-0.33`)} />
+    </> });
+  else if (hg.attrs.mlok)
+    P.push({ slot: 'handguard', z: 6, row: 'bottom', target: px(14, 0.8), el: <>
+      <path d={T(`M${RF},-0.82 L16.8,-0.82 L16.8,0.8 L12.0,0.8 Q10.7,0.85 ${RF},0.5 Z`)} />
+      <path className="detail" d={T(`${[11.6, 13.3, 15.0].map((x) => stadium(x, x + 1.25, 0.12, 0.28)).join(' ')} M12.0,0.62 L16.55,0.62 M16.55,-0.82 L16.55,0.8`)} />
+    </> });
+  else
+    P.push({ slot: 'handguard', z: 6, row: 'bottom', target: px(14, 1.0), el: <>
+      <path d={T(`M${RF},-0.82 L16.8,-0.82 L16.8,0.72 L${RF},0.72 Z M11.0,0.72 L16.3,0.72 L16.3,1.0 L11.0,1.0 Z M11.4,-0.15 L16.2,-0.15 L16.2,0.25 L11.4,0.25 Z`)} />
+      <path className="detail" d={T(`${repeat(11.15, 16.0, 0.394, (x) => `M${x},1.0 L${x},0.9 L${f(x + 0.206)},0.9 L${f(x + 0.206)},1.0`)} ${repeat(11.55, 15.9, 0.394, (x) => `M${x},-0.15 L${x},0.25`)}`)} />
+    </> });
+
+  // Stock
+  const st = b.stock;
+  let sd: string, sdet: string;
+  let rear: number;
+  if (!st) {
+    sd = 'M0,-0.7 L-0.39,-0.83 L-0.97,-0.54 Q-1.25,-0.42 -1.55,-0.39 L-1.93,-0.41 Q-3.2,-0.65 -4.26,-0.87 L-4.84,-0.93 L-8.9,-0.89 Q-9.19,-0.89 -9.22,-0.6 L-9.38,2.72 Q-9.38,2.94 -9.15,2.94 L-8.03,2.94 Q-7.6,2.85 -7.16,2.55 L-6.19,2.2 L-4.26,1.68 L-2.32,1.35 L-0.39,1.06 L0,0.95 Z';
+    sdet = 'M-9.0,-0.89 L-9.15,2.94';
+    rear = -9.38;
+  } else if (st.attrs.kind === 'zhukov') {
+    sd = 'M0,-0.72 L-0.75,-0.72 L-0.85,-0.85 L-9.6,-0.85 Q-9.95,-0.85 -9.95,-0.5 L-9.95,3.0 Q-9.95,3.25 -9.7,3.25 L-8.6,3.25 L-1.2,1.15 L-0.75,1.15 L-0.75,0.95 L0,0.95 Z M-1.5,-0.42 L-8.25,-0.42 Q-8.4,-0.42 -8.4,-0.27 L-8.4,2.15 Q-8.4,2.33 -8.58,2.38 Z';
+    sdet = `M-0.75,-0.72 L-0.75,0.95 ${OC(-0.38, 0.62, 0.12)} M-9.6,-0.85 L-9.6,3.25 M-0.85,-0.6 L-8.7,-0.6`;
+    rear = -9.95;
+  } else if (st.attrs.kind === 'moe') {
+    sd = 'M0,-0.7 L-1.2,-0.74 L-9.7,-0.7 Q-9.95,-0.7 -9.95,-0.45 L-10.05,2.85 Q-10.05,3.1 -9.8,3.1 L-8.7,3.1 Q-5.2,2.05 -1.5,1.3 L0,0.95 Z';
+    sdet = `M-9.6,-0.71 L-9.7,3.1 ${stadium(-8.95, -8.2, 2.55, 0.22)} M-1.6,-0.45 L-8.9,-0.45`;
+    rear = -10.05;
+  } else {
+    // Adjustable: an AR buffer tube on an AK adapter, carrying the M4 stock traced from US 10,184,737.
+    const TE = -7.7;
+    rear = TE - 0.73;
+    const dx = rear - AR_STOCK_REAR, dy = -0.1;
+    const t = arPaths(AR_PROFILES.stock, (x, y) => [x + dx, y + dy]);
+    sd = `M0,-0.72 L-0.6,-0.72 L-0.6,0.95 L0,0.95 Z M-0.6,${f(dy - 0.57)} L${TE},${f(dy - 0.57)} L${TE},${f(dy + 0.57)} L-0.6,${f(dy + 0.57)} Z ${t.o}`;
+    sdet = t.d;
+  }
+  P.push({ slot: own('stock'), z: 4.1, row: 'bottom', target: px(rear + 3, 1.6), el: <><path fillRule="evenodd" d={T(sd)} /><path className="detail" d={T(sdet)} /></> });
+
+  // Pistol grip
+  const gk = b.grip?.attrs.kind as string | undefined;
+  const gripD = !gk
+    ? 'M0.85,0.95 L0.1,4.15 Q0.0,4.7 0.45,4.85 L1.45,4.92 Q1.62,4.92 1.66,4.75 L2.12,2.35 Q2.22,2.0 2.6,1.92 L2.78,1.85 L2.78,0.95 Z'
+    : gk === 'hogue'
+      ? 'M0.8,0.95 L0.05,4.15 Q-0.05,4.75 0.42,4.88 L1.48,4.96 Q1.66,4.96 1.7,4.78 Q1.6,4.4 1.86,4.05 Q2.02,3.65 1.95,3.3 Q2.1,2.92 2.15,2.5 Q2.26,2.02 2.62,1.92 L2.78,1.85 L2.78,0.95 Z'
+      : `M0.95,0.95 L${gk === 'uspalm' ? '0.55,1.0 Q0.38,1.05 0.45,1.18 L0.62,1.22' : '0.7,1.05 Q0.55,1.15 0.62,1.3'} L0.0,4.15 Q-0.1,4.78 0.4,4.88 L1.52,4.97 Q1.72,4.97 1.76,4.76 L2.2,2.32 Q2.3,1.96 2.65,1.9 L2.78,1.82 L2.78,0.95 Z`;
+  const gripDet = !gk
+    ? 'M0.75,1.6 L0.3,3.95 M1.2,1.6 L0.78,4.3 M1.65,1.7 L1.25,4.35'
+    : gk === 'hogue' ? 'M0.9,1.5 L0.35,4.0' : 'M0.95,1.55 L2.0,1.55 L1.55,4.2 Q1.5,4.45 1.25,4.45 L0.55,4.42 Q0.3,4.4 0.36,4.12 Z';
+  P.push({ slot: own('grip'), z: 5, row: 'bottom', target: px(1.0, 3.6), el: <><path d={T(gripD)} /><path className="detail" d={T(gripDet)} /></> });
+
+  // Trigger group: hammer, trigger and disconnector inside the receiver.
+  if (b.trigger)
+    P.push({ slot: 'trigger', internal: true, z: 20, row: 'bottom', target: px(4.1, 0.2), el:
+      <path d={T(`${OC(4.55, 0.28, 0.22)} M4.4,0.1 L3.45,-0.42 L3.3,-0.25 L4.35,0.45 M3.2,0.95 L3.2,0.55 L4.1,0.55 L4.1,0.95 ${OC(3.4, 0.42, 0.18)}`)} /> });
+
+  // Magazine: the curved box, more sharply curved for 7.62x39.
+  const bend = cal === 'akm' ? 0.022 : 0;
+  const mg = (x: number, y: number) => `${f(x + bend * (y - 0.8) * (y - 0.8))},${f(y)}`;
+  const rearE = [[6.38, 0.8], [6.5, 2.13], [6.6, 3.58], [7.1, 5.26], [7.83, 6.96], [8.68, 8.41]];
+  const frontE = [[10.62, 7.2], [10.25, 6.71], [9.65, 5.51], [9.17, 4.06], [8.8, 2.36], [8.55, 0.8]];
+  const curve = (pts: number[][]) => pts.map(([x, y], i) => `${i ? 'L' : 'M'}${mg(x, y)}`).join(' ');
+  const steel = !!b.mag?.attrs.steel;
+  const magD = `${curve(rearE)} L${mg(10.62, 7.2)} ${curve(frontE).replace(/^M/, 'L')} Z`;
+  const floor = `M${mg(8.45, 8.0)} L${mg(10.42, 6.84)}`;
+  // A line along the body, following its curve: the stamped rib on a steel mag, the texture panel's edge on a polymer one.
+  const inset = (pts: number[][], d: number, y0: number, y1: number) => curve(pts.filter(([, y]) => y >= y0 && y <= y1).map(([x, y]) => [x + d, y]));
+  const ribs = steel ? inset(frontE, -0.32, 1.8, 6.8) : inset(rearE, 0.36, 1.8, 7.0);
+  P.push({ slot: 'mag', z: 3, row: 'bottom', target: px(8.4, 4.8), el: <><path d={T(magD)} /><path className="detail" d={T(`${floor} ${ribs}`)} /></> });
+
+  // Optic mount and optic
+  let railTop = -2.35, rx0 = 2.6, rx1 = 7.4;
+  if (mountKind === 'side') {
+    const rs = matches(b.mount, /RS Regulate/);
+    railTop = rs ? -2.35 : -2.55;
+    rx0 = rs ? 2.4 : 2.6; rx1 = rs ? 6.8 : 7.6;
+    const ax = rs ? 2.9 : 3.4;
+    P.push({ slot: 'mount', z: 13, row: 'top', target: px((rx0 + rx1) / 2, railTop), el: <>
+      <path d={T(`${akRail(rx0, rx1, railTop, railTop + 0.38)} M${ax},${f(railTop + 0.38)} L${ax},-1.72 L${f(ax + 1.0)},-1.72 L${f(ax + 1.0)},${f(railTop + 0.38)}`)} />
+      <path className="hidden-line" d={T(`M${ax},-1.72 L${ax},-0.62 M${f(ax + 1.0)},-1.72 L${f(ax + 1.0)},-0.62 M${f(ax - 0.4)},-0.62 L${f(ax + 3.2)},-0.62 L${f(ax + 3.2)},0.1 L${f(ax - 0.4)},0.1 Z`)} />
+    </> });
+  } else if (mountKind === 'gastube') {
+    railTop = -1.6; rx0 = 11.3; rx1 = 17.0;
+    P.push({ slot: 'mount', z: 13, row: 'top', target: px(14.2, railTop), el: <>
+      <path d={T(akRail(rx0, rx1, railTop, -0.82))} />
+      <path className="detail" d={T(`M${rx0},-1.3 L${rx1},-1.3`)} />
+    </> });
+  } else if (mountKind === 'cover') {
+    railTop = -1.98; rx0 = 1.5; rx1 = 8.6;
+    P.push({ slot: 'mount', z: 13, row: 'top', target: px(5, railTop), el: <>
+      <path d={T(`M0,-0.62 L0,-0.7 L0.55,-1.25 Q0.95,-1.68 1.5,-1.72 L1.5,-1.98 L8.6,-1.98 L8.6,-1.85 L9.6,-1.85 L9.6,-1.6 L8.95,-1.6 L8.95,-0.62 Z`)} />
+      <path className="detail" d={T(`${pic(1.65, 8.45, -1.98)} M1.5,-1.72 L8.95,-1.72`)} />
+    </> });
+  } else
+    P.push({ slot: 'mount', z: 13, row: 'top', target: px(5, railTop), el: <path d={T(akRail(rx0, rx1, railTop, railTop + 0.38))} /> });
+  const { od, odet, ot } = rifleOptic(b.optic);
+  const dx = (rx0 + rx1) / 2 - 4.9, dy = railTop + 1.1;
+  P.push({ slot: 'optic', z: 14, row: 'top', target: px(ot[0] + dx, ot[1] + dy),
+    el: <><path fillRule="evenodd" d={T(movePath(od, dx, dy))} /><path className="detail" d={T(movePath(odet, dx, dy))} /></> });
+
+  // Muzzle device: the factory brake when none is chosen (AKM slant brake on M14x1, AK-74 brake on M24x1.5).
+  const mk = (b.muzzle?.attrs.kind as string | undefined) ?? (thread === 'M24x1.5' ? 'brake74' : 'slant');
+  let md: string, mdet: string, mlen: number;
+  if (mk === 'slant') {
+    mlen = 1.7;
+    md = `M${f(BX)},-0.36 L${f(BX + 1.35)},-0.36 L${f(BX + mlen)},0.36 L${f(BX)},0.36 Z`;
+    mdet = `M${f(BX + 0.3)},-0.36 L${f(BX + 0.3)},0.36`;
+  } else if (mk === 'brake74') {
+    mlen = 2.8;
+    const a = BX, z = BX + mlen;
+    md = `M${f(a)},-0.4 L${f(a + 0.3)},-0.4 L${f(a + 0.3)},-0.45 L${f(z - 0.55)},-0.45 L${f(z - 0.55)},-0.36 L${f(z)},-0.36 L${f(z)},0.36 L${f(z - 0.55)},0.36 L${f(z - 0.55)},0.45 L${f(a + 0.3)},0.45 L${f(a + 0.3)},0.4 L${f(a)},0.4 Z`;
+    mdet = `${stadium(a + 0.75, a + 1.35, 0, 0.36)} ${stadium(a + 1.6, a + 2.0, 0, 0.36)} ${OC(z - 0.28, 0, 0.09)}`;
+  } else if (mk === 'comp') {
+    mlen = 2.3;
+    md = `M${f(BX)},-0.42 L${f(BX + mlen - 0.08)},-0.42 L${f(BX + mlen)},-0.34 L${f(BX + mlen)},0.34 L${f(BX + mlen - 0.08)},0.42 L${f(BX)},0.42 Z`;
+    mdet = `M${f(BX + 0.45)},-0.42 L${f(BX + 0.45)},0.42 ${repeat(BX + 0.8, BX + 1.9, 0.36, (x) => stadium(x, x + 0.22, -0.15, 0.18))} ${repeat(BX + 1.0, BX + 1.9, 0.45, (x) => `M${x},0.42 L${x},0.18`)}`;
+  } else {
+    mlen = 2.6;
+    md = `M${f(BX)},-0.44 L${f(BX + mlen)},-0.44 L${f(BX + mlen)},0.44 L${f(BX)},0.44 Z`;
+    mdet = `M${f(BX + 0.4)},-0.44 L${f(BX + 0.4)},0.44 ${[0.6, 1.25, 1.9].map((d) => stadium(BX + d, BX + d + 0.45, 0, 0.55)).join(' ')}`;
+  }
+  P.push({ slot: own('muzzle'), z: 12, row: 'top', target: px(BX + mlen / 2, -0.45), el: <><path d={T(md)} /><path className="detail" d={T(mdet)} /></> });
+
+  const front = BX + mlen;
+  return {
+    width: 1000, height: 486, pieces: P,
+    center: [f(ox + (rear - 0.6) * S), f(ox + (front + 0.6) * S), oy],
+    dims: [[f(ox + rear * S), f(ox + front * S), 462, `${inch(front - rear)} overall`], [f(ox + AK_CHAMBER * S), f(ox + BX * S), f(oy + 1.9 * S), `${inch(L)} barrel`]],
+    rows: [26, 424],
+    spec: `${cal === 'akm' ? '7.62x39' : '5.45x39'} · ${inch(L)} barrel · ${thread === 'M24x1.5' ? 'M24x1.5 RH' : thread} threads`,
+  };
+}
+
 /* ================================================================== render */
 
 export function sceneFor(platform: Platform, build: Build, place: Placement = {}): Scene {
+  if (platform.maker === 'AK Platform') return ak(platform, build);
   return platform.family === 'Rifle' ? rifle(platform, build, place) : pistol(platform, build);
 }
 
@@ -1209,7 +1431,9 @@ export function Blueprint({ platform, build, place, states, active, onPick, onHo
   const pieces = scene.pieces
     .map((p) => (p.slot && !slotIds.has(p.slot) ? { ...p, slot: undefined } : p))
     .sort((a, b) => a.z - b.z);
-  const labels = compact ? [] : placeLabels(pieces.filter((p) => p.slot), 24, scene.width - 24, scene.rows);
+  // One callout per slot: when a part is drawn in several pieces (a base gun with factory parts), the first gets it.
+  const labeled = pieces.filter((p, i) => p.slot && pieces.findIndex((q) => q.slot === p.slot) === i);
+  const labels = compact ? [] : placeLabels(labeled, 24, scene.width - 24, scene.rows);
   const [cx0, cx1, cy] = scene.center;
   // Thumbnails crop to the drawing itself.
   const viewBox = compact
@@ -1228,7 +1452,7 @@ export function Blueprint({ platform, build, place, states, active, onPick, onHo
         const mv = onMove ? p.move : undefined;
         return (
           <g
-            key={p.slot}
+            key={p.slot + i}
             className={cls + (mv ? ' movable' : '') + (dragging === slot.id ? ' dragging' : '')}
             role="button"
             tabIndex={0}

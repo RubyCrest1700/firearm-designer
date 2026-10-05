@@ -99,7 +99,7 @@ function siteCard() {
   const ar = PLATFORMS.find((p) => p.id === 'ar15') ?? PLATFORMS[0];
   return card(
     'Plan your build. Check the fit. Pay less.',
-    'AR-15 · AR-10 · GLOCK · SIG · S&amp;W M&amp;P · HELLCAT',
+    'AR-15 · AR-10 · AK · GLOCK · SIG · S&amp;W M&amp;P · HELLCAT',
     drawing(ar, presetSelection(ar, 'value'), ART.x, ART.y, ART.w, ART.h),
   );
 }
