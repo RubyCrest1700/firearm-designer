@@ -18,8 +18,12 @@ const EMAIL = /^[^\s@<>()",;:]{1,64}@[a-z0-9-]+(\.[a-z0-9-]+)+$/;
 const MAX_BUILDS = 50;
 const MAX_PARTS = 40;
 const MAX_SIGNUPS_PER_DAY = 5;
-/** Resend's free plan sends 100 a day; confirmations need room too. */
+/**
+ * Resend's free plan sends 100 a day: up to 80 alert emails plus 20 confirmations. The overall signup cap
+ * keeps anyone signing up lots of addresses from different networks from using up the alert emails.
+ */
 const MAX_ALERT_EMAILS_PER_RUN = 80;
+const MAX_SIGNUPS_PER_DAY_TOTAL = 20;
 
 export const alertsEnabled = (env) => !!(env.RESEND_API_KEY && env.MAILING_ADDRESS);
 
@@ -153,9 +157,9 @@ function digest(env, token, moved) {
 
 /* ------------------------------------------------------------------ requests */
 
-const page = (title, body) => new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)} | Drop-In Builds</title>
-<style>body{margin:0;font-family:system-ui,Arial,sans-serif;background:#f2f1ee;color:#1c2430}header{background:#0e2a47;color:#fff;padding:16px 24px;font-size:18px}header b{color:#e8853a}main{max-width:520px;margin:32px auto;padding:0 16px}a.btn{display:inline-block;background:#d4691e;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:bold}</style></head>
-<body><header>DROP-IN <b>BUILDS</b></header><main><h1>${esc(title)}</h1>${body}<p><a class="btn" href="${SITE}/#saved">Go to My Builds</a></p></main></body></html>`, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+const page = (title, body, homeButton = true) => new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)} | Drop-In Builds</title>
+<style>body{margin:0;font-family:system-ui,Arial,sans-serif;background:#f2f1ee;color:#1c2430}header{background:#0e2a47;color:#fff;padding:16px 24px;font-size:18px}header b{color:#e8853a}main{max-width:520px;margin:32px auto;padding:0 16px}a.btn,button.btn{display:inline-block;background:#d4691e;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:bold;font-size:16px;border:0;cursor:pointer}</style></head>
+<body><header>DROP-IN <b>BUILDS</b></header><main><h1>${esc(title)}</h1>${body}${homeButton ? `<p><a class="btn" href="${SITE}/#saved">Go to My Builds</a></p>` : ''}</main></body></html>`, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
 
 /** Answers alert requests, or returns null for anything else. `json` and `who` come from api.js. */
 export async function alertsRoute(request, env, { path, url, json, who, now }) {
@@ -174,6 +178,8 @@ export async function alertsRoute(request, env, { path, url, json, who, now }) {
     const hash = await who();
     const recent = await db.prepare('SELECT COUNT(*) AS n FROM alerts WHERE (ip_hash = ? OR email = ?) AND created_at > ?').bind(hash, email, now - DAY).first();
     if (recent.n >= MAX_SIGNUPS_PER_DAY) return json({ error: 'Too many signups today. Try again tomorrow.' }, 429);
+    const today = await db.prepare('SELECT COUNT(*) AS n FROM alerts WHERE created_at > ?').bind(now - DAY).first();
+    if (today.n >= MAX_SIGNUPS_PER_DAY_TOTAL) return json({ error: 'Email signups are busy today. Try again tomorrow.' }, 429);
     const token = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, '0')).join('');
     const index = await loadIndex();
     const row = { token, email };
@@ -213,12 +219,23 @@ export async function alertsRoute(request, env, { path, url, json, who, now }) {
       : page('This Link Has Expired', '<p>Sign up again from My Builds on the site.</p>');
   }
 
-  // GET or POST /alerts/stop?t=<token>: unsubscribe this address from everything (POST is the one-click header)
-  if ((request.method === 'GET' || request.method === 'POST') && path === '/alerts/stop') {
+  // GET /alerts/stop?t=<token>: the Unsubscribe link in every email. It asks first, because email security
+  // scanners open links in emails on their own and would otherwise unsubscribe people who never clicked.
+  // POST /alerts/stop?t=<token>: unsubscribe this address from everything. Sent by that page's button, by
+  // the one-click List-Unsubscribe header in Gmail and Apple Mail, and by Turn Off on the site.
+  if (request.method === 'GET' && path === '/alerts/stop') {
+    const token = url.searchParams.get('t') ?? '';
+    const row = TOKEN.test(token) ? await db.prepare('SELECT email FROM alerts WHERE token = ?').bind(token).first() : null;
+    if (!row) return page('You\'re Unsubscribed', '<p>This address isn\'t getting price alerts. Your saved builds are still on the site.</p>');
+    return page('Stop Price Alerts?', `<p>We'll stop emailing ${esc(row.email)} about price changes.</p>
+<form method="post" action="/alerts/stop?t=${token}"><input type="hidden" name="from" value="page"><p><button class="btn" type="submit">Unsubscribe</button></p></form>`, false);
+  }
+  if (request.method === 'POST' && path === '/alerts/stop') {
     const token = url.searchParams.get('t') ?? '';
     const row = TOKEN.test(token) ? await db.prepare('SELECT email FROM alerts WHERE token = ?').bind(token).first() : null;
     if (row) await db.prepare('DELETE FROM alerts WHERE email = ?').bind(row.email).run();
-    if (request.method === 'POST') return new Response(null, { status: 204 });
+    const fromPage = (await request.text().catch(() => '')).includes('from=page');
+    if (!fromPage) return new Response(null, { status: 204 });
     return page('You\'re Unsubscribed', '<p>We won\'t email this address again. Your saved builds are still on the site.</p>');
   }
 
