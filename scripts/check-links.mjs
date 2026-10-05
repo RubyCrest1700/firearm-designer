@@ -89,4 +89,6 @@ show('Broken', result.broken);
 show('Land on the home page (product may be gone)', result.home);
 show("Couldn't check", result.blocked);
 if (result.skipped.length) console.log(`\nSkipped by robots.txt (${result.skipped.length}): mostly retailer search links, which open fine for people.`);
+// On GitHub, also list each broken link as an error on the run, so it shows on the pull request itself.
+if (process.env.GITHUB_ACTIONS) for (const [url, why] of result.broken) console.log(`::error title=Broken link::${url} (${why}) used in ${[...where.get(url)].slice(0, 3).join(', ')}`);
 process.exitCode = result.broken.length ? 1 : 0;
