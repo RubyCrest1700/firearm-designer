@@ -13,7 +13,12 @@ const ALLOWED_ORIGINS = ['https://rubycrest1700.github.io', 'https://dropinbuild
 const DAY = 86_400_000;
 const WEEK = 7 * DAY;
 const MAX_SHARES_PER_DAY = 10;
-const HIDE_AFTER_REPORTS = 3;
+/**
+ * A build is hidden once people on at least this many different networks report it, and at least as many
+ * as voted for it. Reports from one network (a home, an office, a phone carrier's block) count once, so one
+ * person switching between Wi-Fi and their phone can't hide builds, and a popular build needs more reports.
+ */
+const HIDE_AFTER_REPORTS = 5;
 const PART_ID = /^[a-z0-9][a-z0-9-]{0,47}$/;
 const BUILD_ID = /^[a-z0-9]{10}$/;
 /** Up to 32 parts plus a few `at-<slot>-<code>` accessory placement tokens, which match PART_ID too. */
@@ -48,6 +53,22 @@ async function visitorHash(request, salt) {
   const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
   const bytes = new TextEncoder().encode(`${salt}:${ip}`);
   const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(digest)].slice(0, 12).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** The visitor's network: the first three parts of an IPv4 address, or the first 48 bits of an IPv6 one. */
+export function networkOf(ip) {
+  if (ip.includes('.')) return ip.split('.').slice(0, 3).join('.');
+  const [head, tail = ''] = ip.split('::');
+  const h = head ? head.split(':') : [];
+  const t = tail ? tail.split(':') : [];
+  const groups = [...h, ...Array(Math.max(8 - h.length - t.length, 0)).fill('0'), ...t];
+  return groups.slice(0, 3).map((g) => g.toLowerCase().replace(/^0+(?=.)/, '')).join(':');
+}
+
+async function networkHash(request, salt) {
+  const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${salt}:net:${networkOf(ip)}`));
   return [...new Uint8Array(digest)].slice(0, 12).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
@@ -158,8 +179,9 @@ export async function handle(request, env, now = Date.now()) {
         const r = await db.prepare('INSERT OR IGNORE INTO clicks (build_id, voter, day) VALUES (?, ?, ?)').bind(id, who, Math.floor(now / DAY)).run();
         if (r.meta.changes) await db.prepare('UPDATE builds SET clicks = clicks + 1 WHERE id = ?').bind(id).run();
       } else {
-        const r = await db.prepare('INSERT OR IGNORE INTO reports (build_id, voter) VALUES (?, ?)').bind(id, who).run();
-        if (r.meta.changes) await db.prepare(`UPDATE builds SET reports = reports + 1, hidden = CASE WHEN reports + 1 >= ${HIDE_AFTER_REPORTS} THEN 1 ELSE hidden END WHERE id = ?`).bind(id).run();
+        const net = await networkHash(request, salt);
+        const r = await db.prepare('INSERT OR IGNORE INTO reports (build_id, voter) VALUES (?, ?)').bind(id, net).run();
+        if (r.meta.changes) await db.prepare(`UPDATE builds SET reports = reports + 1, hidden = CASE WHEN reports + 1 >= ${HIDE_AFTER_REPORTS} AND reports + 1 >= votes THEN 1 ELSE hidden END WHERE id = ?`).bind(id).run();
       }
       const row = await db.prepare('SELECT * FROM builds WHERE id = ?').bind(id).first();
       return json({ build: toBuild(row), hidden: !!row.hidden }, 200, origin);
