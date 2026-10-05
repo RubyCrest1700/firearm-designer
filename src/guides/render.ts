@@ -7,7 +7,7 @@ import { PLATFORMS, PRICES_UPDATED_AT } from '../data';
 import { RETAILERS, offerUrl } from '../data/retailers';
 import { bestOffer, money, presetSelection, worst } from '../engine';
 import type { Part, Platform, Severity, Tier } from '../types';
-import { GUIDES, type FitChart, type Guide } from './content';
+import { GUIDES, type AcrossChart, type FitChart, type Guide, type PairChart } from './content';
 import { titleCase } from '../text';
 import { CONTENT_SECURITY_POLICY } from '../config';
 
@@ -30,47 +30,109 @@ type Verdict = 'ok' | Severity;
 const VERDICT: Record<Verdict, { text: string; order: number }> = {
   ok: { text: 'Fits', order: 0 },
   info: { text: 'Fits, with a note', order: 1 },
-  warn: { text: 'Needs a plate or a check', order: 2 },
+  warn: { text: 'Check', order: 2 },
   error: { text: "Won't fit", order: 3 },
 };
 
+interface Group { verdict: Verdict; reasons: string[]; labels: string[] }
+const byVerdict = (x: Group, y: Group) => VERDICT[x.verdict].order - VERDICT[y.verdict].order;
+
+/** The verdict and reasons for one combination, from the issues that involve every one of `slots`. */
+function judge(platform: Platform, build: Record<string, Part>, slots: string[]) {
+  const issues = platform.rules(build).filter((i) => slots.every((s) => i.slots.includes(s)));
+  return { verdict: (worst(issues) ?? 'ok') as Verdict, reasons: [...new Set(issues.map((i) => i.message))] };
+}
+
+/** Parts every combination in a chart is checked with, such as the frame that carries the rail. */
+function extras(platform: Platform, ids: string[]) {
+  const out: Record<string, Part> = {};
+  for (const id of ids) {
+    const p = platform.parts.find((x) => x.id === id);
+    if (!p) throw new Error(`${platform.id}: no part ${id}`);
+    out[p.slot] = p;
+  }
+  return out;
+}
+
+function addTo(groups: Map<string, Group>, j: { verdict: Verdict; reasons: string[] }, name: string) {
+  const key = j.verdict + '|' + j.reasons.join('|');
+  const g = groups.get(key) ?? { ...j, labels: [] };
+  g.labels.push(name);
+  groups.set(key, g);
+}
+
 /** Every part in slot A against every part in slot B, using only the issues the pair raises between them. */
-export function fitChart(platform: Platform, a: string, b: string) {
+export function fitChart(platform: Platform, a: string, b: string, withIds: string[] = []) {
   const left = platform.parts.filter((p) => p.slot === a);
   const right = platform.parts.filter((p) => p.slot === b);
   if (!left.length || !right.length) throw new Error(`${platform.id}: no parts in ${a} or ${b}`);
   return left.map((pa) => {
-    const groups = new Map<string, { verdict: Verdict; reasons: string[]; parts: Part[] }>();
-    for (const pb of right) {
-      const issues = platform.rules({ [a]: pa, [b]: pb }).filter((i) => i.slots.includes(a) && i.slots.includes(b));
-      const verdict: Verdict = worst(issues) ?? 'ok';
-      const reasons = [...new Set(issues.map((i) => i.message))];
-      const key = verdict + '|' + reasons.join('|');
-      const g = groups.get(key) ?? { verdict, reasons, parts: [] };
-      g.parts.push(pb);
-      groups.set(key, g);
-    }
-    return { part: pa, groups: [...groups.values()].sort((x, y) => VERDICT[x.verdict].order - VERDICT[y.verdict].order) };
+    const groups = new Map<string, Group>();
+    for (const pb of right) addTo(groups, judge(platform, { ...extras(platform, withIds), [a]: pa, [b]: pb }, [a, b]), label(pb));
+    return { part: pa, groups: [...groups.values()].sort(byVerdict) };
   });
 }
 
-function chartHtml(platform: Platform, c: FitChart) {
-  const rows = fitChart(platform, c.a, c.b)
+/** Every part in one slot (from all the models' catalogs) against each model. */
+export function acrossChart(c: AcrossChart) {
+  const rows = new Map<string, Part>();
+  for (const m of c.models) for (const p of platformOf(m.platform).parts) if (p.slot === c.slot && !rows.has(p.id)) rows.set(p.id, p);
+  if (!rows.size) throw new Error(`No parts in ${c.slot} for ${c.heading}`);
+  return [...rows.values()].map((part) => {
+    const groups = new Map<string, Group>();
+    for (const m of c.models) {
+      const platform = platformOf(m.platform);
+      addTo(groups, judge(platform, { ...extras(platform, m.with ?? []), [c.slot]: part }, [c.slot]), m.label);
+    }
+    return { part, groups: [...groups.values()].sort(byVerdict) };
+  });
+}
+
+function listHtml(rows: { part: Part; groups: Group[] }[]) {
+  return rows
     .map(({ part, groups }) => `
       <div class="fit-row">
         <h4>${esc(label(part))}</h4>
         <ul>${groups.map((g) => `
           <li class="v-${g.verdict}"><span class="verdict">${VERDICT[g.verdict].text}</span>
-            <span class="parts">${g.parts.map((p) => esc(label(p))).join('<span class="sep"> · </span>')}</span>
+            <span class="parts">${g.labels.map(esc).join('<span class="sep"> · </span>')}</span>
             ${g.reasons.map((r) => `<span class="why">${esc(r)}</span>`).join('')}</li>`).join('')}
         </ul>
       </div>`)
     .join('');
+}
+
+const CELL: Record<Verdict, string> = { ok: 'Fits', info: 'Note', warn: 'Check', error: 'No' };
+
+/** A table with one column per label; parts that share a label must fit every row the same way. */
+function gridHtml(platform: Platform, c: PairChart & { columns: (p: Part) => string }) {
+  const left = platform.parts.filter((p) => p.slot === c.a).sort((x, y) => (c.rowOrder ? c.rowOrder(x) - c.rowOrder(y) : 0));
+  const cols = new Map<string, Part[]>();
+  const right = platform.parts.filter((x) => x.slot === c.b).sort((x, y) => parseFloat(c.columns(x)) - parseFloat(c.columns(y)) || c.columns(x).localeCompare(c.columns(y)));
+  for (const p of right) cols.set(c.columns(p), [...(cols.get(c.columns(p)) ?? []), p]);
+  const cells = left.map((pa) =>
+    [...cols.entries()].map(([name, ps]) => {
+      const results = ps.map((pb) => judge(platform, { ...extras(platform, c.with ?? []), [c.a]: pa, [c.b]: pb }, [c.a, c.b]));
+      const first = JSON.stringify(results[0]);
+      if (results.some((r) => JSON.stringify(r) !== first)) throw new Error(`${platform.id}: parts in column ${name} fit ${label(pa)} differently`);
+      return results[0];
+    }));
+  return `
+      <div class="grid-wrap"><table class="grid">
+        <thead><tr><th scope="col"></th>${[...cols.keys()].map((n) => `<th scope="col">${esc(n)}</th>`).join('')}</tr></thead>
+        <tbody>${left.map((pa, i) => `
+          <tr><th scope="row">${esc(label(pa))}</th>${cells[i].map((r) => `<td class="v-${r.verdict}"${r.reasons.length ? ` title="${esc(r.reasons.join(' '))}"` : ''}>${esc(c.short && r.reasons.length ? [...new Set(r.reasons.map(c.short))].join(', ') : CELL[r.verdict])}</td>`).join('')}</tr>`).join('')}
+        </tbody>
+      </table></div>`;
+}
+
+function chartHtml(platform: Platform, c: FitChart) {
+  const body = 'slot' in c ? listHtml(acrossChart(c)) : c.columns ? gridHtml(platform, { ...c, columns: c.columns }) : listHtml(fitChart(platform, c.a, c.b, c.with));
   return `
     <section class="chart">
       <h2>${esc(titleCase(c.heading))}</h2>
       <p class="muted">${esc(c.intro)}</p>
-      ${rows}
+      ${body}
     </section>`;
 }
 
@@ -172,7 +234,7 @@ export function guidePage(g: Guide, builtAt: string) {
   const platform = platformOf(g.platform);
   const path = `/guides/${g.slug}/`;
   const body = `
-  <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="/guides/">FAQ</a> › <span>${esc(platform.name)}</span></nav>
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="/guides/">FAQ</a> › <span>${esc(g.crumb ?? platform.name)}</span></nav>
   <article>
     <h1>${esc(g.h1)}</h1>
     <p class="lede">${esc(g.lede)}</p>
@@ -376,6 +438,15 @@ section{margin:0}
 .starter span{color:var(--muted);font-size:14px}
 .starter:hover{border-color:var(--cta)}
 .sources li,.guide-list li{margin:4px 0}
+.grid-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);margin:10px 0}
+.grid{border-collapse:collapse;font-size:14px;width:100%}
+@media (min-width:1140px){.grid-wrap{margin-left:-140px;margin-right:-140px}}
+.grid th,.grid td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+.grid thead th{font-size:13px;color:var(--muted);white-space:normal}
+.grid tbody th{text-align:left;font-weight:600;white-space:normal;min-width:140px;position:sticky;left:0;background:var(--surface);padding-left:10px}
+@media (max-width:560px){.grid{font-size:13px}.grid tbody th{min-width:120px}}
+.grid td{font-weight:700;font-size:13px;padding:8px 3px}
+.grid td.v-ok{color:var(--ok)}.grid td.v-info{color:var(--note)}.grid td.v-warn{color:var(--warn)}.grid td.v-error{color:var(--err)}
 .faq{display:grid;gap:8px}
 .faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
 .faq summary{cursor:pointer;font-weight:700;padding:14px 16px;list-style-position:inside}

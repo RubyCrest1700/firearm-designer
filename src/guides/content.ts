@@ -4,14 +4,38 @@
  * chart and price on the page is generated from src/data at build time.
  */
 
-export interface FitChart {
+import type { Part } from '../types';
+
+/** Every part in slot `a`, checked against every part in slot `b` on the guide's platform. */
+export interface PairChart {
   /** Rows: parts in this slot. */
   a: string;
   /** Checked against every part in this slot. */
   b: string;
   heading: string;
   intro: string;
+  /**
+   * Show a table instead of lists, with one column per label. Parts in slot `b` that share a label share a
+   * column, and the build fails if they don't fit the same way.
+   */
+  columns?: (p: Part) => string;
+  /** Parts every combination is checked with, e.g. a muzzle device so a rail can be checked against it. */
+  with?: string[];
+  /** Table only: a few words for a cell's reason, in place of the bare verdict. */
+  short?: (reason: string) => string;
+  /** Table only: row order. */
+  rowOrder?: (p: Part) => number;
 }
+
+/** Every part in one slot, checked against several platforms (each with any parts it needs, such as a frame). */
+export interface AcrossChart {
+  slot: string;
+  models: { label: string; platform: string; with?: string[] }[];
+  heading: string;
+  intro: string;
+}
+
+export type FitChart = PairChart | AcrossChart;
 
 export interface Guide {
   slug: string;
@@ -20,7 +44,10 @@ export interface Guide {
   h1: string;
   /** Meta description: one or two sentences, under ~160 characters. */
   description: string;
+  /** Platform for the picks, starter builds and pair charts. */
   platform: string;
+  /** Breadcrumb label, when the guide covers more than the one platform. */
+  crumb?: string;
   /** Opening paragraph. */
   lede: string;
   /** Short answers, shown first. May contain inline HTML. */
@@ -185,6 +212,103 @@ export const GUIDES: Guide[] = [
     ],
   },
   {
+    slug: 'glock-magazine-compatibility',
+    title: 'Glock 17, 19 and 26 Magazine Compatibility: Which Mags Fit Which Gun',
+    h1: 'Will Glock 17 mags fit a Glock 19 or 26?',
+    description: 'Glock 17, 19 and 26 mags interchange from the bottom up. See which magazines fit flush, which stick out, and which are too short for each grip.',
+    platform: 'glock19',
+    crumb: 'Glock 17, 19 and 26',
+    lede: 'The Glock 17, 19 and 26 all take the same double-stack 9mm magazine, just in different lengths. A longer magazine works in a shorter grip; a shorter one goes in a longer grip but sits up inside it.',
+    answers: [
+      '<b>Yes, G17 mags work in a G19 and a G26.</b> They lock in and feed, and stick out below the grip.',
+      '<b>G19 mags work in a G26</b> the same way, and the long 21 and 24-round mags work in all three.',
+      'Going the other way is the problem: a <b>shorter magazine sits up inside a longer grip</b>. It locks in, but you can\'t grab it to strip it out.',
+      'A sleeve or a grip extension can fill the gap when a longer magazine sticks out.',
+    ],
+    charts: [
+      { slot: 'mag', heading: 'Magazine and pistol', intro: 'Every 9mm Glock magazine we list, checked in the Glock 17, 19 and 26.',
+        models: [{ label: 'Glock 17', platform: 'glock17' }, { label: 'Glock 19', platform: 'glock19' }, { label: 'Glock 26', platform: 'glock26' }] },
+    ],
+    picks: ['mag'],
+    sources: [
+      { label: '3C Tactical: Glock 9mm part compatibility between generations', url: 'https://3crtactical.com/blog/glock-9mm-part-compatibility-between-generations-what-you-need-to-know/' },
+    ],
+  },
+  {
+    slug: 'glock-trigger-upgrade-compatibility',
+    title: 'Glock Trigger Upgrades: Which Kits Fit Gen3, Gen4 and Gen5 Frames',
+    h1: 'Which trigger kits fit your Glock?',
+    description: 'Apex, ZEV or Timney? See which Glock 17, 19 and 26 trigger kits and slide parts kits fit Gen3, Gen4 and Gen5 frames and slides.',
+    platform: 'glock19',
+    crumb: 'Glock 17, 19 and 26',
+    lede: 'A trigger kit replaces the trigger and the parts around it inside the frame, so it has to match the frame generation. The same kits fit the Glock 17, 19 and 26.',
+    answers: [
+      '<b>Gen3 and Gen4 frames take the same trigger kits</b>, and so do Gen3-pattern aftermarket frames like the Lone Wolf Timberwolf.',
+      '<b>Gen5 frames need Gen5 kits.</b> A Gen3/4 trigger kit won\'t fit a Gen5, or the other way round.',
+      'One kit fits the <b>G17, G19 and G26</b> of the same generation.',
+      'The slide parts kit follows the slide the same way: Gen3/4 parts for Gen3 and Gen4 slides, Gen5 parts for Gen5 slides.',
+    ],
+    charts: [
+      { a: 'frame', b: 'fcg', heading: 'Frame and trigger kit', intro: 'Each Glock 19 frame we list, checked against every trigger and frame parts kit.' },
+      { a: 'slide', b: 'spk', heading: 'Slide and slide parts kit', intro: 'Each slide, checked against every slide parts kit.' },
+    ],
+    picks: ['fcg'],
+    sources: [
+      { label: '3C Tactical: Glock 9mm part compatibility between generations', url: 'https://3crtactical.com/blog/glock-9mm-part-compatibility-between-generations-what-you-need-to-know/' },
+    ],
+  },
+  {
+    slug: 'pistol-weapon-light-compatibility',
+    title: 'Pistol Weapon Light Compatibility: Glock, Sig P320 and P365 Rails',
+    h1: 'Which weapon lights fit your pistol?',
+    description: 'TLR-7A, X300 or TLR-7 Sub? See which pistol lights fit the Glock, Glock 43X/48, Sig P320 and P365 rails, and which holsters carry each light.',
+    platform: 'glock19',
+    crumb: 'Pistol Lights',
+    lede: 'A weapon light clamps to the accessory rail under the barrel, and pistol rails are not all the same. Full-size Glocks and the P320 take the common compact lights; the slim Glocks and the P365 need a light made for their rail.',
+    answers: [
+      'The <b>Streamlight TLR-7A and SureFire X300</b> fit the Glock 17, 19 and 26 rail and the P320\'s Picatinny rail.',
+      'The <b>Glock 43X and 48 only take a light on a Rail frame</b>, and it needs the slimline version of the TLR-7 Sub. The plain frame has no rail.',
+      'The <b>P365 and P365XL</b> need the P365 version of the TLR-7 Sub.',
+      'A light-bearing holster is molded around one light, so <b>the holster has to match the light</b>, and a pistol with a light won\'t go in a holster made without one.',
+    ],
+    charts: [
+      { slot: 'light', heading: 'Light and pistol', intro: 'Every pistol light we list, checked on each pistol\'s rail.',
+        models: [
+          { label: 'Glock 17, 19 and 26', platform: 'glock19', with: ['g19-frame-g3'] },
+          { label: 'Glock 43X/48 Rail frame', platform: 'glock43x', with: ['gs-frame-43xr'] },
+          { label: 'Glock 43X/48 standard frame', platform: 'glock43x', with: ['gs-frame-43x'] },
+          { label: 'Sig P320', platform: 'p320', with: ['p-grip-carry'] },
+          { label: 'Sig P365 and P365XL', platform: 'p365', with: ['p365-grip-std'] },
+        ] },
+      { a: 'holster', b: 'light', heading: 'Holster and light', intro: 'Glock 19 holsters we list, checked against each light. Other pistols work the same way.' },
+    ],
+    picks: ['light', 'holster'],
+    sources: [
+      { label: 'Glock: optic mounting and accessories', url: 'https://us.glock.com/en/about/technology/optic-mounting' },
+    ],
+  },
+  {
+    slug: 'sig-p320-red-dot-compatibility',
+    title: 'Sig P320 Red Dot Compatibility: Romeo1Pro Footprint and RMR Plates',
+    h1: 'Which red dots fit a Sig P320 slide?',
+    description: 'Sig P320 optic-ready slides take the Romeo1Pro footprint. See which red dots mount directly, which need an RMR plate, and which slides have no cut.',
+    platform: 'p320',
+    lede: 'Sig\'s optic-ready P320 slides are cut for the Romeo1Pro footprint, which is also the DeltaPoint Pro pattern. Optics with that footprint bolt straight on; RMR-pattern optics need a plate.',
+    answers: [
+      'An <b>optic-ready P320 slide takes Romeo1Pro-footprint optics directly</b>, such as the Romeo1Pro and RomeoX Pro.',
+      '<b>RMR-footprint optics</b> like the Holosun 407C and 507C need an RMR adapter plate, about $40.',
+      'A <b>slide with no optic cut</b> can\'t take a red dot unless it is milled.',
+      'The optic only cares about the slide. <b>The grip module doesn\'t change which red dots fit.</b>',
+    ],
+    charts: [
+      { a: 'slide', b: 'optic', heading: 'Slide and optic', intro: 'Every P320 slide we list, checked against every optic.' },
+    ],
+    picks: ['optic', 'slide'],
+    sources: [
+      { label: 'Rifle Configurator: P320 X-Carry red dot fit', url: 'https://www.rifleconfigurator.com/tools/pistol-red-dot-fit-checker/sig-p320-xcarry' },
+    ],
+  },
+  {
     slug: 'ar-15-barrel-compatibility',
     title: 'AR-15 Barrel Compatibility: Gas Block, Gas Tube, Bolt and Muzzle Threads',
     h1: 'What has to match your AR-15 barrel?',
@@ -209,6 +333,79 @@ export const GUIDES: Guide[] = [
     sources: [
       { label: 'Cheaper Than Dirt: AR-15 gas system identification guide', url: 'https://blog.cheaperthandirt.com/ar-15-gas-system-identification-guide/' },
       { label: 'Wikipedia: 6.5mm Grendel (bolt face)', url: 'https://en.wikipedia.org/wiki/6.5mm_Grendel' },
+    ],
+  },
+  {
+    slug: 'ar-15-handguard-length-chart',
+    title: 'AR-15 Handguard Length Chart: Which Rail Length for Your Barrel',
+    h1: 'AR-15 Handguard Length Chart',
+    description: 'Which handguard length fits a 10.3", 11.5", 16", 18" or 20" AR-15 barrel? A chart of every rail we list against barrel length and gas system.',
+    platform: 'ar15',
+    lede: 'Handguard length is measured from the front of the upper receiver. Pick it by two things on the barrel: how long the barrel is, and where the gas block sits.',
+    answers: [
+      'A rail <b>shorter than the barrel</b> leaves the muzzle device out front; a rail <b>as long as the barrel or longer</b> covers part of the device, a popular look. Install the device before the rail.',
+      'To <b>cover the gas block</b>, the rail has to reach past it: about 4.5" from the receiver on pistol gas, 7.5" on carbine, 9.5" on midlength and 12.5" on rifle gas. A shorter rail works but leaves the block showing.',
+      'A common pairing is a <b>16" midlength barrel with a 13" to 15" rail</b>.',
+      '<b>Drop-in handguards</b> must match the gas system length and need an A2 front sight base to hold them.',
+    ],
+    charts: [
+      { a: 'handguard', b: 'barrel', heading: 'Handguard and barrel', intro: 'Every handguard we list against each barrel length and gas system. "+2.0\" past" means the rail runs that far past the muzzle, "At muzzle" means it ends right at it, and "Block shows" means the gas block sits outside the rail. All of those fit.',
+        columns: (p) => `${p.attrs.length}" ${p.attrs.gas === 'midlength' ? 'mid' : p.attrs.gas}`, with: ['ar-mz-a2'],
+        rowOrder: (p) => (p.attrs.freeFloat ? 0 : 100) + Number(p.attrs.length),
+        short: (r) => r.match(/runs ([\d.]+)" past/)?.[1].replace(/^/, '+').concat('" past') ?? (r.includes('ends almost') ? 'At muzzle' : r.includes('gas block sits') ? 'Block shows' : r.includes('drop-in') ? 'Wrong length' : 'Note') },
+      { a: 'gasblock', b: 'handguard', heading: 'Gas block and handguard', intro: 'What fits under each handguard.' },
+    ],
+    picks: ['handguard'],
+    sources: [
+      { label: 'Cheaper Than Dirt: AR-15 gas system identification guide', url: 'https://blog.cheaperthandirt.com/ar-15-gas-system-identification-guide/' },
+    ],
+  },
+  {
+    slug: 'ar-15-buffer-tube-stock-compatibility',
+    title: 'AR-15 Buffer Tube and Stock Compatibility: Carbine, A5 and Rifle',
+    h1: 'Which AR-15 stocks fit which buffer tubes?',
+    description: 'Carbine, A5 or rifle buffer tube? See which AR-15 stocks fit each buffer system, and what to check about mil-spec and commercial tube sizes.',
+    platform: 'ar15',
+    lede: 'The stock slides onto or bolts over the buffer tube, so the tube decides which stocks fit. There are three common tube types: carbine, A5 and rifle.',
+    answers: [
+      '<b>Collapsible carbine stocks</b> fit carbine tubes, and most also fit the slightly longer A5 tube.',
+      '<b>Fixed rifle stocks</b> like the A2 and the Magpul PRS need a rifle-length tube and rifle buffer.',
+      'Carbine tubes also come in two diameters: <b>mil-spec (1.148") and commercial (1.168")</b>. Buy a stock made for the diameter of your tube.',
+    ],
+    charts: [
+      { a: 'buffer', b: 'stock', heading: 'Buffer system and stock', intro: 'Every buffer kit we list, checked against every stock.' },
+    ],
+    picks: ['buffer', 'stock'],
+    sources: [
+      { label: 'AR15Outfitters: buffer and tube specs', url: 'https://ar15outfitters.com/specs/buffer' },
+      { label: 'PB Arms: buffer tube design', url: 'https://pb-arms.com/design/buffer-tube/' },
+    ],
+  },
+  {
+    slug: 'ar-10-dpms-vs-armalite',
+    title: 'AR-10 vs LR-308: DPMS and Armalite Pattern Parts Compatibility',
+    h1: 'Which AR-10 parts fit DPMS and Armalite rifles?',
+    description: 'AR-10 parts are not all interchangeable. See which uppers, lowers, handguards, bolt carriers and charging handles fit DPMS and Armalite pattern rifles.',
+    platform: 'ar10',
+    lede: 'Unlike the AR-15, the .308 AR has no single standard. Most parts follow the DPMS (LR-308) pattern, which itself comes in high and low profile, and Armalite\'s AR-10 is its own pattern.',
+    answers: [
+      '<b>Pick a pattern first</b> and buy the upper, lower, handguard, bolt carrier and charging handle to match.',
+      'The barrel nut threads differ (<b>DPMS 1-7/16"-16, Armalite 1-7/16"-18</b>), so handguards don\'t cross over.',
+      '<b>DPMS high and low-profile</b> parts mostly mix, but the handguard\'s top rail may not line up exactly with the receiver.',
+      'Lower parts kits differ too: the bolt catch and mag catch are pattern-specific.',
+    ],
+    charts: [
+      { a: 'lower', b: 'upper', heading: 'Lower and upper', intro: 'Every lower we list, checked against every upper.' },
+      { a: 'upper', b: 'handguard', heading: 'Upper and handguard', intro: 'The handguard has to match the upper\'s barrel nut.' },
+      { a: 'upper', b: 'bcg', heading: 'Upper and bolt carrier group', intro: 'Bolt carriers are pattern-specific.' },
+      { a: 'upper', b: 'charging', heading: 'Upper and charging handle', intro: 'So are charging handles.' },
+      { a: 'lower', b: 'lpk', heading: 'Lower and lower parts kit', intro: 'The bolt catch and mag catch follow the lower.' },
+    ],
+    picks: ['upper', 'lower'],
+    sources: [
+      { label: '308AR: AR-10/.308 AR compatibility reference guide', url: 'https://308ar.com/ar-10-308-ar-compatibility-reference-guide/' },
+      { label: 'Gunbuilders: AR-10 vs LR-308 parts guide', url: 'https://www.gunbuilders.com/blog/the-ar10-vs-the-lr308-parts-guide/' },
+      { label: 'Wing Tactical: guide to AR-10s and LR-308s', url: 'https://www.wingtactical.com/blog/guide-to-ar10s-and-lr308s/' },
     ],
   },
 ];

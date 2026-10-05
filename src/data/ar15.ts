@@ -294,7 +294,7 @@ function rules(b: Build, place: Placement = {}): Issue[] {
       out.push({ severity: 'info', slots: ['handguard', 'barrel'], message: `The gas block sits about ${port}" from the receiver, so a ${hg}" handguard leaves it exposed. That works, but looks unfinished.` });
   }
   if (stock && buffer && !(stock.attrs.fits as string[]).includes(buffer.attrs.tube as string))
-    out.push({ severity: 'error', slots: ['stock', 'buffer'], message: `This stock fits ${(stock.attrs.fits as string[]).join(' or ')} buffer tubes, but the buffer kit is a ${buffer.attrs.tube} tube.` });
+    out.push({ severity: 'error', slots: ['stock', 'buffer'], message: `This stock fits ${(stock.attrs.fits as string[]).map((t) => (t === 'a5' ? 'A5' : t)).join(' or ')} buffer tubes, but the buffer kit is ${buffer.attrs.tube === 'a5' ? 'an A5' : `a ${buffer.attrs.tube}`} tube.` });
   if (bcg && barrel && bcg.attrs.bolt !== barrel.attrs.bolt)
     out.push({ severity: 'error', slots: ['bcg', 'barrel'], message: `A ${barrel.attrs.caliber} barrel needs a ${barrel.attrs.bolt} bolt; this BCG has a ${bcg.attrs.bolt} bolt face.` });
   const thread = threadIssue(barrel, muzzle) ?? boreIssue(barrel, muzzle);
