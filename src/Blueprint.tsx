@@ -1349,8 +1349,8 @@ function ak(platform: Platform, b: Build): Scene {
     <path className="detail" d={T(`M${GB0},-0.82 L${GB1},-0.82 M${f(GB0 + 0.3)},-1.3 L${f(GB0 + 0.3)},-0.82 M${f(GB0 + 0.1)},0.62 L${f(GB1 - 0.15)},0.62 ${OC(GB0 + 0.47, 0.25, 0.07)}`)} />
     {/* front sight block: base with the sling loop, the post between its protective ears */}
     <path d={T(`M${f(fs0)},-0.5 L${f(fs1)},-0.5 L${f(fs1)},0.5 L${f(fs1 - 0.3)},0.5 L${f(fs1 - 0.3)},0.9 L${f(fs0 + 0.15)},0.9 L${f(fs0 + 0.15)},0.5 L${f(fs0)},0.5 Z`)} />
-    <path d={T(`M${f(fs0 + 0.3)},-0.5 L${f(fs0 + 0.42)},-1.55 Q${f(fs0 + 0.68)},-2.0 ${f(fs0 + 0.94)},-1.55 L${f(fs0 + 1.06)},-0.5 Z`)} />
-    <path className="detail" d={T(`M${f(fs0 + 0.62)},-1.75 L${f(fs0 + 0.62)},-0.9 M${f(fs0 + 0.74)},-1.75 L${f(fs0 + 0.74)},-0.9 M${f(fs0 + 0.62)},-0.9 L${f(fs0 + 0.74)},-0.9 M${f(fs0 + 0.3)},-0.5 L${f(fs1)},-0.5 M${f(fs0 + 0.15)},0.7 L${f(fs1 - 0.3)},0.7 ${OC(fs0 + 0.68, 0.0, 0.1)}`)} />
+    <path d={T(`M${f(fs0 + 0.22)},-0.5 L${f(fs0 + 0.26)},-1.1 Q${f(fs0 + 0.26)},-1.9 ${f(fs0 + 0.68)},-1.95 Q${f(fs0 + 1.1)},-1.9 ${f(fs0 + 1.1)},-1.1 L${f(fs0 + 1.14)},-0.5 Z`)} />
+    <path className="detail" d={T(`M${f(fs0 + 0.5)},-1.0 L${f(fs0 + 0.5)},-1.6 Q${f(fs0 + 0.5)},-1.72 ${f(fs0 + 0.68)},-1.72 Q${f(fs0 + 0.86)},-1.72 ${f(fs0 + 0.86)},-1.6 L${f(fs0 + 0.86)},-1.0 Z M${f(fs0 + 0.64)},-1.05 L${f(fs0 + 0.64)},-1.6 L${f(fs0 + 0.72)},-1.6 L${f(fs0 + 0.72)},-1.05 M${f(fs0 + 0.22)},-0.5 L${f(fs1)},-0.5 M${f(fs0 + 0.26)},-0.82 L${f(fs0 + 1.1)},-0.82 M${f(fs0 + 0.15)},0.7 L${f(fs1 - 0.3)},0.7 ${OC(fs0 + 0.68, 0.0, 0.1)}`)} />
   </> });
 
   // Upper handguard over the gas tube, unless a full-length handguard or a gas tube rail replaces it.
@@ -1456,10 +1456,10 @@ function ak(platform: Platform, b: Build): Scene {
       <path className="hidden-line" d={T(`M${ax},-1.72 L${ax},-0.62 M${f(ax + 1.0)},-1.72 L${f(ax + 1.0)},-0.62 M${f(ax - 0.4)},-0.62 L${f(ax + 3.2)},-0.62 L${f(ax + 3.2)},0.1 L${f(ax - 0.4)},0.1 Z`)} />
     </> });
   } else if (mountKind === 'gastube') {
-    railTop = -1.6; rx0 = 11.3; rx1 = 17.0;
+    railTop = -1.78; rx0 = 11.4; rx1 = 16.7;
     P.push({ slot: 'mount', z: 13, row: 'top', target: px(14.2, railTop), el: <>
-      <path d={T(akRail(rx0, rx1, railTop, -0.82))} />
-      <path className="detail" d={T(`M${rx0},-1.3 L${rx1},-1.3`)} />
+      <path d={T(`M11.3,-0.82 L11.3,-1.3 Q11.3,-1.5 11.5,-1.5 L16.6,-1.5 Q16.8,-1.5 16.8,-1.3 L16.8,-0.82 Z ${akRail(rx0, rx1, railTop, -1.5)}`)} />
+      <path className="detail" d={T(`M11.5,-1.2 L16.6,-1.2 ${[12.0, 13.4, 14.8].map((x) => stadium(x, x + 1.0, -1.0, 0.2)).join(' ')}`)} />
     </> });
   } else if (mountKind === 'cover') {
     railTop = -1.98; rx0 = 1.5; rx1 = 8.6;
@@ -1773,8 +1773,8 @@ function m1911(platform: Platform, b: Build): Scene {
 
   /* Grip safety: the GI spur, or a beavertail with a memory bump */
   const gsD = beaver
-    ? 'M0.12,1.0 L-0.3,1.06 Q-0.78,1.1 -0.96,1.2 Q-1.06,1.27 -0.96,1.33 Q-0.72,1.42 -0.56,1.6 Q-0.6,1.86 -0.4,2.0 Q-0.2,2.12 -0.12,2.3 L-0.06,2.62 L0.14,2.62 Z'
-    : 'M0.12,1.0 L-0.3,1.12 Q-0.62,1.26 -0.86,1.44 Q-0.97,1.52 -0.85,1.56 Q-0.62,1.56 -0.46,1.64 Q-0.2,1.9 -0.1,2.3 L-0.05,2.62 L0.14,2.62 Z';
+    ? 'M0.12,1.0 L-0.3,1.06 Q-0.62,1.1 -0.76,1.2 Q-0.84,1.27 -0.74,1.32 Q-0.56,1.4 -0.44,1.56 Q-0.4,1.8 -0.28,2.0 Q-0.16,2.2 -0.1,2.4 L-0.06,2.62 L0.14,2.62 Z'
+    : 'M0.12,1.0 L-0.3,1.1 Q-0.54,1.22 -0.66,1.4 Q-0.72,1.48 -0.62,1.5 Q-0.46,1.52 -0.36,1.6 Q-0.18,1.9 -0.1,2.3 L-0.05,2.62 L0.14,2.62 Z';
   P.push({ slot: dbl ? 'pistol' : own('gripsafety'), z: 5, row: 'bottom', target: px(-0.45, 1.75), el: <path d={T(gsD)} /> });
 
   /* Thumb safety: pivots at the frame's rear; extended and ambidextrous safeties have a longer, wider pad */
@@ -1793,12 +1793,12 @@ function m1911(platform: Platform, b: Build): Scene {
     const g = b.grips;
     const kind = (g?.attrs.kind as string | undefined) ?? (ring ? 'g10' : 'wood');
     const panel = kind === 'wrap'
-      ? 'M0.84,1.22 L1.86,1.22 Q2.0,1.22 2.0,1.38 L1.98,2.4 Q2.1,2.72 2.24,2.9 Q2.3,3.12 2.16,3.3 Q2.08,3.42 2.15,3.55 Q2.22,3.78 2.06,3.95 Q1.98,4.07 2.04,4.2 Q2.1,4.42 1.94,4.6 L1.82,5.0 L0.1,5.0 L0.5,1.62 Q0.56,1.26 0.84,1.22 Z'
-      : 'M0.84,1.22 L1.86,1.22 Q2.0,1.22 2.0,1.38 L1.96,2.3 Q1.94,2.5 1.9,2.62 L1.5,4.98 L0.1,4.98 L0.5,1.62 Q0.56,1.26 0.84,1.22 Z';
+      ? 'M0.78,1.8 L1.9,1.8 Q2.02,1.8 2.0,1.95 L1.98,2.4 Q2.1,2.72 2.24,2.9 Q2.3,3.12 2.16,3.3 Q2.08,3.42 2.15,3.55 Q2.22,3.78 2.06,3.95 Q1.98,4.07 2.04,4.2 Q2.1,4.42 1.94,4.6 L1.82,5.0 L0.1,5.0 L0.46,2.1 Q0.5,1.84 0.78,1.8 Z'
+      : 'M0.78,1.8 L1.86,1.8 Q1.98,1.8 1.96,1.95 L1.94,2.4 Q1.92,2.55 1.88,2.66 L1.5,4.98 L0.1,4.98 L0.46,2.1 Q0.5,1.84 0.78,1.8 Z';
     const screw = (x: number, y: number) => `${OC(x, y, 0.07)} M${f(x - 0.05)},${f(y + 0.03)} L${f(x + 0.05)},${f(y - 0.03)}`;
-    let det = `${screw(1.3, 1.62)} ${screw(0.8, 4.6)}`;
-    if (kind === 'wood') det += ' M1.3,1.3 L1.47,1.62 L1.3,1.94 L1.13,1.62 Z M0.8,4.28 L0.97,4.6 L0.8,4.92 L0.63,4.6 Z';
-    if (kind !== 'wrap' && kind !== 'wood') det += ' M0.88,1.3 L1.84,1.3 Q1.92,1.3 1.92,1.4 L1.88,2.3 Q1.86,2.48 1.82,2.6 L1.44,4.9 L0.18,4.9 L0.58,1.64 Q0.62,1.34 0.88,1.3 Z';
+    let det = `${screw(1.28, 2.12)} ${screw(0.8, 4.62)}`;
+    if (kind === 'wood') det += ' M1.28,1.82 L1.45,2.12 L1.28,2.42 L1.11,2.12 Z M0.8,4.32 L0.97,4.62 L0.8,4.92 L0.63,4.62 Z';
+    if (kind !== 'wrap' && kind !== 'wood') det += ' M0.84,1.88 L1.8,1.88 Q1.88,1.88 1.88,1.98 L1.86,2.42 Q1.84,2.56 1.8,2.68 L1.44,4.9 L0.18,4.9 L0.54,2.14 Q0.58,1.92 0.84,1.88 Z';
     P.push({ slot: own('grips'), z: 4, row: 'bottom', target: px(1.05, 3.2), el: <>
       <path d={T(panel)} />
       <path className="detail" d={T(det)} />
@@ -1851,7 +1851,7 @@ function m1911(platform: Platform, b: Build): Scene {
   const yt = dbl ? 1.6 : 1.58;
   const trigD = len === 'flat'
     ? `M${f(xf - 0.18)},${yt} L${f(xf + 0.02)},${yt} L${f(xf)},2.16 Q${f(xf)},2.2 ${f(xf - 0.04)},2.2 L${f(xf - 0.14)},2.2 Q${f(xf - 0.18)},2.2 ${f(xf - 0.18)},2.16 Z`
-    : `M${f(xf - 0.2)},${yt} L${f(xf + 0.02)},${yt} Q${f(xf - 0.06)},1.86 ${f(xf)},2.14 Q${f(xf - 0.02)},2.2 ${f(xf - 0.08)},2.18 Q${f(xf - 0.24)},1.9 ${f(xf - 0.2)},${yt} Z`;
+    : `M${f(xf - 0.2)},${f(yt + 0.04)} L${f(xf + 0.02)},${f(yt + 0.04)} Q${f(xf - 0.04)},1.86 ${f(xf)},2.1 Q${f(xf)},2.14 ${f(xf - 0.04)},2.14 L${f(xf - 0.18)},2.14 Q${f(xf - 0.22)},2.14 ${f(xf - 0.22)},2.1 Z`;
   const trigDet = b.trigger && matches(b.trigger, /3-Hole/) ? [1.72, 1.85, 1.98].map((y) => OC(xf - 0.1, y, 0.03)).join(' ') : '';
   P.push({ slot: dbl ? 'pistol' : own('trigger'), z: 5.5, row: 'bottom', target: px(xf - 0.1, 2.0), el: <>
     <path d={T(trigD)} />
