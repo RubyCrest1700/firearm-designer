@@ -4,7 +4,7 @@
 
 /** @returns {{ price: number, inStock: boolean } | null} */
 export function extractPrice(html) {
-  return fromJsonLd(html) ?? fromMeta(html);
+  return fromJsonLd(html) ?? fromMeta(html) ?? fromTwitterCard(html);
 }
 
 function fromJsonLd(html) {
@@ -61,6 +61,23 @@ function fromMeta(html) {
       const oos = /itemprop=["']availability["'][^>]+(?:OutOfStock|SoldOut)/i.test(html) || /product:availability["'][^>]+content=["']out of stock/i.test(html);
       return { price, inStock: !oos };
     }
+  }
+  return null;
+}
+
+/** Some stores (Primary Arms) list the price only as a Twitter card pair: label1 "PRICE", data1 "$124.99 USD". */
+function fromTwitterCard(html) {
+  const meta = {};
+  for (const [, k, v] of html.matchAll(/<meta[^>]+(?:name|property)=["']twitter:(label\d|data\d)["'][^>]+content=["']([^"']*)["']/gi)) meta[k.toLowerCase()] = v;
+  for (const n of ['1', '2', '3', '4']) {
+    if (!/^price$/i.test(meta[`label${n}`] ?? '')) continue;
+    const value = meta[`data${n}`] ?? '';
+    if (/[-–]/.test(value)) return null; // a price range covers several variants
+    const price = toNumber(value);
+    if (price == null) return null;
+    const avail = Object.keys(meta).find((k) => k.startsWith('label') && /^availability$/i.test(meta[k]));
+    const oos = avail && /out ?of ?stock|soldout|backorder/i.test(meta[`data${avail.slice(5)}`] ?? '');
+    return { price, inStock: !oos };
   }
   return null;
 }
