@@ -208,7 +208,6 @@ export const GUIDES: Guide[] = [
     picks: ['barrel', 'gasblock'],
     sources: [
       { label: 'Cheaper Than Dirt: AR-15 gas system identification guide', url: 'https://blog.cheaperthandirt.com/ar-15-gas-system-identification-guide/' },
-      { label: 'Faxon: 16" Gunner barrel (.625" journal)', url: 'https://faxonfirearms.com/limited-edition-faxon-16-gunner-5-56-nato-mid-length-1-7-5r-4150-qpq/' },
       { label: 'Wikipedia: 6.5mm Grendel (bolt face)', url: 'https://en.wikipedia.org/wiki/6.5mm_Grendel' },
     ],
   },
