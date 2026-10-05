@@ -209,6 +209,22 @@ test('limits signups per visitor per day', async () => {
   assert.equal((await signup(e, 'y@example.com')).status, 429);
 });
 
+test('limits signups overall per day, so confirmations cannot use up the alert emails', async () => {
+  const e = alertEnv();
+  for (let i = 0; i < 20; i++) assert.equal((await signup(e, `x${i}@example.com`, [G19], `2.0.0.${i}`)).status, 201);
+  assert.equal((await signup(e, 'late@example.com', [G19], '3.0.0.1')).status, 429);
+  assert.equal(e.outbox.length, 20);
+});
+
+test('every response carries basic browser protections', async () => {
+  const { default: worker } = await import('./src/index.js');
+  const res = await worker.fetch(req('GET', '/health'), env());
+  assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+  assert.equal(res.headers.get('x-frame-options'), 'DENY');
+  assert.equal(res.headers.get('content-type'), 'application/json; charset=utf-8');
+  assert.deepEqual(await res.json(), { ok: true });
+});
+
 test('emails confirmed signups when prices move, once, then stays quiet', async () => {
   const e = alertEnv();
   const { token } = (await signup(e)).body;
@@ -263,8 +279,14 @@ test('unsubscribing removes every signup for the address, including one-click', 
   const e = alertEnv();
   const a = (await signup(e, 'me@example.com', [G19], '1.0.0.1')).body.token;
   const b = (await signup(e, 'me@example.com', [G19], '1.0.0.2')).body.token;
-  assert.match(await (await visit(e, 'GET', `/alerts/stop?t=${a}`)).text(), /unsubscribed/i);
+  // Opening the link only asks (email scanners open links by themselves); the button unsubscribes
+  const ask = await (await visit(e, 'GET', `/alerts/stop?t=${a}`)).text();
+  assert.match(ask, /Stop Price Alerts\?[\s\S]*me@example\.com[\s\S]*<form method="post"/);
+  assert.equal((await call(e, 'GET', `/api/alerts/${b}`)).status, 200);
+  const pressed = await handle(new Request(`https://share.example/alerts/stop?t=${a}`, { method: 'POST', body: 'from=page', headers: { 'content-type': 'application/x-www-form-urlencoded' } }), e);
+  assert.match(await pressed.text(), /We won't email this address again/);
   assert.equal((await call(e, 'GET', `/api/alerts/${b}`)).status, 404);
+  assert.match(await (await visit(e, 'GET', `/alerts/stop?t=${a}`)).text(), /isn't getting price alerts/);
   const c = (await signup(e, 'you@example.com', [G19], '1.0.0.3')).body.token;
   assert.equal((await visit(e, 'POST', `/alerts/stop?t=${c}`)).status, 204);
   assert.equal((await call(e, 'GET', `/api/alerts/${c}`)).status, 404);

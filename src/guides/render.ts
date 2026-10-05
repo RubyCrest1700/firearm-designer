@@ -9,6 +9,7 @@ import { bestOffer, money, presetSelection, worst } from '../engine';
 import type { Part, Platform, Severity, Tier } from '../types';
 import { GUIDES, type FitChart, type Guide } from './content';
 import { titleCase } from '../text';
+import { CONTENT_SECURITY_POLICY } from '../config';
 
 export const SITE = 'https://dropinbuilds.com';
 const ANALYTICS_TOKEN = '00e0977ba6ee49a7b9a386502da1ef3f';
@@ -125,13 +126,15 @@ function shortDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 }
 
-function layout(o: { title: string; description: string; path: string; body: string; jsonLd: object[] }) {
+function layout(o: { title: string; description: string; path: string; body: string; jsonLd: object[]; notFound?: boolean }) {
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="${CONTENT_SECURITY_POLICY}" />
+<meta name="referrer" content="strict-origin-when-cross-origin" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>${esc(o.title)}</title>
+<title>${esc(o.title)}</title>${o.notFound ? '\n<meta name="robots" content="noindex" />' : ''}
 <meta name="description" content="${esc(o.description)}" />
 <link rel="canonical" href="${SITE}${o.path}" />
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -150,7 +153,7 @@ ${o.jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).re
 <body>
 <header class="site-header"><div class="wrap header-row">
   <a class="brand" href="/">${MARK}<span class="brand-name">Drop-In <b>Builds</b></span></a>
-  <nav aria-label="Main"><a href="/">Home</a><a href="/#build">Build</a><a href="/#saved">My Builds</a><a href="/#community">Community</a><a href="/guides/" aria-current="page">FAQ</a></nav>
+  <nav aria-label="Main"><a href="/">Home</a><a href="/#build">Build</a><a href="/#saved">My Builds</a><a href="/#community">Community</a><a href="/guides/"${o.notFound ? '' : ' aria-current="page"'}>FAQ</a></nav>
 </div></header>
 <main class="wrap">${o.body}</main>
 <footer class="site-footer"><div class="wrap">
@@ -284,6 +287,20 @@ export function indexPage(builtAt: string) {
   });
 }
 
+/** GitHub Pages shows /404.html for any address that doesn't exist. */
+export function notFoundPage() {
+  return layout({
+    title: 'Page Not Found | Drop-In Builds',
+    description: 'This page doesn\'t exist on Drop-In Builds.',
+    path: '/404.html',
+    notFound: true,
+    jsonLd: [],
+    body: `<h1>Page Not Found</h1>
+  <p>That address doesn't match a page on Drop-In Builds. It may have been mistyped, or the page may have moved.</p>
+  <p><a href="/">Go to the Home Page</a> · <a href="/#build">Start a Build</a> · <a href="/guides/">Read the FAQ</a></p>`,
+  });
+}
+
 export function sitemap(builtAt: string) {
   const day = builtAt.slice(0, 10);
   const urls = ['/', '/guides/', ...GUIDES.map((g) => `/guides/${g.slug}/`)];
@@ -321,7 +338,8 @@ a{color:var(--blue)}
 @media (max-width:560px){.header-row{gap:0}.site-header nav{width:calc(100% + 16px);margin:0 -8px 4px;justify-content:space-between;gap:0}}
 .site-header nav a{color:var(--on-navy-muted);text-decoration:none;font-weight:600;font-size:15px;padding:8px 10px;border-radius:6px}
 .site-header nav a:hover{color:var(--on-navy);background:rgba(255,255,255,.08)}
-@media (max-width:560px){.site-header nav a{padding:8px;font-size:14.5px;white-space:nowrap}}
+@media (max-width:560px){.site-header nav a{padding:8px 6px;font-size:14px;white-space:nowrap}}
+@media (max-width:360px){.site-header nav a{padding:8px 3px;font-size:13px}}
 main.wrap{padding-top:20px;padding-bottom:40px}
 .crumbs{font-size:14px;color:var(--muted);margin-bottom:8px}
 .crumbs a{color:var(--muted)}
