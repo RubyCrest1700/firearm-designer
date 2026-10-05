@@ -1841,6 +1841,411 @@
    "basis": "estimate",
    "src": null
   },
+  "m11-bbl-kart45": {
+   "oz": 4.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-bbl-kart9": {
+   "oz": 4.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-bbl-sl45t": {
+   "oz": 5.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-bbl-sl9t": {
+   "oz": 5.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-bbl-wc45": {
+   "oz": 4.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-bbl-wc45c": {
+   "oz": 4.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-colt-s70": {
+   "oz": 37.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-dw-heritage": {
+   "oz": 38.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-grp-altamont": {
+   "oz": 1.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-grp-hogue": {
+   "oz": 2.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-grp-lok": {
+   "oz": 1.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-grp-magpul": {
+   "oz": 1.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-grp-vzop": {
+   "oz": 1.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-grp-vzrecon": {
+   "oz": 1.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-gs-ebmg": {
+   "oz": 0.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-gs-wchr": {
+   "oz": 0.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-ham-eb": {
+   "oz": 0.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-ham-wcbp": {
+   "oz": 0.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-hol-cmd": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-hol-gov": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-kimber-c2": {
+   "oz": 38.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-mag-cmc": {
+   "oz": 3.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-mag-mg45": {
+   "oz": 3.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-mag-mg9": {
+   "oz": 3.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-mag-wc47d": {
+   "oz": 3.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-mag-wc9": {
+   "oz": 3.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-mw-sa": {
+   "oz": 2.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-mw-wcmsh": {
+   "oz": 1.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-mw-wcsc": {
+   "oz": 2.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-ria-gifs": {
+   "oz": 39.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-ria-gims": {
+   "oz": 36.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-ruger-cmd": {
+   "oz": 36.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-ruger-gov": {
+   "oz": 39.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-sa-garrison": {
+   "oz": 40.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-sa-garrison9": {
+   "oz": 40.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-saf-ebambi": {
+   "oz": 0.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-saf-wcambi": {
+   "oz": 0.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-saf-wcext": {
+   "oz": 0.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-sgt-dawson": {
+   "oz": 0.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-sgt-nf": {
+   "oz": 0.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-sgt-novak": {
+   "oz": 0.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-sgt-tribt": {
+   "oz": 0.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-spr-wcrod": {
+   "oz": 1.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-spr-wolffc": {
+   "oz": 0.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-spr-wolffg": {
+   "oz": 0.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-tisas-a1": {
+   "oz": 39.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-trg-eb": {
+   "oz": 0.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "m11-trg-wcul": {
+   "oz": 0.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-bul-sas": {
+   "oz": 34.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-girsan": {
+   "oz": 40.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-hol-39": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-hol-39-tlr7a": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-hol-39-x300": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-hol-44": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-hol-44-tlr7a": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-hol-44-x300": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-hol-5": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-hol-5-tlr7a": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-hol-5-x300": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-mag-bul": {
+   "oz": 4.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-mag-pr17": {
+   "oz": 4.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-mag-pr20": {
+   "oz": 4.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-mag-st16": {
+   "oz": 4.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-mag-st17": {
+   "oz": 4.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-mag-st20": {
+   "oz": 4.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-mw-dawsonpr": {
+   "oz": 1.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-mw-dawsonst": {
+   "oz": 1.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-opt-507c": {
+   "oz": 1.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-opt-508t": {
+   "oz": 1.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-opt-acro": {
+   "oz": 2.1,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-opt-dpp": {
+   "oz": 2.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-opt-rmr": {
+   "oz": 1.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-opt-sro": {
+   "oz": 1.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-prodigy425": {
+   "oz": 32.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-prodigy5": {
+   "oz": 33.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-sgt-dawsonpr": {
+   "oz": 0.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-sgt-dawsonst": {
+   "oz": 0.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-sgt-dawsonsto": {
+   "oz": 0.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-staccato-c2": {
+   "oz": 31.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-staccato-p": {
+   "oz": 33.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "m21-staccato-xc": {
+   "oz": 38.0,
+   "basis": "estimate",
+   "src": null
+  },
   "mp-bbl-apexc": {
    "oz": 4.2,
    "basis": "estimate",

@@ -59,6 +59,13 @@ const IFACES: Iface[] = [
   ['hellcat', 'slide', 'size', 'barrel', 'size'],
   ['hellcat', 'slide', 'size', 'rsa', 'size'],
   ['hellcat', 'barrel', 'thread', 'muzzle', 'thread'],
+  ['m1911', 'pistol', 'size', 'barrel', 'size'],
+  ['m1911', 'pistol', 'cal', 'barrel', 'cal'],
+  ['m1911', 'pistol', 'size', 'spring', 'size'],
+  ['m1911', 'pistol', 'sight', 'sights', 'cut'],
+  ['m1911', 'pistol', 'cal', 'mag', 'cal'],
+  ['m2011', 'pistol', 'sight', 'sights', 'cut'],
+  ['m2011', 'pistol', 'well', 'magwell', 'fit'],
 ];
 let combos = 0;
 for (const [pid, sa, ka, sb, kb] of IFACES) {
