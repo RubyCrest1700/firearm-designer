@@ -6,7 +6,7 @@ import { holsters, pistolAddonRules, pistolAddonSlots, pistolCases, pistolLights
  * Large-frame Glocks: the G20 (10mm Auto) and G21 (.45 ACP). They share the frame, trigger parts and slide
  * parts kit; the slide's breech face, the barrel and the magazines are made for one caliber. Gen3 and Gen4 only: Gen3 has a standard frame and a Short Frame (SF) with a smaller
  * back strap; Gen4 has interchangeable backstraps and a dual recoil spring.
- * Sources: https://us.glock.com/en/pistols/g20, https://us.glock.com/en/pistols/g21,
+ * Sources: https://en.wikipedia.org/wiki/Glock,
  * https://3crtactical.com/blog/are-glock-gen-3-and-gen-4-slides-compatible/
  */
 const CAL: Record<string, string> = { '10mm': '10mm Auto', '45': '.45 ACP', '40': '.40 S&W' };

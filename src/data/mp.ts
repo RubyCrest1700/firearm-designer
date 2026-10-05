@@ -7,8 +7,7 @@ import { holsters, pistolAddonRules, pistolAddonSlots, pistolCases, pistolLights
  * serialized part) and swaps in upgrade slides, barrels, triggers and sights. Anything not swapped is the
  * factory part that came on the pistol. Full size and Compact parts are not interchangeable: slides,
  * barrels and recoil springs are made for one length. M2.0 slides don't fit the original M&P (1.0).
- * Sources: https://www.smith-wesson.com/product/m-p9-m2-0-4-25-optics-ready,
- * https://www.smith-wesson.com/product/m-p9-m2-0-compact-4-optics-ready
+ * Sources: https://en.wikipedia.org/wiki/Smith_%26_Wesson_M%26P
  */
 const SIZE: Record<string, string> = { fs: 'Full Size', c: 'Compact' };
 /** CORE plates that ship with Optics Ready pistols, by footprint (S&W's plate numbers). The DeltaPoint Pro plate is sold separately. */
