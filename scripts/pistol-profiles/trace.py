@@ -81,14 +81,15 @@ REFS = {
     slide=[(560, 690), (2100, 690), (2100, 990), (1888, 990), (1888, 905), (560, 905)],
     guard_seed=(1340, 1140),
     marks=dict(slideFront=2085, muzzle=2090, bore=815, spring=875, slideBottom=905, nose=985,
-               rearSerr=940, frontSerr=1600, port0=1204, port1=1387, rail0=1640, dust=1888, railBottom=1021),
+               rearSerr=940, frontSerr=1600, port0=1195, port1=1400, rail0=1640, dust=1888, railBottom=1021),
   ),
   'hellcat': dict(
     pdf='https://patentimages.storage.googleapis.com/5e/1a/be/a61e9d96084039/USD998740.pdf', page=6, im='-rotate 90',
     # Springfield Armory's US D998,740 S, FIG. 4: the 3" Hellcat, left side, drawn muzzle down in dashed lines;
     # turned upright and mirrored by the rotation so the muzzle points right. The barrel crown and magazine are
-    # unclaimed (thin broken lines) and left out. Calibration: 6.0" overall length, 4.0" tall with a flush magazine.
-    x0=480, y0=415, sx=385.8, sy=381.0, bottom=1860, th=50, merge=7, blur=2.2, line_blur=3.0, line_cut=238, dot_max=8, sil_r=8,
+    # unclaimed (thin broken lines) and left out. Calibration: 6.0" overall length, and the same scale up and down,
+    # so the grip keeps the drawing's angle and flared magwell.
+    x0=480, y0=415, sx=385.8, sy=385.8, bottom=1958, th=50, merge=7, blur=2.2, line_blur=3.0, line_cut=238, dot_max=8, sil_r=8,
     erase_ink=[[(2719, 300), (2900, 300), (2900, 1100), (2719, 1100)]],
     slide=[(380, 380), (2760, 380), (2760, 757), (380, 757)],
     guard_seed=(2000, 1250),

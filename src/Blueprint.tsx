@@ -555,12 +555,14 @@ function pistolSpec(platform: Platform, b: Build): PistolSpec {
 type ProfileKey = 'p320' | 'p365' | 'glock' | 'mp' | 'hellcat';
 
 /** The size each patent drawing shows, and what the patents leave as broken lines (trigger) or don't show. */
-const PROFILE_REF: Record<ProfileKey, { oal: number; h: number; rake: number; portH: number }> = {
+const PROFILE_REF: Record<ProfileKey, { oal: number; h: number; rake: number; portH: number; tilt?: number }> = {
   p320: { oal: 8.0, h: 5.5, rake: 0.2, portH: 0.52 },
   p365: { oal: 5.8, h: 4.3, rake: 0.1, portH: 0.4 },
   glock: { oal: 5.94, h: 4.13, rake: 0.29, portH: 0.48 },
-  mp: { oal: 7.4, h: 5.5, rake: 0.3, portH: 0.5 },
-  hellcat: { oal: 6.0, h: 4.0, rake: 0.25, portH: 0.5 },
+  // The S&W and Springfield drawings are fitted to the published length and height, which leaves their grips a
+  // little more upright than drawn; `tilt` leans the grip back below the trigger guard to match the drawings.
+  mp: { oal: 7.4, h: 5.5, rake: 0.3, portH: 0.58, tilt: 0.06 },
+  hellcat: { oal: 6.0, h: 4.36, rake: 0.25, portH: 0.5, tilt: 0.05 },
 };
 
 /** Trigger shoes, traced from the broken-line triggers in the same patent drawings (y0 is the top of the guard opening).
@@ -585,19 +587,24 @@ const TRIGGERS: Record<ProfileKey, { face: number; curved: (y0: number) => strin
     flat: (y0) => `M2.76,${y0} Q2.62,1.84 2.74,2.14 Q2.8,2.25 2.94,2.25 Q3.0,2.24 2.98,2.17 L2.93,1.82 Q2.92,1.66 3.06,${y0} Z`,
     line: { curved: 'M2.86,1.56 Q2.8,1.86 2.9,2.1', flat: 'M2.86,1.56 Q2.8,1.84 2.86,2.12' },
   },
-  // The M&P's hinged trigger: the upper shoe, the hinge across it, and the lower blade curling forward to its tip.
+  // The M&P's hinged trigger safety: the upper shoe, and the lower blade that pivots on a pin at the hinge and
+  // curls forward to its tip. Traced from the same patent drawing.
   mp: {
     face: 2.8,
-    curved: (y0) => `M2.41,${y0} Q2.55,1.8 2.59,1.95 L2.62,2.12 Q2.7,2.4 2.83,2.59 Q2.95,2.62 3.05,2.55 Q2.9,2.35 2.76,2.06 Q2.8,1.8 3.1,${y0} Z`,
-    flat: (y0) => `M2.41,${y0} Q2.55,1.8 2.59,1.95 L2.62,2.12 L2.7,2.58 Q2.72,2.62 2.78,2.62 L2.92,2.6 Q2.96,2.58 2.94,2.52 L2.8,2.06 Q2.82,1.8 3.1,${y0} Z`,
-    line: { curved: 'M2.62,2.12 L2.77,2.08', flat: 'M2.62,2.12 L2.8,2.08' },
+    curved: (y0) => `M2.37,${y0} Q2.56,1.82 2.59,1.95 L2.606,2.1 L2.763,2.1 L2.763,2.06 Q2.8,1.8 3.095,${y0} Z M2.612,2.13 Q2.7,2.36 2.812,2.522 Q2.82,2.59 2.88,2.59 L2.95,2.588 Q3.05,2.58 3.046,2.522 Q2.85,2.3 2.765,2.13 Z`,
+    flat: (y0) => `M2.37,${y0} Q2.56,1.82 2.59,1.95 L2.606,2.1 L2.763,2.1 L2.763,2.06 Q2.8,1.8 3.095,${y0} Z M2.612,2.13 L2.71,2.56 Q2.72,2.6 2.77,2.6 L2.93,2.6 Q2.98,2.6 2.97,2.55 L2.8,2.13 Z`,
+    line: {
+      curved: 'M2.66,2.08 Q2.66,2.05 2.69,2.05 Q2.72,2.05 2.72,2.08 Q2.72,2.11 2.69,2.11 Q2.66,2.11 2.66,2.08 Z M2.7,2.2 Q2.78,2.38 2.88,2.52',
+      flat: 'M2.66,2.08 Q2.66,2.05 2.69,2.05 Q2.72,2.05 2.72,2.08 Q2.72,2.11 2.69,2.11 Q2.66,2.11 2.66,2.08 Z M2.7,2.2 L2.79,2.54',
+    },
   },
-  // The Hellcat's shoe angles forward from its pivot, with the safety blade down its face.
+  // The Hellcat's straight shoe angles forward from its pivot and widens to a rounded tip, with the blade safety
+  // down its middle. Traced from the same patent drawing.
   hellcat: {
     face: 3.5,
-    curved: (y0) => `M3.16,${y0} Q3.3,1.9 3.4,2.17 Q3.44,2.3 3.46,2.41 Q3.53,2.47 3.6,2.44 Q3.66,2.4 3.63,2.3 Q3.56,2.18 3.5,2.06 Q3.35,1.8 3.28,${y0} Z`,
-    flat: (y0) => `M3.16,${y0} L3.38,2.1 L3.42,2.4 Q3.43,2.45 3.48,2.45 L3.58,2.45 Q3.62,2.44 3.6,2.38 L3.52,2.05 L3.28,${y0} Z`,
-    line: { curved: 'M3.24,1.62 Q3.38,1.9 3.5,2.28', flat: 'M3.25,1.62 L3.46,2.36' },
+    curved: (y0) => `M3.162,${y0} L3.408,2.294 Q3.43,2.39 3.5,2.4 Q3.58,2.4 3.615,2.35 Q3.64,2.311 3.624,2.281 L3.23,${y0} Z`,
+    flat: (y0) => `M3.162,${y0} L3.408,2.294 L3.43,2.4 L3.6,2.4 Q3.64,2.4 3.63,2.36 L3.23,${y0} Z`,
+    line: { curved: 'M3.2,1.62 L3.47,2.341 M3.24,1.62 L3.51,2.341', flat: 'M3.2,1.62 L3.47,2.341 M3.24,1.62 L3.51,2.341' },
   },
 };
 
@@ -691,12 +698,13 @@ function glockGrip(traced: number[], o: { SH: number; hole: number[]; slim: bool
   const tang = slim ? 0.36 : 0.38;
   // The large frame's grip is a little deeper front to back for the longer 10mm and .45 magazines.
   const gw = slim ? 1.85 : large ? 2.16 : 2.08;
-  const hx = -tang - 0.25;
+  const hx = -tang - 0.31;
   const toeX = hx + gw;
-  const fs = 0.31; // front strap rake, inches back per inch down
-  const front = (y: number) => toeX + fs * (yGB - y);
   const A = [X(iA), Y(iA)];
   const fy = A[1] + 0.24;
+  // Front strap rake (inches back per inch down): matched to the back strap's, so the grip tilts as one piece.
+  const fs = 0.31 + 0.06 / (yGB - fy);
+  const front = (y: number) => toeX + fs * (yGB - y);
   // Under the guard: a tight radius from the guard's bottom into the front strap.
   q(A, [front(fy) + 0.03, A[1]], [front(fy), fy]);
   const gen5 = !n && !slim;
@@ -712,15 +720,16 @@ function glockGrip(traced: number[], o: { SH: number; hole: number[]; slim: bool
   if (gen5) q([front(yF), yF], [front(yGB - 0.08) + 0.01, yGB - 0.1], [toeX + 0.07, yGB - 0.03], 5);
   q([pts[pts.length - 2], pts[pts.length - 1]], [toeX + 0.04, yGB], [toeX - 0.08, yGB], 3);
   pts.push(hx + 0.08, yGB);
-  // Back strap, heel up to the web; Gen3/4 hump low down. It runs straight above that, so the web can carry its line on.
-  const wx = -tang + (slim ? 0.57 : 0.59), wy = SH + 0.74;
+  // Back strap, heel up to the web. It runs straight above that, so the web can carry its line on.
+  const wx = -tang + (slim ? 0.69 : 0.71), wy = SH + 0.74;
   q([hx + 0.08, yGB], [hx, yGB], [hx - 0.01, yGB - 0.1], 3);
   const yb0 = yGB - 0.1, sx = (wx - hx + 0.01) / (yb0 - wy);
   const bx = (y: number) => hx - 0.01 + sx * (yb0 - y);
   const yw = SH + 1.05;
   for (let y = yb0 - 0.05; y > yw + 0.02; y -= 0.05) {
     const t = (yb0 - y) / (yb0 - wy);
-    pts.push(bx(y) - (n ? 0.09 * Math.exp(-(((t - 0.3) / 0.16) ** 2)) : 0), y);
+    // Gen3/4 frames swell gently through the middle of the palm; the back strap stays straight at the heel.
+    pts.push(bx(y) - (n ? 0.035 * Math.exp(-(((t - 0.55) / 0.22) ** 2)) : 0), y);
   }
   // Web: one cubic that leaves along the back strap's line and arrives level under the beavertail.
   const P0 = [bx(yw), yw], P3 = [-tang + 0.16, SH + 0.24];
@@ -812,7 +821,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   const ky = (g1 - g0 + dH) / (g1 - g0);
   const grip: Map2 = (x, y) => {
     const y2 = y <= g0 ? y : y <= g1 ? g0 + (y - g0) * ky : y + dH;
-    return [x - R.rake * (y2 - y), y2];
+    return [x - R.rake * (y2 - y) - (R.tilt ?? 0) * Math.max(0, y2 - g0), y2];
   };
   // Gen3/4 Glock frames add finger grooves to the front strap.
   const n = spec.grooves;
