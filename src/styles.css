@@ -729,3 +729,7 @@ a.link { text-decoration: none; }
   .cmp-cell { font-size: 13px; }
   .cmp-heads:has(.cmp-chooser) { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Home: link to the static per-platform pages (/build/<platform>/), mainly so search engines find them. */
+.platform-pages { margin: 14px 0 0; color: var(--muted); font-size: 14.5px; }
+.platform-pages a { color: var(--blue); font-weight: 600; }

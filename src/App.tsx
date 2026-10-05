@@ -411,6 +411,7 @@ function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string) => void;
               </div>
             </div>
           ))}
+          <p className="platform-pages">Parts lists and prices by platform: <a href="./build/">See All Platforms</a></p>
         </section>
 
         <section className="home-section">

@@ -188,7 +188,8 @@ function shortDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 }
 
-function layout(o: { title: string; description: string; path: string; body: string; jsonLd: object[]; notFound?: boolean }) {
+function layout(o: { title: string; description: string; path: string; body: string; jsonLd: object[]; notFound?: boolean; image?: string; current?: 'build' | 'faq' }) {
+  const current = o.current ?? (o.notFound ? undefined : 'faq');
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -206,7 +207,7 @@ function layout(o: { title: string; description: string; path: string; body: str
 <meta property="og:title" content="${esc(o.title)}" />
 <meta property="og:description" content="${esc(o.description)}" />
 <meta property="og:url" content="${SITE}${o.path}" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
+${o.image ? `<meta property="og:image" content="${SITE}${o.image}" />\n<meta property="og:image:width" content="1200" />\n<meta property="og:image:height" content="630" />\n<meta name="twitter:card" content="summary_large_image" />\n` : ''}<link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Narrow:wght@500;600;700&display=swap" />
 <style>${CSS}</style>
@@ -215,7 +216,7 @@ ${o.jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).re
 <body>
 <header class="site-header"><div class="wrap header-row">
   <a class="brand" href="/">${MARK}<span class="brand-name">Drop-In <b>Builds</b></span></a>
-  <nav aria-label="Main"><a href="/">Home</a><a href="/#build">Build</a><a href="/#saved">My Builds</a><a href="/#community">Community</a><a href="/guides/"${o.notFound ? '' : ' aria-current="page"'}>FAQ</a></nav>
+  <nav aria-label="Main"><a href="/">Home</a><a href="/#build"${current === 'build' ? ' aria-current="page"' : ''}>Build</a><a href="/#saved">My Builds</a><a href="/#community">Community</a><a href="/guides/"${current === 'faq' ? ' aria-current="page"' : ''}>FAQ</a></nav>
 </div></header>
 <main class="wrap">${o.body}</main>
 <footer class="site-footer"><div class="wrap">
@@ -349,6 +350,128 @@ export function indexPage(builtAt: string) {
   });
 }
 
+/* -------------------------------------------------------------- platform pages */
+
+/**
+ * One page per platform at /build/<slug>/, so search engines can find each platform's parts, starter
+ * builds and prices (the builder itself lives at one address and is drawn by JavaScript). Platforms
+ * added later get a page automatically, with an address made from their name.
+ */
+const PLATFORM_SLUGS: Record<string, string> = {
+  ar15: 'ar-15', ar10: 'ar-10', glock17: 'glock-17', glock19: 'glock-19', glock26: 'glock-26', glock43x: 'glock-43x-48',
+  glock20: 'glock-20-21', p320: 'sig-p320', p365: 'sig-p365', mp2: 'smith-wesson-mp-2-0', hellcat: 'springfield-hellcat',
+};
+export const platformSlug = (p: Platform) =>
+  PLATFORM_SLUGS[p.id] ?? p.name.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+const partsByPrice = (parts: Part[]) => [...parts].sort((x, y) => (bestOffer(x)?.price ?? 0) - (bestOffer(y)?.price ?? 0));
+
+function starterListHtml(platform: Platform) {
+  return TIERS.map((tier) => {
+    const parts = Object.values(presetSelection(platform, tier)).map((id) => platform.parts.find((p) => p.id === id)!).filter(Boolean);
+    const name = tier === 'value' ? 'Best Value' : tier[0].toUpperCase() + tier.slice(1);
+    return `
+      <details class="starter-parts"><summary>What's in the ${name} ${esc(platform.name)}</summary><ul>${parts.map((p) => {
+        const slot = platform.slots.find((s) => s.id === p.slot)?.name ?? p.slot;
+        const o = bestOffer(p);
+        return `<li><span class="muted">${esc(titleCase(slot))}:</span> ${esc(label(p))}${o ? ` <b>${money(o.price)}</b>` : ''}</li>`;
+      }).join('')}</ul></details>`;
+  }).join('');
+}
+
+function slotTableHtml(platform: Platform) {
+  return platform.slots
+    .map((slot) => {
+      const parts = partsByPrice(platform.parts.filter((p) => p.slot === slot.id));
+      if (!parts.length) return '';
+      const prices = parts.map((p) => bestOffer(p)?.price).filter((n): n is number => n != null);
+      const range = prices.length ? (prices[0] === prices[prices.length - 1] ? money(prices[0]) : `${money(prices[0])} to ${money(prices[prices.length - 1])}`) : '';
+      return `
+      <section class="slot">
+        <h3>${esc(titleCase(slot.name))}</h3>
+        <p class="muted">${parts.length} option${parts.length > 1 ? 's' : ''}${range ? `, ${range}` : ''}.${slot.hint ? ` ${esc(slot.hint)}` : ''}</p>
+        <div class="grid-wrap"><table class="parts">
+          <tbody>${parts.map((p) => `
+            <tr><th scope="row">${esc(label(p))}${p.pick ? ` <span class="tier tier-${p.pick.tier}">${TIER_LABEL[p.pick.tier]}</span>` : ''}<span class="specs">${p.specs.map(esc).join(' · ')}</span></th>
+              <td>${priceHtml(p)}</td></tr>`).join('')}
+          </tbody>
+        </table></div>
+      </section>`;
+    })
+    .join('');
+}
+
+export function platformPage(platform: Platform) {
+  const slug = platformSlug(platform);
+  const path = `/build/${slug}/`;
+  const brands = new Set(platform.parts.map((p) => p.brand)).size;
+  const guides = GUIDES.filter((g) => g.platform === platform.id);
+  const related = guides.length ? guides : GUIDES.filter((g) => platformOf(g.platform).maker === platform.maker).slice(0, 4);
+  const others = PLATFORMS.filter((p) => p !== platform);
+  const budget = Object.values(presetSelection(platform, 'budget')).reduce((sum, id) => sum + (bestOffer(platform.parts.find((p) => p.id === id)!)?.price ?? 0), 0);
+  const body = `
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="/build/">Platforms</a> › <span>${esc(platform.name)}</span></nav>
+  <article>
+    <h1>${esc(platform.name)} Build Planner: Parts, Fit and Prices</h1>
+    <p class="lede">${esc(platform.blurb)} ${platform.parts.length} parts from ${brands} brands, each checked for fit against the rest of your build, with prices compared across retailers.</p>
+    <a class="cta" href="${builderUrl(platform.id)}">Open the ${esc(platform.name)} Builder</a>
+    <section>
+      <h2>Start from a Complete Build</h2>
+      <p class="muted">Three ${esc(platform.name)} builds where every part already fits, from ${money(budget)}. Open one in the builder and swap anything you like.</p>
+      <div class="starters">${startersHtml(platform)}</div>
+      ${starterListHtml(platform)}
+    </section>
+    <section>
+      <h2>${esc(platform.name)} Parts and Prices</h2>
+      <p class="muted">Every ${esc(platform.name)} part we list, cheapest first, with the lowest price we found${PRICES_UPDATED_AT ? ` (prices last checked ${shortDate(PRICES_UPDATED_AT)})` : ''}. The builder checks how each one fits with the rest of your parts.</p>
+      ${slotTableHtml(platform)}
+    </section>
+    ${related.length ? `<section><h2>Fit Questions</h2><ul class="guide-list">${related.map((g) => `<li><a href="/guides/${g.slug}/">${esc(g.h1)}</a></li>`).join('')}</ul></section>` : ''}
+    <section><h2>Other Platforms</h2><ul class="guide-list cols">${others.map((p) => `<li><a href="/build/${platformSlug(p)}/">${esc(p.name)}</a></li>`).join('')}</ul></section>
+  </article>`;
+  return layout({
+    title: `${platform.name} Build Planner: Parts, Fit and Prices | Drop-In Builds`,
+    description: `Plan a ${platform.name} build part by part. ${platform.parts.length} parts checked for fit, prices compared across retailers, and starter builds from ${money(budget)}.`,
+    path,
+    body,
+    image: `/og/${platform.id}.png`,
+    current: 'build',
+    jsonLd: [
+      { '@context': 'https://schema.org', '@type': 'WebPage', name: `${platform.name} Build Planner`, url: SITE + path, publisher: { '@type': 'Organization', name: 'Drop-In Builds', url: SITE } },
+      { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: SITE + '/' },
+        { '@type': 'ListItem', position: 2, name: 'Platforms', item: SITE + '/build/' },
+        { '@type': 'ListItem', position: 3, name: platform.name, item: SITE + path },
+      ] },
+    ],
+  });
+}
+
+/** /build/: every platform, grouped like the builder's platform menu. */
+export function platformsIndexPage() {
+  const families = [...new Set(PLATFORMS.map((p) => p.family))];
+  const body = `
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <span>Platforms</span></nav>
+  <h1>Build Planners for Every Platform</h1>
+  <p class="lede">Pick a platform to see its parts, starter builds and prices, then open it in the builder to check the fit of every part.</p>
+  ${families.map((f) => `
+  <section>
+    <h2>${esc(f)}s</h2>
+    <ul class="guide-cards">${PLATFORMS.filter((p) => p.family === f).map((p) => `
+      <li><a href="/build/${platformSlug(p)}/"><b>${esc(p.name)}</b><span>${esc(p.blurb)}</span></a></li>`).join('')}
+    </ul>
+  </section>`).join('')}
+  <p><a class="cta" href="/#build">Open the Builder</a></p>`;
+  return layout({
+    title: 'Firearm Build Planners: AR, Glock, Sig and More | Drop-In Builds',
+    description: `Plan a build for any of ${PLATFORMS.length} platforms: ${PLATFORMS.map((p) => p.name).join(', ')}. Parts checked for fit, prices compared across retailers.`,
+    path: '/build/',
+    body,
+    current: 'build',
+    jsonLd: [{ '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Build Planners', url: SITE + '/build/' }],
+  });
+}
+
 /** GitHub Pages shows /404.html for any address that doesn't exist. */
 export function notFoundPage() {
   return layout({
@@ -365,7 +488,7 @@ export function notFoundPage() {
 
 export function sitemap(builtAt: string) {
   const day = builtAt.slice(0, 10);
-  const urls = ['/', '/guides/', ...GUIDES.map((g) => `/guides/${g.slug}/`)];
+  const urls = ['/', '/build/', ...PLATFORMS.map((p) => `/build/${platformSlug(p)}/`), '/guides/', ...GUIDES.map((g) => `/guides/${g.slug}/`)];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map((u) => `  <url><loc>${SITE}${u}</loc><lastmod>${day}</lastmod></url>`).join('\n')}
@@ -457,5 +580,19 @@ section{margin:0}
 .guide-cards a{display:block;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;text-decoration:none;color:var(--ink);box-shadow:var(--shadow)}
 .guide-cards a:hover{border-color:var(--cta)}
 .guide-cards span{display:block;color:var(--muted);font-size:15px;margin-top:2px}
+.starter-parts{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin-top:10px;box-shadow:var(--shadow)}
+.starter-parts summary{cursor:pointer;font-weight:700;padding:12px 16px}
+.starter-parts ul{margin:0;padding:0 16px 14px 34px;font-size:15px}
+.starter-parts li{margin:3px 0}
+.parts{border-collapse:collapse;width:100%;font-size:15px}
+.parts th,.parts td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
+.parts tr:last-child th,.parts tr:last-child td{border-bottom:0}
+.parts th{font-weight:600}
+.parts th .specs{display:block;font-weight:400;margin-top:2px}
+.parts th .tier{display:inline-block;margin-left:6px}
+.parts td{white-space:nowrap;width:1%}
+.parts td .price{margin:0}
+@media (max-width:560px){.parts td{white-space:normal;width:38%}.parts td .muted{display:block}}
+.guide-list.cols{columns:2 200px}
 .site-footer{border-top:1px solid var(--line);padding:24px 0 40px;color:var(--muted);font-size:14px}
 `;
