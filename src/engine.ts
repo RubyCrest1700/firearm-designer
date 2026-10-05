@@ -3,8 +3,36 @@ import type { Build, Issue, Offer, Part, Placement, Platform, Severity, Side, Ti
 /**
  * Slot id -> part id. Accessory placements ride along under `@slot` keys, encoded as a side letter and
  * tenths of an inch from the receiver: `{ light: 'r-light-hlx', '@light': 'r45' }`.
+ * Parts the builder already owns are marked under `+slot` keys: `own` for the chosen catalog part, `other`
+ * for one of their own that isn't in our catalog (the slot then has no part id).
  */
 export type Selection = Record<string, string>;
+
+/** Keys that name a slot's part, as opposed to `@` placements and `+` owned marks. */
+const isSlotKey = (k: string) => !k.startsWith('@') && !k.startsWith('+');
+
+export interface Owned {
+  /** Slots whose chosen catalog part the builder already has. */
+  owned: Set<string>;
+  /** Slots filled with a part of their own that isn't in our catalog. */
+  other: Set<string>;
+}
+
+export function ownedOf(sel: Selection): Owned {
+  const out: Owned = { owned: new Set(), other: new Set() };
+  for (const [k, v] of Object.entries(sel)) {
+    if (!k.startsWith('+')) continue;
+    const slot = k.slice(1);
+    if (v === 'own' && sel[slot]) out.owned.add(slot);
+    else if (v === 'other' && !sel[slot]) out.other.add(slot);
+  }
+  return out;
+}
+
+export const ownsAny = (sel: Selection) => Object.keys(sel).some((k) => k.startsWith('+'));
+
+/** The selection without owned marks: what a build looks like to someone else, e.g. on the Community page. */
+export const withoutOwned = (sel: Selection): Selection => Object.fromEntries(Object.entries(sel).filter(([k]) => !k.startsWith('+')));
 
 const SIDE_CODE: Record<string, Side> = { t: 'top', r: 'right', l: 'left', b: 'bottom' };
 export const MOUNT_CODE = /^([trlb])(\d{1,3})$/;
@@ -20,12 +48,21 @@ export function placementOf(sel: Selection): Placement {
   return out;
 }
 
-/** Part ids only, without placements. */
-export const partIds = (sel: Selection) => Object.entries(sel).filter(([k]) => !k.startsWith('@')).map(([, v]) => v);
+/** Part ids only, without placements or owned marks. */
+export const partIds = (sel: Selection) => Object.entries(sel).filter(([k]) => isSlotKey(k)).map(([, v]) => v);
 
-/** Part ids plus `at-<slot>-<code>` placement tokens, for share links and community builds. */
+/** Part ids still to buy: the selection's parts minus the ones the builder already owns. */
+export const toBuyIds = (sel: Selection) => {
+  const { owned } = ownedOf(sel);
+  return Object.entries(sel).filter(([k]) => isSlotKey(k) && !owned.has(k)).map(([, v]) => v);
+};
+
+/**
+ * Part ids plus `at-<slot>-<code>` placement tokens and `own-<slot>` / `has-<slot>` owned marks, for share
+ * links and community builds. Older pages skip tokens they don't know, so links stay readable everywhere.
+ */
 export const selectionTokens = (sel: Selection) =>
-  Object.entries(sel).map(([k, v]) => (k.startsWith('@') ? `at-${k.slice(1)}-${v}` : v));
+  Object.entries(sel).map(([k, v]) => (k.startsWith('@') ? `at-${k.slice(1)}-${v}` : k.startsWith('+') ? `${v === 'other' ? 'has' : 'own'}-${k.slice(1)}` : v));
 
 const RANK: Record<Severity, number> = { info: 1, warn: 2, error: 3 };
 
@@ -38,7 +75,7 @@ export function worst(issues: Issue[]): Severity | undefined {
 export function toBuild(platform: Platform, sel: Selection): Build {
   const byId = new Map(platform.parts.map((p) => [p.id, p]));
   const b: Build = {};
-  for (const [slot, id] of Object.entries(sel)) if (!slot.startsWith('@')) b[slot] = byId.get(id);
+  for (const [slot, id] of Object.entries(sel)) if (isSlotKey(slot)) b[slot] = byId.get(id);
   return b;
 }
 

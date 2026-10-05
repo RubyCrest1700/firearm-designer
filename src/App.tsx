@@ -2,10 +2,13 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { PLATFORMS, PRICES_UPDATED_AT } from './data';
 import { RETAILERS, offerUrl } from './data/retailers';
 import {
-  bestOffer, candidateIssues, encodeMount, issuesFor, money, partIds, placementOf, presetSelection, priceRange,
-  selectionTokens, singleRetailerCarts, toBuild, worst, type Selection,
+  bestOffer, candidateIssues, encodeMount, issuesFor, money, ownedOf, ownsAny, partIds, placementOf, presetSelection, priceRange,
+  selectionTokens, singleRetailerCarts, toBuild, withoutOwned, worst, type Owned, type Selection,
 } from './engine';
+import { findParts, isLink, type Found } from './find';
+import { ComparePage, loadCompare, storeCompare, type CompareItem } from './Compare';
 import { Blueprint, sceneFor, type RegionState } from './Blueprint';
+import { buildStatus, statesFor } from './status';
 import {
   FEATURED, TIER_LABEL, buildOf, droppedBuilds, loadSavedBuilds, priceChanges, priceSnapshot, newId, readSharedBuild, selectionFromParts, shareUrl, checkShareLinks, storeSavedBuilds, totalOf,
   type FeaturedBuild, type SavedBuild,
@@ -27,7 +30,7 @@ import type { Build, Issue, Part, Placement, Platform, Severity, Side, Slot, Tie
 const STORE_KEY = 'firearm-designer:v2';
 const SEV_LABEL: Record<Severity, string> = { error: 'Conflict', warn: 'Check', info: 'Note' };
 const FAMILIES = ['Rifle', 'Pistol'];
-type Route = 'home' | 'build' | 'community' | 'saved';
+type Route = 'home' | 'build' | 'community' | 'saved' | 'compare';
 
 interface Persisted { platform: string; selections: Record<string, Selection> }
 
@@ -48,7 +51,7 @@ function loadPersisted(): Persisted | null {
 const routeFromHash = (): Route => {
   const h = location.hash.replace('#', '');
   if (h === 'community' || h === 'featured') return 'community';
-  if (h === 'saved' || h === 'build') return h;
+  if (h === 'saved' || h === 'build' || h === 'compare') return h;
   return 'home';
 };
 
@@ -56,26 +59,6 @@ const DROPS_SEEN_KEY = 'firearm-designer:drops-seen:v1';
 
 const shortDate = (iso: string, year = false) =>
   new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(year ? { year: 'numeric' } : {}) });
-
-function slotState(build: Build, issues: Issue[], slotId: string): RegionState {
-  if (!build[slotId]) return 'empty';
-  const w = worst(issues.filter((i) => i.slots.includes(slotId)));
-  return w === 'error' ? 'error' : w === 'warn' ? 'warn' : 'ok';
-}
-
-function statesFor(platform: Platform, build: Build, place: Placement = {}) {
-  const issues = issuesFor(platform, build, place);
-  const states = Object.fromEntries(platform.slots.map((s) => [s.id, slotState(build, issues, s.id)])) as Record<string, RegionState>;
-  return { issues, states };
-}
-
-function buildStatus(platform: Platform, build: Build, issues: Issue[]) {
-  const missing = platform.slots.filter((s) => s.required && !build[s.id]).length;
-  const errors = issues.filter((i) => i.severity === 'error').length;
-  if (errors) return { cls: 'error', text: `${errors} conflict${errors > 1 ? 's' : ''} to fix` };
-  if (missing) return { cls: 'warn', text: `${missing} required part${missing > 1 ? 's' : ''} missing` };
-  return { cls: 'ok', text: 'Complete and compatible' };
-}
 
 export default function App() {
   const persisted = useMemo(loadPersisted, []);
@@ -92,6 +75,9 @@ export default function App() {
   /** The community build open in the builder, so retailer clicks count toward it. Cleared on any edit. */
   const [communityOpen, setCommunityOpen] = useState<CommunityBuild | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  /** The two builds on the Compare page, kept for this tab like the build in progress. */
+  const [compare, setCompare] = useState<(CompareItem | null)[]>(loadCompare);
+  useEffect(() => { storeCompare(compare); }, [compare]);
 
   useEffect(() => { void checkShareLinks(); }, []);
   useEffect(() => {
@@ -156,7 +142,7 @@ export default function App() {
   };
   const share = async (name: string, note: string) => {
     const sel = selections[platformId] ?? {};
-    const b = await shareBuild(platformId, name, note, selectionTokens(sel));
+    const b = await shareBuild(platformId, name, note, selectionTokens(withoutOwned(sel)));
     setCommunityOpen(b);
     setToast(`Shared "${b.name}". It's on the Community page now.`);
   };
@@ -171,6 +157,11 @@ export default function App() {
       setOpenSavedId(id);
     }
     setToast(`Saved "${name}" to My Builds`);
+  };
+  /** Puts a build on the Compare page: the first empty side, or in place of the second build. */
+  const addToCompare = (item: CompareItem) => {
+    setCompare(([a, b]) => (!a ? [item, b] : !b ? [a, item] : [a, item]));
+    go('compare');
   };
   const copyLink = async (pid: string, sel: Selection, communityId?: string) => {
     const url = shareUrl(pid, sel, communityId);
@@ -230,6 +221,7 @@ export default function App() {
             onCopyLink={() => copyLink(platformId, selections[platformId] ?? {}, communityOpen?.platform === platformId ? communityOpen.id : undefined)}
             onBuyClick={() => { if (communityOpen) void recordBuyClick(communityOpen.id); }}
             onBrowseFeatured={() => go('community')}
+            onCompare={() => addToCompare({ kind: 'Current Build', name: openSaved?.name ?? communityOpen?.name ?? `Your ${PLATFORMS.find((p) => p.id === platformId)?.name} build`, platform: platformId, selection: { ...(selections[platformId] ?? {}) } })}
           />
         )}
         {route === 'community' && (
@@ -238,6 +230,7 @@ export default function App() {
             onOpenStarter={(fb) => openInBuilder(fb.platform.id, fb.selection)}
             onSave={(name, pid, sel) => saveCopy(name, pid, sel)}
             onCopyLink={(b) => copyLink(b.platform, selectionFromParts(b.platform, b.parts), b.id)}
+            onCompare={(item) => addToCompare(item)}
             onStart={() => go('build')}
             onToast={setToast}
           />
@@ -256,8 +249,19 @@ export default function App() {
             onDuplicate={(s) => setSaved((list) => [{ ...s, id: newId(), name: `${s.name} (copy)`, savedAt: new Date().toISOString() }, ...list])}
             onDelete={(id) => { setSaved((list) => list.filter((s) => s.id !== id)); if (id === openSavedId) setOpenSavedId(null); }}
             onCopyLink={(s) => copyLink(s.platform, s.selection)}
+            onCompare={(s) => addToCompare({ kind: 'My Builds', name: s.name, platform: s.platform, selection: s.selection })}
+            onCompareAll={() => go('compare')}
             onStart={() => go('build')}
             onBrowse={() => go('community')}
+          />
+        )}
+        {route === 'compare' && (
+          <ComparePage
+            items={compare}
+            onSet={(i, item) => setCompare((list) => list.map((x, k) => (k === i ? item : x)))}
+            saved={saved}
+            current={partIds(selections[platformId] ?? {}).length || ownsAny(selections[platformId] ?? {}) ? { platform: platformId, selection: selections[platformId] ?? {}, name: openSaved?.name } : null}
+            onOpen={(item) => openInBuilder(item.platform, item.selection)}
           />
         )}
       </main>
@@ -432,12 +436,14 @@ function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string) => void;
 
 /* ================================================================== builder */
 
-function BuilderPage({ platformId, setPlatformId, selection, setSelection, openSaved, communityOpen, onSave, onShare, onCopyLink, onBuyClick, onBrowseFeatured }: {
+function BuilderPage({ platformId, setPlatformId, selection, setSelection, openSaved, communityOpen, onSave, onShare, onCopyLink, onBuyClick, onBrowseFeatured, onCompare }: {
   platformId: string; setPlatformId: (id: string) => void; selection: Selection; setSelection: (s: Selection) => void;
   openSaved: SavedBuild | null; communityOpen: CommunityBuild | null; onSave: (name: string, asNew: boolean) => void;
   onShare: (name: string, note: string) => Promise<void>; onCopyLink: () => void; onBuyClick: () => void; onBrowseFeatured: () => void;
+  onCompare: () => void;
 }) {
   const [openSlot, setOpenSlot] = useState<string | null>(null);
+  const [finding, setFinding] = useState(false);
   const [hover, setHover] = useState<string | null>(null);
   const [zoom, setZoom] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -453,16 +459,36 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
   const scene = sceneFor(platform, build, place);
   const mounts = platform.family === 'Rifle' ? mountsFor(build, place, railLength(build, platform.id === 'ar10')) : {};
   const setMount = (slot: string, side: Side, at: number) => setSelection({ ...selection, ['@' + slot]: encodeMount(side, at) });
-  const status = buildStatus(platform, build, issues);
-  const total = totalOf(platform, build);
-  const chosen = platform.slots.filter((s) => build[s.id]).length;
+  const owned = ownedOf(selection);
+  const status = buildStatus(platform, build, issues, owned.other);
+  const total = totalOf(platform, build, owned.owned);
+  const ownsSome = owned.owned.size + owned.other.size > 0;
+  const chosen = platform.slots.filter((s) => build[s.id] || owned.other.has(s.id)).length;
   const rifle = platform.family === 'Rifle';
   const weight = buildWeight(platform, build);
   const weightTitle = `Unloaded, as built (not counting the case or holster). ${weight.estimated ? `${weight.estimated} of ${weight.counted} part weights are estimates.` : 'All part weights are listed figures.'}`;
   const openSlotObj = platform.slots.find((s) => s.id === openSlot);
 
-  const choose = (slot: string, partId: string) => { setSelection({ ...selection, [slot]: partId }); setOpenSlot(null); };
-  const remove = (slot: string) => { const next = { ...selection }; delete next[slot]; delete next['@' + slot]; setSelection(next); };
+  /** Puts a part in its slot; `own` marks it as one the builder already has. */
+  const choose = (slot: string, partId: string, own = false) => {
+    const next = { ...selection, [slot]: partId };
+    if (own) next['+' + slot] = 'own'; else delete next['+' + slot];
+    setSelection(next);
+    setOpenSlot(null);
+  };
+  const remove = (slot: string) => { const next = { ...selection }; delete next[slot]; delete next['@' + slot]; delete next['+' + slot]; setSelection(next); };
+  const toggleOwn = (slot: string) => {
+    const next = { ...selection };
+    if (next['+' + slot]) delete next['+' + slot]; else next['+' + slot] = 'own';
+    setSelection(next);
+  };
+  /** Fills a slot with the builder's own part that isn't in our catalog. */
+  const ownOther = (slot: string) => {
+    const next = { ...selection, ['+' + slot]: 'other' };
+    delete next[slot]; delete next['@' + slot];
+    setSelection(next);
+    setOpenSlot(null);
+  };
 
   return (
     <>
@@ -486,6 +512,7 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
                 </button>
               ))}
               <button className="chip" onClick={onBrowseFeatured}>Community Builds</button>
+              <button className="chip chip-own" onClick={() => setFinding(true)}>Parts I Own</button>
               {chosen > 0 && <button className="chip chip-clear" onClick={() => { setSelection({}); setOpenSlot(null); }}>Clear Build</button>}
             </div>
             <figure className="blueprint">
@@ -509,21 +536,22 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
                 <div><span>Parts</span><b>{chosen} of {platform.slots.length}</b></div>
                 <div><span>Status</span><b className={'tb-' + status.cls}>{status.text}</b></div>
                 <div><span>Weight</span><b title={weightTitle}>{chosen ? `${weight.estimated ? '≈ ' : ''}${formatWeight(weight.oz, rifle)}` : '—'}</b></div>
-                <div><span>Total</span><b>{money(total)}</b></div>
+                <div><span>{ownsSome ? 'To Buy' : 'Total'}</span><b>{money(total)}</b></div>
               </figcaption>
             </figure>
             <p className="hint">{zoom ? 'Zoomed in. Swipe the drawing sideways to see the rest, or tap a part to change it. ' : ''}{chosen === 0 ? 'Blank build. Pick parts from the list or click any part on the drawing, or start from a ready-made build above.' : Object.keys(mounts).length ? 'Select any part to change it. Drag a light, laser or grip along the rail to move it; pick its side in the parts list. Parts on the left side show as dashed lines.' : 'Select any part on the drawing or in the list to change it. The drawing updates with every part you choose.'}</p>
           </div>
           <PartsList platform={platform} build={build} issues={issues} states={states} hover={hover} onHover={setHover} onOpen={setOpenSlot} onRemove={remove}
-            mounts={mounts} onMount={setMount} />
+            mounts={mounts} onMount={setMount} owned={owned} onToggleOwn={toggleOwn} />
           <Summary
             platform={platform} build={build} issues={issues} aware={awarenessFor(platform, build)} states={states} status={status} total={total}
-            openSaved={openSaved} onSave={onSave} onShare={onShare} onCopyLink={onCopyLink} onOpen={setOpenSlot}
+            owned={owned} openSaved={openSaved} onSave={onSave} onShare={onShare} onCopyLink={onCopyLink} onOpen={setOpenSlot} onCompare={onCompare}
+            onFindOwned={() => setFinding(true)}
           />
         </div>
       </div>
 
-      <Dock total={total} status={status} />
+      <Dock total={total} status={status} toBuy={ownsSome} />
 
       {openSlotObj && (
         <Picker
@@ -534,11 +562,22 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
           build={build}
           place={place}
           selectedId={build[openSlotObj.id]?.id}
-          onChoose={(id) => choose(openSlotObj.id, id)}
+          ownsSelected={owned.owned.has(openSlotObj.id)}
+          onChoose={(id, own) => choose(openSlotObj.id, id, own)}
+          onToggleOwn={() => toggleOwn(openSlotObj.id)}
+          onOwnOther={() => ownOther(openSlotObj.id)}
           onRemove={build[openSlotObj.id] && !openSlotObj.required ? () => { remove(openSlotObj.id); setOpenSlot(null); } : undefined}
           onClose={() => setOpenSlot(null)}
           onBuyClick={onBuyClick}
         />
+      )}
+
+      {finding && (
+        <OwnedFinder platform={platform} build={build} owned={owned}
+          onOwn={(part) => choose(part.slot, part.id, true)}
+          onOwnOther={ownOther}
+          onSwitch={(id) => { setPlatformId(id); setOpenSlot(null); }}
+          onClose={() => setFinding(false)} />
       )}
     </>
   );
@@ -555,10 +594,11 @@ function FitTag({ state }: { state: RegionState }) {
   return <span className={'fit-tag ' + state}>{text}</span>;
 }
 
-function PartsList({ platform, build, issues, states, hover, onHover, onOpen, onRemove, mounts, onMount }: {
+function PartsList({ platform, build, issues, states, hover, onHover, onOpen, onRemove, mounts, onMount, owned, onToggleOwn }: {
   platform: Platform; build: Build; issues: Issue[]; states: Record<string, RegionState>; hover: string | null;
   onHover: (s: string | null) => void; onOpen: (s: string) => void; onRemove: (s: string) => void;
   mounts: Record<string, Resolved>; onMount: (slot: string, side: Side, at: number) => void;
+  owned: Owned; onToggleOwn: (s: string) => void;
 }) {
   return (
     <section className="card parts" aria-label="Parts list">
@@ -572,26 +612,38 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
             {slots.map((slot) => {
               const part = build[slot.id];
               const offer = part && bestOffer(part);
+              const own = owned.owned.has(slot.id);
+              const other = owned.other.has(slot.id);
               const rowIssues = issues.filter((i) => i.severity === 'info' ? i.slots[0] === slot.id : i.slots.includes(slot.id));
               return (
-                <li key={slot.id} className={'part-row ' + states[slot.id] + (hover === slot.id ? ' hover' : '')}
+                <li key={slot.id} className={'part-row ' + (other ? 'other' : states[slot.id]) + (own ? ' owned' : '') + (hover === slot.id ? ' hover' : '')}
                   onMouseEnter={() => onHover(slot.id)} onMouseLeave={() => onHover(null)}>
                   <span className="part-no">{platform.slots.indexOf(slot) + 1}</span>
                   <button className="part-main" onClick={() => onOpen(slot.id)} aria-label={`${slot.name}: ${part ? `${part.brand} ${part.name}. Change` : 'choose a part'}`}>
                     <span className="part-slot">{slot.name}{!slot.required && <span className="opt">Optional</span>}</span>
                     {part ? (
                       <span className="part-name"><span className="brand-dim">{part.brand}</span> {part.name}{part.serialized && <span className="ffl" title="Serialized: ships to an FFL">FFL</span>}</span>
+                    ) : other ? (
+                      <span className="part-name">Your own {slot.name.toLowerCase()} <span className="brand-dim">(not in our list, so its fit isn't checked)</span></span>
                     ) : (
                       <span className="part-name choose">{slot.required ? `Choose a ${slot.name.toLowerCase()}` : 'Add one'} →</span>
                     )}
                     {rowIssues.map((i, k) => <span key={k} className={'row-issue ' + i.severity}>{i.message}</span>)}
                   </button>
                   <span className="part-price">
-                    {offer ? <><span className="amt">{money(offer.price)}</span><span className="src">{RETAILERS[offer.retailer].name}</span>{part && <ChangeChip part={part} />}</> : <span className="amt dim">—</span>}
+                    {other ? <span className="src owned-note">You Own It</span>
+                      : own && offer ? <><s className="amt dim">{money(offer.price)}</s><span className="src owned-note">You Own It</span></>
+                      : offer ? <><span className="amt">{money(offer.price)}</span><span className="src">{RETAILERS[offer.retailer].name}</span>{part && <ChangeChip part={part} />}</> : <span className="amt dim">—</span>}
+                    {part && (
+                      <button className={'own-btn' + (own ? ' on' : '')} aria-pressed={own} onClick={() => onToggleOwn(slot.id)}
+                        title={own ? "Count this part's price in the total again" : 'Already have this part? It stays in the fit checks but leaves the total.'}>
+                        {own ? '✓ Owned' : 'I Own This'}
+                      </button>
+                    )}
                   </span>
                   <span className="part-fit">
-                    <FitTag state={states[slot.id]} />
-                    {part && !slot.required && <button className="x" onClick={() => onRemove(slot.id)} aria-label={`Remove ${slot.name}`} title="Remove">×</button>}
+                    {other ? <span className="fit-tag empty">Not Checked</span> : <FitTag state={states[slot.id]} />}
+                    {(part || other) && !slot.required && <button className="x" onClick={() => onRemove(slot.id)} aria-label={`Remove ${slot.name}`} title="Remove">×</button>}
                   </span>
                   {mounts[slot.id] && <MountControl slot={slot} m={mounts[slot.id]} onMount={(side, at) => onMount(slot.id, side, at)} />}
                 </li>
@@ -650,10 +702,10 @@ function MountControl({ slot, m, onMount }: { slot: Slot; m: Resolved; onMount: 
   );
 }
 
-function Summary({ platform, build, issues, aware, states, status, total, openSaved, onSave, onShare, onCopyLink, onOpen }: {
+function Summary({ platform, build, issues, aware, states, status, total, owned, openSaved, onSave, onShare, onCopyLink, onOpen, onCompare, onFindOwned }: {
   platform: Platform; build: Build; issues: Issue[]; aware: Aware[]; states: Record<string, RegionState>; status: { cls: string; text: string }; total: number;
-  openSaved: SavedBuild | null; onSave: (name: string, asNew: boolean) => void; onShare: (name: string, note: string) => Promise<void>;
-  onCopyLink: () => void; onOpen: (s: string) => void;
+  owned: Owned; openSaved: SavedBuild | null; onSave: (name: string, asNew: boolean) => void; onShare: (name: string, note: string) => Promise<void>;
+  onCopyLink: () => void; onOpen: (s: string) => void; onCompare: () => void; onFindOwned: () => void;
 }) {
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState('');
@@ -661,8 +713,13 @@ function Summary({ platform, build, issues, aware, states, status, total, openSa
   const [note, setNote] = useState('');
   const [shareError, setShareError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const canShare = status.cls === 'ok';
-  const chosen = platform.slots.map((s) => build[s.id]).filter((p): p is Part => !!p);
+  // A part that isn't in our catalog can't go on the Community page, where every part has to be checkable.
+  const canShare = status.cls === 'ok' && owned.other.size === 0;
+  const all = platform.slots.map((s) => build[s.id]).filter((p): p is Part => !!p);
+  const chosen = all.filter((p) => !owned.owned.has(p.slot));
+  const ownedParts = all.filter((p) => owned.owned.has(p.slot));
+  const ownedCount = ownedParts.length + owned.other.size;
+  const ownedWorth = ownedParts.reduce((sum, p) => sum + (bestOffer(p)?.price ?? 0), 0);
   const highest = chosen.reduce((sum, p) => sum + priceRange(p)[1], 0);
   const retailers = new Set(chosen.map((p) => bestOffer(p)?.retailer)).size;
   const carts = singleRetailerCarts(chosen).slice(0, 4);
@@ -680,13 +737,18 @@ function Summary({ platform, build, issues, aware, states, status, total, openSa
   return (
     <aside className="summary" id="summary" aria-label="Build summary">
       <section className="card total-card">
-        <p className="kicker">Build Total at Best Prices</p>
+        <p className="kicker">{ownedCount ? 'Left to Buy at Best Prices' : 'Build Total at Best Prices'}</p>
         <p className="total"><span>{dollars}</span><small>.{cents}</small></p>
         <p className="total-sub">
-          {chosen.length} parts from {retailers} retailer{retailers === 1 ? '' : 's'}
+          {chosen.length} part{chosen.length === 1 ? '' : 's'}{ownedCount ? ' to buy' : ''} from {retailers} retailer{retailers === 1 ? '' : 's'}
           {highest > total && <> · {money(highest - total)} below the highest prices</>}
         </p>
-        {chosen.length > 0 && <WeightLine platform={platform} build={build} />}
+        {ownedCount > 0 && (
+          <p className="owned-line">
+            You already own {ownedCount} part{ownedCount === 1 ? '' : 's'}{ownedWorth > 0 && <>, about {money(ownedWorth)} at today's prices</>}. {ownedCount === 1 ? "It's" : "They're"} left out of the total but still checked for fit{owned.other.size ? ', except parts that aren\'t in our list' : ''}.
+          </p>
+        )}
+        {all.length > 0 && <WeightLine platform={platform} build={build} />}
         <div className="segments" aria-hidden="true">
           {platform.slots.map((s) => (
             <button key={s.id} tabIndex={-1} className={'seg ' + states[s.id] + (s.required ? '' : ' optional')} title={s.name} onClick={() => onOpen(s.id)} />
@@ -726,9 +788,11 @@ function Summary({ platform, build, issues, aware, states, status, total, openSa
             <button className="btn primary" onClick={startSave}>{openSaved ? 'Save Changes' : 'Save Build'}</button>
             <button className="btn" onClick={onCopyLink}>Copy Link</button>
             <button className="btn wide-row" onClick={startShare} disabled={!canShare}
-              title={canShare ? 'Post this build to the Community page' : 'Finish the build and fix any conflicts to share it'}>
+              title={canShare ? 'Post this build to the Community page' : owned.other.size ? 'Choose a listed part for every slot to share it' : 'Finish the build and fix any conflicts to share it'}>
               Share to Community
             </button>
+            <button className="btn ghost" onClick={onCompare} disabled={all.length === 0 && owned.other.size === 0}>Compare</button>
+            <button className="btn ghost" onClick={onFindOwned}>Parts I Own</button>
           </div>
         )}
       </section>
@@ -784,11 +848,11 @@ function Summary({ platform, build, issues, aware, states, status, total, openSa
   );
 }
 
-function Dock({ total, status }: { total: number; status: { cls: string; text: string } }) {
+function Dock({ total, status, toBuy }: { total: number; status: { cls: string; text: string }; toBuy: boolean }) {
   return (
     <div className="dock" role="region" aria-label="Build total">
       <div>
-        <div className="dock-total">{money(total)}</div>
+        <div className="dock-total">{money(total)}{toBuy && <small> to buy</small>}</div>
         <p className={'status ' + status.cls}>{status.text}</p>
       </div>
       <button className="btn" onClick={() => document.getElementById('summary')?.scrollIntoView({ behavior: 'smooth' })}>Summary</button>
@@ -800,9 +864,9 @@ function Dock({ total, status }: { total: number; status: { cls: string; text: s
 
 type SortKey = 'fit' | 'price' | 'picks';
 
-function Picker({ platform, slot, number, build, place, selectedId, onChoose, onRemove, onClose, onBuyClick }: {
-  platform: Platform; slot: Slot; number: number; build: Build; place: Placement; selectedId?: string;
-  onChoose: (id: string) => void; onRemove?: () => void; onClose: () => void; onBuyClick: () => void;
+function Picker({ platform, slot, number, build, place, selectedId, ownsSelected, onChoose, onToggleOwn, onOwnOther, onRemove, onClose, onBuyClick }: {
+  platform: Platform; slot: Slot; number: number; build: Build; place: Placement; selectedId?: string; ownsSelected: boolean;
+  onChoose: (id: string, own: boolean) => void; onToggleOwn: () => void; onOwnOther: () => void; onRemove?: () => void; onClose: () => void; onBuyClick: () => void;
 }) {
   const [sort, setSort] = useState<SortKey>('fit');
   const [hideConflicts, setHideConflicts] = useState(false);
@@ -860,18 +924,24 @@ function Picker({ platform, slot, number, build, place, selectedId, onChoose, on
         </div>
         <ul className="cands">
           {candidates.map((c) => (
-            <Candidate key={c.part.id} part={c.part} issues={c.issues} sev={c.sev} selected={c.part.id === selectedId} onChoose={() => onChoose(c.part.id)} onBuyClick={onBuyClick} />
+            <Candidate key={c.part.id} part={c.part} issues={c.issues} sev={c.sev} selected={c.part.id === selectedId} owned={c.part.id === selectedId && ownsSelected}
+              onChoose={(own) => (c.part.id === selectedId ? onToggleOwn() : onChoose(c.part.id, own))} onBuyClick={onBuyClick} />
           ))}
           {candidates.length === 0 && <li className="cand-empty">Every option conflicts with your current build. Turn off the filter to see why.</li>}
         </ul>
+        <div className="own-other">
+          <p>Already have a {slot.name.toLowerCase()} that isn't listed here?</p>
+          <button className="btn" onClick={onOwnOther}>Use My Own {titleCase(slot.name)}</button>
+          <p className="dim">It's left out of the total. We can't check its fit, so double-check it with the maker.</p>
+        </div>
         {onRemove && <button className="btn ghost wide" onClick={onRemove}>Remove {titleCase(slot.name)} from Build</button>}
       </aside>
     </div>
   );
 }
 
-function Candidate({ part, issues, sev, selected, onChoose, onBuyClick }: {
-  part: Part; issues: Issue[]; sev: Severity | 'ok'; selected: boolean; onChoose: () => void; onBuyClick: () => void;
+function Candidate({ part, issues, sev, selected, owned, onChoose, onBuyClick }: {
+  part: Part; issues: Issue[]; sev: Severity | 'ok'; selected: boolean; owned: boolean; onChoose: (own: boolean) => void; onBuyClick: () => void;
 }) {
   const [showPrices, setShowPrices] = useState(false);
   const best = bestOffer(part);
@@ -884,7 +954,7 @@ function Candidate({ part, issues, sev, selected, onChoose, onBuyClick }: {
         <FitTag state={fit} />
         {part.pick && <span className={'pick ' + part.pick.tier}>{TIER_LABEL[part.pick.tier]} Pick</span>}
         {part.serialized && <span className="ffl">FFL</span>}
-        {selected && <span className="in-build">In Your Build</span>}
+        {selected && <span className="in-build">{owned ? 'In Your Build · You Own It' : 'In Your Build'}</span>}
       </div>
       <div className="cand-mid">
         <div className="cand-body">
@@ -897,7 +967,8 @@ function Candidate({ part, issues, sev, selected, onChoose, onBuyClick }: {
           {best && <span className="amt">{money(best.price)}</span>}
           {best && <span className="src">{RETAILERS[best.retailer].name}{live ? '' : ' · sample'}</span>}
           <ChangeChip part={part} long />
-          {!selected && <button className="btn primary" onClick={onChoose}>Add to Build</button>}
+          {!selected && <button className="btn primary" onClick={() => onChoose(false)}>Add to Build</button>}
+          <button className={'own-btn' + (owned ? ' on' : '')} aria-pressed={owned} onClick={() => onChoose(true)}>{owned ? '✓ Owned' : 'I Own This'}</button>
         </div>
       </div>
       <button className="compare" aria-expanded={showPrices} onClick={() => setShowPrices(!showPrices)}>
@@ -928,6 +999,124 @@ function Candidate({ part, issues, sev, selected, onChoose, onBuyClick }: {
   );
 }
 
+/* ------------------------------------------------------------ parts I own */
+
+/**
+ * "Parts I Own": search the catalog by what's on the box or paste a product link, then mark the part as owned.
+ * Owned parts stay in the build and its fit checks but leave the total. A part we don't list can still be
+ * marked as owned by slot; it fills the slot without a fit check.
+ */
+function OwnedFinder({ platform, build, owned, onOwn, onOwnOther, onSwitch, onClose }: {
+  platform: Platform; build: Build; owned: Owned; onOwn: (p: Part) => void; onOwnOther: (slot: string) => void;
+  onSwitch: (platformId: string) => void; onClose: () => void;
+}) {
+  const [query, setQuery] = useState('');
+  const [otherSlot, setOtherSlot] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const closeFn = useRef(onClose);
+  closeFn.current = onClose;
+  useEffect(() => {
+    inputRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeFn.current(); };
+    document.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
+  }, []);
+  const { here, elsewhere } = useMemo(() => findParts(query, platform), [query, platform]);
+  const shown = here.slice(0, 30);
+  const otherPlatforms = [...new Map(elsewhere.map((f) => [f.platform.id, f.platform])).values()];
+  const ownedList = platform.slots.filter((s) => owned.owned.has(s.id) || owned.other.has(s.id));
+  const searched = query.trim().length > 0;
+
+  return (
+    <div className="drawer-wrap">
+      <div className="scrim" onClick={onClose} />
+      <aside className="drawer finder" role="dialog" aria-modal="true" aria-labelledby="finder-title">
+        <header className="drawer-head">
+          <div>
+            <p className="kicker">{platform.name}</p>
+            <h2 id="finder-title">Parts I Own</h2>
+            <p className="drawer-hint">Upgrading a gun you already have? Find each part you own and we'll leave it out of the total. It still counts in every fit check.</p>
+          </div>
+          <button className="icon-btn" onClick={onClose} aria-label="Close">×</button>
+        </header>
+        <label className="finder-search">
+          <span className="sr">Search parts</span>
+          <input ref={inputRef} type="search" value={query} onChange={(e) => setQuery(e.target.value)}
+            placeholder="Brand, model, part number, or paste a product link" autoComplete="off" />
+        </label>
+        <p className="finder-tip">Try "Glock Gen3 slide", "Holosun 507", "Magpul MOE" or paste the link from the store where you bought it.</p>
+
+        {searched ? (
+          <ul className="finder-results">
+            {shown.map((f) => <FoundRow key={f.part.id} f={f} build={build} owned={owned} onOwn={onOwn} />)}
+            {here.length > shown.length && <li className="dim finder-more">{here.length - shown.length} more. Add a word to narrow it down.</li>}
+            {here.length === 0 && (
+              <li className="finder-empty">
+                {isLink(query)
+                  ? otherPlatforms.length ? <>That link is for a part we list on another build, not the {platform.name}.</> : <>We don't track that product page yet. Search by the part's name instead, or use "Not in Our List" below.</>
+                  : <>No {platform.name} parts match "{query.trim()}".</>}
+                {otherPlatforms.length > 0 && (
+                  <span className="finder-elsewhere">
+                    {isLink(query) ? 'It goes with the ' : 'It matches parts for '}{otherPlatforms.map((p, i) => (
+                      <span key={p.id}>{i > 0 && (i === otherPlatforms.length - 1 ? ' and ' : ', ')}<button className="link" onClick={() => onSwitch(p.id)}>{p.name}</button></span>
+                    ))}. Switch to that build to mark it.
+                  </span>
+                )}
+              </li>
+            )}
+          </ul>
+        ) : ownedList.length > 0 && (
+          <section className="finder-owned">
+            <h3 className="card-title">Marked as Owned</h3>
+            <ul>
+              {ownedList.map((s) => <li key={s.id}><span className="part-slot">{s.name}</span> {build[s.id] ? <><span className="brand-dim">{build[s.id]!.brand}</span> {build[s.id]!.name}</> : 'Your own part (not in our list)'}</li>)}
+            </ul>
+          </section>
+        )}
+
+        <section className="own-other">
+          <h3 className="card-title">Not in Our List?</h3>
+          <p>Pick the part type and we'll count it as one you own. We can't check its fit, so double-check it with the maker.</p>
+          <div className="own-other-row">
+            <label className="sr" htmlFor="own-other-slot">Part type</label>
+            <select id="own-other-slot" value={otherSlot} onChange={(e) => setOtherSlot(e.target.value)}>
+              <option value="">Choose a part type</option>
+              {platform.slots.map((s) => <option key={s.id} value={s.id}>{titleCase(s.name)}</option>)}
+            </select>
+            <button className="btn" disabled={!otherSlot} onClick={() => { onOwnOther(otherSlot); setOtherSlot(''); }}>Mark as Owned</button>
+          </div>
+        </section>
+        <button className="btn primary wide" onClick={onClose}>Done</button>
+      </aside>
+    </div>
+  );
+}
+
+function FoundRow({ f, build, owned, onOwn }: { f: Found; build: Build; owned: Owned; onOwn: (p: Part) => void }) {
+  const { part, platform } = f;
+  const slot = platform.slots.find((s) => s.id === part.slot)!;
+  const inBuild = build[part.slot]?.id === part.id;
+  const isOwned = inBuild && owned.owned.has(part.slot);
+  const replaces = !inBuild && build[part.slot];
+  const best = bestOffer(part);
+  return (
+    <li className={'found' + (isOwned ? ' on' : '')}>
+      <div className="found-body">
+        <span className="part-slot">{slot.name}{f.byLink && <span className="opt">Exact Match</span>}</span>
+        <span className="part-name"><span className="brand-dim">{part.brand}</span> {part.name}</span>
+        <span className="found-specs">{part.specs.join(' · ')}{part.mpn ? ` · Part # ${part.mpn}` : ''}</span>
+        {replaces && <span className="row-issue">Replaces the {replaces.brand} {replaces.name} in your build.</span>}
+      </div>
+      <div className="found-act">
+        {best && <span className="src">{money(best.price)} new</span>}
+        {isOwned ? <span className="own-btn on">✓ Owned</span> : <button className="btn primary" onClick={() => onOwn(part)}>I Own This</button>}
+      </div>
+    </li>
+  );
+}
+
 /* ================================================================ cards */
 
 function BuildCard({ platformId, selection, badge, title, meta, body, actions, className }: {
@@ -935,7 +1124,9 @@ function BuildCard({ platformId, selection, badge, title, meta, body, actions, c
 }) {
   const { platform, build, place } = buildOf(platformId, selection);
   const { issues, states } = statesFor(platform, build, place);
-  const status = buildStatus(platform, build, issues);
+  const owned = ownedOf(selection);
+  const status = buildStatus(platform, build, issues, owned.other);
+  const ownsSome = owned.owned.size + owned.other.size > 0;
   return (
     <article className={'build-card card' + (className ? ' ' + className : '')}>
       <div className="thumb">
@@ -947,7 +1138,7 @@ function BuildCard({ platformId, selection, badge, title, meta, body, actions, c
         <p className="meta">{meta}</p>
         {body}
         <div className="build-card-foot">
-          <span className="amt big">{money(totalOf(platform, build))}</span>
+          <span className="amt big">{money(totalOf(platform, build, owned.owned))}{ownsSome && <small className="to-buy"> to buy</small>}</span>
           <span className={'status small ' + status.cls}>{status.text}</span>
         </div>
         <div className="build-card-actions">{actions}</div>
@@ -963,9 +1154,9 @@ function topParts(build: Build) {
 
 const SORT_LABEL: [CommunitySort, string][] = [['top', 'Top Voted'], ['new', 'Newest'], ['bought', 'Most Bought']];
 
-function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onStart, onToast }: {
+function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onCompare, onStart, onToast }: {
   onOpen: (b: CommunityBuild) => void; onOpenStarter: (fb: FeaturedBuild) => void; onCopyLink: (b: CommunityBuild) => void;
-  onSave: (name: string, platform: string, sel: Selection) => void; onStart: () => void; onToast: (t: string) => void;
+  onSave: (name: string, platform: string, sel: Selection) => void; onCompare: (item: CompareItem) => void; onStart: () => void; onToast: (t: string) => void;
 }) {
   const [filter, setFilter] = useState<string>('all');
   const [sort, setSort] = useState<CommunitySort>('top');
@@ -1043,6 +1234,7 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onStart, onT
             <button className="btn primary" onClick={() => onOpen(b)}>Open in Builder</button>
             <button className="btn ghost" onClick={() => onSave(b.name, b.platform, sel)}>Save</button>
             <button className="btn ghost" onClick={() => onCopyLink(b)}>Copy Link</button>
+            <button className="btn ghost" onClick={() => onCompare({ kind: 'Community', name: b.name, platform: b.platform, selection: sel })}>Compare</button>
             <button className="btn ghost" onClick={() => setConfirmReport(b.id)}>Report</button>
           </>
         )}
@@ -1115,6 +1307,7 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onStart, onT
                 actions={<>
                   <button className="btn primary" onClick={() => onOpenStarter(fb)}>Open in Builder</button>
                   <button className="btn" onClick={() => onSave(fb.name, fb.platform.id, fb.selection)}>Save</button>
+                  <button className="btn ghost" onClick={() => onCompare({ kind: 'Starter Build', name: fb.name, platform: fb.platform.id, selection: fb.selection })}>Compare</button>
                 </>}
               />
             );
@@ -1192,10 +1385,10 @@ function PriceSinceSaved({ s }: { s: SavedBuild }) {
   );
 }
 
-function SavedPage({ saved, alerts, onOpen, onRename, onDuplicate, onDelete, onCopyLink, onStart, onBrowse }: {
+function SavedPage({ saved, alerts, onOpen, onRename, onDuplicate, onDelete, onCopyLink, onCompare, onCompareAll, onStart, onBrowse }: {
   saved: SavedBuild[]; alerts: ReactNode; onOpen: (s: SavedBuild) => void; onRename: (id: string, name: string) => void;
   onDuplicate: (s: SavedBuild) => void; onDelete: (id: string) => void; onCopyLink: (s: SavedBuild) => void;
-  onStart: () => void; onBrowse: () => void;
+  onCompare: (s: SavedBuild) => void; onCompareAll: () => void; onStart: () => void; onBrowse: () => void;
 }) {
   const [renaming, setRenaming] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
@@ -1206,6 +1399,7 @@ function SavedPage({ saved, alerts, onOpen, onRename, onDuplicate, onDelete, onC
         <p className="kicker">My Builds</p>
         <h1>Your Saved Builds</h1>
         <p className="lede">Builds are saved in this browser. We check prices every night, and each build shows what changed since you saved it. Use Copy Link to open one on another device or send it to someone.</p>
+        {saved.length > 0 && <button className="btn" onClick={onCompareAll}>Compare Two Builds</button>}
       </div>
       {alerts}
       {saved.length === 0 ? (
@@ -1233,7 +1427,7 @@ function SavedPage({ saved, alerts, onOpen, onRename, onDuplicate, onDelete, onC
                     <button className="btn primary" type="submit">Save</button>
                   </form>
                 ) : s.name}
-                meta={<>{platform.name} · {partIds(s.selection).length} parts · Saved {shortDate(s.savedAt, true)}</>}
+                meta={<>{platform.name} · {partIds(s.selection).length} parts{ownsAny(s.selection) ? ` (${ownedOf(s.selection).owned.size + ownedOf(s.selection).other.size} owned)` : ''} · Saved {shortDate(s.savedAt, true)}</>}
                 body={<PriceSinceSaved s={s} />}
                 actions={confirmDelete === s.id ? (
                   <>
@@ -1246,6 +1440,7 @@ function SavedPage({ saved, alerts, onOpen, onRename, onDuplicate, onDelete, onC
                     <button className="btn primary" onClick={() => onOpen(s)}>Open</button>
                     <button className="btn" onClick={() => onCopyLink(s)}>Copy Link</button>
                     <button className="btn ghost" onClick={() => { setRenaming(s.id); setDraft(s.name); }}>Rename</button>
+                    <button className="btn ghost" onClick={() => onCompare(s)}>Compare</button>
                     <button className="btn ghost" onClick={() => onDuplicate(s)}>Duplicate</button>
                     <button className="btn ghost" onClick={() => setConfirmDelete(s.id)}>Delete</button>
                   </>

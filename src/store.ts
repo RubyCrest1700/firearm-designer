@@ -1,6 +1,6 @@
 import { SHARE_BASE } from './config';
 import { PLATFORMS } from './data';
-import { MOUNT_CODE, bestOffer, placementOf, presetSelection, selectionTokens, toBuild, type Selection } from './engine';
+import { MOUNT_CODE, bestOffer, ownedOf, placementOf, presetSelection, selectionTokens, toBuild, type Selection } from './engine';
 import { worthShowing } from './data/history';
 import type { Build, Part, Platform, Tier } from './types';
 
@@ -43,22 +43,24 @@ export function storeSavedBuilds(list: SavedBuild[]) {
  */
 export function priceSnapshot(platformId: string, sel: Selection, keep: Record<string, number> = {}) {
   const { build } = buildOf(platformId, sel);
+  const { owned } = ownedOf(sel);
   const out: Record<string, number> = {};
   for (const part of Object.values(build)) {
-    const price = part && bestOffer(part)?.price;
-    if (part && price !== undefined) out[part.id] = keep[part.id] ?? price;
+    const price = part && !owned.has(part.slot) && bestOffer(part)?.price;
+    if (part && typeof price === 'number') out[part.id] = keep[part.id] ?? price;
   }
   return out;
 }
 
 export interface PriceChange { part: Part; was: number; now: number }
 
-/** Parts in a saved build whose best price moved since it was saved, biggest drop first, and the net change. */
+/** Parts still to buy in a saved build whose best price moved since it was saved, biggest drop first, and the net change. */
 export function priceChanges(s: SavedBuild): { changes: PriceChange[]; drop: number } {
   const { build } = buildOf(s.platform, s.selection);
+  const { owned } = ownedOf(s.selection);
   const changes: PriceChange[] = [];
   for (const part of Object.values(build)) {
-    const was = part && s.prices?.[part.id];
+    const was = part && !owned.has(part.slot) ? s.prices?.[part.id] : undefined;
     const now = part && bestOffer(part)?.price;
     if (part && was !== undefined && now !== undefined && Math.abs(was - now) >= 0.01) changes.push({ part, was, now });
   }
@@ -117,8 +119,19 @@ export function selectionFromParts(platformId: string, ids: string[]): Selection
       if (MOUNT_CODE.test(at[2]) && platform?.slots.some((s) => s.id === at[1])) selection['@' + at[1]] = at[2];
       continue;
     }
+    const own = id.match(/^(own|has)-([a-z]+)$/);
+    if (own) {
+      if (platform?.slots.some((s) => s.id === own[2])) selection['+' + own[2]] = own[1] === 'has' ? 'other' : 'own';
+      continue;
+    }
     const part = platform?.parts.find((p) => p.id === id);
     if (part) selection[part.slot] = part.id;
+  }
+  // Drop owned marks that don't match the slot: `own` needs a part, `other` stands in for one.
+  for (const k of Object.keys(selection)) {
+    if (!k.startsWith('+')) continue;
+    const filled = !!selection[k.slice(1)];
+    if ((selection[k] === 'own') !== filled) delete selection[k];
   }
   return selection;
 }
@@ -156,8 +169,9 @@ export const FEATURED: FeaturedBuild[] = PLATFORMS.flatMap((p) =>
 
 /* ----------------------------------------------------------------- build facts */
 
-export function totalOf(platform: Platform, build: Build) {
-  return platform.slots.reduce((sum, s) => sum + (build[s.id] ? bestOffer(build[s.id]!)?.price ?? 0 : 0), 0);
+/** Best-price total of the build's parts, leaving out slots in `skip` (the parts the builder already owns). */
+export function totalOf(platform: Platform, build: Build, skip?: Set<string>) {
+  return platform.slots.reduce((sum, s) => sum + (build[s.id] && !skip?.has(s.id) ? bestOffer(build[s.id]!)?.price ?? 0 : 0), 0);
 }
 
 export function buildOf(platformId: string, sel: Selection) {
