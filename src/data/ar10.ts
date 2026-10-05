@@ -10,6 +10,8 @@ import { rifleAddonParts, rifleAddonRules, rifleAddonSlots } from './addons';
 const PORT_DISTANCE: Record<string, number> = { carbine: 7.5, midlength: 9.5, rifle: 12.5 };
 const PATTERN_LABEL: Record<string, string> = { 'dpms-high': 'DPMS high-profile', 'dpms-low': 'DPMS low-profile', armalite: 'Armalite' };
 const family = (p: unknown) => (String(p).startsWith('dpms') ? 'DPMS' : 'Armalite');
+/** 'an Armalite', 'a DPMS'. */
+const article = (w: string) => (/^[AEIOU]/.test(w) ? 'an' : 'a');
 /**
  * DPMS and Armalite differ in barrel nut thread (DPMS 1-7/16"-16, Armalite 1-7/16"-18), barrel extension,
  * bolt carrier and gas tube length, so none of those cross over. Source:
@@ -193,7 +195,7 @@ function rules(b: Build, place: Placement = {}): Issue[] {
     });
   }
   if (lower && lpk && lpk.attrs.family !== family(lower.attrs.pattern))
-    out.push({ severity: 'error', slots: ['lower', 'lpk'], message: `A ${family(lower.attrs.pattern)}-pattern lower needs a ${family(lower.attrs.pattern)} parts kit (bolt catch and mag catch differ).` });
+    out.push({ severity: 'error', slots: ['lower', 'lpk'], message: `${article(family(lower.attrs.pattern)) === 'an' ? 'An' : 'A'} ${family(lower.attrs.pattern)}-pattern lower needs ${article(family(lower.attrs.pattern))} ${family(lower.attrs.pattern)} parts kit (bolt catch and mag catch differ).` });
   if (upper && handguard && family(handguard.attrs.pattern) !== family(upper.attrs.pattern)) {
     const u = family(upper.attrs.pattern);
     const h = family(handguard.attrs.pattern);
@@ -204,7 +206,7 @@ function rules(b: Build, place: Placement = {}): Issue[] {
     if (upper && part && part.attrs.family && part.attrs.family !== family(upper.attrs.pattern))
       out.push({ severity: 'error', slots: ['upper', slot], message: `${family(upper.attrs.pattern)} and ${part.attrs.family} patterns use a different ${what}. This part is ${part.attrs.family} pattern.${family(upper.attrs.pattern) === 'Armalite' && slot !== 'bcg' ? ' Armalite sells its barrels and gas tubes mainly as factory spares, so few are sold separately.' : ''}` });
   if (upper && charging && charging.attrs.family !== family(upper.attrs.pattern))
-    out.push({ severity: 'error', slots: ['upper', 'charging'], message: `${family(upper.attrs.pattern)} uppers need a ${family(upper.attrs.pattern)}-pattern charging handle.` });
+    out.push({ severity: 'error', slots: ['upper', 'charging'], message: `${family(upper.attrs.pattern)} uppers need ${article(family(upper.attrs.pattern))} ${family(upper.attrs.pattern)}-pattern charging handle.` });
   // DPMS and current Armalite (A-series) lowers both take SR-25 pattern magazines; only the old AR-10B used
   // modified M14 mags. Sources: https://sadefensejournal.com/armalites-ar-10a/,
   // https://armalite.com/product/ar10-tactical-rifles/ar-10-18-tactical-rifle/ (ships with a Magpul PMAG)
