@@ -7,6 +7,8 @@ Build AR-15 blueprint profiles from public US patent drawings.
       https://patents.google.com/patent/US8910406B1
   Lower receiver, A2-style grip and M4 stock (prior art): US 10,184,737 B2, FIG. 2A
       https://patents.google.com/patent/US10184737B2
+  9mm lower taking Glock magazines (AR-9):               US D782,596 S, FIG. 1
+      https://patents.google.com/patent/USD782596S1
   30-round magazine (Magpul PMAG Gen M3):                US D712,500 S, FIG. 2
       https://patents.google.com/patent/USD712500S1
   Stocks: MOE SL US D736,336 S FIG. 4; CTR US D676,921 S FIG. 3; MOE rifle US D688,768 S FIG. 3;
@@ -30,6 +32,7 @@ OUT = os.path.join(ROOT, 'src', 'data', 'arProfiles.ts')
 SRC = {
   'upper': dict(pdf='https://patentimages.storage.googleapis.com/38/95/c8/889b261042483f/US8910406.pdf', page=2, im='', blur=1.4, th=200),
   'lower': dict(pdf='https://patentimages.storage.googleapis.com/f6/8e/b1/9b09bd89ccbb32/US10184737.pdf', page=4, im='-rotate 90', blur=0, th=170),
+  'lower9': dict(pdf='https://patentimages.storage.googleapis.com/e7/06/88/10de2fc840ea6f/USD782596.pdf', page=2, im='-rotate 90', blur=0, th=170),
   'pmag': dict(pdf='https://patentimages.storage.googleapis.com/64/38/8c/37a9f9b5f75a25/USD712500.pdf', page=4, im='', blur=0, th=170),
   # Stocks, handguard and muzzle devices: turned so the butt (or the barrel end) is on the left.
   'moesl': dict(pdf='https://patentimages.storage.googleapis.com/05/ba/18/6fb61cdc29703c/USD736336.pdf', page=6, im='-rotate 90', blur=0, th=170),
@@ -51,6 +54,11 @@ UPPER_TF = dict(s=SU, px=592, py=836, x=0.05, y=0.0, rot=0)
 UP_PIN = ((694.2 - 592) / SU + 0.05, (987.9 - 836) / SU)
 SL = math.hypot(2851.2 - 1905.1, 935.0 - 950.6) / ((1786.8 - 694.2) / SU)
 LOWER_TF = dict(s=SL, px=1905.1, py=950.6, x=UP_PIN[0], y=UP_PIN[1], rot=math.degrees(math.atan2(950.6 - 935.0, 2851.2 - 1905.1)))
+# 9mm lower: its takedown pin (746.7, 1030) and pivot pin (2741.7, 1030) onto the same pin holes.
+SL9 = (2741.7 - 746.7) / ((1786.8 - 694.2) / SU)
+LOWER9_TF = dict(s=SL9, px=746.7, py=1030, x=UP_PIN[0], y=UP_PIN[1], rot=0)
+# Its magazine well, for placing the Glock magazine: the rear wall (top and bottom) and the front of the well's floor.
+MAG9 = dict(rearTop=(1967, 1087), rearBottom=(1993, 1687), floorFront=(2553, 1620))
 
 PIECES = {
   'upper': dict(src='upper', tf=UPPER_TF, k=5, open_k=5,
@@ -71,6 +79,13 @@ PIECES = {
            # The 66 leader runs down into the magazine catch button.
            [(2412, 860), (2410, 893), (2416, 943), (2413, 980), (2407, 1000), (2391, 1030), (2403, 1036), (2421, 1003),
             (2428, 980), (2431, 943), (2425, 893), (2428, 860)]]),
+  'lower9': dict(src='lower9', tf=LOWER9_TF, k=17, open_k=11, dot_max=6, merge=9, min_seg=30,
+    # The trigger guard and the two openings in the web behind it go right through.
+    holes=[(1510, 1600), (835, 1450), (1045, 1525)],
+    clip=[[(380, 530), (2850, 530), (2850, 1900), (1100, 1900), (700, 1700), (380, 1450)]],
+    # Only the outline is traced: the drawing's chamfer lines break up along the edges, so its detail is
+    # hand-placed from this figure in Blueprint.tsx (LOWER9_DETAIL).
+    erase=[[(0, 0), (3300, 0), (3300, 2600), (0, 2600)]]),
   'grip': dict(src='lower', tf=LOWER_TF, k=7, open_k=11,
     clip=[[(1700, 1103), (2072, 1103), (2072, 1300), (1950, 1720), (1520, 1720), (1520, 1520)]],
     erase=[[(1570, 1300), (1680, 1300), (1775, 1435), (1745, 1485), (1600, 1425), (1565, 1385)]]),
@@ -135,6 +150,11 @@ def piece(name, p, ink_full):
     if p.get('ink_erase'):
         clip &= ~polymask((H, W), p['ink_erase'])
     ink = ink_full & clip
+    if p.get('dot_max'):
+        # Light dot shading: drop specks smaller than the thinnest line is long.
+        n_, lab_, st_, _ = cv2.connectedComponentsWithStats(ink.astype(np.uint8), connectivity=8)
+        keep = np.maximum(st_[:, 2], st_[:, 3]) > p['dot_max']; keep[0] = False
+        ink = keep[lab_]
     u8 = ink.astype(np.uint8) * 255
     for a, b in p.get('seal', []):
         cv2.line(u8, a, b, 255, 7)
@@ -142,10 +162,15 @@ def piece(name, p, ink_full):
     ff = closed.copy()
     cv2.floodFill(ff, np.zeros((H + 2, W + 2), np.uint8), (0, 0), 128)
     sil = ff != 128
+    for seed in p.get('holes', []):
+        # Openings through the part (a trigger guard, skeletonized webs): flood each from a point inside.
+        hf = closed.copy()
+        cv2.floodFill(hf, np.zeros((H + 2, W + 2), np.uint8), seed, 128)
+        sil &= ~cv2.dilate((hf == 128).astype(np.uint8), np.ones((3, 3), np.uint8)).astype(bool)
     sil = smooth(sil, open_k=p['open_k'], blur=1.2)
     n, lab, st, _ = cv2.connectedComponentsWithStats(sil.astype(np.uint8))
     sil = lab == 1 + np.argmax(st[1:, cv2.CC_STAT_AREA])
-    cs, _ = cv2.findContours(sil.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    cs, _ = cv2.findContours(sil.astype(np.uint8), cv2.RETR_CCOMP if p.get('holes') else cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     edge = np.zeros((H, W), np.uint8)
     cv2.drawContours(edge, cs, -1, 255, 11)
     lines = ink & ~polymask((H, W), p['erase']) if p['erase'] else ink
@@ -229,6 +254,10 @@ def main():
             print(name, 'debug offset', max(0, x0_), max(0, y0_), file=sys.stderr)
         xs = outline[0][0::2]; ys = outline[0][1::2]
         print(name, 'x', min(xs), max(xs), 'y', min(ys), max(ys), len(detail), file=sys.stderr)
+    if 'lower9' in out:
+        m9 = mapper(LOWER9_TF)
+        for k, (x, y) in MAG9.items():
+            out.setdefault('marks', {})['mag9' + k[0].upper() + k[1:] + 'X'], out['marks']['mag9' + k[0].upper() + k[1:] + 'Y'] = m9(x, y)
     body = json.dumps(out, separators=(',', ':'))
     with open(OUT, 'w') as fh:
         fh.write('/* Generated by scripts/pistol-profiles/ar.py from AR-15 patent drawings. Do not edit by hand. */\n')
