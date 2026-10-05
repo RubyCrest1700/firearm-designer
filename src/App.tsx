@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { PLATFORMS, PRICES_UPDATED_AT } from './data';
-import { RETAILERS, offerUrl } from './data/retailers';
+import { RETAILERS, buyUrl } from './data/retailers';
 import {
   bestOffer, candidateIssues, encodeMount, issuesFor, money, ownedOf, ownsAny, partIds, placementOf, presetSelection, priceRange,
   selectionTokens, singleRetailerCarts, toBuild, withoutOwned, worst, type Owned, type Selection,
@@ -996,7 +996,7 @@ function Candidate({ part, issues, sev, selected, owned, onChoose, onBuyClick }:
                   <td className="num">{money(o.price)}</td>
                   <td>{o.inStock ? 'In Stock' : <span className="oos">Out</span>}</td>
                   <td className="dim">{o.checkedAt ? `Live ${shortDate(o.checkedAt)}` : 'Sample'}</td>
-                  <td className="num"><a href={o.url ?? offerUrl(o.retailer, `${part.brand} ${part.name}`)} target="_blank" rel="sponsored noopener" onClick={onBuyClick}>{o.url ? 'View ↗' : 'Search ↗'}</a></td>
+                  <td className="num"><a href={buyUrl(o, `${part.brand} ${part.name}`)} target="_blank" rel="sponsored noopener" onClick={onBuyClick}>{o.url ? 'View ↗' : 'Search ↗'}</a></td>
                 </tr>
               ))}
             </tbody>

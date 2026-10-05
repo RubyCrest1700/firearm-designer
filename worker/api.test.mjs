@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
-import { cleanText, handle } from './src/api.js';
+import { cleanText, handle, networkOf } from './src/api.js';
 
 function fakeD1() {
   const db = new DatabaseSync(':memory:');
@@ -74,16 +74,35 @@ test('counts one buy click per visitor per day', async () => {
   assert.equal(r.body.build.clicks, 1);
 });
 
-test('three reports from different visitors hide a build', async () => {
+test('reports from five different networks hide a build', async () => {
   const e = env();
   const { id } = (await share(e)).body.build;
-  await call(e, 'POST', `/api/builds/${id}/report`, null, '1.0.0.1');
-  await call(e, 'POST', `/api/builds/${id}/report`, null, '1.0.0.1');
-  await call(e, 'POST', `/api/builds/${id}/report`, null, '1.0.0.2');
+  const report = (ip) => call(e, 'POST', `/api/builds/${id}/report`, null, ip);
+  await report('1.0.0.1');
+  await report('1.0.0.1');
+  await report('1.0.0.2'); // same network as the first: counts once
+  for (const ip of ['2.0.0.1', '3.0.0.1']) await report(ip);
+  await report('2001:db8:1::5');
   assert.equal((await call(e, 'GET', '/api/builds')).body.builds.length, 1);
-  const third = await call(e, 'POST', `/api/builds/${id}/report`, null, '1.0.0.3');
-  assert.equal(third.body.hidden, true);
+  const fifth = await report('2001:db8:2::5');
+  assert.equal(fifth.body.hidden, true);
   assert.equal((await call(e, 'GET', '/api/builds')).body.builds.length, 0);
+});
+
+test('a build with more votes needs as many reports', async () => {
+  const e = env();
+  const { id } = (await share(e)).body.build;
+  for (let n = 1; n <= 7; n++) await call(e, 'POST', `/api/builds/${id}/vote`, null, `9.9.${n}.1`);
+  for (let n = 1; n <= 6; n++) await call(e, 'POST', `/api/builds/${id}/report`, null, `8.8.${n}.1`);
+  assert.equal((await call(e, 'GET', '/api/builds')).body.builds.length, 1);
+  const seventh = await call(e, 'POST', `/api/builds/${id}/report`, null, '8.8.7.1');
+  assert.equal(seventh.body.hidden, true);
+});
+
+test('groups addresses by network', () => {
+  assert.equal(networkOf('203.0.113.7'), '203.0.113');
+  assert.equal(networkOf('2001:0db8:0001:aaaa::1'), '2001:db8:1');
+  assert.equal(networkOf('2001:db8::1'), '2001:db8:0');
 });
 
 test('featured picks the most voted builds of the week', async () => {

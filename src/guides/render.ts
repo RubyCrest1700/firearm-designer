@@ -4,7 +4,7 @@
  * so a guide never says something the builder disagrees with.
  */
 import { PLATFORMS, PRICES_UPDATED_AT } from '../data';
-import { RETAILERS, offerUrl } from '../data/retailers';
+import { RETAILERS, buyUrl } from '../data/retailers';
 import { bestOffer, money, presetSelection, worst } from '../engine';
 import type { Part, Platform, Severity, Tier } from '../types';
 import { GUIDES, type AcrossChart, type FitChart, type Guide, type PairChart } from './content';
@@ -145,9 +145,9 @@ function priceHtml(part: Part) {
   const o = bestOffer(part);
   if (!o) return '';
   const store = RETAILERS[o.retailer]?.name ?? o.retailer;
-  const href = o.url ?? offerUrl(o.retailer, `${part.brand} ${part.name}`);
+  const href = buyUrl(o, `${part.brand} ${part.name}`);
   const when = o.checkedAt ? `checked ${shortDate(o.checkedAt)}` : 'sample price';
-  return `<p class="price"><b>${money(o.price)}</b> at <a href="${esc(href)}" rel="nofollow noopener" target="_blank">${esc(store)}</a> <span class="muted">(${when})</span></p>`;
+  return `<p class="price"><b>${money(o.price)}</b> at <a href="${esc(href)}" rel="sponsored nofollow noopener" target="_blank">${esc(store)}</a> <span class="muted">(${when})</span></p>`;
 }
 
 function picksHtml(platform: Platform, slots: string[]) {
@@ -290,7 +290,7 @@ const GENERAL_FAQ: { section: string; items: { q: string; a: string }[] }[] = [
   { section: 'About Drop-In Builds', items: [
     { q: 'Is Drop-In Builds a store?', a: "No. We don't sell anything. You plan the build here, and every buy link goes to the retailer or maker, where you check out as usual." },
     { q: 'Do I need an account?', a: 'No. There is nothing to sign up for. Builds you save are kept in your browser, and Copy Link gives you a link that opens the same build on any other device.' },
-    { q: 'Which platforms can I build?', a: 'The AR-15 and AR-10 rifles, the Glock 17, 19 and 26, the Glock 43X and 48, the Sig P320 and the Sig P365. More platforms are on the way.' },
+    { q: 'Which platforms can I build?', a: 'The AR-15 and AR-10 rifles, the Glock 17, 19 and 26, the Glock 43X and 48, the Glock 20 and 21, the Sig P320, the Sig P365, the S&W M&P 2.0 and the Springfield Hellcat. More platforms are on the way.' },
     { q: 'Do you make money from the links?', a: 'Some retailer links may earn us a small commission at no extra cost to you. It never changes which parts we show or how we check fit.' },
   ] },
   { section: 'Using the Builder', items: [
@@ -339,8 +339,8 @@ export function indexPage(builtAt: string) {
   <p><a class="cta" href="/#build">Open the Builder</a></p>
   <p class="muted">Every fit chart is checked part against part with the same rules the builder uses. Updated ${shortDate(builtAt)}.</p>`;
   return layout({
-    title: 'FAQ: Glock, Sig P320, P365 and AR-15 Parts Compatibility | Drop-In Builds',
-    description: 'How Drop-In Builds works, plus fit charts for Glock, Sig P320, Sig P365 and AR-15 parts: slides, frames, grips, barrels, optics and muzzle devices.',
+    title: 'FAQ: Glock, Sig, M&P, Hellcat and AR-15 Parts Compatibility | Drop-In Builds',
+    description: 'How Drop-In Builds works, plus fit charts for Glock, Sig, S&W M&P 2.0, Springfield Hellcat and AR-15 parts: slides, frames, barrels, optics and more.',
     path: '/guides/',
     body,
     jsonLd: [

@@ -12,7 +12,7 @@ import { holsters, pistolAddonRules, pistolAddonSlots, pistolCases, pistolLights
 const SIZE: Record<string, string> = { fs: 'Full Size', c: 'Compact' };
 /** CORE plates that ship with Optics Ready pistols, by footprint (S&W's plate numbers). The DeltaPoint Pro plate is sold separately. */
 const CORE: Record<string, string> = { rmr: 'plate 1', rmsc: 'plate 2', venom: 'plate 5' };
-const FP: Record<string, string> = { rmr: 'RMR', rmsc: 'RMSc', venom: 'Venom/FastFire', dpp: 'DeltaPoint Pro', acro: 'Acro' };
+const FP: Record<string, string> = { rmr: 'RMR', rmsc: 'RMSc', venom: 'Venom/FastFire', dpp: 'DeltaPoint Pro', acro: 'Acro', k: 'Holosun K' };
 
 const slots = [
   { id: 'pistol', name: 'Base pistol', group: 'Core', required: true, hint: 'Serialized. S&W sells the M2.0 as a complete pistol; the rest are upgrades to it.' },
@@ -80,7 +80,7 @@ const allParts = [
       offers: [['PA', 299.99], ['OP', 309.99]], pick: pick('value', 'Mounts on the RMR plate that comes with the pistol.') },
     { id: 'mp-opt-rmr', brand: 'Trijicon', name: 'RMR Type 2, 3.25 MOA', specs: ['RMR footprint', 'Duty-grade'], attrs: { footprint: 'rmr' },
       offers: [['BRN', 449.99], ['OP', 439.99]], pick: pick('premium', 'The duty standard, on the included plate.') },
-    { id: 'mp-opt-407k', brand: 'Holosun', name: 'HS407K X2', specs: ['RMSc footprint', '6 MOA dot'], attrs: { footprint: 'rmsc' },
+    { id: 'mp-opt-407k', brand: 'Holosun', name: 'HS407K X2', specs: ['Holosun K footprint', '6 MOA dot'], attrs: { footprint: 'k' },
       offers: [['PA', 229.99], ['OP', 234.99]] },
     { id: 'mp-opt-venom', brand: 'Vortex', name: 'Venom 3 MOA', specs: ['Venom/FastFire footprint', 'Top-load battery'], attrs: { footprint: 'venom' },
       offers: [['OP', 249.99], ['BRN', 249.99]] },
@@ -126,6 +126,8 @@ function rules(b: Build): Issue[] {
     const fp = optic.attrs.footprint as string;
     if (CORE[fp])
       out.push({ severity: 'info', slots: ['optic', sSlot], message: `Uses CORE ${CORE[fp]}${slide ? ', which comes with Optics Ready pistols. A bare slide may not include it' : ', included with the pistol'}.` });
+    else if (fp === 'k')
+      out.push({ severity: 'warn', slots: ['optic', sSlot], message: 'The Holosun K footprint is based on the RMSc, so it often goes on CORE plate 2, but its lugs differ slightly. Check the fit, or use a plate made for Holosun K.' });
     else if (fp === 'dpp')
       out.push({ severity: 'warn', slots: ['optic', sSlot], message: 'The DeltaPoint Pro needs S&W\'s CORE DPP plate kit, sold separately (about $49).' });
     else
