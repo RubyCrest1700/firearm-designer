@@ -1455,6 +1455,7 @@ function ak(platform: Platform, b: Build): Scene {
 
 export function sceneFor(platform: Platform, build: Build, place: Placement = {}): Scene {
   if (platform.maker === 'AK Platform') return ak(platform, build);
+  if (platform.maker === '1911 Platform') return m1911(platform, build);
   return platform.family === 'Rifle' ? rifle(platform, build, place) : pistol(platform, build);
 }
 
@@ -1589,4 +1590,269 @@ function placeLabels(pieces: Piece[], minX: number, maxX: number, rows: [number,
     items.forEach((p, k) => out.push({ slot: p.slot!, x: f(xs[k]), y: rows[i], tx: p.target[0], ty: p.target[1] }));
   }
   return out;
+}
+
+/* ==================================================================== 1911s */
+
+/**
+ * 1911 and 2011, right side. The layout follows John Browning's own patent drawing of the Government Model
+ * (US 984,519 FIG. 1), measured off the figure at its 8.5" overall length; its engraved lines are redrawn clean
+ * here. Upgrade parts (beavertails, hammers, safeties, magwells) are drawn to the makers' published shapes.
+ * The 2011s keep the 1911's slide and lockwork on a double-stack grip module with a railed dust cover.
+ * Inches, x from the slide's rear and y down from its top, laid out for a 5" Government; shorter slides move
+ * everything ahead of the trigger guard back, and the C2's short grip moves the grip's bottom up.
+ */
+const M11_SLIDE: Record<string, number> = { gov: 7.48, cmd: 6.73, '5': 7.48, '425': 6.73, '44': 6.88, '39': 6.38 };
+const M11_BARREL: Record<string, number> = { gov: 5, cmd: 4.25, '5': 5, '425': 4.25, '44': 4.4, '39': 3.9 };
+const M11_BORE = 0.56;
+
+function mapPath(d: string, map: Map2) {
+  return d.replace(/(-?\d*\.?\d+),(-?\d*\.?\d+)/g, (_, x, y) => {
+    const [a, c] = map(Number(x), Number(y));
+    return `${n3(a)},${n3(c)}`;
+  });
+}
+
+function m1911(platform: Platform, b: Build): Scene {
+  const S = 58, oy = 112;
+  const P: Piece[] = [];
+  const pistol = b.pistol;
+  const dbl = platform.id === 'm2011';
+  /** An upgrade slot left empty shows the factory part, which belongs to the base pistol. */
+  const own = (slot: string) => (b[slot] ? slot : 'pistol');
+  const size = (pistol?.attrs.size as string | undefined) ?? (dbl ? '5' : 'gov');
+  const comp = !!pistol?.attrs.comp;
+  const SL = comp ? M11_SLIDE['44'] : M11_SLIDE[size];
+  const d = M11_SLIDE.gov - SL;
+  const dh = pistol?.attrs.grip === 'c2' ? 0.5 : 0;
+  // Everything ahead of the trigger guard moves back with a shorter slide; the grip's bottom moves up (and forward,
+  // along the grip angle) on a short grip.
+  const map: Map2 = (x, y) => [(x > 4.3 ? x - d : x) + (y > 3.0 ? 0.15 * dh : 0), y > 3.0 ? y - dh : y];
+  const beaver = b.gripsafety ? true : pistol?.attrs.tang !== 'gi';
+  const ring = b.hammer ? true : pistol?.attrs.hammer !== 'spur';
+  const rear = beaver ? -1.04 : -0.95;
+  const threaded = !!b.barrel?.attrs.threaded;
+  let front = SL + (dbl ? 0.04 : 0.12) + (threaded ? 0.6 : 0) + (comp ? 1.1 : 0);
+  const pl = b.light;
+  const lightLen = pl ? (matches(pl, /X300/) ? 3.25 : 2.15) : 0;
+  if (pl) front = Math.max(front, 4.45 + lightLen);
+  const ox = f((720 - (front - rear) * S) / 2 - rear * S);
+  const T0 = makeT(S, ox, oy);
+  const T = (dd: string) => T0(mapPath(dd, map));
+  const px = (x: number, y: number): [number, number] => { const [a, c] = map(x, y); return [f(ox + a * S), f(oy + c * S)]; };
+
+  /* Frame: the steel 1911 frame, or the 2011's steel frame on its polymer grip module, with the trigger guard,
+   * slide stop and magazine catch */
+  const frameD = dbl
+    ? 'M-0.05,0.97 L7.28,0.97 L7.28,1.62 L4.42,1.62 Q4.3,1.62 4.27,1.78 L4.2,2.5 Q4.16,2.74 3.92,2.74 L2.86,2.74 Q2.56,2.74 2.47,2.5 Q2.38,2.72 2.24,2.84 L1.88,4.86 Q1.9,5.04 1.98,5.12 L2.0,5.3 L-0.52,5.3 L-0.46,5.12 Q-0.36,5.0 -0.34,4.86 L-0.06,2.62 L0.08,2.62 L0.08,1.3 L-0.38,1.18 L-0.38,0.97 Z '
+      + 'M2.76,1.6 L3.96,1.6 Q4.08,1.6 4.07,1.76 L4.04,2.4 Q4.02,2.58 3.84,2.58 L2.92,2.58 Q2.68,2.58 2.66,2.34 L2.64,1.76 Q2.64,1.6 2.76,1.6 Z'
+    : 'M-0.05,0.97 L5.92,0.97 L5.92,1.5 L4.22,1.5 Q4.06,1.52 4.03,1.72 L3.99,2.3 Q3.96,2.6 3.66,2.6 L2.82,2.6 Q2.52,2.6 2.44,2.36 Q2.34,2.62 2.16,2.78 L1.72,5.1 L-0.32,5.1 L-0.05,2.62 L0.08,2.62 L0.08,1.3 L-0.38,1.18 L-0.38,0.97 Z '
+      + 'M2.76,1.58 L3.7,1.58 Q3.86,1.58 3.86,1.76 L3.84,2.22 Q3.82,2.44 3.6,2.44 L2.92,2.44 Q2.64,2.44 2.62,2.16 L2.62,1.76 Q2.62,1.58 2.76,1.58 Z';
+  let frameDet = `${OC(2.17, 2.42, 0.13)} ${OC(2.17, 2.42, 0.07)}`;
+  if (dbl) {
+    // The grip module's seam under the frame, the rail's cross slots, the grip texture panel and the magwell's lip.
+    frameDet += ' M0.12,1.34 L4.24,1.4 M4.5,1.48 L7.2,1.48';
+    for (let x = 4.75; x < 7.1; x += 0.394) frameDet += ` M${f(x)},1.48 L${f(x)},1.62`;
+    frameDet += ' M0.13,2.92 L2.0,2.92 L1.69,4.68 L-0.1,4.68 Z M-0.42,5.0 L1.93,5.0';
+  }
+  P.push({ slot: 'pistol', z: 3, row: 'bottom', target: px(3.3, dbl ? 2.74 : 2.6), el: <>
+    <path fillRule="evenodd" d={T(frameD)} />
+    <path className="detail" d={T(frameDet)} />
+  </> });
+
+  /* Slide, with the ejection port, rear serrations and slide stop notch; the 1911's barrel bushing and spring plug */
+  const slideD = (dbl
+    ? 'M0.3,0 L7.42,0 Q7.48,0 7.48,0.06 L7.48,0.97 L0,0.97 L0,0.3 Q0,0 0.3,0 Z'
+    : 'M0.3,0 L7.42,0 Q7.48,0 7.48,0.06 L7.48,1.42 Q7.48,1.47 7.43,1.47 L5.94,1.47 L5.94,1.1 Q5.94,0.97 5.81,0.97 L0,0.97 L0,0.3 Q0,0 0.3,0 Z')
+    + ' M2.48,0.1 L3.9,0.1 L3.9,0.6 L2.48,0.6 Z';
+  let serr = '';
+  for (let x = 0.42; x < 1.8; x += 0.075) serr += `M${f(x)},0.4 L${f(x)},0.92 `;
+  const slideDet = `M0.3,0.09 L7.4,0.09 ${serr} M2.04,0.97 Q2.13,0.86 2.22,0.97`;
+  P.push({ slot: 'pistol', z: 8, row: 'top', target: px(5.2, 0.5), el: <>
+    <path fillRule="evenodd" d={T(slideD)} />
+    <path className="detail" d={T(slideDet)} />
+    {!dbl && <path d={T('M7.48,0.2 L7.6,0.2 L7.6,0.92 L7.48,0.92 Z M7.48,1.04 L7.54,1.04 L7.54,1.38 L7.48,1.38 Z')} />}
+  </> });
+
+  /* Slide stop: thumb piece forward of the grip, the lever along the frame and its pin above the trigger guard */
+  P.push({ slot: 'pistol', z: 6.5, row: 'bottom', target: px(2.4, 1.15), el: <>
+    <path d={T('M1.98,1.0 L3.25,1.04 Q3.44,1.08 3.44,1.25 Q3.44,1.42 3.25,1.42 Q3.08,1.42 3.02,1.3 L2.35,1.22 Q2.1,1.22 2.0,1.14 Q1.94,1.07 1.98,1.0 Z')} />
+    <path className="detail" d={T(`${OC(3.25, 1.25, 0.07)} M2.06,1.05 L2.06,1.15 M2.13,1.04 L2.13,1.17 M2.2,1.04 L2.2,1.18`)} />
+  </> });
+
+  /* Barrel: hood in the ejection port, the rest hidden in the slide; threads past the bushing */
+  const bx = (dbl ? 7.52 : 7.6) - d;
+  P.push({ slot: dbl ? 'pistol' : own('barrel'), z: 9, row: 'top', target: px(3.2, 0.34), el: <>
+    <path d={T('M2.52,0.13 L3.86,0.13 L3.86,0.57 L2.52,0.57 Z')} />
+    <path className="detail" d={T('M2.68,0.13 L2.68,0.57')} />
+    <path className="hidden-line" d={T(`M3.92,${M11_BORE - 0.29} L7.48,${M11_BORE - 0.29} M3.92,${M11_BORE + 0.29} L7.48,${M11_BORE + 0.29}`)} />
+    {dbl && <path d={T0(`M${f(SL)},${M11_BORE - 0.27} L${f(bx)},${M11_BORE - 0.27} L${f(bx)},${M11_BORE + 0.27} L${f(SL)},${M11_BORE + 0.27} Z`)} />}
+    {threaded && <path d={T0(`M${f(bx)},${M11_BORE - 0.2} L${f(bx + 0.6)},${M11_BORE - 0.2} L${f(bx + 0.6)},${M11_BORE + 0.2} L${f(bx)},${M11_BORE + 0.2} Z ${repeat(bx + 0.08, bx + 0.54, 0.07, (x) => `M${x},${M11_BORE - 0.2} L${f(x + 0.03)},${M11_BORE + 0.2}`)}`)} />}
+  </> });
+
+  /* Compensator (Staccato XC): a block on the barrel ahead of the slide, ported on top */
+  if (comp) {
+    let ports = '';
+    for (let k = 0; k < 3; k++) { const x = SL + 0.22 + k * 0.28; ports += `M${f(x)},0.06 L${f(x + 0.06)},0.34 L${f(x + 0.18)},0.34 L${f(x + 0.14)},0.06 `; }
+    P.push({ slot: 'pistol', z: 9.5, row: 'top', target: [f(ox + (SL + 0.55) * S), f(oy + 0.5 * S)], el: <>
+      <path d={T0(`M${f(SL)},0.06 L${f(SL + 1.0)},0.06 Q${f(SL + 1.1)},0.06 ${f(SL + 1.1)},0.16 L${f(SL + 1.1)},0.97 L${f(SL)},0.97 Z`)} />
+      <path className="detail" d={T0(`${ports} M${f(SL + 1.1)},${M11_BORE} L${f(SL + 0.98)},${M11_BORE}`)} />
+    </> });
+  }
+
+  /* Recoil spring and guide rod (internal) */
+  const rod = !!b.spring?.attrs.rod || dbl;
+  P.push({ slot: dbl ? 'pistol' : own('spring'), internal: true, z: 20, row: 'top', target: px(5.0, 1.22), el:
+    <path d={T(`M${rod ? 3.5 : 4.4},1.12 L7.44,1.12 L7.44,1.32 L${rod ? 3.5 : 4.4},1.32 Z ${repeat(4.5, 7.3, 0.16, (x) => `M${x},1.08 L${f(x + 0.08)},1.36`)}`)} /> });
+
+  /* Hammer, cocked: the GI spur, or the Commander-style ring hammer most upgrades and modern 1911s use */
+  const hammerD = ring
+    ? 'M-0.02,0.97 L-0.04,0.5 Q-0.08,0.28 -0.3,0.26 Q-0.56,0.28 -0.6,0.5 Q-0.6,0.7 -0.42,0.76 Q-0.32,0.82 -0.3,0.97 Z ' + OC(-0.31, 0.5, 0.1)
+    : 'M-0.02,0.97 L-0.04,0.42 Q-0.06,0.3 -0.2,0.27 Q-0.45,0.28 -0.62,0.42 L-0.76,0.52 Q-0.78,0.57 -0.72,0.58 Q-0.52,0.56 -0.4,0.66 Q-0.3,0.78 -0.3,0.97 Z';
+  P.push({ slot: dbl ? 'pistol' : own('hammer'), z: 2.5, row: 'top', target: px(-0.3, 0.45), el: <>
+    <path fillRule="evenodd" d={T(hammerD)} />
+    {!ring && <path className="detail" d={T('M-0.36,0.31 L-0.4,0.42 M-0.47,0.35 L-0.51,0.47 M-0.58,0.41 L-0.62,0.52')} />}
+  </> });
+
+  /* Grip safety: the GI spur, or a beavertail with a memory bump */
+  const gsD = beaver
+    ? 'M0.12,1.0 L-0.3,1.06 Q-0.78,1.1 -0.96,1.2 Q-1.06,1.27 -0.96,1.33 Q-0.72,1.42 -0.56,1.6 Q-0.6,1.86 -0.4,2.0 Q-0.2,2.12 -0.12,2.3 L-0.06,2.62 L0.14,2.62 Z'
+    : 'M0.12,1.0 L-0.3,1.12 Q-0.62,1.26 -0.86,1.44 Q-0.97,1.52 -0.85,1.56 Q-0.62,1.56 -0.46,1.64 Q-0.2,1.9 -0.1,2.3 L-0.05,2.62 L0.14,2.62 Z';
+  P.push({ slot: dbl ? 'pistol' : own('gripsafety'), z: 5, row: 'bottom', target: px(-0.45, 1.75), el: <path d={T(gsD)} /> });
+
+  /* Thumb safety: pivots at the frame's rear; extended and ambidextrous safeties have a longer, wider pad */
+  const ext = dbl || b.safety ? true : pistol?.attrs.safety !== 'gi';
+  const safD = ext
+    ? 'M-0.34,1.22 Q-0.34,1.02 -0.12,1.0 L0.92,1.0 Q1.06,1.02 1.06,1.11 Q1.04,1.2 0.92,1.21 L0.2,1.22 Q0.1,1.42 -0.12,1.43 Q-0.34,1.42 -0.34,1.22 Z'
+    : 'M-0.34,1.22 Q-0.34,1.02 -0.12,1.0 L0.6,1.0 Q0.72,1.02 0.72,1.1 Q0.7,1.18 0.6,1.18 L0.2,1.2 Q0.1,1.42 -0.12,1.43 Q-0.34,1.42 -0.34,1.22 Z';
+  P.push({ slot: dbl ? 'pistol' : own('safety'), z: 6, row: 'top', target: px(0.6, 1.1), el: <>
+    <path d={T(safD)} />
+    <path className="detail" d={T(OC(-0.12, 1.22, 0.06) + (ext ? ' M0.72,1.03 L0.72,1.18 M0.8,1.03 L0.8,1.18 M0.88,1.03 L0.88,1.18' : ''))} />
+  </> });
+
+  /* Grip panels (1911): screws in double diamonds on wood, a plain inset on G10 and polymer; the wraparound
+   * rubber grip covers the front strap with finger grooves */
+  if (!dbl) {
+    const g = b.grips;
+    const kind = (g?.attrs.kind as string | undefined) ?? (ring ? 'g10' : 'wood');
+    const panel = kind === 'wrap'
+      ? 'M0.84,1.22 L1.86,1.22 Q2.0,1.22 2.0,1.38 L1.98,2.4 Q2.1,2.72 2.24,2.9 Q2.3,3.12 2.16,3.3 Q2.08,3.42 2.15,3.55 Q2.22,3.78 2.06,3.95 Q1.98,4.07 2.04,4.2 Q2.1,4.42 1.94,4.6 L1.82,5.0 L0.1,5.0 L0.5,1.62 Q0.56,1.26 0.84,1.22 Z'
+      : 'M0.84,1.22 L1.86,1.22 Q2.0,1.22 2.0,1.38 L1.96,2.3 Q1.94,2.5 1.9,2.62 L1.5,4.98 L0.1,4.98 L0.5,1.62 Q0.56,1.26 0.84,1.22 Z';
+    const screw = (x: number, y: number) => `${OC(x, y, 0.07)} M${f(x - 0.05)},${f(y + 0.03)} L${f(x + 0.05)},${f(y - 0.03)}`;
+    let det = `${screw(1.3, 1.62)} ${screw(0.8, 4.6)}`;
+    if (kind === 'wood') det += ' M1.3,1.3 L1.47,1.62 L1.3,1.94 L1.13,1.62 Z M0.8,4.28 L0.97,4.6 L0.8,4.92 L0.63,4.6 Z';
+    if (kind !== 'wrap' && kind !== 'wood') det += ' M0.88,1.3 L1.84,1.3 Q1.92,1.3 1.92,1.4 L1.88,2.3 Q1.86,2.48 1.82,2.6 L1.44,4.9 L0.18,4.9 L0.58,1.64 Q0.62,1.34 0.88,1.3 Z';
+    P.push({ slot: own('grips'), z: 4, row: 'bottom', target: px(1.05, 3.2), el: <>
+      <path d={T(panel)} />
+      <path className="detail" d={T(det)} />
+    </> });
+
+    /* Mainspring housing, or a magwell that replaces it */
+    const mw = b.magwell;
+    let msh = 'M-0.05,2.62 L0.12,2.62 L-0.12,5.1 L-0.32,5.1 Z';
+    let mshDet = '';
+    for (let y = 2.8; y < 5.0; y += 0.12) mshDet += `M${f(-0.06 - 0.12 * (y - 2.62) + 0.04)},${f(y)} L${f(0.1 - 0.1 * (y - 2.62) - 0.04)},${f(y)} `;
+    if (mw?.attrs.kind === 'well') {
+      msh += ' M-0.3,4.86 L1.76,4.86 L1.86,5.24 L-0.44,5.24 Z';
+      mshDet = mshDet.split('M').filter((s) => s && parseFloat(s.split(',')[1]) < 4.8).map((s) => 'M' + s).join('') + ' M-0.38,4.95 L1.79,4.95';
+    }
+    P.push({ slot: own('magwell'), z: 4.5, row: 'bottom', target: px(-0.15, 4.2), el: <>
+      <path d={T(msh)} />
+      <path className="detail" d={T(mshDet)} />
+    </> });
+  }
+
+  /* Magazine floor plate: flush, or a base pad below the grip; 2011 magazines longer than the grip stick out */
+  const mag = b.mag;
+  let magD: string, magDet = '';
+  if (dbl) {
+    const flush = dh ? 16 : 17;
+    const e = mag ? Math.max(0, ((mag.attrs.rounds as number) - flush) * 0.15) : 0;
+    const y0 = 5.3, y1 = y0 + e + 0.12;
+    magD = `M-0.5,${y0} L1.98,${y0} L1.98,${f(y1 - 0.06)} Q1.98,${f(y1)} 1.92,${f(y1)} L-0.44,${f(y1)} Q-0.5,${f(y1)} -0.5,${f(y1 - 0.06)} Z`;
+    if (e > 0.25) for (let t = 0.18; t < e - 0.06; t += 0.2) magDet += `M-0.44,${f(y0 + t)} L1.92,${f(y0 + t)} `;
+  } else {
+    magD = mag?.attrs.pad
+      ? 'M-0.3,5.1 L1.72,5.1 L1.72,5.28 Q1.72,5.34 1.66,5.34 L-0.24,5.34 Q-0.3,5.34 -0.3,5.28 Z'
+      : 'M-0.28,5.1 L1.68,5.1 L1.66,5.17 L-0.27,5.17 Z';
+  }
+  P.push({ slot: own('mag'), z: 1, row: 'bottom', target: px(0.7, dbl ? 5.4 : 5.2), el: <>
+    <path d={T(magD)} />
+    {magDet && <path className="detail" d={T(magDet)} />}
+  </> });
+
+  /* 2011 magwell: a wider flare over the grip module's own */
+  if (dbl && b.magwell)
+    P.push({ slot: 'magwell', z: 4.5, row: 'bottom', target: px(0.7, 5.05), el: <>
+      <path d={T('M-0.36,4.84 L1.9,4.84 L2.08,5.36 L-0.62,5.36 Z')} />
+      <path className="detail" d={T('M-0.46,5.0 L1.95,5.0')} />
+    </> });
+
+  /* Trigger: the 1911's sliding shoe, short (GI), medium or long; 2011s have a flat shoe */
+  const len = dbl ? 'flat' : (b.trigger?.attrs.len as string | undefined) ?? (ring ? 'medium' : 'short');
+  const xf = len === 'long' ? 2.97 : len === 'short' ? 2.84 : 2.9;
+  const yt = dbl ? 1.6 : 1.58;
+  const trigD = len === 'flat'
+    ? `M${f(xf - 0.18)},${yt} L${f(xf + 0.02)},${yt} L${f(xf)},2.16 Q${f(xf)},2.2 ${f(xf - 0.04)},2.2 L${f(xf - 0.14)},2.2 Q${f(xf - 0.18)},2.2 ${f(xf - 0.18)},2.16 Z`
+    : `M${f(xf - 0.2)},${yt} L${f(xf + 0.02)},${yt} Q${f(xf - 0.06)},1.86 ${f(xf)},2.14 Q${f(xf - 0.02)},2.2 ${f(xf - 0.08)},2.18 Q${f(xf - 0.24)},1.9 ${f(xf - 0.2)},${yt} Z`;
+  const trigDet = b.trigger && matches(b.trigger, /3-Hole/) ? [1.72, 1.85, 1.98].map((y) => OC(xf - 0.1, y, 0.03)).join(' ') : '';
+  P.push({ slot: dbl ? 'pistol' : own('trigger'), z: 5.5, row: 'bottom', target: px(xf - 0.1, 2.0), el: <>
+    <path d={T(trigD)} />
+    {trigDet && <path className="detail" d={T(trigDet)} />}
+  </> });
+
+  /* Sights: GI blades, low Novak-style sights, an adjustable rear, or suppressor-height sights */
+  const sg = b.sights;
+  const sk = sg ? 'novak' : (pistol?.attrs.sight === 'gi' ? 'gi' : pistol?.attrs.sight === 'adj' ? 'adj' : 'novak');
+  const sh = sg?.attrs.height === 'suppressor' ? 0.36 : sk === 'gi' ? 0.1 : sk === 'adj' ? 0.24 : 0.2;
+  const fs0 = 6.96, fs1 = 7.24;
+  let sightsD: string, sightDet = '';
+  if (sk === 'gi') sightsD = `M0.48,0 L0.5,-0.1 L0.68,-0.1 L0.7,0 Z M7.02,0 L7.04,-0.13 L7.18,-0.13 L7.24,0 Z`;
+  else {
+    const r0 = sk === 'adj' ? 0.18 : 0.12, r1 = sk === 'adj' ? 1.0 : 0.8;
+    sightsD = (sk === 'adj'
+      ? `M${r0},0 L${f(r0 + 0.02)},${-sh} L${f(r1 - 0.06)},${-sh} L${r1},${f(-sh + 0.12)} L${r1},0 Z`
+      : `M${r0},0 L${f(r0 + 0.02)},${-sh} L${f(r1 - 0.28)},${-sh} Q${f(r1 - 0.2)},${-sh} ${f(r1 - 0.16)},${f(-sh + 0.08)} L${r1},0 Z`)
+      + ` M${fs0},0 L${f(fs0 + 0.06)},${f(-sh + 0.02)} L${f(fs1 - 0.04)},${f(-sh + 0.02)} L${fs1},0 Z`;
+    const mid = (r0 + r1) / 2 - 0.08;
+    sightDet = `M${f(mid - 0.08)},${-sh} L${f(mid - 0.08)},${f(-sh + 0.08)} L${f(mid + 0.08)},${f(-sh + 0.08)} L${f(mid + 0.08)},${-sh} `
+      + `M${f(r0 + 0.04)},-0.03 L${f(r1 - 0.06)},-0.03 ` + (sg ? O2(mid, -sh / 2 + 0.02, 0.045) + ' ' + O2((fs0 + fs1) / 2, -sh / 2 + 0.02, 0.045) : '');
+  }
+  P.push({ slot: own('sights'), z: 10, row: 'top', target: px(0.45, -sh), el: <>
+    <path d={T(sightsD)} />
+    {sightDet && <path className="detail" d={T(sightDet)} />}
+  </> });
+
+  /* Optic (2011): on the maker's plate ahead of the rear sight */
+  if (dbl) {
+    const fp = (b.optic?.attrs.footprint as string) ?? 'rmr';
+    const po = pistolOptic(b.optic, fp);
+    P.push({ slot: 'optic', z: 11, row: 'top', target: px(1.0 + po.len / 2, -po.h), el: <>
+      <path fillRule="evenodd" d={T0(movePath(po.od, 1.0, 0))} />
+      <path className="detail" d={T0(movePath(po.odet, 1.0, 0))} />
+    </> });
+  }
+
+  /* Weapon light (2011), under the dust cover rail */
+  if (pl) {
+    const h = matches(pl, /X300/) ? 1.12 : 0.92;
+    const lx1 = 4.45 + lightLen, lx0 = 4.45, ly0 = 1.48;
+    P.push({ slot: 'light', z: 4, row: 'bottom', target: [f(ox + (lx0 + lightLen / 2) * S), f(oy + (ly0 + h) * S)], el: <>
+      <path d={T0(`M${f(lx0)},${f(ly0)} L${f(lx1 - 0.1)},${f(ly0)} Q${f(lx1)},${f(ly0)} ${f(lx1)},${f(ly0 + 0.1)} L${f(lx1)},${f(ly0 + h - 0.1)} Q${f(lx1)},${f(ly0 + h)} ${f(lx1 - 0.1)},${f(ly0 + h)} L${f(lx0 + 0.35)},${f(ly0 + h)} Q${f(lx0)},${f(ly0 + h)} ${f(lx0)},${f(ly0 + h - 0.3)} Z`)} />
+      <path className="detail" d={T0(`M${f(lx1 - 0.1)},${f(ly0 + 0.16)} L${f(lx1 - 0.1)},${f(ly0 + h - 0.16)} M${f(lx0 + 0.15)},${f(ly0 + 0.3)} L${f(lx0 + 0.15)},${f(ly0 + 0.6)} M${f(lx0 + 0.35)},${f(ly0 + 0.12)} L${f(lx1 - 0.4)},${f(ly0 + 0.12)}`)} />
+    </> });
+  }
+
+  const yTop = dbl && b.optic ? -pistolOptic(b.optic, (b.optic.attrs.footprint as string) ?? 'rmr').h : -sh;
+  const yBot = map(0, dbl ? 5.3 + 0.12 + (mag ? Math.max(0, ((mag.attrs.rounds as number) - (dh ? 16 : 17)) * 0.15) : 0) : mag?.attrs.pad ? 5.34 : 5.17)[1];
+  const vx = f(ox + (front + 0.5) * S);
+  const barrel = comp ? 5 : M11_BARREL[size];
+  return {
+    width: 720, height: 560, pieces: P,
+    center: [f(ox + (rear - 0.3) * S), f(ox + (front + 0.4) * S), f(oy + M11_BORE * S)],
+    dims: [[f(ox + rear * S), f(ox + front * S), 540, `${inch2(front - rear)} overall`]],
+    vdims: [[vx, f(oy + yTop * S), f(oy + yBot * S), `${inch2(yBot - yTop)} tall`]],
+    rows: [26, 500],
+    spec: `${dbl ? '9mm' : pistol?.attrs.cal === '9' ? '9mm' : '.45 ACP'} · ${inch2(barrel)} barrel · ${inch2(SL)} slide`,
+  };
 }
