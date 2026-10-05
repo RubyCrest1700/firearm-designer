@@ -47,8 +47,18 @@ const IFACES: Iface[] = [
   ['p320', 'slide', 'length', 'barrel', 'length'],
   ['p320', 'slide', 'caliber', 'barrel', 'caliber'],
   ['p320', 'slide', 'length', 'spring', 'length'],
+  ['glock20', 'barrel', 'thread', 'muzzle', 'thread'],
+  ['glock20', 'slide', 'cal', 'barrel', 'cal'],
+  ['glock20', 'slide', 'rsa', 'rsa', 'rsa'],
+  ['glock20', 'slide', 'cal', 'mag', 'cal'],
   ['p365', 'slide', 'barrelLen', 'barrel', 'len'],
   ['p365', 'slide', 'springLen', 'spring', 'len'],
+  ['mp2', 'slide', 'size', 'barrel', 'size'],
+  ['mp2', 'slide', 'size', 'rsa', 'size'],
+  ['mp2', 'barrel', 'thread', 'muzzle', 'thread'],
+  ['hellcat', 'slide', 'size', 'barrel', 'size'],
+  ['hellcat', 'slide', 'size', 'rsa', 'size'],
+  ['hellcat', 'barrel', 'thread', 'muzzle', 'thread'],
 ];
 let combos = 0;
 for (const [pid, sa, ka, sb, kb] of IFACES) {
@@ -67,7 +77,7 @@ for (const [pid, sa, ka, sb, kb] of IFACES) {
     }
 }
 // Any thread size named in a part's name or specs must be the one its attrs carry, and vice versa.
-const THREAD = /(1\/2x28|5\/8x24|5\/8x32|M13\.5x1 LH|M14x1 LH)/;
+const THREAD = /(1\/2x28|5\/8x24|5\/8x32|9\/16x24|\.578x28|M13\.5x1 LH|M14x1 LH|M24x1\.5)/;
 for (const p of PLATFORMS)
   for (const part of p.parts) {
     const named = `${part.name} ${part.specs.join(' ')}`.match(THREAD)?.[1];
