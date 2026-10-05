@@ -7,7 +7,7 @@ import { sharePage } from './share.js';
 import { alertsRoute } from './alerts.js';
 
 /** Keep in sync with the platform ids in src/data. */
-export const PLATFORM_IDS = ['ar15', 'ar10', 'ar9', 'akm', 'ak74', 'glock17', 'glock19', 'glock26', 'glock43x', 'glock20', 'p320', 'p365', 'mp2', 'hellcat', 'm1911', 'm2011'];
+export const PLATFORM_IDS = ['ar15', 'ar10', 'ar9', 'akm', 'ak74', 'glock17', 'glock19', 'glock26', 'glock43x', 'glock20', 'p320', 'p365', 'mp2', 'hellcat'];
 
 const ALLOWED_ORIGINS = ['https://rubycrest1700.github.io', 'https://dropinbuilds.com', 'https://www.dropinbuilds.com', 'http://localhost:5173', 'http://localhost:4173'];
 const DAY = 86_400_000;
