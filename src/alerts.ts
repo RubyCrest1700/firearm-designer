@@ -1,5 +1,5 @@
 import { COMMUNITY_API } from './config';
-import { partIds, type Selection } from './engine';
+import { toBuyIds, type Selection } from './engine';
 
 /**
  * Email price alerts (worker/src/alerts.js). One signup per browser watches every saved build here;
@@ -17,8 +17,9 @@ export function storeAlertSignup(s: AlertSignup | null) {
   try { if (s) localStorage.setItem(KEY, JSON.stringify(s)); else localStorage.removeItem(KEY); } catch { /* this visit only */ }
 }
 
+/** Parts the builder already owns aren't watched: their price no longer matters to them. */
 type Watched = { name: string; platform: string; selection: Selection };
-const payload = (builds: Watched[]) => builds.map((b) => ({ name: b.name, platform: b.platform, parts: partIds(b.selection) }));
+const payload = (builds: Watched[]) => builds.map((b) => ({ name: b.name, platform: b.platform, parts: toBuyIds(b.selection) }));
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${COMMUNITY_API}${path}`, { ...init, headers: { 'content-type': 'application/json' }, signal: AbortSignal.timeout(10000) });

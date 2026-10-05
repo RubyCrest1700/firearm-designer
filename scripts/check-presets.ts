@@ -1,7 +1,7 @@
 // Verifies every preset build is complete and free of compatibility errors.
 import { awarenessFor } from '../src/awareness';
 import { PLATFORMS } from '../src/data/index';
-import { issuesFor, placementOf, presetSelection, selectionTokens, toBuild } from '../src/engine';
+import { issuesFor, ownedOf, placementOf, presetSelection, selectionTokens, toBuild, toBuyIds } from '../src/engine';
 import { selectionFromParts } from '../src/store';
 import { buildWeight, formatWeight } from '../src/weight';
 
@@ -184,6 +184,20 @@ for (const p of PLATFORMS) {
   const sel = { ...presetSelection(PLATFORMS[0], 'value'), light: 'r-light-hlx', '@light': 'l85', foregrip: 'r-fg-kag', '@foregrip': 'b24' };
   const back = selectionFromParts(PLATFORMS[0].id, selectionTokens(sel));
   if (JSON.stringify(Object.entries(back).sort()) !== JSON.stringify(Object.entries(sel).sort())) { console.log('placement tokens did not round-trip', back); bad++; }
+}
+// Owned marks survive a share link, leave the total, and never name a part id.
+{
+  const p = PLATFORMS.find((x) => x.id === 'glock19')!;
+  const base = presetSelection(p, 'value');
+  const sel: Record<string, string> = { ...base, '+frame': 'own', '+sights': 'other' };
+  delete sel.sights;
+  const back = selectionFromParts(p.id, selectionTokens(sel));
+  if (JSON.stringify(Object.entries(back).sort()) !== JSON.stringify(Object.entries(sel).sort())) { console.log('owned tokens did not round-trip', back); bad++; }
+  const o = ownedOf(back);
+  if (!o.owned.has('frame') || !o.other.has('sights') || toBuyIds(back).includes(base.frame) || !toBuild(p, back).frame) { console.log('owned marks read wrong', o); bad++; }
+  // A stray mark that doesn't match its slot is dropped.
+  const stray = selectionFromParts(p.id, ['own-optic', `has-frame`, base.frame]);
+  if (stray['+optic'] || stray['+frame']) { console.log('stray owned marks kept', stray); bad++; }
 }
 console.log(`Interface audit: ${combos} part combinations checked across ${IFACES.length} measured interfaces.`);
 process.exit(bad ? 1 : 0);
