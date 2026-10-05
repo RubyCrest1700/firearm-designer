@@ -1303,64 +1303,65 @@ function ak(platform: Platform, b: Build): Scene {
   const thread = (rifle?.attrs.thread as string | undefined) ?? (cal === 'akm' ? 'M14x1 LH' : 'M24x1.5');
   const mountKind = b.mount?.attrs.kind as string | undefined;
   const hgFull = b.handguard?.attrs.kind === 'full';
+  // Proportions measured off a right-side AKM photo: x from the receiver's rear, y from the bore (down is positive).
   const RF = 10.45; // receiver front
+  const RB = 1.45; // receiver bottom
+  const HG0 = RF + 0.1, HG1 = 17.1; // lower handguard; the upper one runs from UH0 to the same front cap
+  const UH0 = 12.6;
+  const GT = -1.12, GB = -0.58; // gas tube top and bottom
+  const GX0 = 19.55, GX1 = 21.5; // gas block, with the gas tube's socket at its rear
+  const fs0 = BX - 0.95, fs1 = BX;
 
-  // Receiver: the stamped body with its rear trunnion, the dust cover (ribbed on the AKM, smooth on the AK-74) with the
-  // rear sight block and leaf sight ahead of it, the selector lever and charging handle on this side, the trigger
-  // guard with the magazine release paddle, and the rivets.
+  // Receiver: the stamped body, the dust cover (ribbed on the AKM, smooth on the AK-74) chamfered at its rear, the
+  // rear sight block with the leaf lying forward over the gas tube's root, the selector lever and charging handle
+  // on this side, the trigger guard with the magazine release paddle, the trigger, and the rivets.
   const cover = mountKind !== 'cover';
-  const rivets = [[0.5, 0.2], [1.1, 0.2], [0.5, 0.7], [1.1, 0.7], [2.95, 0.72], [5.1, 0.72], [9.3, 0.2], [9.95, 0.2], [9.3, 0.7], [9.95, 0.7]].map(([x, y]) => OC(x, y, 0.06)).join(' ');
-  const coverRibs = cal === 'akm' ? repeat(2.6, 6.6, 0.95, (x) => `M${x},-1.1 L${x},-0.66 M${f(x + 0.14)},-1.1 L${f(x + 0.14)},-0.66`) : '';
-  P.push({ slot: 'rifle', z: 4, row: 'bottom', target: px(7.2, 0.45), el: <>
-    {/* body, with the magazine well cut out of its bottom edge between the trigger guard and the front trunnion */}
-    <path d={T(`M0,-0.62 L${RF},-0.62 L${RF},0.95 L6.6,0.95 L6.5,0.75 L8.75,0.75 L8.65,0.95 L0,0.95 Z`)} />
-    {/* dust cover: rounded at the rear, over the top of the receiver */}
-    {cover && <path d={T('M0.1,-0.62 L0.1,-0.8 Q0.1,-1.1 0.5,-1.1 L8.95,-1.1 L8.95,-0.62 Z')} />}
+  const rivets = [[0.65, 0.1], [1.55, 0.65], [0.65, 1.0], [2.9, 1.18], [4.7, 1.18], [8.6, 0.1], [9.6, 0.1], [8.6, 0.85], [9.6, 0.85]].map(([x, y]) => OC(x, y, 0.06)).join(' ');
+  const coverRibs = cal === 'akm' ? repeat(2.0, 6.0, 0.95, (x) => `M${x},-1.14 L${x},-0.7 M${f(x + 0.14)},-1.14 L${f(x + 0.14)},-0.7`) : '';
+  P.push({ slot: 'rifle', z: 4, row: 'bottom', target: px(7.4, 0.9), el: <>
+    <path d={T(`M0,-0.55 L${RF},-0.55 L${RF},${RB} L0,${RB} Z`)} />
+    {cover && <path d={T('M0.05,-0.55 L0.05,-0.6 L1.2,-1.12 L9.5,-1.2 L9.5,-0.55 Z')} />}
     {cover && coverRibs && <path className="detail" d={T(coverRibs)} />}
-    {/* rear sight block with the leaf sight lying on its ramp, and the slider */}
-    <path d={T(`M8.95,-1.1 L9.4,-1.1 L9.4,-1.6 Q10.0,-1.6 10.3,-1.42 L11.3,-1.05 L11.3,-0.62 L8.95,-0.62 Z`)} />
-    <path d={T('M9.42,-1.6 L9.45,-1.7 L10.35,-1.92 L10.42,-1.82 L10.4,-1.5 L10.3,-1.42 Z M9.7,-1.74 L9.7,-1.88 L10.05,-1.88 L10.05,-1.74')} />
-    {/* selector lever on its disc, lying over the charging handle slot */}
-    <path d={T('M1.1,-0.3 Q1.1,-0.55 1.35,-0.55 L5.9,-0.5 Q6.2,-0.5 6.2,-0.3 L6.15,0.0 Q6.12,0.12 6.0,0.1 L5.8,0.05 L5.75,-0.3 L1.35,-0.08 Q1.1,-0.08 1.1,-0.3 Z')} />
-    <path className="detail" d={T(`${OC(1.35, -0.32, 0.14)} ${OC(1.35, -0.32, 0.06)} M1.7,-0.45 L5.6,-0.42`)} />
-    {/* bolt carrier slot and the charging handle, forward in battery */}
-    <path d={T('M6.3,-0.62 L8.75,-0.62 L8.75,-0.3 L6.3,-0.3 Z')} />
-    <path d={T('M7.75,-0.92 L8.4,-0.92 Q8.55,-0.92 8.55,-0.77 L8.55,-0.5 Q8.55,-0.35 8.4,-0.35 L7.75,-0.35 Q7.6,-0.35 7.6,-0.5 L7.6,-0.77 Q7.6,-0.92 7.75,-0.92 Z')} />
-    {/* trigger guard, mag release paddle and the trigger */}
-    <path fillRule="evenodd" d={T('M2.95,0.95 L2.95,1.95 Q2.95,2.15 3.15,2.15 L5.2,2.15 Q5.42,2.15 5.42,1.95 L5.42,0.95 Z M3.12,0.95 L3.12,1.86 Q3.12,1.98 3.24,1.98 L5.12,1.98 Q5.25,1.98 5.25,1.86 L5.25,0.95 Z')} />
-    {/* magazine release: the paddle hangs behind the trigger guard, its thumb pad curling back under the magwell */}
-    <path d={T('M5.5,0.95 L5.5,1.5 Q5.5,1.72 5.72,1.74 L6.35,1.74 Q6.5,1.74 6.5,1.6 Q6.5,1.5 6.38,1.5 L5.85,1.5 Q5.74,1.5 5.74,1.38 L5.74,0.95 Z')} />
-    <path className="detail" d={T('M5.95,1.56 L5.95,1.68 M6.1,1.56 L6.1,1.68 M6.25,1.56 L6.25,1.68')} />
-    {/* trigger: the blade hangs forward in the guard, its face convex to the front and the tip curling back */}
-    <path d={T('M4.05,0.95 L4.4,0.95 Q4.62,1.35 4.42,1.8 Q4.32,1.95 4.2,1.9 Q4.35,1.4 4.05,1.05 Z')} />
-    <path className="detail" d={T(`${rivets} M6.45,0.75 L6.45,0.4 L8.75,0.4 L8.75,0.75 M0,-0.4 L0.1,-0.4 M0,0.75 L0.1,0.75`)} />
+    {/* rear sight block, the leaf lying on it and reaching forward over the gas tube, the gas tube latch on its side */}
+    <path d={T('M9.5,-1.2 L9.6,-1.5 L10.9,-1.5 L10.9,-0.55 L9.5,-0.55 Z')} />
+    <path d={T('M9.72,-1.5 L9.72,-1.98 L10.1,-1.98 L10.1,-1.78 L12.0,-1.68 Q12.25,-1.68 12.25,-1.5 L12.25,-1.3 L10.9,-1.3 L10.9,-1.5 Z')} />
+    <path className="detail" d={T(`${repeat(10.3, 11.9, 0.2, (x) => `M${x},-1.78 L${x},-1.68`)} M9.8,-1.0 L10.05,-1.0 Q10.15,-1.0 10.15,-0.9 L10.15,-0.4 Q10.15,-0.3 10.05,-0.3 L9.8,-0.3 Q9.7,-0.3 9.7,-0.4 L9.7,-0.9 Q9.7,-1.0 9.8,-1.0 Z`)} />
+    {/* selector lever, up on safe, on its pivot; the charging handle on the bolt carrier */}
+    <path d={T('M2.55,0.05 L5.5,0.0 Q5.8,-0.05 5.85,0.15 L5.85,0.45 Q5.8,0.55 5.65,0.52 L2.55,0.45 Z')} />
+    <path className="detail" d={T(`${OC(2.55, 0.25, 0.17)} ${OC(2.55, 0.25, 0.07)} M2.9,0.12 L5.4,0.08`)} />
+    <path d={T('M5.45,-0.55 L5.55,-1.0 Q5.6,-1.05 5.7,-1.05 L6.15,-1.05 Q6.25,-1.05 6.22,-0.95 L6.1,-0.55 Z')} />
+    {/* trigger guard; the magazine release paddle hangs behind the magazine with its tail curling under */}
+    <path fillRule="evenodd" d={T(`M3.0,${RB} L3.0,2.6 Q3.0,2.83 3.25,2.83 L5.0,2.83 Q5.23,2.83 5.23,2.6 L5.23,${RB} L5.11,${RB} L5.11,2.55 Q5.11,2.72 4.95,2.72 L3.3,2.72 Q3.12,2.72 3.12,2.55 L3.12,${RB} Z`)} />
+    <path d={T(`M5.23,${RB} L5.8,${RB} L5.8,2.5 Q5.8,2.75 5.55,2.75 L5.45,2.75 Q5.23,2.75 5.23,2.5 Z M5.68,2.5 L5.85,2.95 L5.98,2.92 L5.82,2.45 Z`)} />
+    <path className="detail" d={T('M5.4,2.25 L5.65,2.25 M5.4,2.4 L5.65,2.4 M5.4,2.55 L5.65,2.55')} />
+    {/* trigger: the blade leans forward as it drops, and its tip hooks forward */}
+    <path d={T(`M3.38,${RB} L3.64,${RB} Q3.6,1.9 3.72,2.15 Q3.85,2.35 4.05,2.4 Q4.12,2.48 3.98,2.52 Q3.6,2.45 3.52,2.1 Q3.42,1.8 3.38,${RB} Z`)} />
+    <path className="detail" d={T(`${rivets} M0,-0.4 L0.1,-0.4 M0,1.2 L0.1,1.2`)} />
   </> });
 
-  // Barrel with the gas block (its port angled back toward the gas tube), bayonet lug, cleaning rod, and the front
-  // sight block with its hooded post and sling loop. The handguard retainer cap holds the lower handguard's front.
-  const GB0 = 17.3, GB1 = 18.25;
-  const fs0 = BX - 0.85, fs1 = BX + 0.05;
+  // Barrel with the gas tube lying on top of it back to the rear sight block, the gas block (its socket takes the
+  // tube's front), the cleaning rod under the barrel, the handguard cap, and the front sight block with its hooded
+  // post and sling loop.
   P.push({ slot: 'rifle', z: 4.2, row: 'top', target: px(BX - 3, -0.3), el: <>
-    {/* exposed barrel between gas block and front sight, the gas tube back to the rear sight block, the cleaning rod */}
-    <path d={T(`M${GB1},-0.33 L${f(fs0)},-0.3 L${f(fs0)},0.3 L${GB1},0.33 Z M11.3,-1.2 L${GB0},-1.2 L${GB0},-0.82 L11.3,-0.82 Z M${GB1},0.5 L${f(fs0)},0.5 L${f(fs0)},0.62 L${GB1},0.62 Z`)} />
-    <path className="hidden-line" d={T(`M${AK_CHAMBER},-0.38 L${GB0},-0.33 M${AK_CHAMBER},0.38 L${GB0},0.33`)} />
-    {/* handguard retainer cap */}
-    <path d={T(`M16.8,-1.1 L${GB0},-1.1 L${GB0},0.8 L16.8,0.8 Z`)} />
-    <path className="detail" d={T(`M16.8,-0.1 L${GB0},-0.1 M16.95,-1.0 L16.95,0.7`)} />
-    {/* gas block: a block over the barrel whose rear face slopes down to meet the gas tube, with the bayonet lug below */}
-    <path d={T(`M${GB0},-1.3 L${f(GB1 - 0.35)},-1.68 Q${GB1},-1.68 ${GB1},-1.5 L${GB1},0.42 L${f(GB1 - 0.15)},0.42 L${f(GB1 - 0.15)},0.85 L${f(GB0 + 0.1)},0.85 L${f(GB0 + 0.1)},0.42 L${GB0},0.42 Z`)} />
-    <path className="detail" d={T(`M${GB0},-0.82 L${GB1},-0.82 M${f(GB1 - 0.35)},-1.68 L${f(GB1 - 0.35)},-0.82 M${f(GB0 + 0.1)},0.62 L${f(GB1 - 0.15)},0.62 ${OC(GB0 + 0.47, 0.25, 0.07)}`)} />
-    {/* front sight block: base with the sling loop, the post between its protective ears */}
-    <path d={T(`M${f(fs0)},-0.5 L${f(fs1)},-0.5 L${f(fs1)},0.5 L${f(fs1 - 0.3)},0.5 L${f(fs1 - 0.3)},0.9 L${f(fs0 + 0.15)},0.9 L${f(fs0 + 0.15)},0.5 L${f(fs0)},0.5 Z`)} />
-    <path d={T(`M${f(fs0 + 0.22)},-0.5 L${f(fs0 + 0.26)},-1.2 Q${f(fs0 + 0.26)},-2.1 ${f(fs0 + 0.68)},-2.15 Q${f(fs0 + 1.1)},-2.1 ${f(fs0 + 1.1)},-1.2 L${f(fs0 + 1.14)},-0.5 Z`)} />
-    <path className="detail" d={T(`M${f(fs0 + 0.5)},-1.05 L${f(fs0 + 0.5)},-1.78 Q${f(fs0 + 0.5)},-1.92 ${f(fs0 + 0.68)},-1.92 Q${f(fs0 + 0.86)},-1.92 ${f(fs0 + 0.86)},-1.78 L${f(fs0 + 0.86)},-1.05 Z M${f(fs0 + 0.64)},-1.1 L${f(fs0 + 0.64)},-1.78 L${f(fs0 + 0.72)},-1.78 L${f(fs0 + 0.72)},-1.1 M${f(fs0 + 0.22)},-0.5 L${f(fs1)},-0.5 M${f(fs0 + 0.26)},-0.82 L${f(fs0 + 1.1)},-0.82 M${f(fs0 + 0.15)},0.7 L${f(fs1 - 0.3)},0.7 ${OC(fs0 + 0.68, 0.0, 0.1)}`)} />
+    <path d={T(`M${HG1},-0.3 L${GX0},-0.3 L${GX0},0.33 L${HG1},0.33 Z M${GX1},-0.29 L${f(fs0)},-0.29 L${f(fs0)},0.29 L${GX1},0.29 Z M10.9,${GT} L${GX0},${GT} L${GX0},${GB} L10.9,${GB} Z M${HG1},0.42 L${f(fs0)},0.42 L${f(fs0)},0.58 L${HG1},0.58 Z`)} />
+    <path className="hidden-line" d={T(`M${AK_CHAMBER},-0.35 L${HG1},-0.33 M${AK_CHAMBER},0.35 L${HG1},0.33`)} />
+    {/* handguard cap: the ferrule holding both handguards' fronts */}
+    <path d={T(`M${HG1},-1.45 L${f(HG1 + 0.45)},-1.45 L${f(HG1 + 0.45)},0.85 L${HG1},0.85 Z`)} />
+    <path className="detail" d={T(`M${HG1},-0.57 L${f(HG1 + 0.45)},-0.57 M${f(HG1 + 0.12)},-1.35 L${f(HG1 + 0.12)},0.75`)} />
+    {/* gas block: tall at the rear where the tube seats, sloping down to the barrel; cleaning rod guide below */}
+    <path d={T(`M${GX0},-1.31 L20.6,-1.31 Q20.9,-1.31 21.0,-1.1 L21.35,-0.6 L${GX1},-0.55 L${GX1},0.4 L21.7,0.4 L21.7,0.75 L21.3,0.75 L21.3,0.45 L20.05,0.45 L20.05,${GB} L${GX0},${GB} Z`)} />
+    <path className="detail" d={T(`M20.05,${GB} L20.05,-1.31 M20.05,-0.3 L${GX1},-0.3 ${OC(20.5, -0.85, 0.07)}`)} />
+    {/* front sight block: base with the sling loop, the post in its hooded tower */}
+    <path d={T(`M${f(fs0)},-0.83 L${f(fs1)},-0.83 L${f(fs1)},0.54 L${f(fs1 - 0.25)},0.54 L${f(fs1 - 0.25)},0.9 L${f(fs0 + 0.15)},0.9 L${f(fs0 + 0.15)},0.54 L${f(fs0)},0.54 Z`)} />
+    <path d={T(`M${f(fs0 + 0.25)},-0.83 L${f(fs0 + 0.28)},-1.75 Q${f(fs0 + 0.28)},-2.05 ${f(fs0 + 0.5)},-2.05 Q${f(fs0 + 0.75)},-2.05 ${f(fs0 + 0.75)},-1.75 L${f(fs0 + 0.78)},-0.83 Z`)} />
+    <path className="detail" d={T(`M${f(fs0 + 0.38)},-1.35 L${f(fs0 + 0.62)},-1.35 L${f(fs0 + 0.62)},-0.95 L${f(fs0 + 0.38)},-0.95 Z M${f(fs0 + 0.47)},-1.35 L${f(fs0 + 0.47)},-1.75 L${f(fs0 + 0.53)},-1.75 L${f(fs0 + 0.53)},-1.35 M${f(fs0)},-0.3 L${f(fs1)},-0.3 M${f(fs0 + 0.15)},0.72 L${f(fs1 - 0.25)},0.72 ${OC(fs0 + 0.47, 0.1, 0.1)}`)} />
   </> });
 
   // Upper handguard over the gas tube, unless a full-length handguard or a gas tube rail replaces it.
   if (!hgFull && mountKind !== 'gastube')
-    P.push({ slot: 'rifle', z: 5, row: 'top', target: px(14, -1.35), el: <>
-      <path d={T('M11.3,-1.0 L11.35,-1.62 Q11.4,-1.85 11.65,-1.85 L16.55,-1.8 Q16.8,-1.78 16.8,-1.6 L16.8,-1.0 Z')} />
-      <path className="detail" d={T('M11.6,-1.7 L16.6,-1.65 M11.5,-1.12 L16.7,-1.12')} />
+    P.push({ slot: 'rifle', z: 5, row: 'top', target: px(14.8, -1.05), el: <>
+      <path d={T(`M${UH0},-0.57 L${UH0},-1.4 Q${UH0},-1.52 ${f(UH0 + 0.12)},-1.52 L${f(HG1 - 0.1)},-1.52 Q${HG1},-1.52 ${HG1},-1.4 L${HG1},-0.57 Z`)} />
+      <path className="detail" d={T(`M${f(UH0 + 0.15)},-1.38 L${f(HG1 - 0.15)},-1.38 M${f(UH0 + 0.15)},-0.72 L${f(HG1 - 0.15)},-0.72`)} />
     </> });
 
   // Lower handguard
@@ -1368,23 +1369,23 @@ function ak(platform: Platform, b: Build): Scene {
   const hgSlot = own('handguard');
   if (!hg)
     P.push({ slot: hgSlot, z: 6, row: 'bottom', target: px(14, 0.72), el: <>
-      <path d={T(`M${RF},-0.82 L16.8,-0.82 L16.8,0.72 L14.8,0.72 Q13.4,0.8 12.4,1.02 Q11.4,1.15 ${f(RF + 0.3)},0.95 Q${RF},0.92 ${RF},0.6 Z`)} />
-      <path className="detail" d={T(`M${f(RF + 0.1)},-0.6 L16.7,-0.6 M${f(RF + 0.3)},-0.82 L${f(RF + 0.3)},0.85 M16.55,-0.82 L16.55,0.72 ${stadium(12.2, 15.6, 0.1, 0.36)}`)} />
+      <path d={T(`M${HG0},-0.57 L${HG1},-0.57 L${HG1},0.87 L16.6,0.95 Q14.6,1.0 13.0,1.16 Q12.1,1.3 11.8,${RB} L11.0,${RB} Q${HG0},1.4 ${HG0},1.1 Z`)} />
+      <path className="detail" d={T(`M${f(HG0 + 0.25)},-0.57 L${f(HG0 + 0.25)},${RB} M${f(HG1 - 0.2)},-0.57 L${f(HG1 - 0.2)},0.9 ${stadium(12.2, 15.4, 0.25, 0.36)}`)} />
     </> });
   else if (hg.attrs.kind === 'full')
     P.push({ slot: 'handguard', z: 6, row: 'bottom', target: px(14, 0.9), el: <>
-      <path d={T(`M10.9,-1.55 L16.6,-1.55 Q16.85,-1.55 16.85,-1.3 L16.85,0.65 Q16.85,0.9 16.6,0.9 L11.3,0.9 Q${RF},0.85 ${RF},0.2 L${RF},-1.1 Q${RF},-1.55 10.9,-1.55 Z`)} />
+      <path d={T(`M10.9,-1.55 L${f(HG1 - 0.2)},-1.55 Q${HG1},-1.55 ${HG1},-1.3 L${HG1},0.65 Q${HG1},0.9 ${f(HG1 - 0.2)},0.9 L11.3,0.9 Q${RF},0.85 ${RF},0.2 L${RF},-1.1 Q${RF},-1.55 10.9,-1.55 Z`)} />
       <path className="detail" d={T(`${[11.5, 13.2, 14.9].map((x) => stadium(x, x + 1.3, -0.95, 0.3) + ' ' + stadium(x, x + 1.3, 0.28, 0.3)).join(' ')} M10.9,-1.3 L16.6,-1.3 M11.0,-0.33 L16.6,-0.33`)} />
     </> });
   else if (hg.attrs.mlok)
-    P.push({ slot: 'handguard', z: 6, row: 'bottom', target: px(14, 0.8), el: <>
-      <path d={T(`M${RF},-0.82 L16.8,-0.82 L16.8,0.55 L12.0,0.55 Q10.7,0.6 ${RF},0.3 Z`)} />
-      <path className="detail" d={T(`${[11.6, 13.3, 15.0].map((x) => stadium(x, x + 1.25, -0.1, 0.28)).join(' ')} M12.0,0.4 L16.55,0.4 M16.55,-0.82 L16.55,0.55`)} />
+    P.push({ slot: 'handguard', z: 6, row: 'bottom', target: px(14, 0.5), el: <>
+      <path d={T(`M${HG0},-0.57 L${HG1},-0.57 L${HG1},0.7 L12.0,0.7 Q10.7,0.75 ${HG0},0.45 Z`)} />
+      <path className="detail" d={T(`${[11.6, 13.3, 15.0].map((x) => stadium(x, x + 1.25, 0.05, 0.28)).join(' ')} M12.0,0.55 L16.8,0.55 M${f(HG1 - 0.25)},-0.57 L${f(HG1 - 0.25)},0.7`)} />
     </> });
   else
     P.push({ slot: 'handguard', z: 6, row: 'bottom', target: px(14, 1.0), el: <>
-      <path d={T(`M${RF},-0.82 L16.8,-0.82 L16.8,0.72 L${RF},0.72 Z M11.0,0.72 L16.3,0.72 L16.3,1.0 L11.0,1.0 Z M11.4,-0.15 L16.2,-0.15 L16.2,0.25 L11.4,0.25 Z`)} />
-      <path className="detail" d={T(`${repeat(11.15, 16.0, 0.394, (x) => `M${x},1.0 L${x},0.9 L${f(x + 0.206)},0.9 L${f(x + 0.206)},1.0`)} ${repeat(11.55, 15.9, 0.394, (x) => `M${x},-0.15 L${x},0.25`)}`)} />
+      <path d={T(`M${HG0},-0.57 L${HG1},-0.57 L${HG1},0.85 L${HG0},0.85 Z M11.0,0.85 L16.3,0.85 L16.3,1.13 L11.0,1.13 Z M11.4,0.0 L16.2,0.0 L16.2,0.4 L11.4,0.4 Z`)} />
+      <path className="detail" d={T(`${repeat(11.15, 16.0, 0.394, (x) => `M${x},1.13 L${x},1.03 L${f(x + 0.206)},1.03 L${f(x + 0.206)},1.13`)} ${repeat(11.55, 15.9, 0.394, (x) => `M${x},0.0 L${x},0.4`)}`)} />
     </> });
 
   // Stock
@@ -1392,17 +1393,17 @@ function ak(platform: Platform, b: Build): Scene {
   let sd: string, sdet: string;
   let rear: number;
   if (!st) {
-    // Fixed wood stock: the comb runs back almost level with the receiver top, the toe line drops to a tall butt
-    // with the steel butt plate and its trap door.
-    sd = 'M0,-0.62 L0,-0.2 L-0.3,-0.25 Q-1.0,-0.3 -1.6,-0.3 L-7.6,-0.32 Q-7.85,-0.32 -7.88,-0.08 L-8.2,3.35 Q-8.22,3.57 -8.0,3.57 L-7.3,3.57 Q-6.5,3.3 -5.5,2.9 L-1.2,1.5 Q-0.6,1.35 0,1.3 L0,0.95 Z';
-    sdet = `M-7.66,-0.32 L-7.98,3.57 ${OC(-7.78, 0.0, 0.05)} ${OC(-8.05, 3.25, 0.05)} M-7.8,1.3 L-7.68,1.3 L-7.78,2.5 L-7.9,2.5 Z`;
-    rear = -9.38;
+    // Fixed wood stock, from the photo: the comb climbs a little to meet the receiver, the toe line falls straight
+    // back to the tall butt and its steel plate.
+    sd = 'M0,-0.05 Q-0.6,0.1 -1.2,0.4 L-2,0.44 L-8.0,0.44 Q-8.5,0.5 -8.75,0.7 L-8.9,1.0 L-8.9,4.1 Q-8.88,4.35 -8.6,4.3 L-8.0,4.13 Q-5.5,3.45 -3,2.68 Q-1.5,2.25 0,1.95 Z';
+    sdet = `M-8.7,0.75 L-8.7,4.25 ${OC(-8.78, 1.3, 0.05)} ${OC(-8.78, 3.7, 0.05)} M-8.82,2.0 L-8.68,2.0 L-8.68,3.1 L-8.82,3.1 Z`;
+    rear = -8.9;
   } else if (st.attrs.kind === 'zhukov') {
-    sd = 'M0,-0.72 L-0.75,-0.72 L-0.85,-0.85 L-9.6,-0.85 Q-9.95,-0.85 -9.95,-0.5 L-9.95,3.0 Q-9.95,3.25 -9.7,3.25 L-8.6,3.25 L-1.2,1.15 L-0.75,1.15 L-0.75,0.95 L0,0.95 Z M-1.5,-0.42 L-8.25,-0.42 Q-8.4,-0.42 -8.4,-0.27 L-8.4,2.15 Q-8.4,2.33 -8.58,2.38 Z';
-    sdet = `M-0.75,-0.72 L-0.75,0.95 ${OC(-0.38, 0.62, 0.12)} M-9.6,-0.85 L-9.6,3.25 M-0.85,-0.6 L-8.7,-0.6`;
+    sd = 'M0,-0.72 L-0.75,-0.72 L-0.85,-0.85 L-9.6,-0.85 Q-9.95,-0.85 -9.95,-0.5 L-9.95,3.0 Q-9.95,3.25 -9.7,3.25 L-8.6,3.25 L-1.2,1.15 L-0.75,1.15 L-0.75,1.45 L0,1.45 Z M-1.5,-0.42 L-8.25,-0.42 Q-8.4,-0.42 -8.4,-0.27 L-8.4,2.15 Q-8.4,2.33 -8.58,2.38 Z';
+    sdet = `M-0.75,-0.72 L-0.75,1.45 ${OC(-0.38, 0.62, 0.12)} M-9.6,-0.85 L-9.6,3.25 M-0.85,-0.6 L-8.7,-0.6`;
     rear = -9.95;
   } else if (st.attrs.kind === 'moe') {
-    sd = 'M0,-0.7 L-1.2,-0.74 L-9.7,-0.7 Q-9.95,-0.7 -9.95,-0.45 L-10.05,2.85 Q-10.05,3.1 -9.8,3.1 L-8.7,3.1 Q-5.2,2.05 -1.5,1.3 L0,0.95 Z';
+    sd = 'M0,-0.7 L-1.2,-0.74 L-9.7,-0.7 Q-9.95,-0.7 -9.95,-0.45 L-10.05,2.85 Q-10.05,3.1 -9.8,3.1 L-8.7,3.1 Q-5.2,2.05 -1.5,1.3 L0,1.45 Z';
     sdet = `M-9.6,-0.71 L-9.7,3.1 ${stadium(-8.95, -8.2, 2.55, 0.22)} M-1.6,-0.45 L-8.9,-0.45`;
     rear = -10.05;
   } else {
@@ -1411,41 +1412,42 @@ function ak(platform: Platform, b: Build): Scene {
     rear = TE - 0.73;
     const dx = rear - AR_STOCK_REAR, dy = -0.1;
     const t = arPaths(AR_PROFILES.stock, (x, y) => [x + dx, y + dy]);
-    sd = `M0,-0.72 L-0.6,-0.72 L-0.6,0.95 L0,0.95 Z M-0.6,${f(dy - 0.57)} L${TE},${f(dy - 0.57)} L${TE},${f(dy + 0.57)} L-0.6,${f(dy + 0.57)} Z ${t.o}`;
+    sd = `M0,-0.72 L-0.6,-0.72 L-0.6,1.45 L0,1.45 Z M-0.6,${f(dy - 0.57)} L${TE},${f(dy - 0.57)} L${TE},${f(dy + 0.57)} L-0.6,${f(dy + 0.57)} Z ${t.o}`;
     sdet = t.d;
   }
-  P.push({ slot: own('stock'), z: 4.1, row: 'bottom', target: px(rear + 3, 1.6), el: <><path fillRule="evenodd" d={T(sd)} /><path className="detail" d={T(sdet)} /></> });
+  P.push({ slot: own('stock'), z: 4.1, row: 'bottom', target: px(rear + 3, 2.0), el: <><path fillRule="evenodd" d={T(sd)} /><path className="detail" d={T(sdet)} /></> });
 
-  // Pistol grip
+  // Pistol grip: the factory grip's broad top fills the gap behind the trigger guard, then narrows to a rounded heel.
   const gk = b.grip?.attrs.kind as string | undefined;
   const gripD = !gk
-    ? 'M1.75,0.95 L1.25,4.3 Q1.15,4.85 1.5,4.9 L2.45,4.9 Q2.62,4.9 2.6,4.72 L2.5,2.6 Q2.55,1.9 2.95,1.3 L2.95,0.95 Z'
-    : gk === 'hogue'
+    ? `M0.74,${RB} L3.03,${RB} Q3.1,1.75 2.8,2.4 Q2.45,3.0 2.1,3.8 L1.68,5.0 Q1.58,5.55 1.15,5.6 L0.4,5.55 Q-0.1,5.5 -0.05,5.1 L0.32,4.0 Q0.6,3.0 0.74,2.0 Z`
+    : movePath(gk === 'hogue'
       ? 'M0.8,0.95 L0.05,4.15 Q-0.05,4.75 0.42,4.88 L1.48,4.96 Q1.66,4.96 1.7,4.78 Q1.6,4.4 1.86,4.05 Q2.02,3.65 1.95,3.3 Q2.1,2.92 2.15,2.5 Q2.26,2.02 2.62,1.92 L2.78,1.85 L2.78,0.95 Z'
-      : `M0.95,0.95 L${gk === 'uspalm' ? '0.55,1.0 Q0.38,1.05 0.45,1.18 L0.62,1.22' : '0.7,1.05 Q0.55,1.15 0.62,1.3'} L0.0,4.15 Q-0.1,4.78 0.4,4.88 L1.52,4.97 Q1.72,4.97 1.76,4.76 L2.2,2.32 Q2.3,1.96 2.65,1.9 L2.78,1.82 L2.78,0.95 Z`;
+      : `M0.95,0.95 L${gk === 'uspalm' ? '0.55,1.0 Q0.38,1.05 0.45,1.18 L0.62,1.22' : '0.7,1.05 Q0.55,1.15 0.62,1.3'} L0.0,4.15 Q-0.1,4.78 0.4,4.88 L1.52,4.97 Q1.72,4.97 1.76,4.76 L2.2,2.32 Q2.3,1.96 2.65,1.9 L2.78,1.82 L2.78,0.95 Z`, 0, 0.5);
   const gripDet = !gk
-    ? 'M1.62,1.5 L1.3,4.2 M2.0,1.5 L1.75,4.3'
-    : gk === 'hogue' ? 'M0.9,1.5 L0.35,4.0' : 'M0.95,1.55 L2.0,1.55 L1.55,4.2 Q1.5,4.45 1.25,4.45 L0.55,4.42 Q0.3,4.4 0.36,4.12 Z';
-  P.push({ slot: own('grip'), z: 5, row: 'bottom', target: px(1.0, 3.6), el: <><path d={T(gripD)} /><path className="detail" d={T(gripDet)} /></> });
+    ? 'M0.95,2.1 L0.5,4.2 M1.5,2.1 L1.1,4.6'
+    : movePath(gk === 'hogue' ? 'M0.9,1.5 L0.35,4.0' : 'M0.95,1.55 L2.0,1.55 L1.55,4.2 Q1.5,4.45 1.25,4.45 L0.55,4.42 Q0.3,4.4 0.36,4.12 Z', 0, 0.5);
+  P.push({ slot: own('grip'), z: 5, row: 'bottom', target: px(1.2, 4.0), el: <><path d={T(gripD)} /><path className="detail" d={T(gripDet)} /></> });
 
   // Trigger group: hammer, trigger and disconnector inside the receiver.
   if (b.trigger)
-    P.push({ slot: 'trigger', internal: true, z: 20, row: 'bottom', target: px(4.1, 0.2), el:
-      <path d={T(`${OC(4.55, 0.28, 0.22)} M4.4,0.1 L3.45,-0.42 L3.3,-0.25 L4.35,0.45 M3.2,0.95 L3.2,0.55 L4.1,0.55 L4.1,0.95 ${OC(3.4, 0.42, 0.18)}`)} /> });
+    P.push({ slot: 'trigger', internal: true, z: 20, row: 'bottom', target: px(4.1, 0.5), el:
+      <path d={T(`${OC(4.55, 0.58, 0.22)} M4.4,0.4 L3.45,-0.12 L3.3,0.05 L4.35,0.75 M3.2,1.45 L3.2,0.85 L4.1,0.85 L4.1,1.45 ${OC(3.4, 0.72, 0.18)}`)} />
+    });
 
-  // Magazine: the curved box, more sharply curved for 7.62x39.
-  const bend = cal === 'akm' ? 0.022 : 0;
-  const mg = (x: number, y: number) => `${f(x + bend * (y - 0.8) * (y - 0.8))},${f(y)}`;
-  const rearE = [[6.38, 0.8], [6.5, 2.1], [6.7, 3.5], [7.3, 5.0], [8.3, 6.4], [9.5, 7.5]];
-  const frontE = [[11.55, 6.95], [11.0, 6.25], [10.2, 5.05], [9.5, 3.6], [8.9, 2.2], [8.6, 0.8]];
-  const curve = (pts: number[][]) => pts.map(([x, y], i) => `${i ? 'L' : 'M'}${mg(x, y)}`).join(' ');
+  // Magazine: the curved box traced from the photo (7.62x39); the 5.45 magazine curves less.
+  const k = cal === 'akm' ? 1 : 0.7;
+  const mg = (x: number, y: number, x0: number) => `${f(x0 + k * (x - x0))},${f(y)}`;
+  const rearE: number[][] = [[6.13, 1.2], [6.13, 2.0], [6.4, 3.0], [6.74, 4.0], [7.28, 5.0], [7.97, 6.0], [8.89, 7.0], [9.5, 7.7]];
+  const frontE: number[][] = [[11.77, 6.5], [10.46, 5.0], [9.62, 4.0], [9.0, 3.0], [8.62, 2.0], [8.62, 1.2]];
+  const curve = (pts: number[][], x0: number) => pts.map(([x, y], i) => `${i ? 'L' : 'M'}${mg(x, y, x0)}`).join(' ');
   const steel = !!b.mag?.attrs.steel;
-  const magD = `${curve(rearE)} L${mg(11.55, 6.95)} ${curve(frontE).replace(/^M/, 'L')} Z`;
-  const floor = `M${mg(9.2, 7.1)} L${mg(11.35, 6.6)}`;
-  // A line along the body, following its curve: the stamped rib on a steel mag, the texture panel's edge on a polymer one.
-  const inset = (pts: number[][], d: number, y0: number, y1: number) => curve(pts.filter(([, y]) => y >= y0 && y <= y1).map(([x, y]) => [x + d, y]));
-  const ribs = steel ? [-0.3, -0.75, -1.2].map((d) => inset(frontE, d, 1.6, 6.3)).join(' ') : inset(rearE, 0.36, 1.8, 6.5);
-  P.push({ slot: 'mag', z: 3, row: 'bottom', target: px(8.4, 4.8), el: <><path d={T(magD)} /><path className="detail" d={T(`${floor} ${ribs}`)} /></> });
+  const magD = `${curve(rearE, 6.13)} L${mg(11.77, 6.5, 8.62)} ${curve(frontE, 8.62).replace(/^M/, 'L')} Z`;
+  const floor = `M${mg(9.55, 7.35, 6.13)} L${mg(11.55, 6.4, 8.62)}`;
+  // A line along the body, following its curve: the stamped ribs on a steel mag, the texture panel's edge on a polymer one.
+  const inset = (pts: number[][], d: number, y0: number, y1: number, x0: number) => curve(pts.filter(([, y]) => y >= y0 && y <= y1).map(([x, y]) => [x + d, y]), x0);
+  const ribs = steel ? [-0.35, -0.85, -1.35].map((d) => inset(frontE, d, 2.0, 6.5, 8.62)).join(' ') : inset(rearE, 0.4, 2.0, 7.0, 6.13);
+  P.push({ slot: 'mag', z: 3, row: 'bottom', target: px(8.5, 4.8), el: <><path d={T(magD)} /><path className="detail" d={T(`${floor} ${ribs}`)} /></> });
 
   // Optic mount and optic
   let railTop = -2.35, rx0 = 2.6, rx1 = 7.4;
@@ -1455,20 +1457,20 @@ function ak(platform: Platform, b: Build): Scene {
     rx0 = rs ? 2.4 : 2.6; rx1 = rs ? 6.8 : 7.6;
     const ax = rs ? 2.9 : 3.4;
     P.push({ slot: 'mount', z: 13, row: 'top', target: px((rx0 + rx1) / 2, railTop), el: <>
-      <path d={T(`${akRail(rx0, rx1, railTop, railTop + 0.38)} M${ax},${f(railTop + 0.38)} L${ax},-1.1 L${f(ax + 1.0)},-1.1 L${f(ax + 1.0)},${f(railTop + 0.38)}`)} />
-      <path className="hidden-line" d={T(`M${ax},-1.1 L${ax},-0.62 M${f(ax + 1.0)},-1.1 L${f(ax + 1.0)},-0.62 M${f(ax - 0.4)},-0.62 L${f(ax + 3.2)},-0.62 L${f(ax + 3.2)},0.1 L${f(ax - 0.4)},0.1 Z`)} />
+      <path d={T(`${akRail(rx0, rx1, railTop, railTop + 0.38)} M${ax},${f(railTop + 0.38)} L${ax},-1.15 L${f(ax + 1.0)},-1.15 L${f(ax + 1.0)},${f(railTop + 0.38)}`)} />
+      <path className="hidden-line" d={T(`M${ax},-1.15 L${ax},-0.55 M${f(ax + 1.0)},-1.15 L${f(ax + 1.0)},-0.55 M${f(ax - 0.4)},-0.55 L${f(ax + 3.2)},-0.55 L${f(ax + 3.2)},0.1 L${f(ax - 0.4)},0.1 Z`)} />
     </> });
   } else if (mountKind === 'gastube') {
-    railTop = -2.08; rx0 = 11.4; rx1 = 16.7;
-    P.push({ slot: 'mount', z: 13, row: 'top', target: px(14.2, railTop), el: <>
-      <path d={T(`M11.3,-1.0 L11.3,-1.6 Q11.3,-1.8 11.5,-1.8 L16.6,-1.8 Q16.8,-1.8 16.8,-1.6 L16.8,-1.0 Z ${akRail(rx0, rx1, railTop, -1.8)}`)} />
-      <path className="detail" d={T(`M11.5,-1.5 L16.6,-1.5 ${[12.0, 13.4, 14.8].map((x) => stadium(x, x + 1.0, -1.25, 0.2)).join(' ')}`)} />
+    railTop = -2.08; rx0 = UH0 + 0.1; rx1 = HG1 - 0.1;
+    P.push({ slot: 'mount', z: 13, row: 'top', target: px(14.8, railTop), el: <>
+      <path d={T(`M${UH0},-0.57 L${UH0},-1.6 Q${UH0},-1.8 ${f(UH0 + 0.2)},-1.8 L${f(HG1 - 0.2)},-1.8 Q${HG1},-1.8 ${HG1},-1.6 L${HG1},-0.57 Z ${akRail(rx0, rx1, railTop, -1.8)}`)} />
+      <path className="detail" d={T(`M${f(UH0 + 0.2)},-1.5 L${f(HG1 - 0.2)},-1.5 ${[13.0, 14.4, 15.8].map((x) => stadium(x, x + 1.0, -1.2, 0.2)).join(' ')}`)} />
     </> });
   } else if (mountKind === 'cover') {
     railTop = -1.4; rx0 = 1.5; rx1 = 8.6;
     P.push({ slot: 'mount', z: 13, row: 'top', target: px(5, railTop), el: <>
-      <path d={T(`M0,-0.62 L0,-0.7 L0.4,-0.95 Q0.9,-1.1 1.5,-1.12 L1.5,-1.4 L8.6,-1.4 L8.6,-1.3 L9.6,-1.3 L9.6,-1.1 L8.95,-1.1 L8.95,-0.62 Z`)} />
-      <path className="detail" d={T(`${pic(1.65, 8.45, -1.4)} M1.5,-1.12 L8.95,-1.12`)} />
+      <path d={T('M0.05,-0.55 L0.05,-0.6 L1.2,-1.12 L1.5,-1.12 L1.5,-1.4 L8.6,-1.4 L8.6,-1.2 L9.5,-1.2 L9.5,-0.55 Z')} />
+      <path className="detail" d={T(`${pic(1.65, 8.45, -1.4)} M1.5,-1.12 L9.5,-1.12`)} />
     </> });
   } else
     P.push({ slot: 'mount', z: 13, row: 'top', target: px(5, railTop), el: <path d={T(akRail(rx0, rx1, railTop, railTop + 0.38))} /> });
@@ -1481,9 +1483,9 @@ function ak(platform: Platform, b: Build): Scene {
   const mk = (b.muzzle?.attrs.kind as string | undefined) ?? (thread === 'M24x1.5' ? 'brake74' : 'slant');
   let md: string, mdet: string, mlen: number;
   if (mk === 'slant') {
-    mlen = 0.9;
-    md = `M${f(BX)},-0.36 L${f(BX + 0.55)},-0.36 L${f(BX + mlen)},0.36 L${f(BX)},0.36 Z`;
-    mdet = `M${f(BX + 0.3)},-0.36 L${f(BX + 0.3)},0.36`;
+    mlen = 0.82;
+    md = `M${f(BX)},-0.42 L${f(BX + 0.5)},-0.42 L${f(BX + mlen)},0.42 L${f(BX)},0.42 Z`;
+    mdet = `M${f(BX + 0.28)},-0.42 L${f(BX + 0.28)},0.42`;
   } else if (mk === 'brake74') {
     mlen = 2.8;
     const a = BX, z = BX + mlen;
@@ -1504,7 +1506,7 @@ function ak(platform: Platform, b: Build): Scene {
   return {
     width: 1000, height: 486, pieces: P,
     center: [f(ox + (rear - 0.6) * S), f(ox + (front + 0.6) * S), oy],
-    dims: [[f(ox + rear * S), f(ox + front * S), 462, `${inch(front - rear)} overall`], [f(ox + AK_CHAMBER * S), f(ox + BX * S), f(oy + 1.9 * S), `${inch(L)} barrel`]],
+    dims: [[f(ox + rear * S), f(ox + front * S), 462, `${inch(front - rear)} overall`], [f(ox + AK_CHAMBER * S), f(ox + BX * S), f(oy + 2.0 * S), `${inch(L)} barrel`]],
     rows: [26, 424],
     spec: `${cal === 'akm' ? '7.62x39' : '5.45x39'} · ${inch(L)} barrel · ${thread === 'M24x1.5' ? 'M24x1.5 RH' : thread} threads`,
   };
@@ -1705,17 +1707,21 @@ function m1911(platform: Platform, b: Build): Scene {
   const frameD = dbl
     ? 'M-0.05,0.97 L7.28,0.97 L7.28,1.62 L4.42,1.62 Q4.3,1.62 4.27,1.78 L4.2,2.5 Q4.16,2.74 3.92,2.74 L2.86,2.74 Q2.56,2.74 2.47,2.5 Q2.38,2.72 2.24,2.84 L1.88,4.86 Q1.9,5.04 1.98,5.12 L2.0,5.3 L-0.52,5.3 L-0.46,5.12 Q-0.36,5.0 -0.34,4.86 L-0.06,2.62 L0.08,2.62 L0.08,1.3 L-0.38,1.18 L-0.38,0.97 Z '
       + 'M2.76,1.6 L3.96,1.6 Q4.08,1.6 4.07,1.76 L4.04,2.4 Q4.02,2.58 3.84,2.58 L2.92,2.58 Q2.68,2.58 2.66,2.34 L2.64,1.76 Q2.64,1.6 2.76,1.6 Z'
-    : 'M0.12,0.97 L5.75,0.97 L5.75,1.5 L4.22,1.5 Q4.06,1.52 4.03,1.72 L3.99,2.3 Q3.96,2.6 3.66,2.6 L2.82,2.6 Q2.52,2.6 2.44,2.36 Q2.34,2.62 2.16,2.78 L1.5,5.1 L-0.9,5.1 Q-0.75,4.4 -0.5,3.9 Q-0.3,3.2 -0.1,2.62 L0.12,2.62 Z '
-      + 'M2.76,1.58 L3.7,1.58 Q3.86,1.58 3.86,1.76 L3.84,2.22 Q3.82,2.44 3.6,2.44 L2.92,2.44 Q2.64,2.44 2.62,2.16 L2.62,1.76 Q2.62,1.58 2.76,1.58 Z';
-  let frameDet = `${OC(1.95, 2.25, 0.13)} ${OC(1.95, 2.25, 0.07)}`;
-  if (!dbl) frameDet += ' M1.1,1.04 L1.92,1.04 Q1.98,1.04 1.98,1.1 L1.98,1.14 Q1.98,1.2 1.92,1.2 L1.1,1.2 Q1.04,1.2 1.04,1.14 L1.04,1.1 Q1.04,1.04 1.1,1.04 Z';
+    // Traced from a Colt Government photo: the back strap tucks in under the tang, then the flat mainspring housing
+    // runs straight to the heel; the trigger guard sweeps up into the front strap.
+    : 'M0.12,0.97 L5.75,0.97 L5.75,1.5 L4.0,1.5 Q3.76,1.55 3.74,1.85 L3.72,2.25 Q3.66,2.59 3.3,2.59 L2.7,2.59 Q2.2,2.62 2.05,2.75 L1.12,5.02 L-0.85,5.02 Q-1.02,5.02 -1.02,4.85 L-0.3,2.93 Q-0.15,2.65 -0.05,2.35 L-0.05,2.1 Q-0.1,1.8 -0.42,1.65 '
+      + (beaver ? 'Q-0.5,1.5 -0.5,1.3 Q-0.4,1.1 -0.1,1.02 ' : 'Q-0.6,1.55 -0.84,1.5 Q-0.94,1.42 -0.84,1.33 Q-0.5,1.2 -0.1,1.04 ')
+      + 'L-0.1,0.97 Z M2.45,1.55 L3.5,1.55 Q3.65,1.55 3.65,1.72 L3.62,2.25 Q3.58,2.42 3.4,2.42 L2.4,2.42 Q2.15,2.4 2.15,2.15 L2.15,1.9 Q2.17,1.6 2.45,1.55 Z';
+  // Magazine catch button behind the guard, and the plunger tube along the frame flat between the two safeties
+  let frameDet = dbl ? `${OC(2.17, 2.42, 0.13)} ${OC(2.17, 2.42, 0.07)}` : `${OC(1.9, 2.27, 0.12)} ${OC(1.9, 2.27, 0.06)}`;
+  if (!dbl) frameDet += ' M0.6,1.0 L1.9,1.0 Q1.96,1.0 1.96,1.06 Q1.96,1.12 1.9,1.12 L0.6,1.12 Q0.54,1.12 0.54,1.06 Q0.54,1.0 0.6,1.0 Z';
   if (dbl) {
     // The grip module's seam under the frame, the rail's cross slots, the grip texture panel and the magwell's lip.
     frameDet += ' M0.12,1.34 L4.24,1.4 M4.5,1.48 L7.2,1.48';
     for (let x = 4.75; x < 7.1; x += 0.394) frameDet += ` M${f(x)},1.48 L${f(x)},1.62`;
     frameDet += ' M0.13,2.92 L2.0,2.92 L1.69,4.68 L-0.1,4.68 Z M-0.42,5.0 L1.93,5.0';
   }
-  P.push({ slot: 'pistol', z: 3, row: 'bottom', target: px(3.3, dbl ? 2.74 : 2.6), el: <>
+  P.push({ slot: 'pistol', z: 3, row: 'bottom', target: px(3.0, dbl ? 2.74 : 2.5), el: <>
     <path fillRule="evenodd" d={T(frameD)} />
     <path className="detail" d={T(frameDet)} />
   </> });
@@ -1723,7 +1729,7 @@ function m1911(platform: Platform, b: Build): Scene {
   /* Slide, with the ejection port, rear serrations and slide stop notch; the 1911's barrel bushing and spring plug */
   const slideD = (dbl
     ? 'M0.3,0 L7.42,0 Q7.48,0 7.48,0.06 L7.48,0.97 L0,0.97 L0,0.3 Q0,0 0.3,0 Z'
-    : 'M0.3,0 L7.42,0 Q7.48,0 7.48,0.06 L7.48,1.42 Q7.48,1.47 7.43,1.47 L5.77,1.47 L5.77,1.1 Q5.77,0.97 5.64,0.97 L0,0.97 L0,0.3 Q0,0 0.3,0 Z')
+    : 'M0.3,0 L7.42,0 Q7.48,0 7.48,0.06 L7.48,1.42 Q7.48,1.47 7.43,1.47 L5.77,1.47 L5.77,1.1 Q5.77,0.97 5.64,0.97 L0.46,0.97 L0.46,0.82 L0.3,0.82 L0.3,0.97 L0,0.97 L0,0.3 Q0,0 0.3,0 Z')
     + ' M2.48,0.1 L3.9,0.1 L3.9,0.6 L2.48,0.6 Z';
   let serr = '';
   for (let x = 0.42; x < 1.8; x += 0.075) serr += `M${f(x)},0.4 L${f(x)},0.92 `;
@@ -1735,9 +1741,9 @@ function m1911(platform: Platform, b: Build): Scene {
   </> });
 
   /* Slide stop: thumb piece forward of the grip, the lever along the frame and its pin above the trigger guard */
-  P.push({ slot: 'pistol', z: 6.5, row: 'bottom', target: px(2.4, 1.15), el: <>
-    <path d={T('M1.15,1.0 L1.9,1.0 Q1.98,1.0 1.98,1.08 L3.1,1.1 L3.16,1.12 L3.25,1.08 Q3.44,1.08 3.44,1.25 Q3.44,1.42 3.25,1.42 Q3.1,1.4 3.04,1.3 L1.98,1.22 Q1.98,1.28 1.9,1.28 L1.2,1.28 Q1.08,1.28 1.08,1.16 L1.08,1.08 Q1.08,1.0 1.15,1.0 Z')} />
-    <path className="detail" d={T(`${OC(3.25, 1.25, 0.07)} ${repeat(1.22, 1.88, 0.08, (x) => `M${x},1.04 L${x},1.24`)}`)} />
+  P.push({ slot: 'pistol', z: 6.5, row: 'bottom', target: px(2.2, 1.11), el: <>
+    <path d={T('M2.0,1.0 L2.4,1.0 Q2.46,1.0 2.46,1.05 L3.14,1.05 Q3.3,1.03 3.3,1.1 Q3.3,1.17 3.14,1.15 L2.46,1.15 Q2.46,1.22 2.4,1.22 L2.0,1.22 Q1.95,1.22 1.95,1.17 L1.95,1.05 Q1.95,1.0 2.0,1.0 Z')} />
+    <path className="detail" d={T(`${OC(3.22, 1.1, 0.07)} ${repeat(2.0, 2.4, 0.06, (x) => `M${x},1.03 L${x},1.19`)}`)} />
   </> });
 
   /* Barrel: hood in the ejection port, the rest hidden in the slide; threads past the bushing */
@@ -1768,26 +1774,26 @@ function m1911(platform: Platform, b: Build): Scene {
   /* Hammer, cocked: the GI spur, or the Commander-style ring hammer most upgrades and modern 1911s use */
   const hammerD = ring
     ? 'M-0.02,0.97 L-0.04,0.62 Q-0.1,0.34 -0.36,0.32 Q-0.62,0.36 -0.62,0.6 Q-0.6,0.76 -0.42,0.8 Q-0.32,0.86 -0.3,0.97 Z ' + OC(-0.36, 0.56, 0.11)
-    : 'M-0.02,0.97 L-0.04,0.5 Q-0.08,0.36 -0.25,0.34 L-0.7,0.26 Q-0.88,0.24 -0.9,0.34 Q-0.88,0.44 -0.72,0.48 L-0.5,0.54 Q-0.38,0.62 -0.32,0.78 L-0.3,0.97 Z';
+    : 'M0,1.0 L0,0.4 L0.05,0.3 Q0,0.22 -0.1,0.22 L-0.28,0.2 L-0.55,0.18 Q-0.63,0.2 -0.62,0.28 Q-0.6,0.33 -0.5,0.34 L-0.42,0.36 Q-0.3,0.5 -0.07,0.93 L-0.07,1.0 Z';
   P.push({ slot: dbl ? 'pistol' : own('hammer'), z: 2.5, row: 'top', target: px(-0.3, 0.45), el: <>
     <path fillRule="evenodd" d={T(hammerD)} />
-    {!ring && <path className="detail" d={T('M-0.4,0.3 L-0.42,0.4 M-0.5,0.29 L-0.52,0.39 M-0.6,0.27 L-0.62,0.37 M-0.7,0.26 L-0.72,0.36 M-0.8,0.26 L-0.8,0.34')} />}
+    {!ring && <path className="detail" d={T(repeat(-0.56, -0.3, 0.05, (x) => `M${x},0.19 L${x},0.26`))} />}
   </> });
 
   /* Grip safety: the GI spur, or a beavertail with a memory bump */
   const gsD = beaver
-    ? 'M0.12,1.0 L-0.3,1.06 Q-0.62,1.1 -0.76,1.2 Q-0.84,1.27 -0.74,1.32 Q-0.56,1.4 -0.44,1.56 Q-0.4,1.8 -0.28,2.0 Q-0.16,2.2 -0.1,2.4 L-0.06,2.62 L0.14,2.62 Z'
-    : 'M0.12,1.0 L-0.3,1.08 Q-0.64,1.2 -0.86,1.4 Q-0.94,1.48 -0.82,1.52 Q-0.6,1.52 -0.46,1.6 Q-0.2,1.9 -0.1,2.3 L-0.05,2.62 L0.14,2.62 Z';
-  P.push({ slot: dbl ? 'pistol' : own('gripsafety'), z: 5, row: 'bottom', target: px(-0.45, 1.75), el: <path d={T(gsD)} /> });
+    ? 'M-0.1,1.02 Q-0.6,1.02 -1.0,1.1 Q-1.12,1.18 -1.02,1.3 Q-0.8,1.5 -0.55,1.72 Q-0.2,1.95 -0.1,2.2 Q-0.18,2.45 -0.24,2.65 Q-0.28,2.8 -0.3,2.93 L-0.12,2.93 Q0.02,2.65 0.1,2.35 L0.1,2.1 Q0.05,1.75 -0.25,1.55 Q-0.35,1.42 -0.3,1.3 Q-0.22,1.15 -0.1,1.1 Z'
+    : 'M-0.1,1.04 Q-0.5,1.2 -0.84,1.33 Q-0.94,1.42 -0.84,1.5 Q-0.6,1.55 -0.42,1.65 Q-0.1,1.8 -0.05,2.1 L-0.05,2.35 Q-0.15,2.65 -0.3,2.93 L-0.12,2.93 Q0.02,2.65 0.1,2.35 L0.1,2.1 Q0.05,1.75 -0.25,1.55 Q-0.35,1.42 -0.3,1.3 Q-0.22,1.15 -0.1,1.1 Z';
+  P.push({ slot: dbl ? 'pistol' : own('gripsafety'), z: 5, row: 'bottom', target: px(beaver ? -0.7 : -0.55, 1.4), el: <path d={T(gsD)} /> });
 
   /* Thumb safety: pivots at the frame's rear; extended and ambidextrous safeties have a longer, wider pad */
   const ext = dbl || b.safety ? true : pistol?.attrs.safety !== 'gi';
   const safD = ext
-    ? 'M-0.34,1.22 Q-0.34,1.02 -0.12,1.0 L0.78,1.0 Q0.98,1.0 1.0,1.14 Q0.98,1.3 0.8,1.34 L0.2,1.34 Q0.1,1.44 -0.12,1.44 Q-0.34,1.42 -0.34,1.22 Z'
-    : 'M-0.34,1.22 Q-0.34,1.02 -0.12,1.0 L0.56,1.0 Q0.68,1.02 0.68,1.12 Q0.66,1.22 0.56,1.22 L0.2,1.24 Q0.1,1.44 -0.12,1.44 Q-0.34,1.42 -0.34,1.22 Z';
-  P.push({ slot: dbl ? 'pistol' : own('safety'), z: 6, row: 'top', target: px(0.6, 1.1), el: <>
+    ? 'M-0.15,1.32 Q-0.2,1.18 -0.08,1.12 L0.2,1.06 L0.82,1.06 Q0.9,1.06 0.9,1.14 Q0.9,1.34 0.75,1.36 L0.26,1.36 Q0.2,1.36 0.2,1.3 L0.05,1.33 Z'
+    : 'M-0.15,1.32 Q-0.2,1.18 -0.08,1.12 L0.2,1.08 L0.4,1.08 Q0.44,1.08 0.44,1.14 L0.44,1.36 Q0.44,1.42 0.38,1.42 L0.24,1.42 Q0.2,1.42 0.2,1.36 L0.2,1.3 L0.05,1.33 Z';
+  P.push({ slot: dbl ? 'pistol' : own('safety'), z: 6, row: 'top', target: px(0.32, 1.25), el: <>
     <path d={T(safD)} />
-    <path className="detail" d={T(OC(-0.12, 1.22, 0.06) + (ext ? ' M0.6,1.03 L0.6,1.3 M0.7,1.03 L0.7,1.3 M0.8,1.03 L0.8,1.3' : ' M0.4,1.03 L0.4,1.2 M0.48,1.03 L0.48,1.2'))} />
+    <path className="detail" d={T(ext ? repeat(0.5, 0.85, 0.07, (x) => `M${x},1.1 L${x},1.32`) : repeat(0.25, 0.42, 0.05, (x) => `M${x},1.12 L${x},1.38`))} />
   </> });
 
   /* Grip panels (1911): screws in double diamonds on wood, a plain inset on G10 and polymer; the wraparound
@@ -1795,15 +1801,18 @@ function m1911(platform: Platform, b: Build): Scene {
   if (!dbl) {
     const g = b.grips;
     const kind = (g?.attrs.kind as string | undefined) ?? (ring ? 'g10' : 'wood');
+    // The panel's corners come from the photo; the rubber wraparound follows the front strap with finger grooves.
+    let wrapFront = '';
+    for (let y = 2.75; y <= 4.86; y += 0.08) wrapFront += ` L${f(2.05 - 0.41 * (y - 2.75) + 0.04 + 0.05 * Math.sin((2 * Math.PI * (y - 2.6)) / 0.55))},${f(y)}`;
     const panel = kind === 'wrap'
-      ? 'M0.3,1.3 L1.9,1.3 Q2.02,1.3 2.0,1.45 L1.98,2.4 Q2.1,2.72 2.24,2.9 Q2.3,3.12 2.16,3.3 Q2.08,3.42 2.15,3.55 Q2.22,3.78 2.06,3.95 Q1.98,4.07 2.04,4.2 Q2.1,4.42 1.94,4.6 L1.6,5.0 L-0.5,5.0 L0.12,1.5 Q0.16,1.32 0.3,1.3 Z'
-      : 'M0.3,1.3 L1.86,1.3 Q1.98,1.3 1.96,1.45 L1.94,2.4 Q1.92,2.55 1.88,2.66 L1.3,4.98 L-0.5,4.98 L0.12,1.5 Q0.16,1.32 0.3,1.3 Z';
+      ? `M0.55,1.22 L1.85,1.22 Q1.92,1.22 1.9,1.3 L1.82,2.5 Q1.95,2.6 2.05,2.75${wrapFront} L1.1,4.92 L-0.9,4.92 L0.45,1.3 Q0.47,1.22 0.55,1.22 Z`
+      : 'M0.55,1.22 L1.85,1.22 Q1.92,1.22 1.9,1.3 L1.0,4.92 L-0.9,4.92 L0.45,1.3 Q0.47,1.22 0.55,1.22 Z';
     const screw = (x: number, y: number) => `${OC(x, y, 0.07)} M${f(x - 0.05)},${f(y + 0.03)} L${f(x + 0.05)},${f(y - 0.03)}`;
-    let det = `${screw(1.2, 1.62)} ${screw(0.1, 4.6)}`;
+    let det = `${screw(1.18, 1.59)} ${screw(0.1, 4.5)}`;
     if (kind === 'wood') {
-      det += ' M1.2,1.32 L1.37,1.62 L1.2,1.92 L1.03,1.62 Z M0.1,4.3 L0.27,4.6 L0.1,4.9 L-0.07,4.6 Z';
+      det += ' M1.18,1.3 L1.33,1.59 L1.18,1.9 L1.03,1.59 Z M0.1,4.2 L0.25,4.5 L0.1,4.8 L-0.05,4.5 Z';
       // checkering: a diagonal cross-hatch, clipped to the panel's outline
-      const poly = [[0.32, 1.36], [1.86, 1.36], [1.9, 2.4], [1.84, 2.66], [1.26, 4.92], [-0.42, 4.92], [0.16, 1.56]];
+      const poly = [[0.5, 1.28], [1.84, 1.28], [0.96, 4.87], [-0.8, 4.87]];
       const inside = (x: number, y: number) => {
         let c = false;
         for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
@@ -1822,9 +1831,9 @@ function m1911(platform: Platform, b: Build): Scene {
         }
         return out;
       };
-      for (let k = -12; k < 26; k++) det += hatch(-0.4 + k * 0.1, 5.0, 0.5 + k * 0.1, 1.3) + hatch(1.9 - k * 0.1, 1.3, 2.8 - k * 0.1, 5.0);
+      for (let k = -10; k < 30; k++) det += hatch(-1.0 + k * 0.1, 5.0, 0.2 + k * 0.1, 1.2) + hatch(2.0 - k * 0.1, 1.2, 3.2 - k * 0.1, 5.0);
     }
-    if (kind !== 'wrap' && kind !== 'wood') det += ' M0.4,1.38 L1.8,1.38 Q1.88,1.38 1.88,1.48 L1.86,2.42 Q1.84,2.56 1.8,2.68 L1.24,4.9 L-0.4,4.9 L0.2,1.6 Q0.24,1.42 0.4,1.38 Z';
+    if (kind !== 'wrap' && kind !== 'wood') det += ' M0.6,1.3 L1.78,1.3 Q1.84,1.3 1.82,1.38 L0.96,4.84 L-0.76,4.84 L0.52,1.38 Q0.54,1.3 0.6,1.3 Z';
     P.push({ slot: own('grips'), z: 4, row: 'bottom', target: px(1.05, 3.2), el: <>
       <path d={T(panel)} />
       <path className="detail" d={T(det)} />
@@ -1832,16 +1841,16 @@ function m1911(platform: Platform, b: Build): Scene {
 
     /* Mainspring housing, or a magwell that replaces it */
     const mw = b.magwell;
-    // The housing follows the raked back strap; the GI housing is arched, so it bulges a little at mid-height.
-    const back = (y: number) => { const t = (y - 2.62) / 2.48; return -0.1 - 0.8 * t - 0.12 * Math.sin(Math.PI * t); };
-    let msh = `M-0.1,2.62 L0.12,2.62 L-0.68,5.1 L-0.9,5.1 ${repeat(2.72, 5.0, 0.1, (y) => `L${f(back(y))},${y}`)} Z`;
+    // The flat housing runs straight down the raked back strap from the grip safety to the heel, serrated.
+    const back = (y: number) => -0.3 - 0.365 * (y - 2.93);
+    let msh = 'M-0.3,2.93 L-0.12,2.93 L-0.78,5.02 L-0.85,5.02 Q-1.02,5.02 -1.02,4.85 Z';
     let mshDet = '';
-    for (let y = 2.8; y < 5.0; y += 0.12) mshDet += `M${f(back(y) + 0.04)},${f(y)} L${f(back(y) + 0.18)},${f(y)} `;
+    for (let y = 3.05; y < 4.9; y += 0.1) mshDet += `M${f(back(y) + 0.03)},${f(y)} L${f(back(y) + 0.16)},${f(y)} `;
     if (mw?.attrs.kind === 'well') {
-      msh += ' M-0.86,4.86 L1.56,4.86 L1.66,5.24 L-1.02,5.24 Z';
-      mshDet = mshDet.split('M').filter((s) => s && parseFloat(s.split(',')[1]) < 4.8).map((s) => 'M' + s).join('') + ' M-0.94,4.95 L1.6,4.95';
+      msh += ' M-0.95,4.8 L1.2,4.8 L1.3,5.2 L-1.08,5.2 Z';
+      mshDet = mshDet.split('M').filter((s) => s && parseFloat(s.split(',')[1]) < 4.75).map((s) => 'M' + s).join('') + ' M-1.02,4.95 L1.24,4.95';
     }
-    P.push({ slot: own('magwell'), z: 4.5, row: 'bottom', target: px(-0.15, 4.2), el: <>
+    P.push({ slot: own('magwell'), z: 4.5, row: 'bottom', target: px(-0.82, 4.5), el: <>
       <path d={T(msh)} />
       <path className="detail" d={T(mshDet)} />
     </> });
@@ -1858,8 +1867,8 @@ function m1911(platform: Platform, b: Build): Scene {
     if (e > 0.25) for (let t = 0.18; t < e - 0.06; t += 0.2) magDet += `M-0.44,${f(y0 + t)} L1.92,${f(y0 + t)} `;
   } else {
     magD = mag?.attrs.pad
-      ? 'M-0.88,5.1 L1.5,5.1 L1.5,5.28 Q1.5,5.34 1.44,5.34 L-0.82,5.34 Q-0.88,5.34 -0.88,5.28 Z'
-      : 'M-0.86,5.1 L1.46,5.1 L1.44,5.17 L-0.85,5.17 Z';
+      ? 'M-0.9,5.02 L1.12,5.02 L1.12,5.22 Q1.12,5.28 1.06,5.28 L-0.84,5.28 Q-0.9,5.28 -0.9,5.22 Z'
+      : 'M-0.88,5.02 L1.12,5.02 L1.1,5.1 L-0.86,5.1 Z';
   }
   P.push({ slot: own('mag'), z: 1, row: 'bottom', target: px(0.7, dbl ? 5.4 : 5.2), el: <>
     <path d={T(magD)} />
@@ -1875,13 +1884,14 @@ function m1911(platform: Platform, b: Build): Scene {
 
   /* Trigger: the 1911's sliding shoe, short (GI), medium or long; 2011s have a flat shoe */
   const len = dbl ? 'flat' : (b.trigger?.attrs.len as string | undefined) ?? (ring ? 'medium' : 'short');
-  const xf = len === 'long' ? 2.97 : len === 'short' ? 2.84 : 2.9;
-  const yt = dbl ? 1.6 : 1.7;
+  // The shoe fills the back of the guard opening top to bottom, with a slightly dished face; its stirrup rides in
+  // the frame behind it.
+  const xf = len === 'long' ? 2.82 : len === 'short' ? 2.62 : 2.72;
   const trigD = len === 'flat'
-    ? `M${f(xf - 0.18)},${yt} L${f(xf + 0.02)},${yt} L${f(xf)},2.16 Q${f(xf)},2.2 ${f(xf - 0.04)},2.2 L${f(xf - 0.14)},2.2 Q${f(xf - 0.18)},2.2 ${f(xf - 0.18)},2.16 Z`
-    : `M${f(xf - 0.2)},${f(yt + 0.04)} L${f(xf + 0.02)},${f(yt + 0.04)} Q${f(xf - 0.04)},1.86 ${f(xf)},2.1 Q${f(xf)},2.14 ${f(xf - 0.04)},2.14 L${f(xf - 0.18)},2.14 Q${f(xf - 0.22)},2.14 ${f(xf - 0.22)},2.1 Z`;
-  const trigDet = b.trigger && matches(b.trigger, /3-Hole/) ? [1.72, 1.85, 1.98].map((y) => OC(xf - 0.1, y, 0.03)).join(' ') : '';
-  P.push({ slot: dbl ? 'pistol' : own('trigger'), z: 5.5, row: 'bottom', target: px(xf - 0.1, 2.0), el: <>
+    ? `M2.4,1.6 L${f(xf + 0.06)},1.6 L${f(xf + 0.02)},2.2 Q${f(xf + 0.02)},2.24 ${f(xf - 0.02)},2.24 L2.4,2.24 Z`
+    : `M2.3,1.58 L${f(xf + 0.08)},1.58 Q${f(xf - 0.1)},1.95 ${f(xf + 0.06)},2.32 L2.3,2.32 Z`;
+  const trigDet = b.trigger && matches(b.trigger, /3-Hole/) ? [1.76, 1.95, 2.14].map((y) => OC(xf - 0.14, y, 0.04)).join(' ') : '';
+  P.push({ slot: dbl ? 'pistol' : own('trigger'), z: 5.5, row: 'bottom', target: px(xf - 0.15, 1.95), el: <>
     <path d={T(trigD)} />
     {trigDet && <path className="detail" d={T(trigDet)} />}
   </> });
