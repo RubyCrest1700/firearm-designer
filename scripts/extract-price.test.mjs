@@ -26,6 +26,13 @@ test('falls back to price meta tags', () => {
   assert.deepEqual(extractPrice(html), { price: 1249, inStock: true });
 });
 
+test('falls back to a Twitter card price label', () => {
+  const html = `<meta property="twitter:data1" content="$124.99 USD"><meta property="twitter:label1" content="PRICE"><meta property="twitter:data2" content="OutOfStock"><meta property="twitter:label2" content="AVAILABILITY">`;
+  assert.deepEqual(extractPrice(html), { price: 124.99, inStock: false });
+  const range = `<meta name="twitter:label1" content="Price" /><meta name="twitter:data1" content="&#036;432.18 - &#036;457.66" />`;
+  assert.equal(extractPrice(range), null);
+});
+
 test('returns null when there is no price', () => {
   assert.equal(extractPrice('<html><body>Hello</body></html>'), null);
 });
