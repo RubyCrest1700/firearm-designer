@@ -432,7 +432,7 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
  * `oal` is overall length, `height` is top of the rear sight to the bottom of a flush magazine.
  */
 interface PistolModel {
-  brand: 'glock' | 'sig';
+  brand: 'glock' | 'sig' | 'sw' | 'sa';
   slide: number; oal: number; barrel: number;
   /** Slide height, top flat to frame. The Glock patent drawing (a G42, US 9,316,455 FIG. 4) shows 0.83";
    *  the 9mm slides stand about a fifth of the gun's height. */
@@ -447,11 +447,18 @@ const G = (slide: number, oal: number, barrel: number, sh: number, reach: number
   ({ brand: 'glock', slide, oal, barrel, sh, rake: 0.4, reach });
 const S9 = (slide: number, oal: number, barrel: number, sh: number, reach: number): PistolModel =>
   ({ brand: 'sig', slide, oal, barrel, sh, rake: 0.33, reach });
+const SW = (slide: number, oal: number, barrel: number, sh: number, reach: number): PistolModel =>
+  ({ brand: 'sw', slide, oal, barrel, sh, rake: 0.3, reach });
+const SA = (slide: number, oal: number, barrel: number, sh: number, reach: number): PistolModel =>
+  ({ brand: 'sa', slide, oal, barrel, sh, rake: 0.25, reach });
 
 const MODELS: Record<string, PistolModel> = {
   glock17: G(7.32, 8.03, 4.49, 0.98, 2.83),
   glock19: G(6.85, 7.36, 4.02, 0.98, 2.8),
   glock26: G(6.26, 6.5, 3.43, 0.98, 2.83),
+  // G20/G21 Gen4: 8.07" long, 7.60" slide, 4.61" barrel, 5.51" tall, 2.85" trigger distance (us.glock.com).
+  // The large-frame slide is taller.
+  glock20: G(7.6, 8.07, 4.61, 1.06, 2.85),
   g43x: G(6.06, 6.5, 3.41, 0.9, 2.64),
   g48: G(6.85, 7.28, 4.17, 0.9, 2.64),
   p320full: S9(7.55, 8.0, 4.7, 1.18, 2.85),
@@ -459,14 +466,22 @@ const MODELS: Record<string, PistolModel> = {
   p320subcompact: S9(6.25, 6.7, 3.6, 1.18, 2.85),
   p365std: S9(5.4, 5.8, 3.1, 0.98, 2.6),
   p365xl: S9(6.2, 6.6, 3.7, 0.98, 2.6),
+  // M&P9 M2.0 Full Size 4.25" (7.4" long, 5.5" tall) and Compact 4" (7.0", 5.3"), smith-wesson.com.
+  mpfs: SW(6.93, 7.4, 4.25, 0.89, 2.8),
+  mpc: SW(6.53, 7.0, 4.0, 0.89, 2.8),
+  // Hellcat 3" (6.0" long, 4.0" tall) and Hellcat Pro 3.7" (6.6", 4.8"), springfield-armory.com.
+  hellcat3: SA(5.79, 6.0, 3.0, 0.9, 2.6),
+  hellcatpro: SA(6.39, 6.6, 3.7, 0.9, 2.6),
 };
 
 /** Published height with a flush magazine, by grip size / magazine size. */
-const GLOCK_H: Record<string, number> = { glock17: 5.47, glock19: 5.04, glock26: 4.17 };
+const GLOCK_H: Record<string, number> = { glock17: 5.47, glock19: 5.04, glock26: 4.17, glock20: 5.51 };
 const GLOCK_MAG_H: Record<number, number> = { 3: 5.47, 2: 5.04, 1: 4.17 };
 const P320_H: Record<string, number> = { full: 5.5, carry: 5.5, compact: 5.3, subcompact: 4.7 };
 const P320_DUST: Record<string, string> = { full: 'full', carry: 'compact', compact: 'compact', subcompact: 'subcompact' };
 const P365_H: Record<string, number> = { std: 4.3, xl: 4.8, ext: 5.2 };
+const MP_H: Record<string, number> = { fs: 5.5, c: 5.3 };
+const HELLCAT_H: Record<string, number> = { '3': 4.0, pro: 4.8 };
 const SIGHT = 0.2; // standard rear sight height above the slide
 const BASE = 0.16; // magazine floor plate below the grip
 
@@ -479,6 +494,8 @@ interface PistolSpec {
   grooves: number;
   /** Breech position from the slide's rear, when the barrel is shorter than the slide calls for (comp slides) */
   breech?: number;
+  /** Large-frame Glock (G20/G21): a deeper grip front to back. */
+  large?: boolean;
 }
 
 function pistolSpec(platform: Platform, b: Build): PistolSpec {
@@ -503,9 +520,27 @@ function pistolSpec(platform: Platform, b: Build): PistolSpec {
       const ml = a(b.mag, 'len');
       return { m, frame: MODELS['p365' + g], gripH: P365_H[g], magH: ml ? P365_H[ml] : P365_H[g], grooves: 0, breech: base.slide - base.barrel };
     }
+    case 'mp2':
+    case 'hellcat': {
+      // Built from a complete pistol: the frame is the pistol's, the slide is the upgrade slide if there is one.
+      const mp = platform.id === 'mp2';
+      const key = (v?: string) => (mp ? 'mp' + (v ?? 'fs') : 'hellcat' + (v ?? '3'));
+      const H = mp ? MP_H : HELLCAT_H;
+      const fs = a(b.pistol, 'size') ?? (mp ? 'fs' : '3');
+      const ss = a(b.slide, 'size') ?? fs;
+      const ms = a(b.mag, 'size');
+      const ext = b.mag ? (typeof b.mag.attrs.ext === 'number' ? b.mag.attrs.ext : b.mag.attrs.ext ? 0.9 : 0) : 0;
+      return { m: MODELS[key(ss)], frame: MODELS[key(fs)], gripH: H[fs], magH: (ms ? H[ms] : H[fs]) + ext, grooves: 0 };
+    }
     default: {
       const m = MODELS[platform.id] ?? MODELS.glock19;
       const ms = b.mag?.attrs.size as number | undefined;
+      // Large-frame magazines are flush or extended (the ETS 18 and 20 round bodies add about an inch).
+      if (platform.id === 'glock20') {
+        const fr = b.frame;
+        const grooved = !fr || !matches(fr, /No finger grooves/);
+        return { m, frame: m, gripH: 5.51, magH: b.mag?.attrs.ext ? 6.5 : 5.51, grooves: grooved ? 3 : 0, large: true };
+      }
       const fr = b.frame;
       const grooved = !fr || (/gen3|gen4/.test(String(fr.attrs.gen)) && !matches(fr, /No finger grooves/));
       return { m, frame: m, gripH: GLOCK_H[platform.id] ?? 5.04, magH: ms ? GLOCK_MAG_H[ms] : GLOCK_H[platform.id] ?? 5.04, grooves: grooved ? (platform.id === 'glock26' ? 2 : 3) : 0 };
@@ -517,13 +552,15 @@ function pistolSpec(platform: Platform, b: Build): PistolSpec {
  * from Sig's design patents, the Glocks from Glock's G42 utility patent. Each is calibrated to the published length
  * and height of the gun it shows, then fitted to each slide, frame and grip size. */
 
-type ProfileKey = 'p320' | 'p365' | 'glock';
+type ProfileKey = 'p320' | 'p365' | 'glock' | 'mp' | 'hellcat';
 
 /** The size each patent drawing shows, and what the patents leave as broken lines (trigger) or don't show. */
 const PROFILE_REF: Record<ProfileKey, { oal: number; h: number; rake: number; portH: number }> = {
   p320: { oal: 8.0, h: 5.5, rake: 0.2, portH: 0.52 },
   p365: { oal: 5.8, h: 4.3, rake: 0.1, portH: 0.4 },
   glock: { oal: 5.94, h: 4.13, rake: 0.29, portH: 0.48 },
+  mp: { oal: 7.4, h: 5.5, rake: 0.3, portH: 0.5 },
+  hellcat: { oal: 6.0, h: 4.0, rake: 0.25, portH: 0.5 },
 };
 
 /** Trigger shoes, traced from the broken-line triggers in the same patent drawings (y0 is the top of the guard opening).
@@ -547,6 +584,20 @@ const TRIGGERS: Record<ProfileKey, { face: number; curved: (y0: number) => strin
     curved: (y0) => `M2.76,${y0} Q2.6,1.86 2.8,2.16 Q2.88,2.26 3.0,2.25 Q3.06,2.24 3.03,2.18 Q2.9,2.0 2.96,1.74 Q2.99,1.6 3.06,${y0} Z`,
     flat: (y0) => `M2.76,${y0} Q2.62,1.84 2.74,2.14 Q2.8,2.25 2.94,2.25 Q3.0,2.24 2.98,2.17 L2.93,1.82 Q2.92,1.66 3.06,${y0} Z`,
     line: { curved: 'M2.86,1.56 Q2.8,1.86 2.9,2.1', flat: 'M2.86,1.56 Q2.8,1.84 2.86,2.12' },
+  },
+  // The M&P's hinged trigger: the upper shoe, the hinge across it, and the lower blade curling forward to its tip.
+  mp: {
+    face: 2.8,
+    curved: (y0) => `M2.41,${y0} Q2.55,1.8 2.59,1.95 L2.62,2.12 Q2.7,2.4 2.83,2.59 Q2.95,2.62 3.05,2.55 Q2.9,2.35 2.76,2.06 Q2.8,1.8 3.1,${y0} Z`,
+    flat: (y0) => `M2.41,${y0} Q2.55,1.8 2.59,1.95 L2.62,2.12 L2.7,2.58 Q2.72,2.62 2.78,2.62 L2.92,2.6 Q2.96,2.58 2.94,2.52 L2.8,2.06 Q2.82,1.8 3.1,${y0} Z`,
+    line: { curved: 'M2.62,2.12 L2.77,2.08', flat: 'M2.62,2.12 L2.8,2.08' },
+  },
+  // The Hellcat's shoe angles forward from its pivot, with the safety blade down its face.
+  hellcat: {
+    face: 3.5,
+    curved: (y0) => `M3.16,${y0} Q3.3,1.9 3.4,2.17 Q3.44,2.3 3.46,2.41 Q3.53,2.47 3.6,2.44 Q3.66,2.4 3.63,2.3 Q3.56,2.18 3.5,2.06 Q3.35,1.8 3.28,${y0} Z`,
+    flat: (y0) => `M3.16,${y0} L3.38,2.1 L3.42,2.4 Q3.43,2.45 3.48,2.45 L3.58,2.45 Q3.62,2.44 3.6,2.38 L3.52,2.05 L3.28,${y0} Z`,
+    line: { curved: 'M3.24,1.62 Q3.38,1.9 3.5,2.28', flat: 'M3.25,1.62 L3.46,2.36' },
   },
 };
 
@@ -614,8 +665,8 @@ function fillWeb(pts: number[], y0: number, y1: number, a: number) {
  *  about 2.1" front to back at the bottom (1.85" on the slimline). Gen3/4 frames have the hump low on the back strap
  *  and finger grooves; Gen5 frames have a flared mag well. The traced G42 outline is kept from the top of the frame
  *  over the dust cover and around the trigger guard. Coordinates are final inches. */
-function glockGrip(traced: number[], o: { SH: number; hole: number[]; slim: boolean; grooves: number; yGB: number }) {
-  const { SH, slim, grooves: n, yGB } = o;
+function glockGrip(traced: number[], o: { SH: number; hole: number[]; slim: boolean; large?: boolean; grooves: number; yGB: number }) {
+  const { SH, slim, large, grooves: n, yGB } = o;
   const [h0x, , h1x, h1y] = o.hole;
   const N = traced.length / 2;
   const X = (i: number) => traced[2 * (((i % N) + N) % N)], Y = (i: number) => traced[2 * (((i % N) + N) % N) + 1];
@@ -638,7 +689,8 @@ function glockGrip(traced: number[], o: { SH: number; hole: number[]; slim: bool
     }
   };
   const tang = slim ? 0.36 : 0.38;
-  const gw = slim ? 1.85 : 2.08;
+  // The large frame's grip is a little deeper front to back for the longer 10mm and .45 magazines.
+  const gw = slim ? 1.85 : large ? 2.16 : 2.08;
   const hx = -tang - 0.25;
   const toeX = hx + gw;
   const fs = 0.31; // front strap rake, inches back per inch down
@@ -786,7 +838,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     // The G42 drawing's detail lines are dotted CAD shading; draw Glock's own details on the traced outline instead.
     const traced = outlines[0].flatMap((_, i, a) => (i % 2 ? [] : frameMap(a[i], a[i + 1])));
     const SH = mk.sh, yRail = mk.railBottom;
-    const grip9 = glockGrip(traced, { SH, hole: mk.hole, slim: o.slim, grooves: spec.grooves, yGB: spec.gripH - SIGHT - BASE });
+    const grip9 = glockGrip(traced, { SH, hole: mk.hole, slim: o.slim, large: spec.large, grooves: spec.grooves, yGB: spec.gripH - SIGHT - BASE });
     mapped = grip9.pts;
     heel = grip9.heel;
     toe = grip9.toe;
@@ -849,6 +901,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
 function profilePieces(P: Piece[], g: ProfileGeo, o: {
   T: ReturnType<typeof makeT>; px: (x: number, y: number) => [number, number];
   frameSlot: string; trig: string; flat: boolean; comp: boolean; cut: string; lighten: boolean; SL: number;
+  own: (slot: string) => string;
 }) {
   const { T, px, SL } = o;
   /* Frame or grip module, with its controls and texture as drawn on the patent */
@@ -866,7 +919,7 @@ function profilePieces(P: Piece[], g: ProfileGeo, o: {
   const floor = `M${f(hx + 0.04)},${f(hy)} L${f(tx - 0.02)},${f(ty)} L${f(tx + 0.03)},${f(ty + e + 0.03)} Q${f(tx + 0.07)},${f(ty + bb)} ${f(tx - 0.06)},${f(ty + bb)} L${f(hx + 0.08)},${f(hy + bb)} Q${f(hx - 0.05)},${f(hy + bb - 0.02)} ${f(hx - 0.02)},${f(hy + e + 0.04)} Z`;
   let extLines = '';
   if (e > 0.25) for (let t = 0.2; t < e - 0.08; t += 0.22) extLines += `M${f(hx + 0.12)},${f(hy + t)} L${f(tx - 0.14)},${f(ty + t)} `;
-  P.push({ slot: 'mag', z: 2, row: 'bottom', target: px((hx + tx) / 2, (hy + ty) / 2 + bb - 0.06),
+  P.push({ slot: o.own('mag'), z: 2, row: 'bottom', target: px((hx + tx) / 2, (hy + ty) / 2 + bb - 0.06),
     el: <>
       {g.windowD && <path d={T(g.windowD)} />}
       <path d={T(floor)} />
@@ -888,7 +941,7 @@ function profilePieces(P: Piece[], g: ProfileGeo, o: {
   const ports = o.comp ? repeat(SL - 0.95, SL - 0.35, 0.22, (x) => `M${x},0 L${x},0.13 Q${f(x + 0.07)},0.22 ${f(x + 0.14)},0.13 L${f(x + 0.14)},0`) : '';
   const plate = o.cut !== 'none' ? `M0.86,0 L0.86,0.12 L2.66,0.12 L2.66,0` : '';
   const extractor = g.key === 'p365' ? `M${f(g.port0 - 0.3)},0.24 L${f(g.port0 - 0.04)},0.24 L${f(g.port0 - 0.04)},0.34 L${f(g.port0 - 0.3)},0.34 Z` : '';
-  P.push({ slot: 'slide', z: 8, row: 'top', target: px(SL - 1.0, g.sh * 0.5),
+  P.push({ slot: o.own('slide'), z: 8, row: 'top', target: px(SL - 1.0, g.sh * 0.5),
     el: <>
       <path fillRule="evenodd" d={T(`${g.slideD} ${port}`)} />
       <path className="detail" d={T(`${g.slideDetail} ${lightCuts} ${ports} ${plate} ${extractor}`)} />
@@ -929,7 +982,7 @@ function pistolOptic(o: Part | undefined, fp: string): { od: string; odet: strin
     const lips = `M0.17,${f(-H + 0.12)} L0.13,-0.3 M${f(L - 0.14)},${f(-H + 0.1)} L${f(L - 0.14)},-0.3 M0.02,${f(-H + 0.12)} L${f(L - 0.04)},${f(-H + 0.12)}`;
     return { od, odet: `${cap} ${cross} ${adj} ${clamp} ${lips} ${top}`, len: L, h: H };
   }
-  const small = fp === 'rmsc' || fp === 'rmrcc';
+  const small = fp === 'rmsc' || fp === 'rmrcc' || fp === 'k';
   const sro = matches(o, /SRO/);
   const L = small ? 1.62 : 1.77;
   const H = small ? 0.84 : sro ? 1.16 : matches(o, /RomeoX/) ? 1.08 : 1.0;
@@ -956,17 +1009,24 @@ function pistolOptic(o: Part | undefined, fp: string): { od: string; odet: strin
   return { od, odet: `${face} ${base} ${wind} ${elev} ${btns} ${tray} ${glass}`, len: L, h: H };
 }
 
-function pistol(platform: Platform, b: Build): Scene {
+/** Which patent drawing each platform is fitted from; the rest follow their brand. */
+const PROFILE_FOR: Record<string, ProfileKey> = { p365: 'p365', mp2: 'mp', hellcat: 'hellcat' };
+
+function pistol(platform: Platform, build: Build): Scene {
   const S = 58;
-  const spec = pistolSpec(platform, b);
+  const has = (id: string) => platform.slots.some((s) => s.id === id);
+  // Pistols built from a complete base pistol: an upgrade slot left empty is the factory part, drawn as part of the pistol.
+  const base = has('pistol');
+  const own = (slot: string) => (base && !build[slot] ? 'pistol' : slot);
+  const b: Build = base ? { ...build, slide: build.slide ?? build.pistol, barrel: build.barrel ?? build.pistol, frame: build.pistol } : build;
+  const spec = pistolSpec(platform, build);
   const { m } = spec;
   const sig = m.brand === 'sig';
-  const micro = sig && m.sh < 1.0;
-  const has = (id: string) => platform.slots.some((s) => s.id === id);
-  const trig = has('fcg') ? 'fcg' : 'fcu';
-  const flat = trig === 'fcg' ? matches(b.fcg, /flat|Apex/i) : matches(b.fcu, /flat|X-Series/i);
+  const micro = (sig && m.sh < 1.0) || m.brand === 'sa';
+  const trig = has('fcg') ? 'fcg' : has('trigger') ? 'trigger' : 'fcu';
+  const flat = trig === 'fcg' ? matches(b.fcg, /flat|Apex/i) : trig === 'trigger' ? !!b.trigger?.attrs.flat : matches(b.fcu, /flat|X-Series/i);
   // Every pistol is drawn from its maker's patent drawing, fitted to each size.
-  const geo = profileGeometry(sig ? (platform.id === 'p365' ? 'p365' : 'p320') : 'glock', spec, {
+  const geo = profileGeometry(PROFILE_FOR[platform.id] ?? (sig ? 'p320' : 'glock'), spec, {
     slim: platform.id === 'glock43x', frontSerr: matches(b.slide, /serration|Gen5|MOS|ZEV|Spectre|XFull|M18/i), flat,
   });
   const { SL, tang } = geo;
@@ -984,15 +1044,15 @@ function pistol(platform: Platform, b: Build): Scene {
   const comp = matches(b.slide, /Comp|Spectre/);
   const cut = (b.slide?.attrs.cut as string | undefined) ?? 'none';
   const lighten = matches(b.slide, /Octane|Lightening/);
-  const frameSlot = has('frame') ? 'frame' : 'grip';
+  const frameSlot = has('frame') ? 'frame' : base ? 'pistol' : 'grip';
   const { railY: yRail, gF, dust, yMB, bc, port0, port1, springY } = geo;
   const rear = Math.min(-tang, geo.heel[0]);
-  profilePieces(P, geo, { T, px, frameSlot, trig, flat, comp, cut, lighten, SL });
+  profilePieces(P, geo, { T, px, frameSlot, trig: own(trig), flat, comp, cut, lighten, SL, own });
 
   /* Barrel: hood shows in the ejection port; the rest is hidden; threads run past the slide */
   const br = micro ? 0.24 : 0.28;
   const chamber = f(port0 - 0.12);
-  P.push({ slot: 'barrel', z: 9, row: 'top', target: px((port0 + port1) / 2, 0.24),
+  P.push({ slot: own('barrel'), z: 9, row: 'top', target: px((port0 + port1) / 2, 0.24),
     el: <>
       <path d={T(`M${f(port0 + 0.02)},0.06 L${f(port1 - 0.02)},0.06 L${f(port1 - 0.02)},0.48 L${f(port0 + 0.02)},0.48 Z M${f(port0 + 0.16)},0.06 L${f(port0 + 0.16)},0.48`)} />
       <path className="hidden-line" d={T(`M${f(port1)},${f(bc - br)} L${f(SL)},${f(bc - br)} M${f(port1)},${f(bc + br)} L${f(SL)},${f(bc + br)} M${chamber},${f(bc + br + 0.06)} L${f(port1)},${f(bc + br + 0.06)} M${chamber},${f(bc - br)} L${chamber},${f(bc + br + 0.06)}`)} />
@@ -1014,7 +1074,7 @@ function pistol(platform: Platform, b: Build): Scene {
   }
 
   /* Recoil spring and slide parts (internal) */
-  const springSlot = has('rsa') ? 'rsa' : 'spring';
+  const springSlot = own(has('rsa') ? 'rsa' : 'spring');
   const sy = springY;
   P.push({ slot: springSlot, internal: true, z: 20, row: 'top', target: px(SL - 1.5, sy),
     el: <path d={T(`M${f(port0 + 0.5)},${f(sy - 0.08)} L${f(SL - 0.06)},${f(sy - 0.08)} L${f(SL - 0.06)},${f(sy + 0.08)} L${f(port0 + 0.5)},${f(sy + 0.08)} Z ${repeat(port0 + 0.7, SL - 0.3, 0.15, (x) => `M${x},${f(sy - 0.12)} L${f(x + 0.08)},${f(sy + 0.12)}`)}`)} /> });
@@ -1024,7 +1084,7 @@ function pistol(platform: Platform, b: Build): Scene {
 
   /* Sights */
   const sh = b.sights?.attrs.height === 'suppressor' ? 0.36 : SIGHT;
-  const sightSlot = has('sights') ? 'sights' : undefined;
+  const sightSlot = has('sights') ? own('sights') : undefined;
   // Rear sight: a block with a sloped face, square notch and the dovetail in the slide; front: a post on its dovetail.
   // Tritium or fiber inserts show as small circles. Sig rear sights are longer with a sloped back.
   const r0 = sig ? 0.14 : 0.2, r1 = sig ? 0.86 : 0.74;

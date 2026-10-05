@@ -1,5 +1,5 @@
 """
-Build the Sig pistol blueprint profiles from public US design-patent drawings.
+Build the pistol blueprint profiles from public US design-patent drawings.
 
   python3 scripts/pistol-profiles/trace.py   # writes src/data/pistolProfiles.ts
 
@@ -69,6 +69,34 @@ REFS = {
     guard_seed=(1250, 640),
     marks=dict(slideFront=1798, muzzle=1830, bore=215, spring=300, slideBottom=340, nose=340,
                rearSerr=640, frontSerr=1745, port0=None, port1=None, rail0=1500, dust=1820, railBottom=478),
+  ),
+  'mp': dict(
+    pdf='https://patentimages.storage.googleapis.com/ff/a5/16/9ea3a834137543/USD814592.pdf', page=3, im='',
+    # Smith & Wesson's US D814,592 S, FIG. 1: an M&P9 M2.0 full size, right side, stippled.
+    # Calibration: 7.4" overall length, 5.5" tall with sights and a flush magazine.
+    x0=667, y0=741, sx=204.5, sy=184.0, bottom=1668, th=30, merge=3,
+    stipple=dict(box=(560, 690, 2100, 1720), panel_y=1250, panel_y1=1630, hole_box=(1100, 1035, 1465, 1250)),
+    # The trigger is drawn from part data, so its lines inside the guard are left out.
+    detail_erase=[[(1100, 1035), (1465, 1035), (1465, 1250), (1100, 1250)]],
+    slide=[(560, 690), (2100, 690), (2100, 990), (1888, 990), (1888, 905), (560, 905)],
+    guard_seed=(1340, 1140),
+    marks=dict(slideFront=2085, muzzle=2090, bore=815, spring=875, slideBottom=905, nose=985,
+               rearSerr=940, frontSerr=1600, port0=1204, port1=1387, rail0=1640, dust=1888, railBottom=1021),
+  ),
+  'hellcat': dict(
+    pdf='https://patentimages.storage.googleapis.com/5e/1a/be/a61e9d96084039/USD998740.pdf', page=6, im='-rotate 90',
+    # Springfield Armory's US D998,740 S, FIG. 4: the 3" Hellcat, left side, drawn muzzle down in dashed lines;
+    # turned upright and mirrored by the rotation so the muzzle points right. The barrel crown and magazine are
+    # unclaimed (thin broken lines) and left out. Calibration: 6.0" overall length, 4.0" tall with a flush magazine.
+    x0=480, y0=415, sx=385.8, sy=381.0, bottom=1860, th=50, merge=7, blur=2.2, line_blur=3.0, line_cut=238, dot_max=8, sil_r=8,
+    erase_ink=[[(2719, 300), (2900, 300), (2900, 1100), (2719, 1100)]],
+    slide=[(380, 380), (2760, 380), (2760, 757), (380, 757)],
+    guard_seed=(2000, 1250),
+    hole_poly=[(1500, 1112), (1600, 1050), (1710, 1000), (2000, 998), (2070, 1010), (2115, 1050), (2130, 1120), (2125, 1300),
+               (2100, 1350), (2050, 1378), (1700, 1380), (1600, 1372), (1520, 1345), (1470, 1300), (1455, 1240), (1462, 1170)],
+    detail_erase=[[(1440, 990), (2140, 990), (2140, 1390), (1440, 1390)]],
+    marks=dict(slideFront=2713, muzzle=2716, bore=575, spring=860, slideBottom=757, nose=757,
+               rearSerr=1300, frontSerr=2050, port0=1569, port1=2006, rail0=2250, dust=2710, railBottom=995),
   ),
 }
 
@@ -147,14 +175,66 @@ def smooth(mask, open_k=0, blur=2.0):
     return m > 127
 
 
+def destipple(img, c):
+    """Redraw a stippled (halftone-shaded) design-patent drawing as plain lines.
+
+    Smith & Wesson's and Springfield's design patents shade every surface with dots, so the edges are where the
+    dots stop: the gun's silhouette is where blurred ink begins, the slide cuts and openings are the clear areas
+    inside it, and the grip panels are the dense areas. Each is outlined in solid black for the steps below."""
+    st = c['stipple']
+    ink = (img < 170).astype(np.float32)
+    x_a, y_a, x_b, y_b = st['box']
+    body = (cv2.GaussianBlur(ink, (0, 0), 4) > 0.06).astype(np.uint8)
+    keep = np.zeros_like(body); keep[y_a:y_b, x_a:x_b] = 1; body &= keep
+    body = cv2.morphologyEx(body, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15)))
+    ff = body * 255
+    cv2.floodFill(ff, None, (0, 0), 128)
+    sil = (ff != 128).astype(np.uint8)
+    n, lab, stt, _ = cv2.connectedComponentsWithStats(sil)
+    sil = (lab == 1 + np.argmax(stt[1:, cv2.CC_STAT_AREA])).astype(np.uint8)
+    clear = ((cv2.GaussianBlur(ink, (0, 0), 3) < 0.07) & (sil > 0)).astype(np.uint8)
+    clear = cv2.morphologyEx(clear, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
+    clear &= cv2.erode(sil, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9)))
+    # Grip panels are outlined by narrow bands of lighter dots: find where the dots thin out against their surroundings.
+    d3, d10 = cv2.GaussianBlur(ink, (0, 0), 3), cv2.GaussianBlur(ink, (0, 0), 10)
+    band = ((d10 - d3) > 0.12) & (d10 > 0.2) & (cv2.erode(sil, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (41, 41))) > 0)
+    band[:st['panel_y'], :] = False
+    band[st.get('panel_y1', y_b):, :] = False
+    band = skeletonize(cv2.morphologyEx(band.astype(np.uint8), cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))) > 0)
+    n, lab, stt, _ = cv2.connectedComponentsWithStats(band.astype(np.uint8), connectivity=8)
+    bands = np.isin(lab, [i for i in range(1, n) if max(stt[i, 2], stt[i, 3]) > st.get('band_min', 60)])
+    if st.get('hole_box'):
+        # The trigger splits the guard opening into clear patches; the opening is their outer hull.
+        hx_a, hy_a, hx_b, hy_b = st['hole_box']
+        n, lab, stt, _ = cv2.connectedComponentsWithStats(clear[hy_a:hy_b, hx_a:hx_b])
+        inner = [i for i in range(1, n) if stt[i, 4] > 400 and stt[i, 0] > 0 and stt[i, 1] > 0
+                 and stt[i, 0] + stt[i, 2] < hx_b - hx_a and stt[i, 1] + stt[i, 3] < hy_b - hy_a]
+        ys, xs = np.nonzero(np.isin(lab, inner))
+        c['hole_poly'] = (cv2.convexHull(np.stack([xs + hx_a, ys + hy_a], 1).astype(np.int32)).reshape(-1, 2)).tolist()
+    out = np.full_like(img, 255)
+    cs, _ = cv2.findContours(sil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    cv2.drawContours(out, cs, -1, 0, 4)
+    cs, _ = cv2.findContours(clear, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
+    cv2.drawContours(out, [x for x in cs if cv2.contourArea(x) > st.get('clear_min', 400)], -1, 0, 3)
+    out[cv2.dilate(bands.astype(np.uint8), np.ones((3, 3), np.uint8)) > 0] = 0
+    return out
+
+
 def run(key, c):
     img = fetch(key, c)
+    if c.get('stipple'):
+        img = destipple(img, c)
     H, W = img.shape
     sx, sy, x0, y0 = c['sx'], c['sy'], c['x0'], c['y0']
     X = lambda v: round((float(v) - x0) / sx, 3)
     Y = lambda v: round((float(v) - y0) / sy, 3)
 
     # Solid lines only: drop the dotted shading and short dashes.
+    if c.get('dot_max'):
+        # Stippled panels: drop the dots (smaller than the shortest dash) before joining the dashes up.
+        n, lab, st, _ = cv2.connectedComponentsWithStats((img < 170).astype(np.uint8), connectivity=8)
+        img = np.where(np.isin(lab, np.nonzero(np.maximum(st[:, 2], st[:, 3]) < c['dot_max'])[0][1:]), 255, img).astype(np.uint8)
+    raw = img
     if c.get('blur'):
         # Dotted CAD lines: blur the dots together into solid lines.
         img = np.where(cv2.GaussianBlur(img, (0, 0), c['blur']) < 200, 0, 255).astype(np.uint8)
@@ -162,7 +242,13 @@ def run(key, c):
         cv2.fillPoly(img, [np.array(poly, np.int32)], 255)
     for line in c.get('patch', []):
         cv2.polylines(img, [np.array(line, np.int32)], False, 0, 4)
-    ink = (img < 170).astype(np.uint8)
+    lim = img
+    if c.get('line_blur'):
+        # Widely spaced dashes: join them harder for the detail lines than for the outline.
+        lim = np.where(cv2.GaussianBlur(raw, (0, 0), c['line_blur']) < c.get('line_cut', 200), 0, 255).astype(np.uint8)
+        for poly in c.get('erase_ink', []):
+            cv2.fillPoly(lim, [np.array(poly, np.int32)], 255)
+    ink = (lim < 170).astype(np.uint8)
     n, lab, st, _ = cv2.connectedComponentsWithStats(ink, connectivity=8)
     keep = np.maximum(st[:, 2], st[:, 3]) >= c['th']; keep[0] = False
     lines = keep[lab]
@@ -283,11 +369,11 @@ def main():
     data = {k: run(k, c) for k, c in REFS.items()}
     body = json.dumps(data, separators=(',', ':'))
     with open(OUT, 'w') as fh:
-        fh.write('/* Generated by scripts/pistol-profiles/trace.py from Sig Sauer and Glock patent drawings. Do not edit by hand. */\n')
+        fh.write('/* Generated by scripts/pistol-profiles/trace.py from Sig Sauer, Glock, Smith & Wesson and Springfield patent drawings. Do not edit by hand. */\n')
         fh.write('/* Inches: x from the slide rear, y down from the slide top. Polylines are flat [x, y, x, y, ...] arrays. */\n')
         fh.write('export interface ProfilePiece { outline: number[][]; detail: number[][]; hole?: number[] }\n')
         fh.write('export interface PistolProfile { slide: ProfilePiece; frame: ProfilePiece; marks: Record<string, number | null | number[]> }\n\n')
-        fh.write(f'export const PROFILES: Record<\'p320\' | \'p365\' | \'glock\', PistolProfile> = {body};\n')
+        fh.write(f'export const PROFILES: Record<{" | ".join(repr(k) for k in data)}, PistolProfile> = {body};\n')
     print('wrote', OUT, len(body), 'bytes', file=sys.stderr)
 
 

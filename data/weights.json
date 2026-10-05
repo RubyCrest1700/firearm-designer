@@ -1261,6 +1261,271 @@
    "basis": "estimate",
    "src": null
   },
+  "gl-bbl-20lw": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-bbl-20lwd": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-bbl-20lwt": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-bbl-20oem": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-bbl-20to40": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-bbl-21lw": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-bbl-21lwdt": {
+   "oz": 5.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-bbl-21lwt": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-bbl-21oem": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-fcg-cmc": {
+   "oz": 1.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-fcg-oem": {
+   "oz": 1.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-fcg-ow": {
+   "oz": 1.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-frame-g3": {
+   "oz": 5.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-frame-g4": {
+   "oz": 5.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-frame-lw": {
+   "oz": 5.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-frame-sf": {
+   "oz": 5.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-hol-g20": {
+   "oz": 4.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-hol-g20-tlr7a": {
+   "oz": 6.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-hol-g20-x300": {
+   "oz": 6.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-hol-g21": {
+   "oz": 4.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-hol-g21-tlr7a": {
+   "oz": 6.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-hol-g21-x300": {
+   "oz": 6.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-mag-20": {
+   "oz": 3.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-mag-20-10": {
+   "oz": 3.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-mag-20ets": {
+   "oz": 3.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-mag-20ets20": {
+   "oz": 3.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-mag-21": {
+   "oz": 3.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-mag-21-10": {
+   "oz": 3.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-mag-21ets": {
+   "oz": 3.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-mag-21ets18": {
+   "oz": 3.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-mz-tp578": {
+   "oz": 0.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-mz-tp916": {
+   "oz": 0.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-opt-407c": {
+   "oz": 1.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-opt-507c": {
+   "oz": 1.3,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-opt-acro": {
+   "oz": 2.1,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-opt-rmr": {
+   "oz": 1.3,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-opt-sro": {
+   "oz": 1.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-rsa-g3": {
+   "oz": 0.9,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-rsa-g4": {
+   "oz": 0.9,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-rsa-ismi": {
+   "oz": 1.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-sight-bt": {
+   "oz": 0.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-sight-hdxr": {
+   "oz": 0.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-sight-oem": {
+   "oz": 0.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-slide-20brn": {
+   "oz": 13.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-slide-20g3": {
+   "oz": 13.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-slide-20g4": {
+   "oz": 13.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-slide-20mos": {
+   "oz": 13.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-slide-20zp": {
+   "oz": 13.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-slide-21g3": {
+   "oz": 13.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-slide-21g4": {
+   "oz": 13.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-slide-21mos": {
+   "oz": 13.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-spk-lw": {
+   "oz": 0.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "gl-spk-oem": {
+   "oz": 0.6,
+   "basis": "estimate",
+   "src": null
+  },
   "gs-bbl-43x": {
    "oz": 2.4,
    "basis": "estimate",
@@ -1401,6 +1666,346 @@
    "basis": "estimate",
    "src": null
   },
+  "hc-3": {
+   "oz": 18.3,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-bbl-3": {
+   "oz": 2.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-bbl-3t": {
+   "oz": 3.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-bbl-apex": {
+   "oz": 3.1,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-bbl-pro": {
+   "oz": 3.1,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-bbl-prot": {
+   "oz": 3.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-bbl-tp": {
+   "oz": 3.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-hol-3": {
+   "oz": 3.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-hol-3-tlr7sub": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-hol-pro": {
+   "oz": 3.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-hol-pro-tlr7sub": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-mag-10": {
+   "oz": 2.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-mag-11": {
+   "oz": 2.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-mag-13": {
+   "oz": 2.3,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-mag-15": {
+   "oz": 2.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-mag-p10": {
+   "oz": 2.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-mag-p15": {
+   "oz": 2.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-mag-p17": {
+   "oz": 2.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-mz-tp": {
+   "oz": 0.3,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-opt-407k": {
+   "oz": 1.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-opt-507k": {
+   "oz": 1.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-opt-eps": {
+   "oz": 1.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-opt-r0": {
+   "oz": 0.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-opt-rmsc": {
+   "oz": 0.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-pro": {
+   "oz": 21.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-procomp": {
+   "oz": 21.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-prot": {
+   "oz": 21.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-rsa-3": {
+   "oz": 0.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-rsa-apex": {
+   "oz": 0.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-sight-ag": {
+   "oz": 0.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-sight-nf": {
+   "oz": 0.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-sight-trooper": {
+   "oz": 0.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-slide-apex": {
+   "oz": 8.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-slide-tp": {
+   "oz": 8.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "hc-trig-apex": {
+   "oz": 0.3,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-bbl-apexc": {
+   "oz": 4.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-bbl-eb": {
+   "oz": 4.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-bbl-faxc": {
+   "oz": 4.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-bbl-faxfs": {
+   "oz": 4.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-bbl-sw": {
+   "oz": 4.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-c4": {
+   "oz": 23.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-fs": {
+   "oz": 24.7,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-fst": {
+   "oz": 25.1,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-hol-c": {
+   "oz": 3.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-hol-c-tlr7a": {
+   "oz": 5.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-hol-c-x300": {
+   "oz": 6.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-hol-fs": {
+   "oz": 3.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-hol-fs-tlr7a": {
+   "oz": 5.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-hol-fs-x300": {
+   "oz": 6.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-mag-10": {
+   "oz": 3.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-mag-15": {
+   "oz": 2.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-mag-17": {
+   "oz": 3.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-mag-23": {
+   "oz": 3.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-mz-tp": {
+   "oz": 0.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-opt-407k": {
+   "oz": 1.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-opt-507c": {
+   "oz": 1.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-opt-acro": {
+   "oz": 2.1,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-opt-dpp": {
+   "oz": 1.9,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-opt-rmr": {
+   "oz": 1.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-opt-venom": {
+   "oz": 1.1,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-rsa-fs": {
+   "oz": 0.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-sight-hdxr": {
+   "oz": 0.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-sight-sup": {
+   "oz": 0.3,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-slide-c": {
+   "oz": 9.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-slide-fs": {
+   "oz": 10.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-trig-apexcurve": {
+   "oz": 0.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-trig-apexflat": {
+   "oz": 0.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "mp-trig-timney": {
+   "oz": 0.5,
+   "basis": "estimate",
+   "src": null
+  },
   "p-bbl-c9": {
    "oz": 4.0,
    "basis": "estimate",
@@ -1497,6 +2102,16 @@
    "src": null
   },
   "p-light-tlr7sub-g": {
+   "oz": 2.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "p-light-tlr7sub-h": {
+   "oz": 2.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "p-light-tlr7sub-p": {
    "oz": 2.4,
    "basis": "estimate",
    "src": null
