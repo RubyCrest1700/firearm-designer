@@ -117,6 +117,44 @@ function inside(pts: number[], x: number, y: number) {
   return c;
 }
 
+/** Dots on a staggered grid inside a polygon (flat x,y list), kept a tenth of an inch off its edge: grip textures. */
+function dotsIn(poly: number[], pitch: number, map: Map2 = same, margin = 0.1): string {
+  const xs = poly.filter((_, i) => !(i % 2)), ys = poly.filter((_, i) => i % 2);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  let d = '';
+  for (let y = y0, row = 0; y <= y1; y += pitch, row++) {
+    for (let x = x0 + (row % 2 ? pitch / 2 : 0); x <= x1; x += pitch) {
+      if (!inside(poly, x, y) || !inside(poly, x - margin, y) || !inside(poly, x + margin, y) || !inside(poly, x, y - margin) || !inside(poly, x, y + margin)) continue;
+      const [a, c] = map(x, y);
+      d += `M${f(a)},${f(c)} L${f(a + 0.015)},${f(c)} `;
+    }
+  }
+  return d;
+}
+
+/** Dashes along parallel lines (angle from +x in degrees, pitch in inches) inside a polygon: lattice textures. */
+function hatchIn(poly: number[], angle: number, pitch: number, map: Map2 = same, margin = 0.06): string {
+  const xs = poly.filter((_, i) => !(i % 2)), ys = poly.filter((_, i) => i % 2);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const a = (angle * Math.PI) / 180, ux = Math.cos(a), uy = Math.sin(a);
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, R = Math.hypot(x1 - x0, y1 - y0) / 2, step = 0.02;
+  let d = '';
+  for (let o = -R; o <= R; o += pitch) {
+    let run: [number, number] | null = null;
+    for (let t = -R; t <= R + step; t += step) {
+      const x = cx - uy * o + ux * t, y = cy + ux * o + uy * t;
+      const ok = t <= R && inside(poly, x, y) && inside(poly, x - margin, y) && inside(poly, x + margin, y) && inside(poly, x, y - margin) && inside(poly, x, y + margin);
+      if (ok && !run) run = [x, y];
+      else if (!ok && run) {
+        const [p, q] = map(run[0], run[1]), [r, t2] = map(x - ux * step, y - uy * step);
+        d += `M${f(p)},${f(q)} L${f(r)},${f(t2)} `;
+        run = null;
+      }
+    }
+  }
+  return d;
+}
+
 /**
  * A rifle optic drawn on a Picatinny rail whose top is at y = -1.1, centred near x = 4.9 (inches). Returns the outline,
  * detail and the callout anchor in inches; callers move it onto their rail.
@@ -224,15 +262,21 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
   // Stock
   const stock = b.stock;
   let sd: string;
+  let sdet = '';
   let traced: { o: string; d: string } | null = null;
   let rear: number;
-  // Stocks traced from patent drawings (see scripts/pistol-profiles/ar.py), each placed by its butt and its top.
+  // Stocks traced from patent drawings (see scripts/pistol-profiles/ar.py), each placed by its butt and its top;
+  // the rest are drawn to their makers' shapes along the tube, from the butt (u = 0) to the nose at the castle nut.
   const fixedStock = matches(stock, /A2|PRS|Precision|Rifle Stock/);
   rear = fixedStock ? TE - 0.65 : TE - 0.73;
   const traceStock = (key: ArStockKey, top: number) => {
     traced = arPaths(AR_PROFILES[key], (x, y) => [x + rear, y + top]);
     return traced.o;
   };
+  const U = (u: number) => f(rear + u);
+  // The nose, tube saddle and release latch shared by the mil-spec collapsible stocks and braces drawn here.
+  const nose = `L${U(6.75)},-0.9 Q${U(7.02)},-0.9 ${U(7.02)},-0.62 L${U(7.02)},0.95 L${U(5.75)},0.95 L${U(5.65)},1.08 L${U(5.55)},1.45 L${U(4.45)},1.45 L${U(4.25)},1.12`;
+  const latchPin = OC(rear + 5.4, 1.2, 0.06);
   if (matches(stock, /A2/)) {
     // The A2 drawing is a hatched section, so only its outline is traced; the butt plate seam is drawn here.
     sd = traceStock('stockA2', -1.0);
@@ -243,47 +287,103 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
   else if (matches(stock, /UBR/)) sd = traceStock('stockUbr', -1.4);
   else if (matches(stock, /MOE SL/)) sd = traceStock('stockMoeSl', -1.05);
   else if (matches(stock, /CTR/)) sd = traceStock('stockCtr', -1.05);
+  else if (matches(stock, /Bravo/)) {
+    // B5 Systems Bravo: a wedge whose toe line runs straight from behind the latch to the heel, a near-vertical butt
+    // under a thin pad, a recessed side panel, a QD socket at the rear and a sling slot through the toe.
+    sd = `M${U(0.3)},-0.98 ${nose} L${U(3.95)},1.12 L${U(0.6)},3.95 Q${U(0.42)},4.08 ${U(0.32)},3.95 L${U(0)},-0.6 Q${U(0)},-0.98 ${U(0.3)},-0.98 Z`;
+    sdet = `M${U(0.3)},-0.9 L${U(0.6)},3.9 ${OC(rear + 1.3, 0.35, 0.2)} ${OC(rear + 1.3, 0.35, 0.08)} M${U(1.9)},-0.15 L${U(3.8)},-0.15 L${U(3.8)},0.9 L${U(1.9)},0.9 Z M${U(0.8)},2.5 L${U(1.1)},2.5 L${U(1.1)},3.25 Q${U(1.1)},3.4 ${U(0.95)},3.4 Q${U(0.8)},3.4 ${U(0.8)},3.25 Z M${U(0.6)},-0.72 L${U(6.6)},-0.72 ${latchPin}`;
+  }
+  else if (matches(stock, /Gunfighter/)) {
+    // BCM Gunfighter Mod 0: boxier than the M4, the toe line stepping down behind the latch before falling to a
+    // squared heel, a thick ribbed rubber pad on a vertical butt, a QD socket at the rear and a slot through the toe.
+    sd = `M${U(0.45)},-0.98 ${nose} L${U(3.7)},1.12 L${U(3.5)},1.6 L${U(3.0)},1.6 L${U(0.7)},3.75 L${U(0.45)},3.85 L${U(0)},3.85 L${U(0)},-0.8 Q${U(0)},-0.98 ${U(0.45)},-0.98 Z`;
+    sdet = `M${U(0.45)},-0.9 L${U(0.45)},3.85 ${repeat(-0.45, 3.5, 0.55, (y) => `M${U(0.08)},${f(y)} L${U(0.4)},${f(y)}`)} ${OC(rear + 1.05, 0.3, 0.2)} ${OC(rear + 1.05, 0.3, 0.08)} M${U(0.9)},2.6 L${U(1.25)},2.6 L${U(1.25)},3.3 L${U(0.9)},3.3 Z M${U(0.7)},-0.72 L${U(6.6)},-0.72 ${latchPin}`;
+  }
+  else if (matches(stock, /SBA3/)) {
+    // SB Tactical SBA3: a slim spine along the tube ending in the tall arm cuff, its strap buckled across.
+    sd = `M${U(1.45)},-0.9 ${nose} L${U(1.6)},1.15 L${U(1.5)},1.6 Q${U(1.55)},3.5 ${U(0.9)},3.75 Q${U(0.2)},3.95 ${U(0.1)},3.0 L${U(0)},0.2 L${U(0.05)},-0.6 Q${U(0.1)},-0.95 ${U(0.5)},-0.95 Z`;
+    sdet = `M${U(0.1)},1.7 L${U(1.5)},1.7 M${U(0.1)},2.5 L${U(1.5)},2.5 M${U(0.55)},1.7 L${U(0.55)},2.5 M${U(0.95)},1.7 L${U(0.95)},2.5 ${OC(rear + 0.75, 0.55, 0.3)} M${U(1.6)},-0.72 L${U(6.6)},-0.72 ${latchPin}`;
+  }
+  else if (matches(stock, /SBA4/)) {
+    // SB Tactical SBA4: stock-shaped, a flat-bottomed cuff behind a short angled underside, the strap across the cuff.
+    sd = `M${U(0.25)},-0.95 ${nose} L${U(2.4)},1.12 L${U(1.9)},2.0 L${U(1.75)},3.5 Q${U(1.75)},3.85 ${U(1.4)},3.85 L${U(0.25)},3.85 Q${U(0)},3.85 ${U(0)},3.6 L${U(0)},-0.7 Q${U(0)},-0.95 ${U(0.25)},-0.95 Z`;
+    sdet = `M${U(0.1)},1.6 L${U(1.8)},1.6 M${U(0.1)},2.4 L${U(1.8)},2.4 M${U(0.6)},1.6 L${U(0.6)},2.4 M${U(1.0)},1.6 L${U(1.0)},2.4 M${U(0.1)},0.95 L${U(1.9)},0.95 ${OC(rear + 0.8, 0.35, 0.28)} M${U(0.4)},-0.72 L${U(6.6)},-0.72 ${latchPin}`;
+  }
   else {
     // Other collapsible stocks: the M4 stock traced from US 10,184,737 FIG. 2A, pushed in so its nose sits just behind the castle nut.
     const dx = rear - AR_STOCK_REAR;
     traced = arPaths(AR_PROFILES.stock, (x, y) => [x + dx, y]);
     sd = traced.o;
   }
-  const stockDet = traced!.d;
+  const stockDet = sdet || traced!.d;
   P.push({ slot: 'stock', z: 2, row: 'bottom', target: px(rear + 2.2, 1.6), el: <><path d={T(sd)} /><path className="detail" d={T(stockDet)} /></> });
 
   // Lower receiver, A2-style grip and trigger: traced from US 10,184,737 FIG. 2A (see scripts/pistol-profiles/ar.py).
   // The Glock-magazine 9mm lower is traced from US D782,596 FIG. 1; its trigger guard and web openings are holes.
-  const lower = arPaths(glock9 ? AR_PROFILES.lower9 : AR_PROFILES.lower);
+  // Lowers with an integrated trigger guard and flared magwell (Aero's M4E1 and M5, billet lowers) get a deeper,
+  // rounded guard flowing into the magwell lip in place of the mil-spec guard and its pins.
+  const flared = !glock9 && (matches(b.lower, /M4E1|M5 Stripped|Billet/) || matches(b.lower, /Integrated trigger guard|Flared magwell/));
+  let lower: { o: string; d: string };
+  if (flared) {
+    const o = AR_PROFILES.lower.outline[0];
+    const guard = [2.08, 2.05, 2.0, 2.3, 1.98, 2.75, 2.05, 3.05, 2.25, 3.28, 2.6, 3.36, 3.4, 3.36, 3.85, 3.3, 4.1, 3.18, 4.15, 3.22, 6.3, 2.8, 6.42, 2.72];
+    lower = arPaths({ outline: [[...o.slice(0, 27 * 2), ...guard, ...o.slice(59 * 2)]], detail: AR_PROFILES.lower.detail.filter((_, k) => ![4, 5, 6, 7, 8, 32].includes(k)) });
+  } else lower = arPaths(glock9 ? AR_PROFILES.lower9 : AR_PROFILES.lower);
   P.push({ slot: 'lower', z: 4, row: 'bottom', target: px(5.6 * kx, 2.4 * ky),
     el: <><path d={R(lower.o)} fillRule={glock9 ? 'evenodd' : undefined} /><path className="detail" d={R(glock9 ? LOWER9_DETAIL.map((l) => polyPath(l, same, false)).join(' ') : lower.d)} /></> });
 
   // Lower parts kit: the selector's right-side stub over its detent (the lower drawing shows the hole).
   P.push({ slot: 'lpk', z: 6, row: 'bottom', target: px(1.43 * kx, 1.29 * ky),
     el: <path d={O(1.43, 1.29, 0.2) + R(' M1.43,1.29 L1.75,1.12 M1.36,1.29 L1.5,1.29')} /> });
+  // Trigger: the curved shoe traced with the lower, or a flat blade for the flat-shoe triggers.
   const trig = arPaths(AR_PROFILES.trigger);
-  P.push({ slot: 'trigger', z: 6, row: 'bottom', target: px(2.5 * kx, 2.3 * ky), el: <path d={R(trig.o)} /> });
+  P.push({ slot: 'trigger', z: 6, row: 'bottom', target: px(2.5 * kx, 2.3 * ky),
+    el: <path d={R(matches(b.trigger, /Flat/) ? 'M2.28,1.89 L2.76,1.89 L2.76,1.94 L2.6,2.05 L2.66,2.75 Q2.66,2.82 2.58,2.82 L2.5,2.82 L2.42,2.05 L2.28,1.94 Z' : trig.o)} /> });
 
-  // Pistol grip: the traced A2-style grip, leaned forward for steeper and vertical grips (sheared about its top),
-  // with a stippled panel inside the drawing's panel outline.
+  // Pistol grip, each one in the catalog drawn to its own profile. The MOE keeps the A2's rake with a smooth front
+  // strap (no finger ridge) and Magpul's long side panel; the MOE+ is the same grip overmoulded all round; the MOE-K2+
+  // stands near vertical with its extended backstrap and palm swell; BCM's Gunfighter Mod 3 leans at its reduced
+  // angle with a straight front strap, a tang filling the gap behind the receiver, a fillet up to the trigger guard and
+  // the hexagonal texture; Hogue's rubber grip has its finger grooves and palm swell under a cobblestone finish.
+  // Without a grip chosen, the A2-style grip traced from the lower's patent stands in.
   const gr = b.grip;
-  const sh = matches(gr, /vertical/i) ? 0.15 : matches(gr, /steep/i) ? 0.08 : 0;
-  const gTop = Math.min(...AR_PROFILES.grip.outline[0].filter((_, i) => i % 2));
-  const gmap: Map2 = (x, y) => [x + (y - gTop) * sh, y];
-  const grip = arPaths(AR_PROFILES.grip, gmap);
-  const panel = AR_PROFILES.grip.detail.reduce((a, d) => (d.length > a.length ? d : a), [] as number[]);
-  let gripTex = '';
-  for (let y = gTop + 0.6, row = 0; y < gTop + 3.6; y += 0.14, row++) {
-    for (let x = -1.6 + (row % 2 ? 0.07 : 0); x < 1.8; x += 0.14) {
-      if (!inside(panel, x, y) || !inside(panel, x - 0.1, y) || !inside(panel, x + 0.1, y) || !inside(panel, x, y - 0.1) || !inside(panel, x, y + 0.1)) continue;
-      const [a, c] = gmap(x, y);
-      gripTex += `M${f(a)},${f(c)} L${f(a + 0.015)},${f(c)} `;
-    }
+  const gk = matches(gr, /K2/) ? 'k2' : matches(gr, /Gunfighter/) ? 'bcm' : matches(gr, /Finger grooves|OverMolded/) ? 'hogue' : matches(gr, /MOE\+/) ? 'moeplus' : matches(gr, /MOE/) ? 'moe' : 'a2';
+  let gripO: string, gripDet = '', gripTex: string;
+  let gripAt: [number, number] = [-0.2, 4.0];
+  if (gk === 'a2') {
+    const grip = arPaths(AR_PROFILES.grip);
+    const panel = AR_PROFILES.grip.detail.reduce((a, d) => (d.length > a.length ? d : a), [] as number[]);
+    gripO = grip.o; gripDet = grip.d; gripTex = dotsIn(panel, 0.14);
+  } else if (gk === 'moe' || gk === 'moeplus') {
+    gripO = 'M0.28,1.92 L0.26,2.15 L-1.58,4.86 Q-1.74,5.08 -1.66,5.22 L-0.02,5.56 Q0.32,5.6 0.40,5.28 L1.12,4.15 Q1.45,3.6 1.62,3.0 Q1.70,2.7 1.70,2.35 L1.70,1.96 Z';
+    gripDet = 'M-1.5,5.02 L0.25,5.38';
+    if (gk === 'moe') {
+      const panel = [0.09, 2.62, 1.52, 2.62, 1.52, 2.95, 1.3, 3.6, 0.97, 4.15, 0.45, 5.05, -1.4, 4.86];
+      gripDet += ' ' + polyPath(panel, same, true);
+      gripTex = dotsIn(panel, 0.14);
+    } else gripTex = dotsIn([0.14, 2.5, 1.56, 2.5, 1.56, 2.6, 1.5, 3.0, 1.32, 3.6, 1.0, 4.15, 0.42, 5.05, 0.3, 5.22, -1.42, 4.92], 0.13);
+    gripAt = [-0.3, 4.0];
+  } else if (gk === 'k2') {
+    gripO = 'M0.28,1.92 L-0.05,1.94 Q-0.3,1.96 -0.3,2.2 Q-1.05,3.5 -1.22,5.0 Q-1.34,5.2 -1.2,5.3 L0.2,5.5 Q0.5,5.55 0.55,5.3 L1.1,3.7 Q1.45,3.0 1.62,2.7 Q1.70,2.5 1.70,2.3 L1.70,1.96 Z';
+    gripDet = 'M-1.1,5.05 L0.42,5.3';
+    gripTex = dotsIn([-0.15, 2.45, 1.56, 2.45, 1.56, 2.6, 1.5, 2.95, 1.2, 3.7, 0.45, 5.05, -1.0, 4.88, -0.72, 3.6], 0.13);
+    gripAt = [0.1, 4.0];
+  } else if (gk === 'bcm') {
+    gripO = 'M0.28,1.92 L0.05,1.95 Q-0.12,1.97 -0.15,2.15 L-1.42,5.05 Q-1.55,5.22 -1.42,5.3 L0.2,5.58 Q0.45,5.62 0.52,5.4 L1.75,2.65 L1.88,2.35 L1.9,2.05 L1.70,1.96 Z';
+    gripDet = 'M-1.3,5.08 L0.42,5.38';
+    const panel = [0.0, 2.55, 1.6, 2.55, 1.5, 2.9, 0.55, 4.95, -1.15, 4.7, -0.15, 2.75];
+    gripDet += ' ' + polyPath(panel, same, true);
+    gripTex = hatchIn(panel, 60, 0.18) + hatchIn(panel, -60, 0.18);
+    gripAt = [0.1, 4.0];
+  } else {
+    gripO = 'M0.28,1.92 L0.2,1.96 Q0.06,2.05 0.02,2.25 Q-1.15,3.6 -1.62,4.9 Q-1.78,5.1 -1.7,5.25 L-0.05,5.6 Q0.3,5.65 0.42,5.35 L0.5,5.07 Q0.86,4.78 0.77,4.26 Q1.21,3.89 1.11,3.37 Q1.56,3.01 1.46,2.49 Q1.62,2.15 1.70,1.96 Z';
+    gripTex = dotsIn([0.1, 2.45, 1.5, 2.45, 1.42, 2.6, 1.08, 3.36, 0.73, 4.25, 0.42, 5.04, 0.05, 5.4, -1.55, 5.06, -1.3, 4.7, -0.85, 3.95, -0.45, 3.3], 0.16);
+    gripAt = [-0.3, 4.0];
   }
-  P.push({ slot: 'grip', z: 5, row: 'bottom', target: px((0.1 + 2.5 * sh) * kx, 3.6 * ky),
+  P.push({ slot: 'grip', z: 5, row: 'bottom', target: px(gripAt[0] * kx, gripAt[1] * ky),
     el: <>
-      <path d={R(grip.o)} />
-      <path className="detail" d={R(grip.d)} />
+      <path d={R(gripO)} />
+      {gripDet && <path className="detail" d={R(gripDet)} />}
       <path className="detail stipple" d={R(gripTex)} />
     </> });
 
@@ -300,19 +400,22 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
     const len = glock9 ? 5.0 + (rounds - 17) * 0.29 : 3.3 + rounds * 0.165; // G17 5.0", 33 rd 9.6"; Colt 32 rd 8.6"
     const w = glock9 ? 1.25 : 1.12;
     const at = (x: number, y: number): [number, number] => [ax + (y - ay) * lean + x, y];
-    const bot = top + len, fp = glock9 ? 0.34 : 0.22; // floor plate height
+    const pmagGl = glock9 && matches(b.mag, /PMAG/);
+    const bot = top + len, fp = glock9 ? (pmagGl ? 0.48 : 0.34) : 0.22; // floor plate height
     const pts = [at(0, top), at(w, top), at(w, bot - fp), at(w + (glock9 ? 0.1 : 0.04), bot - fp + 0.05), at(w + (glock9 ? 0.1 : 0.04), bot - 0.05),
       at(w + (glock9 ? 0.04 : 0), bot), at(-0.04, bot), at(-0.06, bot - 0.05), at(-0.06, bot - fp + 0.05), at(0, bot - fp)];
     const pp = (q: [number, number][]) => q.map(([x, y], i) => `${i ? 'L' : 'M'}${f(x)},${f(y)}`).join(' ');
     const seam = pp([at(-0.06, bot - fp + 0.05), at(w + (glock9 ? 0.1 : 0.04), bot - fp + 0.05)]);
     // Colt mags have stamped ribs down the sides.
-    const ribs = glock9 ? '' : ` ${pp([at(0.3, 3.4), at(0.3, bot - fp - 0.4)])} ${pp([at(w - 0.3, 3.4), at(w - 0.3, bot - fp - 0.4)])}`;
+    const ribs = glock9
+      ? pmagGl ? ` ${pp([at(0.28, top + 0.7), at(0.28, bot - fp - 0.3)])} ${pp([at(w - 0.28, top + 0.7), at(w - 0.28, bot - fp - 0.3)])}` : ''
+      : ` ${pp([at(0.3, 3.4), at(0.3, bot - fp - 0.4)])} ${pp([at(w - 0.3, 3.4), at(w - 0.3, bot - fp - 0.4)])}`;
     P.push({ slot: 'mag', z: 3, row: 'bottom', target: px(ax + (bot - 1 - ay) * lean + w / 2, bot - 1),
       el: <><path d={T(pp(pts) + ' Z')} /><path className="detail" d={T(seam + ribs)} /></> });
   } else
   P.push({ slot: 'mag', z: 3, row: 'bottom', target: px(big ? 5.5 * kx : 6.2, big ? 6.2 : 6.6),
     el: big
-      ? <><path d={T('M3.98,3.0 L6.55,3.0 C6.65,4.8 6.85,6.4 7.05,7.75 L7.1,7.98 L4.6,8.12 L4.55,7.9 C4.3,6.3 4.1,4.7 3.98,3.0 Z', kx, 1)} /><path className="detail" d={T('M4.2,4.4 L6.65,4.32 M4.35,5.8 L6.85,5.7 M4.5,7.2 L7.0,7.1', kx, 1)} /></>
+      ? <><path d={T('M3.98,3.0 L6.55,3.0 C6.65,4.8 6.85,6.4 7.05,7.75 L7.1,7.98 L4.6,8.12 L4.55,7.9 C4.3,6.3 4.1,4.7 3.98,3.0 Z', kx, 1)} /><path className="detail" d={T(matches(b.mag, /Armalite/) ? 'M4.7,3.3 L5.4,7.9 M4.52,7.55 L7.05,7.4' : 'M4.2,4.4 L6.65,4.32 M4.35,5.8 L6.85,5.7 M4.5,7.2 L7.0,7.1 M4.45,3.3 L4.95,7.6 M6.15,3.3 L6.75,7.6', kx, 1)} /></>
       : <><path d={T(pmag.o)} /><path className="detail" d={T(pmag.d)} /></> });
 
   // Upper receiver: the standard flat-top traced from US 8,910,406 FIG. 1A.
@@ -322,8 +425,9 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
       <path d={R(upper.o)} />
       <path className="detail" d={R(upper.d)} />
     </> });
+  // Charging handle; this is the right side, so only an ambidextrous handle (Radian's Raptor) shows a latch wing.
   P.push({ slot: 'charging', z: 8, row: 'top', target: px(-0.55 * kx, -0.62 * ky),
-    el: <path d={R('M-0.78,-0.76 L0.05,-0.76 L0.05,-0.5 L-0.78,-0.5 Q-0.98,-0.53 -0.98,-0.63 Q-0.98,-0.73 -0.78,-0.76 Z')} /> });
+    el: <path d={R('M-0.78,-0.76 L0.05,-0.76 L0.05,-0.5 L-0.78,-0.5 Q-0.98,-0.53 -0.98,-0.63 Q-0.98,-0.73 -0.78,-0.76 Z' + (matches(b.charging, /Raptor/) ? ' M-0.5,-0.5 L-1.0,-0.5 Q-1.25,-0.42 -1.15,-0.26 L-0.45,-0.3 Z' : ''))} /> });
   P.push({ slot: 'bcg', internal: true, z: 20, row: 'top', target: px(2.4 * kx, 0.3 * ky),
     el: <path d={R(`M0.4,-0.45 L5.85,-0.45 L5.85,0.45 L0.4,0.45 Z ${nine ? '' : 'M3.2,-0.45 L3.2,-0.76 L4.6,-0.76 L4.6,-0.45'} M5.85,-0.3 L6.45,-0.3 L6.45,0.3 L5.85,0.3`)} /> });
 
@@ -337,12 +441,26 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
   const H = typeof hg?.attrs.length === 'number' ? hg.attrs.length : freeFloat ? (big ? 15 : 13.5) : 9;
   const HX = RF + H;
   const fsb = b.gasblock?.attrs.profile === 'fsb';
+  const gb625 = b.gasblock?.attrs.journal === '.625';
+  const gbAdj = matches(b.gasblock, /Adjustable/);
 
+  // Barrel contour: pencil barrels stay thin, Government (M4) profiles step up to .750 at the gas block, heavy and
+  // hybrid profiles run fat under the handguard; the gas journal takes the size the specs give. Fluted barrels show
+  // their flutes along the exposed length.
+  const bp = matches(b.barrel, /Light profile|Pencil/) ? 'light' : matches(b.barrel, /Heavy/) ? 'heavy' : matches(b.barrel, /Government/) ? 'gov' : matches(b.barrel, /Hybrid/) ? 'hybrid' : 'std';
+  const jm = /\.(\d{3}) journal/.exec(b.barrel?.specs.join(' ') ?? '');
+  const rj = jm ? Number('0.' + jm[1]) / 2 : 0.375;
+  const rRear = { light: 0.31, heavy: 0.47, gov: 0.31, hybrid: 0.45, std: 0.36 }[bp];
+  const rFront = { light: 0.3, heavy: 0.43, gov: 0.375, hybrid: 0.375, std: 0.34 }[bp];
+  const rF9 = matches(b.barrel, /Light Taper/) ? 0.3 : 0.36;
+  const fx0 = Math.max(HX, GX + 1.2) + 0.25, fx1 = BX - 0.45;
+  const flutes = matches(b.barrel, /Fluted/) && fx1 > fx0 + 0.5 ? [-0.16, 0, 0.16].map((y) => `M${f(fx0)},${y} L${f(fx1)},${y}`).join(' ') : '';
   P.push({ slot: 'barrel', z: 9, row: 'top', target: px(Math.max(HX, GX + 0.6) + (BX - Math.max(HX, GX + 0.6)) / 2, 0.3),
     el: <>
       <path d={T(nine
-        ? `M${f(RF)},-0.42 L${f(RF + 0.9)},-0.42 L${f(RF + 1.0)},-0.36 L${f(BX)},-0.36 L${f(BX)},0.36 L${f(RF + 1.0)},0.36 L${f(RF + 0.9)},0.42 L${f(RF)},0.42 Z`
-        : `M${f(RF)},-0.42 L${f(GX)},-0.375 L${f(GX + 0.9)},-0.31 L${f(BX)},-0.29 L${f(BX)},0.29 L${f(GX + 0.9)},0.31 L${f(GX)},0.375 L${f(RF)},0.42 Z`)} />
+        ? `M${f(RF)},-0.42 L${f(RF + 0.9)},-0.42 L${f(RF + 1.0)},-0.36 L${f(RF + 3)},-0.36 L${f(BX)},${f(-rF9)} L${f(BX)},${f(rF9)} L${f(RF + 3)},0.36 L${f(RF + 1.0)},0.36 L${f(RF + 0.9)},0.42 L${f(RF)},0.42 Z`
+        : `M${f(RF)},-0.42 L${f(RF + 1.0)},-0.42 L${f(RF + 1.15)},${f(-rRear)} L${f(GX - 0.05)},${f(-rRear)} L${f(GX)},${f(-rj)} L${f(GX + 0.9)},${f(-rj)} L${f(GX + 1.1)},${f(-rFront)} L${f(BX)},${f(-rFront)} L${f(BX)},${f(rFront)} L${f(GX + 1.1)},${f(rFront)} L${f(GX + 0.9)},${f(rj)} L${f(GX)},${f(rj)} L${f(GX - 0.05)},${f(rRear)} L${f(RF + 1.15)},${f(rRear)} L${f(RF + 1.0)},0.42 L${f(RF)},0.42 Z`)} />
+      {flutes && <path className="detail" d={T(flutes)} />}
       <path className="hidden-line" d={T(`M${f(BF)},-0.5 L${f(RF)},-0.5 M${f(BF)},0.5 L${f(RF)},0.5`)} />
     </> });
   if (!nine) P.push({ slot: 'gastube', internal: true, z: 21, row: 'top', target: px((4.6 * kx + GX) / 2, -0.62),
@@ -353,15 +471,43 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
           <path d={T(`M${f(GX - 0.62)},-0.98 L${f(GX + 0.62)},-0.98 L${f(GX + 0.62)},0.62 L${f(GX - 0.62)},0.62 Z M${f(GX - 0.42)},-0.98 Q${f(GX - 0.5)},-2.42 ${f(GX - 0.16)},-2.47 L${f(GX + 0.16)},-2.47 Q${f(GX + 0.5)},-2.42 ${f(GX + 0.42)},-0.98 M${f(GX)},0.62 L${f(GX)},1.02 L${f(GX + 0.55)},1.02 L${f(GX + 0.55)},0.62`)} />
           <path className="detail" d={T(`M${f(GX)},-2.3 L${f(GX)},-1.35 M${f(GX - 0.2)},-1.35 L${f(GX + 0.2)},-1.35`)} />
         </>
-      : <path d={T(`M${f(GX - 0.42)},-0.86 L${f(GX + 0.55)},-0.86 L${f(GX + 0.55)},0.44 L${f(GX - 0.42)},0.44 Z`)} /> });
+      : <path d={T(`M${f(GX - 0.42)},${gb625 ? -0.78 : -0.86} L${f(GX + 0.55)},${gb625 ? -0.78 : -0.86} L${f(GX + 0.55)},${gb625 ? 0.36 : 0.44} L${f(GX - 0.42)},${gb625 ? 0.36 : 0.44} Z${gbAdj ? ` M${f(GX + 0.55)},-0.72 L${f(GX + 0.74)},-0.72 L${f(GX + 0.74)},-0.46 L${f(GX + 0.55)},-0.46 Z M${f(GX + 0.74)},-0.59 L${f(GX + 0.66)},-0.59` : ''}`)} /> });
 
   if (freeFloat) {
-    P.push({ slot: 'handguard', z: 11, row: 'top', target: px(RF + H * 0.45, RAIL),
-      el: <>
-        <path d={T(`M${f(RF)},${f(RAIL)} L${f(HX - 0.25)},${f(RAIL)} Q${f(HX)},${f(RAIL)} ${f(HX)},${f(RAIL + 0.25)} L${f(HX)},0.7 Q${f(HX)},0.95 ${f(HX - 0.25)},0.95 L${f(RF)},0.95 Z`)} />
-        <path className="detail" d={T(`M${f(RF)},${f(RAIL + 0.2)} L${f(HX - 0.1)},${f(RAIL + 0.2)} ${pic(RF + 0.25, HX - 0.3, RAIL)} M${f(HX - 0.35)},${f(RAIL + 0.2)} L${f(HX - 0.35)},0.95 M${f(RF)},0.62 L${f(HX - 0.35)},0.62 M${f(RF + 0.55)},0.62 L${f(RF + 0.55)},0.95 ${repeat(RF + 1.1, HX - 1.6, 1.6, (x) => `M${x},0.72 L${f(x + 0.9)},0.72`)}`) + O(RF / kx + 0.95 / kx, 0.38 / ky, 0.12) + O((HX - 0.75) / kx, 0.38 / ky, 0.12)} />
-        <path className="detail" d={T(` ${repeat(RF + 1.1, HX - 1.6, 1.6, (x) => `M${x},-0.2 L${f(x + 1.1)},-0.2 Q${f(x + 1.27)},-0.2 ${f(x + 1.27)},-0.03 Q${f(x + 1.27)},0.14 ${f(x + 1.1)},0.14 L${x},0.14 Q${f(x - 0.17)},0.14 ${f(x - 0.17)},-0.03 Q${f(x - 0.17)},-0.2 ${x},-0.2 Z`)} M${f(RF + 0.15)},${f(RAIL + 0.2)} L${f(RF + 0.15)},0.95`)} />
-      </> });
+    // Free-float rails, each to its maker's profile: the top rail level with the upper's (the ATLAS S-ONE only
+    // carries rail at its ends), M-LOK slots along the side at 3 o'clock, and each maker's own lightening cuts
+    // below them: BCM's short 4:30 slots, Geissele's ovals and big rear bolts, Midwest's long narrow slots and
+    // anti-rotation tab, Seekins' angled cuts. The rest keep the plain rail with its bottom slots.
+    const hk = matches(hg, /ATLAS|S-ONE/) ? 'atlas' : matches(hg, /MCMR/) ? 'mcmr' : matches(hg, /MK16|Super Modular/) ? 'mk16' : matches(hg, /Combat Rail/) ? 'mi' : matches(hg, /SP3R/) ? 'seekins' : 'plain';
+    const bot = { atlas: 0.72, mcmr: 0.78, mk16: 0.9, mi: 0.8, seekins: 0.85, plain: 0.95 }[hk];
+    const top = RAIL;
+    const slotRow = (y: number, h: number, len: number, from: number, to: number, pitch: number) => {
+      const r = h / 2;
+      return repeat(from, to - len - r, pitch, (x) => `M${x},${f(y - r)} L${f(x + len)},${f(y - r)} Q${f(x + len + r)},${f(y - r)} ${f(x + len + r)},${f(y)} Q${f(x + len + r)},${f(y + r)} ${f(x + len)},${f(y + r)} L${x},${f(y + r)} Q${f(x - r)},${f(y + r)} ${f(x - r)},${f(y)} Q${f(x - r)},${f(y - r)} ${x},${f(y - r)} Z`);
+    };
+    const mlok = (from: number, to: number) => slotRow(-0.03, 0.34, 1.1, from, to, 1.6);
+    const screws = (y: number) => O((RF + 0.3) / kx, y / ky, 0.1) + O((RF + 0.65) / kx, y / ky, 0.1);
+    let hgO: string, hgD: string;
+    if (hk === 'atlas') {
+      hgO = `M${f(RF)},${f(top + 0.32)} L${f(RF + 0.3)},${f(top + 0.32)} L${f(RF + 0.3)},${f(top)} L${f(RF + 2.1)},${f(top)} L${f(RF + 2.1)},${f(top + 0.32)} L${f(HX - 1.7)},${f(top + 0.32)} L${f(HX - 1.7)},${f(top)} L${f(HX - 0.2)},${f(top)} Q${f(HX)},${f(top)} ${f(HX)},${f(top + 0.2)} L${f(HX)},${f(bot - 0.2)} Q${f(HX)},${f(bot)} ${f(HX - 0.2)},${f(bot)} L${f(RF)},${f(bot)} Z`;
+      hgD = `${pic(RF + 0.45, HX - 1.75, top)} ${pic(HX - 1.55, HX - 0.25, top)} M${f(RF + 0.3)},${f(top + 0.2)} L${f(RF + 2.1)},${f(top + 0.2)} M${f(HX - 1.7)},${f(top + 0.2)} L${f(HX - 0.1)},${f(top + 0.2)} M${f(RF + 0.75)},${f(top + 0.32)} L${f(RF + 0.75)},${f(bot)} ${mlok(RF + 1.3, HX - 0.4)} ${repeat(RF + 1.3, HX - 1.5, 1.6, (x) => `M${x},${f(bot - 0.14)} L${f(x + 1.1)},${f(bot - 0.14)}`)} ${screws(bot - 0.25)}`;
+    } else if (hk === 'mcmr') {
+      hgO = `M${f(RF)},${f(top)} L${f(HX - 0.2)},${f(top)} Q${f(HX)},${f(top)} ${f(HX)},${f(top + 0.2)} L${f(HX)},${f(bot - 0.15)} Q${f(HX)},${f(bot)} ${f(HX - 0.15)},${f(bot)} L${f(RF)},${f(bot)} Z`;
+      hgD = `${pic(RF + 0.25, HX - 0.3, top)} M${f(RF)},${f(top + 0.2)} L${f(HX - 0.1)},${f(top + 0.2)} M${f(RF + 0.85)},${f(top + 0.2)} L${f(RF + 0.85)},${f(bot)} ${mlok(RF + 1.3, HX - 0.4)} ${slotRow(bot - 0.3, 0.2, 0.7, RF + 1.5, HX - 0.4, 1.6)} ${screws(bot - 0.22)}`;
+    } else if (hk === 'mk16') {
+      hgO = `M${f(RF)},${f(top)} L${f(HX - 0.8)},${f(top)} L${f(HX)},${f(top + 0.55)} L${f(HX)},${f(bot - 0.2)} Q${f(HX)},${f(bot)} ${f(HX - 0.2)},${f(bot)} L${f(RF + 1.0)},${f(bot)} L${f(RF + 1.0)},${f(bot + 0.12)} L${f(RF)},${f(bot + 0.12)} Z`;
+      hgD = `${pic(RF + 0.25, HX - 0.85, top)} M${f(RF)},${f(top + 0.2)} L${f(HX - 0.75)},${f(top + 0.2)} M${f(RF + 1.0)},${f(top + 0.2)} L${f(RF + 1.0)},${f(bot)} ${mlok(RF + 1.6, HX - 0.5)} ${slotRow(bot - 0.32, 0.26, 0.5, RF + 1.9, HX - 0.6, 1.6)} ${screws(bot - 0.12)}`;
+    } else if (hk === 'mi') {
+      hgO = `M${f(RF)},${f(top)} L${f(HX - 0.15)},${f(top)} L${f(HX)},${f(top + 0.15)} L${f(HX)},${f(bot - 0.15)} L${f(HX - 0.15)},${f(bot)} L${f(RF)},${f(bot)} Z M${f(RF + 0.05)},${f(top)} L${f(RF + 0.05)},${f(top - 0.1)} L${f(RF + 0.65)},${f(top - 0.1)} L${f(RF + 0.65)},${f(top)} Z`;
+      hgD = `${pic(RF + 0.85, HX - 0.3, top)} M${f(RF)},${f(top + 0.2)} L${f(HX - 0.1)},${f(top + 0.2)} M${f(RF + 0.75)},${f(top + 0.2)} L${f(RF + 0.75)},${f(bot)} ${mlok(RF + 1.3, HX - 0.4)} ${slotRow(bot - 0.3, 0.14, 1.2, RF + 1.3, HX - 0.4, 1.6)} ${screws(bot - 0.25)}`;
+    } else if (hk === 'seekins') {
+      hgO = `M${f(RF)},${f(top)} L${f(HX - 0.4)},${f(top)} L${f(HX)},${f(top + 0.3)} L${f(HX)},${f(bot - 0.15)} Q${f(HX)},${f(bot)} ${f(HX - 0.15)},${f(bot)} L${f(RF)},${f(bot)} Z`;
+      hgD = `${pic(RF + 0.25, HX - 0.45, top)} M${f(RF)},${f(top + 0.2)} L${f(HX - 0.35)},${f(top + 0.2)} M${f(RF + 0.8)},${f(top + 0.2)} L${f(RF + 0.8)},${f(bot)} ${mlok(RF + 1.3, HX - 0.4)} ${repeat(RF + 1.4, HX - 0.9, 1.6, (x) => `M${x},${f(bot - 0.5)} L${f(x + 0.55)},${f(bot - 0.5)} L${f(x + 0.4)},${f(bot - 0.15)} L${f(x - 0.15)},${f(bot - 0.15)} Z`)} ${screws(bot - 0.25)}`;
+    } else {
+      hgO = `M${f(RF)},${f(top)} L${f(HX - 0.25)},${f(top)} Q${f(HX)},${f(top)} ${f(HX)},${f(top + 0.25)} L${f(HX)},${f(bot - 0.25)} Q${f(HX)},${f(bot)} ${f(HX - 0.25)},${f(bot)} L${f(RF)},${f(bot)} Z`;
+      hgD = `${pic(RF + 0.25, HX - 0.3, top)} M${f(RF)},${f(top + 0.2)} L${f(HX - 0.1)},${f(top + 0.2)} M${f(HX - 0.35)},${f(top + 0.2)} L${f(HX - 0.35)},${f(bot)} M${f(RF)},${f(bot - 0.33)} L${f(HX - 0.35)},${f(bot - 0.33)} M${f(RF + 0.55)},${f(bot - 0.33)} L${f(RF + 0.55)},${f(bot)} ${repeat(RF + 1.1, HX - 1.6, 1.6, (x) => `M${x},${f(bot - 0.23)} L${f(x + 0.9)},${f(bot - 0.23)}`)} ${mlok(RF + 1.1, HX - 0.5)} M${f(RF + 0.15)},${f(top + 0.2)} L${f(RF + 0.15)},${f(bot)} ${O((RF + 0.95) / kx, 0.38 / ky, 0.12)} ${O((HX - 0.75) / kx, 0.38 / ky, 0.12)}`;
+    }
+    P.push({ slot: 'handguard', z: 11, row: 'top', target: px(RF + H * 0.45, top), el: <><path d={T(hgO)} /><path className="detail" d={T(hgD)} /></> });
   } else {
     // Drop-in handguard: the Magpul MOE carbine handguard traced from US D656,215 FIG. 3, between the delta ring
     // and the front sight base. Longer ones keep the end caps and stretch the middle.
@@ -381,15 +527,46 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
   let md: string;
   let mdet = '';
   let mlen: number;
-  // Brakes: a ported brake traced from US D285,238 FIG. 1; 3-prong hiders: US D577,410 FIG. 1 (collar and prongs).
-  const mzTrace = matches(mz, /brake/i) ? 'muzzleBrake' as const : matches(mz, /prong/i) ? 'muzzleProng' as const : null;
-  if (mzTrace) {
-    const h = AR_PROFILES.marks[mzTrace + 'H'];
-    const t = arPaths(AR_PROFILES[mzTrace], (x, y) => [BX + x, y - h / 2]);
-    mlen = mzTrace === 'muzzleBrake' ? 2.25 : 2.2;
+  // Each device to its own shape. Lantac Dragon: a squared can with three side windows shrinking toward its
+  // coned nose. Precision Armament M4-72: a fat three-chamber brake, its ports raked back. VG6 Gamma: two side
+  // chambers behind three flash-hider slots. SureFire WarComp: the SOCOM's three tines with two ports cut in its
+  // top. 3-prong hiders: traced from US D577,410 FIG. 1; other brakes from US D285,238 FIG. 1. 9mm cans are smooth
+  // tubes, bell-mouthed (KAK) or coned (PSA's linear comp); Odin's Atlas 9 is a squared two-port comp.
+  const mk = matches(mz, /Dragon/) ? 'dragon' : matches(mz, /M4-72/) ? 'm472' : matches(mz, /Gamma/) ? 'gamma' : matches(mz, /WarComp/) ? 'warcomp'
+    : matches(mz, /prong/i) ? 'prong' : matches(mz, /Flash Can|Linear/) ? 'can' : matches(mz, /Atlas 9/) ? 'comp9' : matches(mz, /brake/i) ? 'brake' : matches(mz, /comp/i) ? 'comp' : 'a2';
+  const tube = (len: number, r: number, nose = '') => `M${f(BX)},-0.4 L${f(BX + 0.28)},-0.4 L${f(BX + 0.28)},${f(-r)} ${nose || `L${f(BX + len)},${f(-r)} L${f(BX + len)},${f(r)}`} L${f(BX + 0.28)},${f(r)} L${f(BX + 0.28)},0.4 L${f(BX)},0.4 Z`;
+  const window = (x0: number, x1: number, y0: number, y1: number) => `M${f(x0)},${f(y0)} L${f(x1)},${f(y0)} L${f(x1)},${f(y1)} L${f(x0)},${f(y1)} Z`;
+  const vents = (xs: number[], r: number) => xs.map((d) => `M${f(BX + d)},${f(-r)} L${f(BX + d)},${f(-r + 0.12)} M${f(BX + d + 0.14)},${f(-r)} L${f(BX + d + 0.14)},${f(-r + 0.12)}`).join(' ');
+  if (mk === 'prong' || mk === 'warcomp' || mk === 'brake') {
+    const key = mk === 'brake' ? 'muzzleBrake' as const : 'muzzleProng' as const;
+    const h = AR_PROFILES.marks[key + 'H'];
+    const t = arPaths(AR_PROFILES[key], (x, y) => [BX + x, y - h / 2]);
+    mlen = mk === 'brake' ? 2.25 : 2.2;
     md = t.o;
-    mdet = t.d;
-  } else if (matches(mz, /comp/i)) {
+    mdet = t.d + (mk === 'warcomp' ? ` ${window(BX + 0.45, BX + 0.7, -h / 2, -h / 2 + 0.2)} ${window(BX + 0.85, BX + 1.1, -h / 2, -h / 2 + 0.2)}` : '');
+  } else if (mk === 'dragon') {
+    mlen = 2.25;
+    md = tube(mlen, 0.44, `L${f(BX + 2.05)},-0.44 L${f(BX + mlen)},-0.28 L${f(BX + mlen)},0.28 L${f(BX + 2.05)},0.44`);
+    mdet = `${window(BX + 0.45, BX + 0.98, -0.3, 0.2)} ${window(BX + 1.1, BX + 1.55, -0.3, 0.2)} ${window(BX + 1.67, BX + 2.0, -0.3, 0.2)} ${vents([0.55, 1.2, 1.72], 0.44)}`;
+  } else if (mk === 'm472') {
+    mlen = 2.3;
+    md = tube(mlen, 0.5);
+    mdet = [0.4, 1.0, 1.6].map((d) => `M${f(BX + d + 0.15)},-0.42 L${f(BX + d + 0.55)},-0.42 L${f(BX + d + 0.4)},0.42 L${f(BX + d)},0.42 Z`).join(' ') + ` ${vents([0.6, 1.2, 1.8], 0.5)}`;
+  } else if (mk === 'gamma') {
+    mlen = 2.2;
+    md = tube(mlen, 0.43);
+    const slot = (y: number) => `M${f(BX + 1.6)},${f(y - 0.05)} L${f(BX + 2.08)},${f(y - 0.05)} Q${f(BX + 2.13)},${f(y)} ${f(BX + 2.08)},${f(y + 0.05)} L${f(BX + 1.6)},${f(y + 0.05)} Q${f(BX + 1.55)},${f(y)} ${f(BX + 1.6)},${f(y - 0.05)} Z`;
+    mdet = `${window(BX + 0.45, BX + 0.95, -0.3, 0.26)} ${window(BX + 1.05, BX + 1.45, -0.3, 0.26)} ${slot(-0.27)} ${slot(-0.07)} ${slot(0.13)} ${vents([0.6, 1.15], 0.43)}`;
+  } else if (mk === 'can') {
+    mlen = 2.6;
+    const cone = matches(mz, /Linear/);
+    md = tube(mlen, 0.44, cone ? `L${f(BX + 2.0)},-0.44 L${f(BX + mlen)},-0.22 L${f(BX + mlen)},0.22 L${f(BX + 2.0)},0.44` : `L${f(BX + 2.25)},-0.44 Q${f(BX + mlen)},-0.44 ${f(BX + mlen)},-0.15 L${f(BX + mlen)},0.15 Q${f(BX + mlen)},0.44 ${f(BX + 2.25)},0.44`);
+    mdet = `M${f(BX + 0.55)},-0.44 L${f(BX + 0.55)},0.44 ${repeat(BX + 0.32, BX + 0.5, 0.06, (x) => `M${x},-0.44 L${x},0.44`)}`;
+  } else if (mk === 'comp9') {
+    mlen = 2.1;
+    md = tube(mlen, 0.45);
+    mdet = `${window(BX + 0.5, BX + 0.95, -0.26, 0.26)} ${window(BX + 1.15, BX + 1.6, -0.26, 0.26)} ${vents([0.62, 1.27], 0.45)} M${f(BX + 1.85)},-0.45 L${f(BX + 1.85)},0.45`;
+  } else if (mk === 'comp') {
     mlen = 2.0;
     md = `M${f(BX)},-0.42 L${f(BX + mlen - 0.08)},-0.42 L${f(BX + mlen)},-0.34 L${f(BX + mlen)},0.34 L${f(BX + mlen - 0.08)},0.42 L${f(BX)},0.42 Z M${f(BX + 0.45)},-0.42 L${f(BX + 0.45)},0.42 ${repeat(BX + 0.75, BX + 1.6, 0.34, (x) => `M${x},-0.42 L${x},-0.27 Q${f(x + 0.1)},-0.15 ${f(x + 0.2)},-0.27 L${f(x + 0.2)},-0.42`)}`;
   } else {
