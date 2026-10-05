@@ -658,6 +658,8 @@ a.link { text-decoration: none; }
 .own-btn { align-self: flex-end; margin-top: 4px; border: 1px dashed var(--line-2); background: none; color: var(--muted); font: 600 11.5px/1 var(--f-sans); padding: 5px 8px; border-radius: 99px; white-space: nowrap; }
 .own-btn:hover { color: var(--ink); border-color: var(--ink); }
 .own-btn.on { border-style: solid; border-color: var(--ok); color: var(--ok); background: var(--ok-soft); }
+/* Phones: tall enough to tap without hitting the part next to it. */
+@media (max-width: 719px) { .own-btn { padding: 9px 12px; font-size: 12.5px; } }
 .owned-note { color: var(--ok); font-weight: 700; }
 .part-row.owned .part-name, .part-row.other .part-name { color: var(--muted); }
 .part-row.other .part-no { border-style: dashed; }

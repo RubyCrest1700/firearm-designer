@@ -6,7 +6,7 @@
 //   node scripts/update-prices.mjs --dry-run  # print results, don't write
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { extractPrice } from './extract-price.mjs';
+import { extractPrice, implausiblePrice } from './extract-price.mjs';
 import { parseRobots, isAllowed } from './robots.mjs';
 import { recordHistory, formatHistory } from './price-history.mjs';
 
@@ -46,7 +46,7 @@ async function allowedByRobots(url) {
 }
 
 const offers = {};
-const report = { ok: 0, blocked: 0, failed: 0, kept: 0 };
+const report = { ok: 0, blocked: 0, failed: 0, kept: 0, rejected: 0 };
 
 for (const [partId, byRetailer] of Object.entries(sources)) {
   for (const [retailer, url] of Object.entries(byRetailer)) {
@@ -60,6 +60,12 @@ for (const [partId, byRetailer] of Object.entries(sources)) {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const found = extractPrice(await res.text());
         if (!found) throw new Error('no price found on page');
+        const before = previous.offers?.[partId] ?? {};
+        const odd = implausiblePrice(found.price, {
+          last: before[retailer]?.price,
+          others: Object.entries(before).filter(([r]) => r !== retailer).map(([, o]) => o.price),
+        });
+        if (odd) { report.rejected++; throw new Error(`ignored, looks like a misread: ${odd}`); }
         entry = { price: found.price, inStock: found.inStock, url, checkedAt: now.toISOString() };
         report.ok++;
         console.log(`${partId} @ ${retailer}: $${found.price}${found.inStock ? '' : ' (out of stock)'}`);
@@ -81,7 +87,7 @@ for (const [partId, byRetailer] of Object.entries(sources)) {
 }
 
 const out = { updatedAt: report.ok ? now.toISOString() : previous.updatedAt ?? null, offers };
-console.log(`\nDone: ${report.ok} updated, ${report.kept} kept from last run, ${report.failed} failed, ${report.blocked} blocked by robots.txt`);
+console.log(`\nDone: ${report.ok} updated, ${report.kept} kept from last run, ${report.failed} failed (${report.rejected} of them ignored as likely misreads), ${report.blocked} blocked by robots.txt`);
 if (!dryRun) {
   writeFileSync('data/prices.json', JSON.stringify(out, null, 2) + '\n');
   // Only fresh reads go into the history; a price kept from an earlier night is already recorded.
