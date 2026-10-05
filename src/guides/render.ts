@@ -4,7 +4,7 @@
  * so a guide never says something the builder disagrees with.
  */
 import { PLATFORMS, PRICES_UPDATED_AT } from '../data';
-import { RETAILERS, offerUrl } from '../data/retailers';
+import { RETAILERS, buyUrl } from '../data/retailers';
 import { bestOffer, money, presetSelection, worst } from '../engine';
 import type { Part, Platform, Severity, Tier } from '../types';
 import { GUIDES, type AcrossChart, type FitChart, type Guide, type PairChart } from './content';
@@ -145,9 +145,9 @@ function priceHtml(part: Part) {
   const o = bestOffer(part);
   if (!o) return '';
   const store = RETAILERS[o.retailer]?.name ?? o.retailer;
-  const href = o.url ?? offerUrl(o.retailer, `${part.brand} ${part.name}`);
+  const href = buyUrl(o, `${part.brand} ${part.name}`);
   const when = o.checkedAt ? `checked ${shortDate(o.checkedAt)}` : 'sample price';
-  return `<p class="price"><b>${money(o.price)}</b> at <a href="${esc(href)}" rel="nofollow noopener" target="_blank">${esc(store)}</a> <span class="muted">(${when})</span></p>`;
+  return `<p class="price"><b>${money(o.price)}</b> at <a href="${esc(href)}" rel="sponsored nofollow noopener" target="_blank">${esc(store)}</a> <span class="muted">(${when})</span></p>`;
 }
 
 function picksHtml(platform: Platform, slots: string[]) {
