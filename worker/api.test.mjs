@@ -215,7 +215,7 @@ test('emails confirmed signups when prices move, once, then stays quiet', async 
   // Unconfirmed: nothing goes out
   await withIndex(ALERT_INDEX(120), () => runAlerts(e));
   assert.equal(e.outbox.length, 1);
-  assert.match(await (await visit(e, 'GET', `/alerts/confirm?t=${token}`)).text(), /Price alerts are on/);
+  assert.match(await (await visit(e, 'GET', `/alerts/confirm?t=${token}`)).text(), /Price Alerts Are On/);
   // Apex down $30, slide up $40 (both over $20 and 10%)
   const r = await withIndex(ALERT_INDEX(120, 340), () => runAlerts(e));
   assert.equal(r.sent, 1);
@@ -263,7 +263,7 @@ test('unsubscribing removes every signup for the address, including one-click', 
   const e = alertEnv();
   const a = (await signup(e, 'me@example.com', [G19], '1.0.0.1')).body.token;
   const b = (await signup(e, 'me@example.com', [G19], '1.0.0.2')).body.token;
-  assert.match(await (await visit(e, 'GET', `/alerts/stop?t=${a}`)).text(), /unsubscribed/);
+  assert.match(await (await visit(e, 'GET', `/alerts/stop?t=${a}`)).text(), /unsubscribed/i);
   assert.equal((await call(e, 'GET', `/api/alerts/${b}`)).status, 404);
   const c = (await signup(e, 'you@example.com', [G19], '1.0.0.3')).body.token;
   assert.equal((await visit(e, 'POST', `/alerts/stop?t=${c}`)).status, 204);

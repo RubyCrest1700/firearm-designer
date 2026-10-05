@@ -135,7 +135,7 @@ export interface FeaturedBuild {
 }
 
 /** Our own starter builds: three tiers for every platform. */
-export const TIER_LABEL: Record<Tier, string> = { budget: 'Budget', value: 'Best value', premium: 'Premium' };
+export const TIER_LABEL: Record<Tier, string> = { budget: 'Budget', value: 'Best Value', premium: 'Premium' };
 
 const TIER_SUMMARY: Record<Tier, (p: Platform) => string> = {
   budget: (p) => `The lowest total for a ${p.name} that still runs reliably. Proven parts, no extras.`,
