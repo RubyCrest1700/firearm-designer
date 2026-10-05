@@ -2,7 +2,8 @@
   "_comment": "Product page URLs the nightly price job reads, keyed by part id, then retailer id (see src/data/retailers.ts). Add a URL here to make that part's price live.",
   "parts": {
     "a10-bcg-jp": {
-      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-bolts-bolt-carrier-groups/ar-.308-low-mass-operating-system-complete-carrier-group/"
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-bolts-bolt-carrier-groups/ar-.308-low-mass-operating-system-complete-carrier-group/",
+      "PA": "https://www.primaryarms.com/jp-enterprises-large-frame-lmos-bolt-carrier-with-qpq-finish-jpbc-4"
     },
     "a10-buf-aero": {
       "AERO": "https://www.aeroprecisionusa.com/m5-308-carbine-buffer-kit-1"
@@ -11,16 +12,21 @@
       "AERO": "https://www.aeroprecisionusa.com/ar308-charging-handle"
     },
     "a10-ch-radian": {
-      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-charging-handle-parts/ar-308-raptor-charging-handle-7.62/"
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-charging-handle-parts/ar-308-raptor-charging-handle-7.62/",
+      "AT3": "https://www.at3tactical.com/products/radian-raptor-ambidextrous-ar10-charging-handle",
+      "BRD": "https://blackrifledepot.com/radian-raptor-ambidextrous-charging-handle-ar10-sr25/"
     },
     "a10-gb-750": {
       "AERO": "https://www.aeroprecisionusa.com/750-low-profile-gas-block-w-aero-logo-nitride"
     },
     "a10-grip-bcm": {
-      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-grips/ar-15-mod-3-gunfighter-grip/?sku=100013641"
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-grips/ar-15-mod-3-gunfighter-grip/?sku=100013641",
+      "RA": "https://www.rainierarms.com/bcm-gunfighter-grip-mod-3-black/",
+      "PA": "https://www.primaryarms.com/bravo-company-gunfighter-grip-mod-3-black-bcm-gfg-mod-3-black"
     },
     "a10-grip-moe": {
-      "PSA": "https://palmettostatearmory.com/magpul-moe-grip-ar15-m16-mag415-blk-mfg-retail-kit.html"
+      "PSA": "https://palmettostatearmory.com/magpul-moe-grip-ar15-m16-mag415-blk-mfg-retail-kit.html",
+      "MAGPUL": "https://magpul.com/moe-grip-ar15-m4.html"
     },
     "a10-hg-atlas": {
       "AERO": "https://www.aeroprecisionusa.com/m5-15-atlas-s-one-m-lok-handguard-anodized-black"
@@ -32,19 +38,24 @@
       "AERO": "https://www.aeroprecisionusa.com/m5-308-lower-parts-kit-minus-fcg"
     },
     "a10-mag-pmag": {
-      "PA": "https://www.primaryarms.com/magpul-pmag-20-lr-sr-gen-m3-7-62x51-magazine-black-mag291blk"
+      "PA": "https://www.primaryarms.com/magpul-pmag-20-lr-sr-gen-m3-7-62x51-magazine-black-mag291blk",
+      "MAGPUL": "https://magpul.com/pmag-20-lr-sr-gen-m3.html",
+      "ARD": "https://ar15discounts.com/products/magpul-pmag-m3-7-62-308-20rd-black/"
     },
     "a10-mz-pa": {
       "PA": "https://www.primaryarms.com/precision-armament-m4-72-severe-duty-7-62-compensator-5-8x24-black",
-      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-muzzle-devices/ar-.308--m4-72-severe-duty-brake-30-caliber/"
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-muzzle-devices/ar-.308--m4-72-severe-duty-brake-30-caliber/",
+      "RA": "https://www.rainierarms.com/precision-armament-m4-72-severe-duty-compensator-7-62mm-308/"
     },
     "a10-stock-moesl": {
       "PA": "https://www.primaryarms.com/magpul-moe-slim-line-carbine-stock-mil-spec-black-mag347-blk",
-      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-stocks-parts/ar-15-moe-sl-stock-collapsible-mil-spec/?sku=100015169"
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-stocks-parts/ar-15-moe-sl-stock-collapsible-mil-spec/?sku=100015169",
+      "MAGPUL": "https://magpul.com/moe-sl-carbine-stock-mil-spec.html"
     },
     "a10-stock-ubr": {
       "PA": "https://www.primaryarms.com/Magpul-UBR-GEN2-Collapsible-Stock-Black",
-      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-stocks-parts/ar-15-ubr-2.0-collapsible-stock-collapsible-a5-length/"
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-stocks-parts/ar-15-ubr-2.0-collapsible-stock-collapsible-a5-length/",
+      "MAGPUL": "https://magpul.com/ubr-gen2-collapsible-stock.html"
     },
     "a10-trig-alg": {
       "PA": "https://www.primaryarms.com/alg-defense-combat-trigger-act"
@@ -60,16 +71,21 @@
       "AERO": "https://www.aeroprecisionusa.com/m5-stripped-upper-receiver-anodized"
     },
     "ar-bbl-ba16": {
-      "PA": "https://www.primaryarms.com/ballistic-advantage-ar-15-5-56-nato-16-mid-length-barrel-1-2x28-babl556015m"
+      "PA": "https://www.primaryarms.com/ballistic-advantage-ar-15-5-56-nato-16-mid-length-barrel-1-2x28-babl556015m",
+      "RTB": "https://www.righttobear.com/ballistic-advantage-16-5-56-mid-length-govt-barrel-babl556015m/",
+      "AT3": "https://www.at3tactical.com/products/ballistic-advantage-5-56-16-barrel-government-profile-mid-length-1-7-twist-4150-cmv-nitride-modern-series"
     },
     "ar-bcg-bcm": {
-      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-bolts-bolt-carrier-groups/m16-5.56-bolt-carrier-group-1aa756be/?sku=100020758"
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-bolts-bolt-carrier-groups/m16-5.56-bolt-carrier-group-1aa756be/?sku=100020758",
+      "PA": "https://www.primaryarms.com/bravo-company-manufacturing-bolt-carrier-group-bcm-bcg"
     },
     "ar-bcg-psa": {
       "PSA": "https://palmettostatearmory.com/psa-5-56-nitride-mpi-full-auto-bolt-carrier-group-516446953.html"
     },
     "ar-buf-aero": {
-      "AERO": "https://www.aeroprecisionusa.com/ar15-carbine-buffer-kit-w-heavy-buffer"
+      "AERO": "https://www.aeroprecisionusa.com/ar15-carbine-buffer-kit-w-heavy-buffer",
+      "RTB": "https://www.righttobear.com/Aero-Precision-AR15-Carbine-Buffer-Kit-w-H-Buffer-p/aprh100959c.htm",
+      "ARD": "https://ar15discounts.com/products/aero-precision-ar-15-m4-carbine-buffer-kit-no-stock-h-buffer/"
     },
     "ar-buf-vltor": {
       "MID": "https://www.midwayusa.com/product/1003409554"
@@ -79,7 +95,9 @@
     },
     "ar-ch-bcm": {
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-charging-handle-parts/ar-15-bcmgunfighter-charging-handle-gen-2-black/?sku=100027144",
-      "MID": "https://www.midwayusa.com/product/1025635734"
+      "MID": "https://www.midwayusa.com/product/1025635734",
+      "RTB": "https://www.righttobear.com/bcm-vltor-charging-handle-mod-4b-medium-latch-bcm-gfh-mod4b-556/",
+      "ARD": "https://ar15discounts.com/products/bcmgunfighter-charging-handle-5-56mm-223-w-mod-4b-medium-latch/"
     },
     "ar-ch-radian": {
       "PA": "https://www.primaryarms.com/radian-weapons-ar15-m16-raptor-ambidextrous-charging-handle-black",
@@ -89,7 +107,9 @@
       "AERO": "https://www.aeroprecisionusa.com/750-low-profile-gas-block-w-aero-logo-nitride"
     },
     "ar-grip-bcm": {
-      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-grips/ar-15-mod-3-gunfighter-grip/?sku=100013641"
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-grips/ar-15-mod-3-gunfighter-grip/?sku=100013641",
+      "RTB": "https://www.righttobear.com/bcm-gunfighter-grip-mod-3-black-bcm-gfg-mod-3-blk/",
+      "PA": "https://www.primaryarms.com/bravo-company-gunfighter-grip-mod-3-black-bcm-gfg-mod-3-black"
     },
     "ar-grip-k2": {
       "PA": "https://www.primaryarms.com/magpul-moe-k2-plus-pistol-grip-black",
@@ -103,7 +123,9 @@
       "AERO": "https://www.aeroprecisionusa.com/gas-tube-carbine-length-melonite"
     },
     "ar-hg-bcm": {
-      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-handguards-parts/ar-15-bcmgunfighter--mcmr-handguard-m-lok-free-float/?sku=100026763"
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-handguards-parts/ar-15-bcmgunfighter--mcmr-handguard-m-lok-free-float/?sku=100026763",
+      "RA": "https://www.rainierarms.com/bcm-gunfighter-ar-15-mcmr-223-5-56mm-rail-m-lok-compatible-mounting-slots-13/",
+      "PA": "https://www.primaryarms.com/bcm-13-mlok-compatible-modular-rail-bcm-mcmr-13-556-blk"
     },
     "ar-hg-mi": {
       "PA": "https://www.primaryarms.com/midwest-industries-15in-combat-rail-m-lok-ar-15-handguard-black"
@@ -115,7 +137,9 @@
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-receivers-parts/m4e1-stripped-lower-receivers-for-ar-15/?sku=100026146"
     },
     "ar-lower-anderson": {
-      "PSA": "https://palmettostatearmory.com/anderson-manufacturing-am-15-stripped-lower-5-56x45mm-black.html"
+      "PSA": "https://palmettostatearmory.com/anderson-manufacturing-am-15-stripped-lower-5-56x45mm-black.html",
+      "KYG": "https://www.kygunco.com/product/anderson-d2-k067-ag00-am-15-no-logo-lower-receiver-multi-cal",
+      "AT3": "https://www.at3tactical.com/products/anderson-manufacturing-stripped-am-15-lower-receiver"
     },
     "ar-lpk-aero": {
       "AERO": "https://www.aeroprecisionusa.com/ar15-lpk-minus"
@@ -126,14 +150,22 @@
     },
     "ar-mz-warcomp": {
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-muzzle-devices/ar-15-warcomp-flash-hider-22-cal/",
-      "OP": "https://www.opticsplanet.com/v/warcomp-556-1-2-28-surefire-warcomp-flash-hider-adapter.html"
+      "OP": "https://www.opticsplanet.com/v/warcomp-556-1-2-28-surefire-warcomp-flash-hider-adapter.html",
+      "BRD": "https://blackrifledepot.com/surefire-warcomp-flash-hider-5-56-1-2x28/",
+      "ARD": "https://ar15discounts.com/products/surefire-warcomp-flash-hider-5-56-1-2x28/"
     },
     "ar-opt-aimpoint": {
       "BRN": "https://www.brownells.com/optics/reflex-red-dot-sights/red-dot-sights/patrol-rifle-optic-pro/",
-      "MID": "https://www.midwayusa.com/product/1027902722"
+      "MID": "https://www.midwayusa.com/product/1027902722",
+      "RA": "https://www.rainierarms.com/aimpoint-pro-patrol-rifle-optic/",
+      "PA": "https://www.primaryarms.com/aimpoint-pro-patrol-rifle-optic-12841",
+      "ARD": "https://ar15discounts.com/products/aimpoint-patrol-rifle-optic-pro-ar15-ready-qrp2-mount-39mm-spacer/"
     },
     "ar-stock-bcm": {
-      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-stocks-parts/ar-15-bcmgunfighter-stock-collapsible-mil-spec/"
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-stocks-parts/ar-15-bcmgunfighter-stock-collapsible-mil-spec/",
+      "WING": "https://www.wingtactical.com/firearm-parts/ar-15-parts/stocks-accessories/bravo-company-bcmgunfighter-mod-0-stock/",
+      "RA": "https://www.rainierarms.com/bcm-gunfighter-stock-assembly-mod-0/",
+      "PA": "https://www.primaryarms.com/bravo-company-manufacturing-bcm-gunfighter-mod-0-stock-black"
     },
     "ar-stock-moesl": {
       "MAGPUL": "https://magpul.com/moe-sl-carbine-stock-mil-spec.html",
@@ -157,7 +189,10 @@
       "BRN": "https://www.brownells.com/gun-parts/magazines/handgun-magazines-parts/gen-5-magazine-for-glock-g26/?sku=100033566"
     },
     "g-mag-oem15": {
-      "BRN": "https://www.brownells.com/gun-parts/magazines/handgun-magazines-parts/9mm-luger-magazines-for-glock-19/?sku=100002772"
+      "BRN": "https://www.brownells.com/gun-parts/magazines/handgun-magazines-parts/9mm-luger-magazines-for-glock-19/?sku=100002772",
+      "KYG": "https://www.kygunco.com/product/glock-mf19015-g19-9mm-magazine-15rd",
+      "RA": "https://www.rainierarms.com/glock-19-oem-15rd-magazine/",
+      "ARD": "https://ar15discounts.com/products/glock-19-15-round-magazine-9mm/"
     },
     "g-mag-pmag12": {
       "MID": "https://www.midwayusa.com/product/1018078247",
@@ -176,7 +211,9 @@
       "OP": "https://www.opticsplanet.com/holosun-hs507c-x2-red-dot-sights.html"
     },
     "g-opt-rmr": {
-      "BRN": "https://www.brownells.com/optics/reflex-red-dot-sights/red-dot-sights/rmr-type-2-rm06-3.25-moa-adjustable-led-reflex-sight/"
+      "BRN": "https://www.brownells.com/optics/reflex-red-dot-sights/red-dot-sights/rmr-type-2-rm06-3.25-moa-adjustable-led-reflex-sight/",
+      "RA": "https://www.rainierarms.com/trijicon-rmr-sight-adjustable-3-25-moa-red-dot-type-2/",
+      "PA": "https://www.primaryarms.com/trijicon-rmr-type-2-adjustable-led-reflex-sight-3.25-moa"
     },
     "g-sight-ameriglo": {
       "BRN": "https://www.brownells.com/handgun-parts/sights/sight-sets/suppressor-sights-for-glock--prod53947.aspx"
@@ -206,7 +243,8 @@
       "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-slides-parts/slides-with-rmr-cut-for-glock-17/?sku=430111308"
     },
     "g19-bbl-faxon": {
-      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-barrels-parts/threaded-compact-barrel-for-glock~-19-gen-1-4/"
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-barrels-parts/threaded-compact-barrel-for-glock~-19-gen-1-4/",
+      "FAX": "https://faxonfirearms.com/GA910N19NGQ-N"
     },
     "g19-frame-lw": {
       "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-frames-parts/twc-textured-frame-fits-glock-gen34-g19-23-32-38-slide/?sku=430105222"
@@ -227,11 +265,14 @@
       "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-triggers-parts/action-enhancement-trigger-kit-for-slim-frame-glocks/"
     },
     "gs-mag-oem10": {
-      "BRN": "https://www.brownells.com/gun-parts/magazines/handgun-magazines-parts/factory-magazine-43x48/?sku=100033567"
+      "BRN": "https://www.brownells.com/gun-parts/magazines/handgun-magazines-parts/factory-magazine-43x48/?sku=100033567",
+      "AT3": "https://www.at3tactical.com/products/glock-oem-9mm-10rd-magazine-glock-43x-48"
     },
     "gs-mag-s15": {
       "BRN": "https://www.brownells.com/gun-parts/magazines/handgun-magazines-parts/s15-9mm-luger-magazine-for-glock-43x48-gen3/",
-      "GS": "https://www.glockstore.com/Shield-Arms-S15-Gen3-Magazines-for-G43X-48"
+      "GS": "https://www.glockstore.com/Shield-Arms-S15-Gen3-Magazines-for-G43X-48",
+      "KYG": "https://www.kygunco.com/product/shield-arms-s15me5insg3blk-s15-mag-gen-3-15rd-for-glock-43x48-black-nitride",
+      "PA": "https://www.primaryarms.com/shield-arms-s15-gen3-magazine-for-glock-43x-48-15-rounds-black-nitride"
     },
     "gs-opt-507k": {
       "PA": "https://www.primaryarms.com/holosun-hs507k-x2-compact-pistol-red-dot-sight-2-moa",
@@ -249,7 +290,8 @@
       "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-barrels-parts/9mm-luger-barrel-with-lci-for-sig-sauer-p320-full-size/"
     },
     "p-bbl-faxonc": {
-      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-barrels-parts/sig-sauer-p320-compact-9mm-luger-flame-fluted-barrel/"
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-barrels-parts/sig-sauer-p320-compact-9mm-luger-flame-fluted-barrel/",
+      "FAX": "https://faxonfirearms.com/sig-p320-compact-flame-fluted-barrel-9mm-416-r-nitride-non-threaded/"
     },
     "p-fcu-std": {
       "SIG": "https://www.sigsauer.com/p320-fcu.html",
@@ -266,11 +308,13 @@
       "SIG": "https://www.sigsauer.com/p320-x-series-grip-module-9mm-40-auto-357sig.html"
     },
     "p-mag-sig15": {
-      "SIG": "https://www.sigsauer.com/p250-p320-compact-15rd-9mm-magazine.html"
+      "SIG": "https://www.sigsauer.com/p250-p320-compact-15rd-9mm-magazine.html",
+      "RA": "https://www.rainierarms.com/sig-sauer-p250-p320-compact-oem-9mm-15-round-magazine/"
     },
     "p-mag-sig17": {
       "SIG": "https://www.sigsauer.com/p250-p320-full-17rd-9mm-magazine.html",
-      "BRN": "https://www.brownells.com/gun-parts/magazines/handgun-magazines-parts/p250p320-full-sizecarry-9mm-luger-handgun-magazines/"
+      "BRN": "https://www.brownells.com/gun-parts/magazines/handgun-magazines-parts/p250p320-full-sizecarry-9mm-luger-handgun-magazines/",
+      "RA": "https://www.rainierarms.com/sig-sauer-p320-p250-full-size-9mm-17-rd-magazine/"
     },
     "p-opt-r1p": {
       "SIG": "https://www.sigsauer.com/romeo1pro-1x30-mm.html",
@@ -319,7 +363,8 @@
       "PA": "https://www.primaryarms.com/sig-sauer-9mm-p365-10-round-magazine"
     },
     "p365-mag-12": {
-      "SIG": "https://www.sigsauer.com/p365-micro-compact-12rd-9mm-magazine.html"
+      "SIG": "https://www.sigsauer.com/p365-micro-compact-12rd-9mm-magazine.html",
+      "PA": "https://www.primaryarms.com/sig-sauer-p365-magazine-9mm-12-round"
     },
     "p365-opt-507k": {
       "PA": "https://www.primaryarms.com/holosun-hs507k-x2-compact-pistol-red-dot-sight-2-moa",
@@ -333,20 +378,25 @@
     },
     "p365-slide-xl": {
       "SIG": "https://www.sigsauer.com/p365-xl-9mm-3-7-slide-assembly-sig-loctm-optic-ready-black.html",
-      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-slides-parts/slide-assembly-optic-ready-for-sig-sauer-p365xl/"
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-slides-parts/slide-assembly-optic-ready-for-sig-sauer-p365xl/",
+      "KYG": "https://www.kygunco.com/product/sig-sauer-p365-xl-9mm-3.7-slide-assembly-sig-loc-optic-ready-black"
     },
     "p365-spr-std": {
       "SIG": "https://www.sigsauer.com/p365-recoil-spring-assembly.html",
-      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-recoil-parts/sig-sauer-p365-recoil-spring-assembly/"
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-recoil-parts/sig-sauer-p365-recoil-spring-assembly/",
+      "KYG": "https://www.kygunco.com/product/sig-sauer-kit365recoilspring-p365-recoil-spring-assembly-for-9mm-sig-p365",
+      "RA": "https://www.rainierarms.com/sig-sauer-p365-recoil-spring-assembly/"
     },
     "p365-spr-xl": {
-      "SIG": "https://www.sigsauer.com/recoil-spring-assembly-p365xl.html"
+      "SIG": "https://www.sigsauer.com/recoil-spring-assembly-p365xl.html",
+      "RA": "https://www.rainierarms.com/sig-sauer-p365xl-9mm-recoil-spring-assembly/"
     },
     "a10-bcg-young": {
       "YM": "https://www.youngmanufacturing.net/ar-10-armalite-black-nitride-bolt-carrier-group.aspx"
     },
     "r-light-hlx": {
-      "PA": "https://www.primaryarms.com/streamlight-protac-rail-mount-hl-x-1000-lumen-weapon-light-tapeswitch"
+      "PA": "https://www.primaryarms.com/streamlight-protac-rail-mount-hl-x-1000-lumen-weapon-light-tapeswitch",
+      "ARD": "https://ar15discounts.com/products/streamlight-protac-railmount-hl-x-weapon-light-1000-lumen-black/"
     },
     "r-mag-hm3x": {
       "PA": "https://www.primaryarms.com/holosun-hm3x-3x-magnifier"
@@ -367,13 +417,18 @@
       "AERO": "https://www.aeroprecisionusa.com/ar15-15-atlas-s-one-m-lok-handguard-anodized-black"
     },
     "ar-hg-geissele": {
-      "OP": "https://www.opticsplanet.com/geissele-mk16-super-m-lok-13-5in-modular-rail.html"
+      "OP": "https://www.opticsplanet.com/geissele-mk16-super-m-lok-13-5in-modular-rail.html",
+      "PA": "https://www.primaryarms.com/geissele-automatics-mk16-super-modular-m-lok-rail-black-13.5"
     },
     "ar-mz-sf3p": {
-      "PA": "https://www.primaryarms.com/surefire-3-prong-flash-hider-silencer-mount-sf3p-556-1-2-28"
+      "PA": "https://www.primaryarms.com/surefire-3-prong-flash-hider-silencer-mount-sf3p-556-1-2-28",
+      "RA": "https://www.rainierarms.com/surefire-sf3p-556-1-2x28/",
+      "AT3": "https://www.at3tactical.com/products/surefire-socom-ar-15-flash-hider-for-5-56-1-2x28-thread",
+      "ARD": "https://ar15discounts.com/products/surefire-3-prong-flash-hider-w-suppressor-adapter-5-56-1-2x28/"
     },
     "ar-opt-romeo5x": {
-      "SIG": "https://www.sigsauer.com/romeo5x-1x20-mm.html"
+      "SIG": "https://www.sigsauer.com/romeo5x-1x20-mm.html",
+      "ARD": "https://ar15discounts.com/products/sig-sauer-romeo5x-gen-ii-compact-red-dot-sight-1x20mm-2-moa-red-dot-1-moa-adj-aaa-m1913-black/"
     },
     "ar-opt-slx16": {
       "PA": "https://www.primaryarms.com/KIT-PA-SLX-1-6X24S-NOVA-PADLXSM"
@@ -382,7 +437,338 @@
       "PA": "https://www.primaryarms.com/KIT-PA-SLX-1-6X24S-NOVA-PADLXSM"
     },
     "a10-bbl-ba20": {
-      "PA": "https://www.primaryarms.com/ballistic-advantage-ar-10-308-20-rifle-barrel-5-8x24-babl308006m"
+      "PA": "https://www.primaryarms.com/ballistic-advantage-ar-10-308-20-rifle-barrel-5-8x24-babl308006m",
+      "ARD": "https://ar15discounts.com/products/ballistic-advantage-20-308-hbar-rifle-ar-10-barrel-modern-series/"
+    },
+    "ar-stock-prs": {
+      "MAGPUL": "https://magpul.com/prs-gen3-precision-adjustable-stock.html",
+      "PA": "https://www.primaryarms.com/magpul-prs-gen-3-precision-rifle-stock-black"
+    },
+    "ar-bbl-grendel20": {
+      "FAX": "https://faxonfirearms.com/15BG8R20FHQ-5R-NP3",
+      "AT3": "https://www.at3tactical.com/products/faxon-firearms-match-series-20-inch-heavy-fluted-barrel-6-5-grendel-5r-416r-nitride-nickel-teflon-extension",
+      "ARD": "https://ar15discounts.com/products/faxon-firearms-match-series-20-heavy-fluted-6-5-grendel-rifle-length-416-r-stainless-nitride-melonite-5r-nickel-teflon-extension-barrel/"
+    },
+    "g17-hol-g17": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/glock-17-gen-3-4-5-iwb-holster/"
+    },
+    "g26-bbl-lw": {
+      "LW": "https://www.lonewolfdist.com/Detail.aspx?PROD=919649",
+      "BRD": "https://blackrifledepot.com/lone-wolf-alpha-wolf-m-26-threaded-9mm-barrel-for-glock-26/",
+      "ARD": "https://ar15discounts.com/products/lone-wolf-alpha-wolf-m-26-threaded-9mm-barrel-for-glock-26/"
+    },
+    "ar-mz-vg6": {
+      "AERO": "https://www.aeroprecisionusa.com/vg6-gamma-556",
+      "BRD": "https://blackrifledepot.com/vg6-gamma-556-muzzle-brake/",
+      "ARD": "https://ar15discounts.com/products/vg6-gamma-556/"
+    },
+    "ar-trig-rise": {
+      "PA": "https://www.primaryarms.com/rise-armament-advanced-performance-trigger-black"
+    },
+    "ar-bbl-ba20": {
+      "BRD": "https://blackrifledepot.com/ballistic-advantage-20-5-56-government-rifle-length-modern-series-barrel/",
+      "RTB": "https://www.righttobear.com/ballistic-advantage-20-5-56-govt-profile-barrel-babl556026m/"
+    },
+    "ar-stock-ctr": {
+      "MAGPUL": "https://magpul.com/ctr-carbine-stock-mil-spec.html",
+      "PA": "https://www.primaryarms.com/magpul-ctr-carbine-stock-mil-spec-black-mag310-blk"
+    },
+    "ar-lower-spikes": {
+      "KYG": "https://www.kygunco.com/product/spikes-tactical-stls019-cfa-spider-stripped-lower-223-rem-5.56-nato-black",
+      "ARD": "https://ar15discounts.com/products/spikes-tactical-stls018-spider-fire-safe-stripped-lower-223-rem-556nato-black/"
+    },
+    "g17-bbl-lw": {
+      "LW": "https://lonewolfdist.com/barrel-promotion/alphawolf-barrel-for-m-17-9mm-threaded-1-2-x-28/"
+    },
+    "ar-bcg-grendel": {
+      "FAX": "https://faxonfirearms.com/FF65GBCGCNITRIDE",
+      "AT3": "https://www.at3tactical.com/products/faxon-firearms-6-5-grendel-type-2-bolt-carrier-group-9310-steel-black-nitride"
+    },
+    "ar-gb-slr750": {
+      "WING": "https://www.wingtactical.com/firearm-parts/ar-15/gas-systems/gas-blocks/slr-rifleworks-steel-adjustable-sentry-7-gas-block/",
+      "RTB": "https://www.righttobear.com/SLR-Rifleworks-Sentry-7-Set-Screw-Adjustable-Gas-B-p/sa7-sm.htm"
+    },
+    "ar-buf-rifle": {
+      "AERO": "https://www.aeroprecisionusa.com/ar15-rifle-buffer-kit-1",
+      "BRD": "https://blackrifledepot.com/aero-precision-ar-15-rifle-buffer-kit/",
+      "ARD": "https://ar15discounts.com/products/aero-precision-ar-15-rifle-buffer-kit-no-stock/"
+    },
+    "ar-stock-ubr": {
+      "MAGPUL": "https://magpul.com/ubr-gen2-collapsible-stock.html",
+      "PA": "https://www.primaryarms.com/Magpul-UBR-GEN2-Collapsible-Stock-Black"
+    },
+    "ar-bbl-ba115": {
+      "BRD": "https://blackrifledepot.com/ballistic-advantage-modern-series-5-56-barrel-gov-carbine-11-5/",
+      "RTB": "https://www.righttobear.com/ballistic-advantage-11-5-carbine-length-barrel-babl556023m/",
+      "ARD": "https://ar15discounts.com/products/ballistic-advantage-modern-series-5-56-barrel-gov-carbine-11-5/"
+    },
+    "ar-bbl-300": {
+      "RTB": "https://www.righttobear.com/ballistic-advantage-300-blackout-modern-16-barrel-babl300011m/",
+      "AT3": "https://www.at3tactical.com/products/ballistic-advantage-300-blackout-16-barrel-pistol-length-1-7-twist-4150-cmv-nitride",
+      "ARD": "https://ar15discounts.com/products/ballistic-advantage-16-300-blk-pistol-length-modern-series-barrel/"
+    },
+    "ar-lower-seekins": {
+      "KYG": "https://www.kygunco.com/product/seekins-precision-110008-sp223-gen2-billet-lower-receiver-223-rem-black"
+    },
+    "ar-stock-b5": {
+      "WING": "https://www.wingtactical.com/firearm-parts-accessories/ar-15-parts/ar-stocks-and-accessories/b5-systems-bravo-stock/",
+      "PA": "https://www.primaryarms.com/b5-systems-bravo-stock-mil-spec-black"
+    },
+    "g17-bbl-faxont": {
+      "FAX": "https://faxonfirearms.com/faxon-barrel-threaded-4150-nitride-for-g17/"
+    },
+    "g19-hol-g19": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/glock-19-gen-3-4-5-iwb-holster/"
+    },
+    "ar-stock-moerifle": {
+      "MAGPUL": "https://magpul.com/moe-rifle-stock.html",
+      "PA": "https://www.primaryarms.com/magpul-moe-fixed-rifle-stock-black-mag404-blk"
+    },
+    "ar-bbl-ba10": {
+      "AT3": "https://www.at3tactical.com/products/ballistic-advantage-5-56-10-3-barrel-hanson-carbine-length-performance-series"
+    },
+    "a10-mag-armalite": {
+      "KYG": "https://www.kygunco.com/product/armalite-10607002-2nd-gen-20rd-ar10-magazine"
+    },
+    "g19-bbl-lw": {
+      "LW": "https://lonewolfdist.com/barrel-promotion/alphawolf-barrel-for-m-19-9mm-threaded-1-2-x-28/",
+      "RTB": "https://www.righttobear.com/lone-wolf-alpha-wolf-glock-19-threaded-barrel-sb-aw-19th/"
+    },
+    "ar-bbl-ba75": {
+      "BRD": "https://blackrifledepot.com/ballistic-advantage-7-5-5-56-pistol-length-ar-15-barrel-modern-series/",
+      "RTB": "https://www.righttobear.com/ballistic-advantage-7-5-5-56-pistol-length-barrel-babl556001m/",
+      "ARD": "https://ar15discounts.com/products/ballistic-advantage-7-5-5-56-pistol-length-nitride-modern-series-barrel/"
+    },
+    "ar-hg-moecarb": {
+      "MAGPUL": "https://magpul.com/moem-lokhandguard-carbine-length-ar15-m4.html",
+      "PA": "https://www.primaryarms.com/magpul-moe-m-lok-handguard-carbine-length-black"
+    },
+    "ar-bbl-ba18spr": {
+      "RTB": "https://www.righttobear.com/ballistic-advantage-18-223-wylde-spr-fluted-stai-babl223021pl/",
+      "ARD": "https://ar15discounts.com/products/ballistic-advantage-18-223-wylde-spr-fluted-stainless-steel-rifle-length-ar-15-barrel-premium-series/"
+    },
+    "r-mag-vmx3t": {
+      "KYG": "https://www.kygunco.com/product/vortex-vmx-3t-vmx-3t-magnifier-with-flip-mount",
+      "RA": "https://www.rainierarms.com/vortex-vmx-3t-magnifier-w-flip-mount/",
+      "PA": "https://www.primaryarms.com/vortex-vmx-3t-red-dot-magnifier-flip-mount"
+    },
+    "ar-gt-pistol": {
+      "AERO": "https://www.aeroprecisionusa.com/gas-tube-pistol-length-stainless-steel",
+      "BRD": "https://blackrifledepot.com/aero-precision-melonite-pistol-length-gas-tube/"
+    },
+    "ar-hg-moerifle": {
+      "MAGPUL": "https://magpul.com/moem-lokhandguard-rifle-length-ar15-m16.html",
+      "PA": "https://www.primaryarms.com/magpul-moe-m-lok-handguard-rifle-length-black"
+    },
+    "g19-bbl-faxont": {
+      "FAX": "https://faxonfirearms.com/GA910N19NGQ-T",
+      "RTB": "https://www.righttobear.com/faxon-match-series-compact-9mm-barrel-threaded-fits-g19-gen-2-5/",
+      "RA": "https://www.rainierarms.com/faxon-firearms-duty-series-barrel-for-glock-19-threaded-nitride/"
+    },
+    "g26-hol-g26": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/glock-26-gen-3-4-5-iwb-holster/"
+    },
+    "ar-bbl-ba300-9": {
+      "BRD": "https://blackrifledepot.com/ballistic-advantage-9-300-blk-pistol-length-nitride-modern-series-barrel/",
+      "RTB": "https://www.righttobear.com/Ballistic-Advantage-9-Barrel-300-Blackout-p/babl300004m.htm",
+      "ARD": "https://ar15discounts.com/products/ballistic-advantage-9-300-blk-pistol-length-nitride-modern-series-barrel/"
+    },
+    "a10-opt-vortex": {
+      "KYG": "https://www.kygunco.com/product/vortex-strike-eagle-1-8x24-with-cantilever-mount"
+    },
+    "ar-hg-moe": {
+      "MAGPUL": "https://magpul.com/moem-lokhandguard-mid-length-ar15-m4.html",
+      "PA": "https://www.primaryarms.com/magpul-moe-m-lok-handguard-mid-length-black-mag426-blk"
+    },
+    "ar-gt-mid": {
+      "AERO": "https://www.aeroprecisionusa.com/gas-tube-mid-length-stainless-steel",
+      "BRD": "https://blackrifledepot.com/aero-precision-melonite-mid-length-gas-tube/"
+    },
+    "ar-bbl-arc18": {
+      "AT3": "https://www.at3tactical.com/products/ballistic-advantage-6mm-arc-18-ar-15-barrel-premium-series-spr-rifle-length"
+    },
+    "gs-hol-g43x": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/glock-43x-9mm-without-rail-iwb-holster/"
+    },
+    "ar-grip-moeplus": {
+      "PA": "https://www.primaryarms.com/magpul-moe-plus-pistol-grip-black"
+    },
+    "r-fg-kag": {
+      "KYG": "https://www.kygunco.com/product/bravo-company-bcm-kag-mcmr-blk-bcm-gunfighter-kag-black-m-lok-compatible",
+      "PA": "https://www.primaryarms.com/bcm-gunfighter-kag-grip-m-lok-black"
+    },
+    "ar-bbl-criterion": {
+      "BRD": "https://blackrifledepot.com/criterion-barrels-18-223-wylde-hybrid-phosphate-chrome-lined-rifle-length-barrel/",
+      "PA": "https://www.primaryarms.com/criterion-barrels-hybrid-223-wylde-rifle-length-ar-15-barrel-18in",
+      "ARD": "https://ar15discounts.com/products/criterion-barrels-18-223-wylde-hybrid-phosphate-chrome-lined-rifle-length-barrel/"
+    },
+    "gs-hol-g43x-tlr7sub": {
+      "VED": "https://www.vedderholsters.com/glock-43x-w-rail-w-tlr-7-sub-iwb-holster-lighttuck/"
+    },
+    "ar-bcg-aero": {
+      "AERO": "https://www.aeroprecisionusa.com/ar15-556-bolt-carrier-group-complete-black-nitride",
+      "ARD": "https://ar15discounts.com/products/aero-precision-5-56-bolt-carrier-group-black-nitride/"
+    },
+    "r-fg-mvg": {
+      "MAGPUL": "https://magpul.com/m-lok-mvg-vertical-grip.html"
+    },
+    "ar-hg-bcm10": {
+      "RA": "https://www.rainierarms.com/bcm-gunfighter-ar-15-mcmr-223-5-56mm-rail-m-lok-compatible-mounting-slots-10/",
+      "PA": "https://www.primaryarms.com/bravo-company-mfg-mcmr-10-modular-rail-handguard-m-lok-compatible-10.5in"
+    },
+    "ar-trig-cmc": {
+      "AT3": "https://www.at3tactical.com/products/cmc-ar-15-match-trigger-flat-sp-91503",
+      "PA": "https://www.primaryarms.com/cmc-ar-15-ar10-drop-in-single-stage-3.5lb-flat-trigger-mil-spec-.145in"
+    },
+    "ar-trig-larue": {
+      "BRD": "https://blackrifledepot.com/larue-tactical-mbt-2s-ar-15-trigger/",
+      "PA": "https://www.primaryarms.com/larue-tactical-mbt-2s-ar-15-trigger-straight-bow"
+    },
+    "gs-hol-g48": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/glock-48-9mm-iwb-holster/"
+    },
+    "r-fg-afg2": {
+      "MAGPUL": "https://magpul.com/afg-2-angled-fore-grip.html"
+    },
+    "g-mag-pmag21": {
+      "KYG": "https://www.kygunco.com/product/magpul-mag661-blk-pmag-21rd-gl9-9mm-glock-mag-21rd-black",
+      "MAGPUL": "https://magpul.com/pmag21gl9-9x19-glock.html",
+      "PA": "https://www.primaryarms.com/mpi-pmag-gl9-9mm-21rd-mag661"
+    },
+    "ar-bbl-grendel18": {
+      "RTB": "https://www.righttobear.com/ballistic-advantage-18-6-5-grendel-spr-barrel-babl65g003p/",
+      "ARD": "https://ar15discounts.com/products/ballistic-advantage-18-6-5-grendel-spr-stainless-steel-rifle-length-ar-15-barrel-premium-series/"
+    },
+    "r-fg-stop": {
+      "MAGPUL": "https://magpul.com/m-lok-handstop-kit.html"
+    },
+    "gs-hol-g48-tlr7sub": {
+      "VED": "https://www.vedderholsters.com/glock-48-w-rail-w-tlr-7-sub-iwb-holster-lighttuck/"
+    },
+    "ar-mz-sf3p30": {
+      "AT3": "https://www.at3tactical.com/products/surefire-socom-ar-10-flash-hider-for-7-62-5-8x24-thread",
+      "ARD": "https://ar15discounts.com/products/surefire-sf3p762-socom-3-prong-flash-hider-black-dlc-stainless-steel-with-5-8-24-tpi-threads-2-60-oal-for-7-62x51mm-nato-ar-10/"
+    },
+    "r-rail-9": {
+      "MAGPUL": "https://magpul.com/m-lokpolymerrailsection-9slots.html"
+    },
+    "p320-hol-compact": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/sig-sauer-p320-compact-9mm-iwb-holster/"
+    },
+    "ar-mz-lantac": {
+      "AT3": "https://www.at3tactical.com/products/lantac-dragon-muzzle-brake-223-5-56-nato-1-2x28",
+      "ARD": "https://ar15discounts.com/products/lantac-5-56-223-dragon-muzzle-brake-1-2-28/"
+    },
+    "ar-opt-exps3": {
+      "RA": "https://www.rainierarms.com/eotech-exps3-0-holographic-weapon-sight-black/",
+      "PA": "https://www.primaryarms.com/eotech-exps3-0-holographic-weapon-sight",
+      "ARD": "https://ar15discounts.com/products/eotech-exps3-0-holographic-weapon-sight/"
+    },
+    "p320-hol-full": {
+      "VED": "https://www.vedderholsters.com/sig-sauer-p320-full-size-9mm-iwb-holster-lighttuck/"
+    },
+    "ar-hg-aero9": {
+      "RTB": "https://www.righttobear.com/Aero-9-inch-ATLAS-S-ONE-M-LOK-p/apra500102a.htm"
+    },
+    "p320-hol-subcompact": {
+      "VED": "https://www.vedderholsters.com/sig-sauer-p320-subcompact-w-rail-rounded-trigger-guard-iwb-holster-lighttuck/"
+    },
+    "a10-stock-ctr": {
+      "MAGPUL": "https://magpul.com/ctr-carbine-stock-mil-spec.html"
+    },
+    "r-light-m600": {
+      "RA": "https://www.rainierarms.com/surefire-m600-dual-fuel-led-scout-light/",
+      "ARD": "https://ar15discounts.com/products/surefire-m600-scout-duel-fuel-weaponlight-1500-lumen-black/"
+    },
+    "ar-gb-aero625": {
+      "BRD": "https://blackrifledepot.com/625-low-profile-gas-block-phosphate/"
+    },
+    "ar-gt-rifle": {
+      "RTB": "https://www.righttobear.com/aero-precision-melonite-gas-tubes-rifle-aprh100283c/"
+    },
+    "p365-hol-std": {
+      "VED": "https://www.vedderholsters.com/sig-sauer-p365-w-out-thumb-safety-iwb-holster-lighttuck/"
+    },
+    "a10-mz-sf3p": {
+      "AT3": "https://www.at3tactical.com/products/surefire-socom-ar-10-flash-hider-for-7-62-5-8x24-thread",
+      "RA": "https://www.rainierarms.com/surefire-flash-hider-adapter-sf3p-762-5-8x24/",
+      "ARD": "https://ar15discounts.com/products/surefire-socom-flash-hider-suppressor-adapter-three-prong-762nato-5-8x24-rh-black/"
+    },
+    "r-laser-ls117": {
+      "RA": "https://www.rainierarms.com/holosun-ls117g-green-visible-laser-designator/"
+    },
+    "ar-gb-sa750": {
+      "RTB": "https://www.righttobear.com/Superlative-Arms-750-Adjustable-Gas-Block-Bleed-p/sabo-di-750sm.htm",
+      "PA": "https://www.primaryarms.com/superlative-arms-bleed-off-adjustable-gas-block-set-screw-750-melonite",
+      "ARD": "https://ar15discounts.com/products/superlative-arms-750-adjustable-gas-block-solid-melonited/"
+    },
+    "p365-hol-xl": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/sig-sauer-p365-xl-without-thumb-safety-iwb-holster/"
+    },
+    "ar-gb-sa625": {
+      "RTB": "https://www.righttobear.com/superlative-arms-625-adjustable-gas-block-bleed-sabo-di-625sm/",
+      "PA": "https://www.primaryarms.com/superlative-arms-bleed-off-adjustable-gas-block-set-screw-625-melonite",
+      "ARD": "https://ar15discounts.com/products/superlative-arms-625-adjustable-gas-block-solid-melonited/"
+    },
+    "g-mag-oem17": {
+      "AT3": "https://www.at3tactical.com/products/glock-oem-17-round-magazine-for-g17-34-9mm",
+      "RA": "https://www.rainierarms.com/glock-g17-g34-oem-9mm-17rd-magazine/"
+    },
+    "g17-frame-g3": {
+      "RTB": "https://www.righttobear.com/glock-17-gen-3-frame-g17-gen3-oemf/"
+    },
+    "r-fg-bcmvg": {
+      "RA": "https://www.rainierarms.com/bravo-company-mfg-bcm-gunfighter-vertical-grip-mlok-compatible-mod-3/",
+      "BRD": "https://blackrifledepot.com/bcm-gunfighter-m-lok-mod-3-vertical-grip-black/",
+      "PA": "https://www.primaryarms.com/bcm-gunfighter-mod-3-vertical-grip-m-lok-black"
+    },
+    "ar-mz-pa": {
+      "PA": "https://www.primaryarms.com/precision-armament-m4-72-severe-duty-7-62-compensator-5-8x24-black"
+    },
+    "a10-trig-larue": {
+      "BRD": "https://blackrifledepot.com/larue-tactical-mbt-2s-ar-15-trigger/",
+      "PA": "https://www.primaryarms.com/larue-tactical-mbt-2s-ar-15-trigger-straight-bow"
+    },
+    "a10-bbl-criterion": {
+      "BRD": "https://blackrifledepot.com/criterion-barrels-20-6-5-creedmoor-hybrid-nitride-rifle-length-barrel/",
+      "ARD": "https://ar15discounts.com/products/criterion-barrels-20-6-5-creedmoor-hybrid-nitride-rifle-length-barrel/"
+    },
+    "ar-hg-mi7": {
+      "PA": "https://www.primaryarms.com/midwest-industries-7in-m-lok-combat-rail-ar-15-handguard-black"
+    },
+    "a10-bcg-toolcraft": {
+      "BRD": "https://blackrifledepot.com/toolcraft-ar-10-308-6-5-creedmoor-bolt-carrier-group-black-nitride/"
+    },
+    "g-opt-507k": {
+      "BRD": "https://blackrifledepot.com/holosun-technologies-507k-x2-red-dot-sight-2-moa/",
+      "PA": "https://www.primaryarms.com/holosun-hs507k-x2-compact-pistol-red-dot-sight-2-moa",
+      "ARD": "https://ar15discounts.com/products/holosun-hs507k-x2-pistol-red-dot-sight-2-moa/"
+    },
+    "r-laser-cmr301": {
+      "PA": "https://www.primaryarms.com/crimson-trace-cmr-301-rail-master-pro-green-laser-sight-tactical-light-system-for-ar-type-rifles"
+    },
+    "a10-gb-sa750": {
+      "PA": "https://www.primaryarms.com/superlative-arms-bleed-off-adjustable-gas-block-set-screw-750-melonite"
+    },
+    "a10-gb-875": {
+      "PA": "https://www.primaryarms.com/superlative-arms-bleed-off-adjustable-gas-block-set-screw-875-melonite"
+    },
+    "ar-bcg-toolcraft": {
+      "ARD": "https://ar15discounts.com/products/toolcraft-223-5-56-300blk-m16-profile-bolt-carrier-group-black-nitride/"
+    },
+    "g-mag-oem24": {
+      "PA": "https://www.primaryarms.com/glock-9mm-magazine-24-round-double-stack",
+      "ARD": "https://ar15discounts.com/products/glock-9mm-magazine-double-stack-24-round/"
+    },
+    "ar-opt-holosun": {
+      "ARD": "https://ar15discounts.com/products/holosun-hud-solar-powered-circle-dot-sight/"
+    },
+    "g-opt-407c": {
+      "PA": "https://www.primaryarms.com/holosun-hs407c-x2-pistol-red-dot-sight-2moa",
+      "ARD": "https://ar15discounts.com/products/holosun-hs407c-x2-pistol-red-dot-sight-2-moa/"
+    },
+    "gs-opt-epsc": {
+      "PA": "https://www.primaryarms.com/holosun-eps-carry-enclosed-pistol-sight-2-moa-dot-red-reticle"
     }
   }
 }
