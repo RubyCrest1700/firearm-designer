@@ -675,6 +675,20 @@ const TRIGGERS: Record<ProfileKey, { face: number; curved: (y0: number) => strin
   },
 };
 
+/** The M&P 2.0's scalloped slide serrations: tall rounded slots leaning forward, eight at the rear and three at the front
+ *  (ahead of the ejection port), as on US D814,592 FIG. 1. Inches on the slide, drawn in code because the stippled
+ *  drawing's loops trace unevenly. */
+function mpSerr(SL: number, SH: number) {
+  const slot = (x: number, top: number, bottom: number) => {
+    const w = 0.085, lean = 0.1;
+    return `M${f(x)},${f(bottom)} L${f(x + lean)},${f(top + 0.04)} Q${f(x + lean + 0.02)},${f(top)} ${f(x + lean + w)},${f(top)} L${f(x + w)},${f(bottom - 0.04)} Q${f(x + w - 0.02)},${f(bottom)} ${f(x)},${f(bottom)} Z`;
+  };
+  let d = '';
+  for (let k = 0; k < 8; k++) d += slot(0.3 + k * 0.19, 0.16, SH - 0.1) + ' ';
+  for (let k = 0; k < 3; k++) d += slot(SL - 1.4 + k * 0.19, 0.16, SH - 0.14) + ' ';
+  return d;
+}
+
 /** The Hellcat's slide serrations, drawn from US D998,740 FIG. 4 (the traced dashes come out ragged): slanted lands
  *  with a cut beside each, five at the rear and three at the front. Patent pixels, mapped to inches by the trace's scale. */
 const HELLCAT_SERR: { pts: number[]; close: boolean }[] = (() => {
@@ -923,7 +937,18 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   let heel = grip(mk.heel[0], mk.heel[1]);
   let toe = grip(mk.toe[0], mk.toe[1]);
   const ext = Math.max(0, spec.magH - spec.gripH);
-  const hole = pr.frame.hole ? polyPath(scF(pr.frame.hole), frameMap, true) : '';
+  // The Glock guard opening has a squared front: nearly vertical front wall and tight corners (US 4,539,889 FIG. 1).
+  const glockHole = (() => {
+    const [x0, y0, x1, y1] = mk.hole;
+    const r = (cx: number, cy: number, rr: number, a0: number, a1: number, n = 5) => {
+      const out: number[] = [];
+      for (let k = 0; k <= n; k++) { const a = a0 + ((a1 - a0) * k) / n; out.push(cx + rr * Math.cos(a), cy + rr * Math.sin(a)); }
+      return out;
+    };
+    const PI = Math.PI;
+    return [...r(x0 + 0.3, y0 + 0.3, 0.3, PI, 1.5 * PI), ...r(x1 - 0.16, y0 + 0.16, 0.16, 1.5 * PI, 2 * PI), ...r(x1 - 0.2, y1 - 0.2, 0.2, 0, 0.5 * PI), ...r(x0 + 0.34, y1 - 0.34, 0.34, 0.5 * PI, PI)];
+  })();
+  const hole = glock ? polyPath(glockHole, frameMap, true) : pr.frame.hole ? polyPath(scF(pr.frame.hole), frameMap, true) : '';
   const outlines = pr.frame.outline.map((ol) => (glock ? smooth(fillWeb(densify(scF(ol), 0.05), mk.sh + 0.15, mk.gripBottom - 0.1, 0.65), 2) : ol));
   let frameDetail = pr.frame.detail.map((ol) => polyPath(scF(ol), frameMap, false)).join(' ');
   let slideDetail = pr.slide.detail.map((ol) => polyPath(scS(ol), slideMap, false)).join(' ');
@@ -972,13 +997,19 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     frameDetail = `${rail} ${check} ${controls} ${catchD} ${frameLine} ${panel}`;
     // Slide: the top bevel and lower edge lines, rear (and optional front) serrations, extractor and muzzle face.
     const lines = `M0.05,0.12 L${f(SL - 0.1)},0.12 M0.1,${f(SH - 0.18)} L${f(SL - 0.48)},${f(SH - 0.18)}`;
-    const rearSerr = repeat(0.24, 1.12, 0.11, (x) => `M${x},0.2 L${f(x - 0.07)},${f(SH - 0.24)}`);
-    const fSerr = o.frontSerr ? repeat(SL - 1.45, SL - 0.8, 0.12, (x) => `M${x},0.2 L${f(x - 0.07)},${f(SH - 0.3)}`) : '';
-    const extractor = `M${f(port0 - 0.42)},0.26 L${f(port0 - 0.04)},0.26 L${f(port0 - 0.04)},0.4 L${f(port0 - 0.42)},0.4 Z`;
+    // Glock serrations are straight vertical grooves, not slanted.
+    const rearSerr = repeat(0.24, 1.12, 0.11, (x) => `M${x},0.2 L${x},${f(SH - 0.24)}`);
+    const fSerr = o.frontSerr ? repeat(SL - 1.45, SL - 0.8, 0.12, (x) => `M${x},0.2 L${x},${f(SH - 0.3)}`) : '';
+    const extractor = `M${f(port0 - 0.7)},0.24 L${f(port0 - 0.04)},0.24 L${f(port0 - 0.04)},0.42 L${f(port0 - 0.7)},0.42 Z`;
     const face = `M${f(SL - 0.05)},${f(mk.bore - 0.2)} L${f(SL - 0.05)},${f(mk.bore + 0.2)}`;
     slideDetail = `${lines} ${rearSerr} ${fSerr} ${extractor} ${face}`;
   }
   if (key === 'hellcat') slideDetail += ' ' + HELLCAT_SERR.map((p) => polyPath(scS(p.pts), slideMap, p.close)).join(' ');
+  if (key === 'mp') slideDetail += ' ' + mpSerr(SL, mk.sh);
+  if (key === 'hellcat') {
+    // Takedown lever and slide stop on the frame flat, in place of the drawing's molded contour lines.
+    frameDetail += ` ${OC(fx(2.4), mk.railBottom + 0.32, 0.17)} ${OC(fx(2.4), mk.railBottom + 0.32, 0.06)} M${f(fx(2.0))},${f(mk.railBottom + 0.1)} L${f(fx(1.75))},${f(mk.railBottom + 0.1)} Q${f(fx(1.6))},${f(mk.railBottom + 0.12)} ${f(fx(1.6))},${f(mk.railBottom + 0.24)} L${f(fx(1.62))},${f(mk.railBottom + 0.3)} L${f(fx(1.95))},${f(mk.railBottom + 0.28)}`;
+  }
   const yGB = Math.max(heel[1], toe[1]);
   return {
     key, SL, muzzle: sx(mk.muzzle), tang, bc: mk.bore, springY: mk.spring, sh: mk.sh,
@@ -1274,37 +1305,59 @@ function ak(platform: Platform, b: Build): Scene {
   const hgFull = b.handguard?.attrs.kind === 'full';
   const RF = 10.45; // receiver front
 
-  // Receiver: the stamped body, dust cover, rear sight, selector, charging handle, trigger guard and mag catch.
+  // Receiver: the stamped body with its rear trunnion, the dust cover (ribbed on the AKM, smooth on the AK-74) with the
+  // rear sight block and leaf sight ahead of it, the selector lever and charging handle on this side, the trigger
+  // guard with the magazine release paddle, and the rivets.
   const cover = mountKind !== 'cover';
-  const rivets = [[0.55, 0.3], [1.15, 0.3], [3.0, 0.72], [5.15, 0.72], [9.25, 0.15], [9.95, 0.15], [9.6, 0.55]].map(([x, y]) => OC(x, y, 0.07)).join(' ');
+  const rivets = [[0.5, 0.2], [1.1, 0.2], [0.5, 0.7], [1.1, 0.7], [2.95, 0.72], [5.1, 0.72], [9.3, 0.2], [9.95, 0.2], [9.3, 0.7], [9.95, 0.7]].map(([x, y]) => OC(x, y, 0.06)).join(' ');
+  const coverRibs = cal === 'akm' ? repeat(2.6, 6.6, 0.95, (x) => `M${x},-1.72 L${x},-0.66 M${f(x + 0.14)},-1.72 L${f(x + 0.14)},-0.66`) : '';
   P.push({ slot: 'rifle', z: 4, row: 'bottom', target: px(7.2, 0.45), el: <>
-    <path d={T(`M0,-0.62 L${RF},-0.62 L${RF},0.95 L0,0.95 Z`)} />
-    {cover && <path d={T('M0,-0.62 L0,-0.7 L0.55,-1.25 Q0.95,-1.68 1.5,-1.72 L8.95,-1.72 L8.95,-0.62 Z M0.42,-1.2 L0.42,-1.4 Q0.42,-1.46 0.48,-1.46 L0.62,-1.46 Q0.68,-1.46 0.68,-1.4 L0.68,-1.36')} />}
-    <path d={T(`M8.95,-1.72 L9.9,-1.72 L11.3,-1.05 L11.3,-0.62 L8.95,-0.62 Z ${cover ? 'M9.0,-1.72 L10.2,-1.95 L10.28,-1.72 M9.35,-1.72 L9.35,-1.9 L9.7,-1.9 L9.7,-1.72' : ''}`)} />
-    <path d={T('M0.62,-0.58 L6.2,-0.6 Q6.3,-0.6 6.3,-0.5 L6.25,-0.12 Q6.22,-0.04 6.12,-0.05 L5.85,-0.08 L5.7,-0.42 L1.2,-0.18 Q0.62,-0.16 0.62,-0.4 Z')} />
-    <path d={T('M7.8,-0.92 L8.5,-0.92 Q8.62,-0.92 8.62,-0.8 L8.62,-0.58 Q8.62,-0.48 8.5,-0.48 L7.8,-0.48 Q7.68,-0.48 7.68,-0.6 L7.68,-0.8 Q7.68,-0.92 7.8,-0.92 Z')} />
-    <path fillRule="evenodd" d={T('M2.85,0.95 L2.85,1.88 Q2.85,2.15 3.12,2.15 L4.9,2.15 Q5.15,2.15 5.15,1.88 L5.15,0.95 Z M3.05,0.95 L3.05,1.8 Q3.05,1.95 3.2,1.95 L4.82,1.95 Q4.95,1.95 4.95,1.8 L4.95,0.95 Z')} />
-    <path d={T('M3.6,0.95 Q3.92,1.32 3.76,1.86 L3.86,1.88 Q4.06,1.3 3.78,0.95 Z M5.5,0.95 L5.5,1.62 Q5.54,1.86 5.8,1.86 L6.2,1.86 L6.2,1.7 L5.84,1.7 Q5.72,1.7 5.72,1.58 L5.72,0.95')} />
-    <path className="detail" d={T(`${OC(0.9, -0.38, 0.12)} M5.75,-0.6 L7.55,-0.6 L7.55,-0.3 L5.95,-0.3 ${rivets} ${OC(3.4, 0.42, 0.09)} ${OC(4.55, 0.28, 0.09)} M7.9,-0.7 L8.4,-0.7`)} />
+    {/* body, with the magazine well cut out of its bottom edge between the trigger guard and the front trunnion */}
+    <path d={T(`M0,-0.62 L${RF},-0.62 L${RF},0.95 L6.6,0.95 L6.5,0.75 L8.75,0.75 L8.65,0.95 L0,0.95 Z`)} />
+    {/* dust cover: rounded at the rear, over the top of the receiver */}
+    {cover && <path d={T('M0.1,-0.62 L0.1,-0.95 Q0.1,-1.72 0.9,-1.72 L8.95,-1.72 L8.95,-0.62 Z')} />}
+    {cover && coverRibs && <path className="detail" d={T(coverRibs)} />}
+    {/* rear sight block with the leaf sight lying on its ramp, and the slider */}
+    <path d={T(`M8.95,-1.72 L9.55,-1.72 Q10.0,-1.72 10.3,-1.5 L11.3,-1.05 L11.3,-0.62 L8.95,-0.62 Z`)} />
+    <path d={T('M9.05,-1.72 L9.1,-1.8 L10.35,-2.05 L10.42,-1.95 L10.4,-1.58 L10.3,-1.5 Z M9.6,-1.84 L9.6,-1.98 L9.95,-1.98 L9.95,-1.84')} />
+    {/* selector lever on its disc, lying over the charging handle slot */}
+    <path d={T('M1.1,-0.3 Q1.1,-0.55 1.35,-0.55 L5.9,-0.5 Q6.2,-0.5 6.2,-0.3 L6.15,0.0 Q6.12,0.12 6.0,0.1 L5.8,0.05 L5.75,-0.3 L1.35,-0.08 Q1.1,-0.08 1.1,-0.3 Z')} />
+    <path className="detail" d={T(`${OC(1.35, -0.32, 0.14)} ${OC(1.35, -0.32, 0.06)} M1.7,-0.45 L5.6,-0.42`)} />
+    {/* bolt carrier slot and the charging handle, forward in battery */}
+    <path d={T('M6.3,-0.62 L8.75,-0.62 L8.75,-0.3 L6.3,-0.3 Z')} />
+    <path d={T('M7.75,-0.92 L8.4,-0.92 Q8.55,-0.92 8.55,-0.77 L8.55,-0.5 Q8.55,-0.35 8.4,-0.35 L7.75,-0.35 Q7.6,-0.35 7.6,-0.5 L7.6,-0.77 Q7.6,-0.92 7.75,-0.92 Z')} />
+    {/* trigger guard, mag release paddle and the trigger */}
+    <path fillRule="evenodd" d={T('M2.75,0.95 L2.75,1.9 Q2.75,2.15 3.0,2.15 L4.95,2.15 Q5.2,2.15 5.2,1.9 L5.2,0.95 Z M2.93,0.95 L2.93,1.84 Q2.93,1.97 3.06,1.97 L4.89,1.97 Q5.02,1.97 5.02,1.84 L5.02,0.95 Z')} />
+    <path d={T('M5.55,0.95 L5.55,1.5 Q5.55,1.75 5.8,1.78 L6.25,1.78 L6.25,1.62 L5.9,1.62 Q5.78,1.62 5.78,1.5 L5.78,0.95 Z')} />
+    <path d={T('M3.55,0.95 Q3.9,1.3 3.72,1.86 L3.84,1.88 Q4.04,1.28 3.75,0.95 Z')} />
+    <path className="detail" d={T(`${rivets} M6.45,0.75 L6.45,0.4 L8.75,0.4 L8.75,0.75 M0,-0.4 L0.1,-0.4 M0,0.75 L0.1,0.75`)} />
   </> });
 
-  // Barrel, gas system, front sight and the parts that stay with the rifle.
+  // Barrel with the gas block (its port angled back toward the gas tube), bayonet lug, cleaning rod, and the front
+  // sight block with its hooded post and sling loop. The handguard retainer cap holds the lower handguard's front.
+  const GB0 = 17.3, GB1 = 18.25;
   const fs0 = BX - 1.5, fs1 = BX - 0.15;
   P.push({ slot: 'rifle', z: 4.2, row: 'top', target: px(BX - 3, -0.3), el: <>
-    <path d={T(`M17.25,-0.33 L${f(BX)},-0.28 L${f(BX)},0.28 L17.25,0.33 Z M17.25,-1.22 L19.75,-1.22 L19.75,-0.82 L17.25,-0.82 Z M17.25,0.48 L${f(fs0 + 0.2)},0.48 L${f(fs0 + 0.2)},0.6 L17.25,0.6 Z`)} />
-    <path className="hidden-line" d={T(`M${AK_CHAMBER},-0.38 L17.25,-0.33 M${AK_CHAMBER},0.38 L17.25,0.33`)} />
-    <path d={T('M19.75,-1.3 L20.6,-1.3 Q20.95,-1.3 20.95,-0.95 L20.95,0.42 L20.7,0.42 L20.7,0.88 L20.0,0.88 L20.0,0.42 L19.75,0.42 Z')} />
-    <path d={T(`M${f(fs0)},-0.45 L${f(fs0 + 0.3)},-0.45 L${f(fs0 + 0.55)},-1.7 Q${f(fs0 + 0.7)},-1.95 ${f(fs0 + 0.95)},-1.85 L${f(fs1 - 0.15)},-1.0 L${f(fs1)},-0.45 L${f(fs1)},0.45 L${f(fs1 - 0.4)},0.45 L${f(fs1 - 0.45)},0.8 L${f(fs0 + 0.2)},0.8 L${f(fs0 + 0.2)},0.45 L${f(fs0)},0.45 Z`)} />
-    <path className="detail" d={T(`M19.75,-0.42 L20.95,-0.42 ${OC(20.35, 0.62, 0.08)} M${f(fs0 + 0.78)},-1.6 L${f(fs0 + 0.78)},-0.95 M${f(fs0 + 0.3)},-0.45 L${f(fs1)},-0.45`)} />
-    <path d={T('M16.8,-0.95 L17.25,-0.95 L17.25,0.85 L16.8,0.85 Z')} />
-    <path className="detail" d={T('M16.8,-0.1 L17.25,-0.1')} />
+    {/* exposed barrel between gas block and front sight, the gas tube back to the rear sight block, the cleaning rod */}
+    <path d={T(`M${GB1},-0.33 L${f(fs0)},-0.3 L${f(fs0)},0.3 L${GB1},0.33 Z M11.3,-1.2 L${GB0},-1.2 L${GB0},-0.82 L11.3,-0.82 Z M${GB1},0.5 L${f(fs0)},0.5 L${f(fs0)},0.62 L${GB1},0.62 Z`)} />
+    <path className="hidden-line" d={T(`M${AK_CHAMBER},-0.38 L${GB0},-0.33 M${AK_CHAMBER},0.38 L${GB0},0.33`)} />
+    {/* handguard retainer cap */}
+    <path d={T(`M16.8,-0.95 L${GB0},-0.95 L${GB0},0.85 L16.8,0.85 Z`)} />
+    <path className="detail" d={T(`M16.8,-0.1 L${GB0},-0.1 M16.95,-0.82 L16.95,0.72`)} />
+    {/* gas block: a block over the barrel whose rear face slopes down to meet the gas tube, with the bayonet lug below */}
+    <path d={T(`M${GB0},-1.3 L${f(GB1 - 0.1)},-1.3 Q${GB1},-1.3 ${GB1},-1.2 L${GB1},0.42 L${f(GB1 - 0.15)},0.42 L${f(GB1 - 0.15)},0.95 L${f(GB0 + 0.1)},0.95 L${f(GB0 + 0.1)},0.42 L${GB0},0.42 Z`)} />
+    <path className="detail" d={T(`M${GB0},-0.82 L${GB1},-0.82 M${f(GB0 + 0.3)},-1.3 L${f(GB0 + 0.3)},-0.82 M${f(GB0 + 0.1)},0.62 L${f(GB1 - 0.15)},0.62 ${OC(GB0 + 0.47, 0.25, 0.07)}`)} />
+    {/* front sight block: base with the sling loop, the post between its protective ears */}
+    <path d={T(`M${f(fs0)},-0.5 L${f(fs1)},-0.5 L${f(fs1)},0.5 L${f(fs1 - 0.3)},0.5 L${f(fs1 - 0.3)},0.9 L${f(fs0 + 0.15)},0.9 L${f(fs0 + 0.15)},0.5 L${f(fs0)},0.5 Z`)} />
+    <path d={T(`M${f(fs0 + 0.3)},-0.5 L${f(fs0 + 0.42)},-1.55 Q${f(fs0 + 0.68)},-2.0 ${f(fs0 + 0.94)},-1.55 L${f(fs0 + 1.06)},-0.5 Z`)} />
+    <path className="detail" d={T(`M${f(fs0 + 0.62)},-1.75 L${f(fs0 + 0.62)},-0.9 M${f(fs0 + 0.74)},-1.75 L${f(fs0 + 0.74)},-0.9 M${f(fs0 + 0.62)},-0.9 L${f(fs0 + 0.74)},-0.9 M${f(fs0 + 0.3)},-0.5 L${f(fs1)},-0.5 M${f(fs0 + 0.15)},0.7 L${f(fs1 - 0.3)},0.7 ${OC(fs0 + 0.68, 0.0, 0.1)}`)} />
   </> });
 
   // Upper handguard over the gas tube, unless a full-length handguard or a gas tube rail replaces it.
   if (!hgFull && mountKind !== 'gastube')
     P.push({ slot: 'rifle', z: 5, row: 'top', target: px(14, -1.35), el: <>
-      <path d={T('M11.3,-1.05 L11.3,-1.4 Q11.4,-1.55 11.75,-1.55 L16.6,-1.3 Q16.8,-1.28 16.8,-1.1 L16.8,-0.82 L11.3,-0.82 Z')} />
-      <path className="detail" d={T('M11.75,-1.42 L16.6,-1.18')} />
+      <path d={T('M11.3,-1.05 L11.35,-1.45 Q11.4,-1.6 11.6,-1.6 L16.6,-1.45 Q16.8,-1.43 16.8,-1.25 L16.8,-0.82 L11.3,-0.82 Z')} />
+      <path className="detail" d={T('M11.6,-1.47 L16.6,-1.33')} />
     </> });
 
   // Lower handguard
@@ -1312,7 +1365,8 @@ function ak(platform: Platform, b: Build): Scene {
   const hgSlot = own('handguard');
   if (!hg)
     P.push({ slot: hgSlot, z: 6, row: 'bottom', target: px(14, 0.72), el: <>
-      <path d={T(`M${RF},-0.82 L16.8,-0.82 L16.8,0.72 L12.3,0.72 Q11.75,0.74 11.5,1.05 Q11.2,1.32 10.8,1.12 Q${RF},0.92 ${RF},0.55 Z`)} />
+      <path d={T(`M${RF},-0.82 L16.8,-0.82 L16.8,0.72 L14.6,0.72 Q13.2,0.74 12.2,1.02 Q11.3,1.2 ${f(RF + 0.3)},0.95 Q${RF},0.9 ${RF},0.55 Z`)} />
+      <path className="detail" d={T(`M${f(RF + 0.1)},-0.6 L16.7,-0.6 M${f(RF + 0.3)},-0.82 L${f(RF + 0.3)},0.8 M16.55,-0.82 L16.55,0.72`)} />
     </> });
   else if (hg.attrs.kind === 'full')
     P.push({ slot: 'handguard', z: 6, row: 'bottom', target: px(14, 0.9), el: <>
@@ -1335,8 +1389,10 @@ function ak(platform: Platform, b: Build): Scene {
   let sd: string, sdet: string;
   let rear: number;
   if (!st) {
-    sd = 'M0,-0.7 L-0.39,-0.83 L-0.97,-0.54 Q-1.25,-0.42 -1.55,-0.39 L-1.93,-0.41 Q-3.2,-0.65 -4.26,-0.87 L-4.84,-0.93 L-8.9,-0.89 Q-9.19,-0.89 -9.22,-0.6 L-9.38,2.72 Q-9.38,2.94 -9.15,2.94 L-8.03,2.94 Q-7.6,2.85 -7.16,2.55 L-6.19,2.2 L-4.26,1.68 L-2.32,1.35 L-0.39,1.06 L0,0.95 Z';
-    sdet = 'M-9.0,-0.89 L-9.15,2.94';
+    // Fixed wood stock: the comb runs back almost level with the receiver top, the toe line drops to a tall butt
+    // with the steel butt plate and its trap door.
+    sd = 'M0,-0.7 L-0.3,-0.72 Q-0.9,-0.6 -1.6,-0.56 L-9.0,-0.62 Q-9.2,-0.62 -9.22,-0.42 L-9.42,3.05 Q-9.42,3.28 -9.2,3.28 L-8.3,3.28 Q-7.5,3.0 -6.5,2.6 L-1.4,1.28 Q-0.7,1.12 0,0.95 Z';
+    sdet = `M-9.02,-0.62 L-9.22,3.28 ${OC(-9.1, -0.3, 0.05)} ${OC(-9.3, 2.95, 0.05)} M-9.12,0.95 L-9.0,0.95 L-9.06,2.0 L-9.18,2.0 Z`;
     rear = -9.38;
   } else if (st.attrs.kind === 'zhukov') {
     sd = 'M0,-0.72 L-0.75,-0.72 L-0.85,-0.85 L-9.6,-0.85 Q-9.95,-0.85 -9.95,-0.5 L-9.95,3.0 Q-9.95,3.25 -9.7,3.25 L-8.6,3.25 L-1.2,1.15 L-0.75,1.15 L-0.75,0.95 L0,0.95 Z M-1.5,-0.42 L-8.25,-0.42 Q-8.4,-0.42 -8.4,-0.27 L-8.4,2.15 Q-8.4,2.33 -8.58,2.38 Z';
@@ -1649,6 +1705,7 @@ function m1911(platform: Platform, b: Build): Scene {
     : 'M-0.05,0.97 L5.92,0.97 L5.92,1.5 L4.22,1.5 Q4.06,1.52 4.03,1.72 L3.99,2.3 Q3.96,2.6 3.66,2.6 L2.82,2.6 Q2.52,2.6 2.44,2.36 Q2.34,2.62 2.16,2.78 L1.72,5.1 L-0.32,5.1 L-0.05,2.62 L0.08,2.62 L0.08,1.3 L-0.38,1.18 L-0.38,0.97 Z '
       + 'M2.76,1.58 L3.7,1.58 Q3.86,1.58 3.86,1.76 L3.84,2.22 Q3.82,2.44 3.6,2.44 L2.92,2.44 Q2.64,2.44 2.62,2.16 L2.62,1.76 Q2.62,1.58 2.76,1.58 Z';
   let frameDet = `${OC(2.17, 2.42, 0.13)} ${OC(2.17, 2.42, 0.07)}`;
+  if (!dbl) frameDet += ' M1.1,1.04 L1.92,1.04 Q1.98,1.04 1.98,1.1 L1.98,1.14 Q1.98,1.2 1.92,1.2 L1.1,1.2 Q1.04,1.2 1.04,1.14 L1.04,1.1 Q1.04,1.04 1.1,1.04 Z';
   if (dbl) {
     // The grip module's seam under the frame, the rail's cross slots, the grip texture panel and the magwell's lip.
     frameDet += ' M0.12,1.34 L4.24,1.4 M4.5,1.48 L7.2,1.48';
@@ -1723,11 +1780,11 @@ function m1911(platform: Platform, b: Build): Scene {
   /* Thumb safety: pivots at the frame's rear; extended and ambidextrous safeties have a longer, wider pad */
   const ext = dbl || b.safety ? true : pistol?.attrs.safety !== 'gi';
   const safD = ext
-    ? 'M-0.34,1.22 Q-0.34,1.02 -0.12,1.0 L0.92,1.0 Q1.06,1.02 1.06,1.11 Q1.04,1.2 0.92,1.21 L0.2,1.22 Q0.1,1.42 -0.12,1.43 Q-0.34,1.42 -0.34,1.22 Z'
-    : 'M-0.34,1.22 Q-0.34,1.02 -0.12,1.0 L0.6,1.0 Q0.72,1.02 0.72,1.1 Q0.7,1.18 0.6,1.18 L0.2,1.2 Q0.1,1.42 -0.12,1.43 Q-0.34,1.42 -0.34,1.22 Z';
+    ? 'M-0.34,1.22 Q-0.34,1.02 -0.12,1.0 L0.78,1.0 Q0.98,1.0 1.0,1.14 Q0.98,1.3 0.8,1.34 L0.2,1.34 Q0.1,1.44 -0.12,1.44 Q-0.34,1.42 -0.34,1.22 Z'
+    : 'M-0.34,1.22 Q-0.34,1.02 -0.12,1.0 L0.5,1.0 Q0.62,1.02 0.62,1.12 Q0.6,1.22 0.5,1.22 L0.2,1.24 Q0.1,1.44 -0.12,1.44 Q-0.34,1.42 -0.34,1.22 Z';
   P.push({ slot: dbl ? 'pistol' : own('safety'), z: 6, row: 'top', target: px(0.6, 1.1), el: <>
     <path d={T(safD)} />
-    <path className="detail" d={T(OC(-0.12, 1.22, 0.06) + (ext ? ' M0.72,1.03 L0.72,1.18 M0.8,1.03 L0.8,1.18 M0.88,1.03 L0.88,1.18' : ''))} />
+    <path className="detail" d={T(OC(-0.12, 1.22, 0.06) + (ext ? ' M0.6,1.03 L0.6,1.3 M0.7,1.03 L0.7,1.3 M0.8,1.03 L0.8,1.3' : ' M0.4,1.03 L0.4,1.2 M0.48,1.03 L0.48,1.2'))} />
   </> });
 
   /* Grip panels (1911): screws in double diamonds on wood, a plain inset on G10 and polymer; the wraparound
