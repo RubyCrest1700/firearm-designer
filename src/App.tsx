@@ -175,6 +175,13 @@ export default function App() {
 
   const openSaved = saved.find((s) => s.id === openSavedId && s.platform === platformId) ?? null;
 
+  // Each page names itself in the browser tab, history and bookmarks.
+  useEffect(() => {
+    const name = PLATFORMS.find((p) => p.id === platformId)?.name ?? '';
+    const page = { home: 'Plan Your Build, Check the Fit, Pay Less', build: `Build Your ${name}`, saved: 'My Builds', community: 'Community Builds', compare: 'Compare Builds' }[route];
+    document.title = `${page} | Drop-In Builds`;
+  }, [route, platformId]);
+
   return (
     <div className="site">
       <header className="site-header">
@@ -988,7 +995,7 @@ function Candidate({ part, issues, sev, selected, owned, onChoose, onBuyClick }:
                   <td className="num">{money(o.price)}</td>
                   <td>{o.inStock ? 'In Stock' : <span className="oos">Out</span>}</td>
                   <td className="dim">{o.checkedAt ? `Live ${shortDate(o.checkedAt)}` : 'Sample'}</td>
-                  <td className="num"><a href={o.url ?? offerUrl(o.retailer, `${part.brand} ${part.name}`)} target="_blank" rel="noopener noreferrer" onClick={onBuyClick}>{o.url ? 'View ↗' : 'Search ↗'}</a></td>
+                  <td className="num"><a href={o.url ?? offerUrl(o.retailer, `${part.brand} ${part.name}`)} target="_blank" rel="sponsored noopener" onClick={onBuyClick}>{o.url ? 'View ↗' : 'Search ↗'}</a></td>
                 </tr>
               ))}
             </tbody>

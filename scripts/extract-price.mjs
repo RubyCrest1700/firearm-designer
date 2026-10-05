@@ -128,3 +128,20 @@ function toOunces(value, unit) {
   }
   return oz && oz > 0 && oz < 1000 ? Math.round(oz * 10) / 10 : null;
 }
+
+/**
+ * Sanity check for a freshly read price. A read far from what the same store charged last time (or, for a
+ * store we haven't read before, from what the other stores charge) is far more likely a misread, such as a
+ * bundle, a single-part variant or a placeholder, than a real change, and would otherwise reach the site,
+ * the price charts and the alert emails. Returns why the price looks wrong, or null when it's fine.
+ * A store whose price really did move that far is accepted again once its old price ages out (7 days).
+ */
+export const MAX_PRICE_MOVE = 2.5;
+export function implausiblePrice(price, { last, others = [] } = {}) {
+  if (!(price >= 1)) return `price $${price} is under $1`;
+  const sorted = others.filter((n) => n > 0).sort((a, b) => a - b);
+  const ref = last ?? (sorted.length ? sorted[Math.floor(sorted.length / 2)] : null);
+  if (!ref) return null;
+  if (price > ref * MAX_PRICE_MOVE || price < ref / MAX_PRICE_MOVE) return `$${price} is too far from the usual $${ref}`;
+  return null;
+}

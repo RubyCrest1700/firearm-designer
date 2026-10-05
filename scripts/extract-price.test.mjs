@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { extractPrice, extractWeight } from './extract-price.mjs';
+import { extractPrice, extractWeight, implausiblePrice } from './extract-price.mjs';
 import { parseRobots, isAllowed } from './robots.mjs';
 
 test('reads a JSON-LD Product offer', () => {
@@ -50,4 +50,14 @@ test('reads a listed weight from JSON-LD and spec tables', () => {
   assert.equal(extractWeight('<table><tr><th>Weight</th><td>1 lb 10 oz</td></tr></table>'), 26);
   assert.equal(extractWeight('<dl><dt>Weight:</dt><dd><span>312 g</span></dd></dl>'), 11);
   assert.equal(extractWeight('<table><tr><th>Shipping Weight</th><td>3 lbs</td></tr></table>'), null);
+});
+
+test('flags prices that are probably misreads', () => {
+  assert.equal(implausiblePrice(129.99, { last: 139.99 }), null);
+  assert.equal(implausiblePrice(69.99, { last: 139.99 }), null); // a real half-price sale gets through
+  assert.match(implausiblePrice(12.99, { last: 139.99 }), /too far/);
+  assert.match(implausiblePrice(899, { last: 139.99 }), /too far/);
+  assert.match(implausiblePrice(0, {}), /under \$1/);
+  assert.match(implausiblePrice(15, { others: [140, 150, 160] }), /too far/); // new store, compared with the rest
+  assert.equal(implausiblePrice(15, {}), null); // nothing to compare with
 });
