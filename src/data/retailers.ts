@@ -34,3 +34,22 @@ export function offerUrl(retailerId: string, query: string): string {
   const r = RETAILERS[retailerId];
   return r.search + encodeURIComponent(query);
 }
+
+/**
+ * Every link to a store carries our name (utm_source=dropinbuilds), so the store sees Drop-In Builds in its
+ * own visitor stats. That's the proof merchants look for before inviting a site into their affiliate program.
+ * Links we can't parse are left as they are.
+ */
+export function tagged(url: string): string {
+  try {
+    const u = new URL(url);
+    u.searchParams.set('utm_source', 'dropinbuilds');
+    u.searchParams.set('utm_medium', 'referral');
+    return u.toString();
+  } catch {
+    return url;
+  }
+}
+
+/** Where a price links to: the product page we read the price from, or the store's search for the part. */
+export const buyUrl = (o: { retailer: string; url?: string }, partName: string) => tagged(o.url ?? offerUrl(o.retailer, partName));
