@@ -1350,7 +1350,7 @@ function ak(platform: Platform, b: Build): Scene {
     <path className="detail" d={T('M6.6,-0.62 L9.4,-0.62 M6.6,-0.48 L9.4,-0.48')} />
     <path d={T('M6.25,-0.25 L6.25,-1.05 Q6.25,-1.22 6.42,-1.22 L6.8,-1.22 Q6.98,-1.2 6.92,-1.02 L6.65,-0.88 L6.58,-0.25 Z')} />
     {/* trigger guard; the magazine release paddle hangs behind the magazine with its tail curling under */}
-    <path d={T(`M0,${RB} L0.95,${RB} L0.95,1.62 L0,1.62 Z`)} />
+    <path d={T(`M-1.1,${RB} L0.95,${RB} L0.95,1.64 L-1.1,1.64 Z`)} />
     <path fillRule="evenodd" d={T(`M2.85,${RB} L2.85,2.6 Q2.85,2.83 3.1,2.83 L5.0,2.83 Q5.23,2.83 5.23,2.6 L5.23,${RB} L5.11,${RB} L5.11,2.55 Q5.11,2.72 4.95,2.72 L3.4,2.72 Q3.25,2.72 3.25,2.55 L3.25,${RB} Z`)} />
     <path d={T(`M5.17,${RB} L5.8,${RB} L5.8,2.6 Q5.8,2.75 5.68,2.78 L5.72,3.0 L5.6,3.0 L5.55,2.78 Q5.48,2.7 5.48,2.55 L5.48,2.15 L5.3,2.15 Q5.17,2.15 5.17,2.0 Z`)} />
     <path className="detail" d={T('M5.3,1.75 L5.7,1.75 M5.3,1.9 L5.7,1.9')} />
@@ -1430,19 +1430,21 @@ function ak(platform: Platform, b: Build): Scene {
     if (stockShape === 'folder-left' || stockShape === 'folder-right' || stockShape === 'fixed100') {
       const hinge = stockShape !== 'fixed100';
       const x0 = hinge ? -0.95 : 0;
-      sd = `${hinge ? `M0,-0.55 L-0.95,-0.55 L-0.95,${RB} L0,${RB} Z ` : ''}M${x0},-0.32 L-8.55,-0.32 Q-9.3,-0.32 -9.3,0.4 L-9.3,3.85 Q-9.3,4.25 -8.9,4.25 L-8.35,4.2 Q-4.6,3.3 -1.45,1.9 L${x0},${RB} Z`;
-      sdet = `M-8.95,-0.3 L-8.95,4.23 ${repeat(0.3, 3.7, 0.5, (y) => `M-9.3,${y} L-8.95,${y}`)} ${stadium(-7.9, -3.4, 1.45, 0.55)} ${swivel(-8.3, 4.2)}`;
+      sd = `${hinge ? `M0,-0.55 L-0.95,-0.55 L-0.95,${RB} L0,${RB} Z ` : ''}M${x0},-0.32 L-8.9,-0.32 Q-9.3,-0.32 -9.3,0.1 L-9.3,3.25 Q-9.3,3.55 -9.0,3.55 L-8.4,3.5 Q-4.6,2.35 -1.45,1.68 L${x0},${RB} Z`;
+      sdet = `M-8.95,-0.3 L-8.95,3.53 ${repeat(0.1, 3.2, 0.5, (y) => `M-9.3,${y} L-8.95,${y}`)} ${stadium(-7.9, -3.4, 1.3, 0.55)} ${swivel(-8.3, 3.5)}`;
       if (stockShape === 'folder-right') sdet += ` ${OC(-0.5, -0.05, 0.3)} ${OC(-0.5, -0.05, 0.1)} M-0.95,0.55 L-0.2,0.55`;
       else if (hinge) sdet += ` ${stadium(-0.75, -0.2, 0.55, 0.3)} M-0.95,-0.1 L0,-0.1`;
       rear = -9.3;
     } else {
-      sd = 'M0,-0.05 Q-0.6,0.1 -1.2,0.4 L-2,0.44 L-8.0,0.44 Q-8.5,0.5 -8.75,0.7 L-8.9,1.0 L-8.9,4.1 Q-8.88,4.35 -8.6,4.3 L-8.0,4.13 Q-5.5,3.45 -3,2.68 Q-1.5,2.25 0,1.95 Z';
-      sd += ' M0,1.45 L-0.5,1.5 L-0.45,1.85 Q-0.2,1.98 0,1.98 Z';
-      sdet = `M-8.7,0.75 L-8.7,4.25 ${OC(-8.78, 1.3, 0.05)} ${OC(-8.78, 3.7, 0.05)} M-8.82,2.0 L-8.68,2.0 L-8.68,3.1 L-8.82,3.1 Z ${swivel(-2.9, 2.68)}`;
+      // Measured on the photo: the wrist meets the receiver a quarter inch under its top rear and flush with the
+      // trunnion's lower tang, the comb settles level with the bore, and the butt plate leans back under the heel.
+      const bx = (y: number) => -8.1 - (y - 0.15) * 0.23; // the butt face, heel to toe
+      sd = 'M0,-0.38 L-0.3,-0.36 Q-1.2,-0.2 -1.9,0.13 L-7.85,0.14 Q-8.1,0.14 -8.12,0.3 L-8.9,3.7 Q-8.92,3.92 -8.7,3.9 L-7.8,3.45 Q-5.0,2.45 -1.3,1.6 L0,1.5 Z';
+      sdet = `M${f(bx(0.4) + 0.15)},0.4 L${f(bx(3.6) + 0.15)},3.6 ${OC(bx(0.9) + 0.08, 0.9, 0.05)} ${OC(bx(3.4) + 0.08, 3.4, 0.05)} M${f(bx(1.7) + 0.02)},1.7 L${f(bx(1.7) + 0.14)},1.7 L${f(bx(2.7) + 0.14)},2.7 L${f(bx(2.7) + 0.02)},2.7 Z ${swivel(-2.6, 1.9)}`;
       rear = -8.9;
-      if (stockShape === 'ak74') sdet += ` ${stadium(-7.7, -3.6, 1.85, 0.62)}`;
-      if (furn === 'polymer') sdet += ` ${repeat(1.3, 4.0, 0.45, (y) => `M-8.9,${y} L-8.72,${y}`)}`;
-      if (furn === 'walnut') { sd += ' M-8.9,0.95 L-9.2,0.98 L-9.2,4.28 L-8.9,4.3 Z'; sdet += ' M-9.05,1.05 L-9.05,4.2'; rear = -9.2; }
+      if (stockShape === 'ak74') sdet += ` ${stadium(-7.3, -3.4, 1.35, 0.6)}`;
+      if (furn === 'polymer') sdet += ` ${repeat(0.7, 3.4, 0.45, (y) => `M${f(bx(y))},${f(y)} L${f(bx(y) + 0.22)},${f(y)}`)}`;
+      if (furn === 'walnut') { sd += ' M-8.1,0.15 L-8.4,0.17 L-9.2,3.92 L-8.9,3.9 Z'; sdet += ' M-8.26,0.3 L-9.05,3.85'; rear = -9.2; }
     }
   } else if (st.attrs.kind === 'zhukov') {
     // ZHUKOV-S: an aluminium hinge block on the trunnion, a faceted body with a long side recess, QD socket and a
@@ -1560,7 +1562,7 @@ function ak(platform: Platform, b: Build): Scene {
   if (mountKind === 'side') {
     // RS Regulate: a slim lower on the side rail with a short upper over the cover; Midwest: a longer cantilevered rail
     const rs = matches(b.mount, /RS Regulate/);
-    railTop = rs ? -2.35 : -2.55;
+    railTop = rs ? -1.7 : -2.15;
     rx0 = rs ? 2.4 : 2.6; rx1 = rs ? 4.9 : 7.6;
     const ax = rs ? 2.9 : 3.4;
     P.push({ slot: 'mount', z: 13, row: 'top', target: px((rx0 + rx1) / 2, railTop), el: <>
