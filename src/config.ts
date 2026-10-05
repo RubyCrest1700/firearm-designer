@@ -1,14 +1,15 @@
 /**
- * Address of the community builds API (worker/), e.g. https://firearm-designer-api.<name>.workers.dev.
- * Empty until the Worker is first deployed; the site then runs community features in preview mode.
- */
-export const COMMUNITY_API = 'https://firearm-designer-api.pdaly1700.workers.dev';
-
-/**
  * Share links that show a picture card on Reddit, Discord and in texts (worker/src/share.js).
- * The same Worker, on a custom domain. Until it answers, Copy link falls back to plain ?b= links.
+ * The community builds Worker, on our own domain. Until it answers, Copy link falls back to plain ?b= links.
  */
 export const SHARE_BASE = 'https://share.dropinbuilds.com';
+
+/**
+ * Address of the community builds and price alerts API (worker/). The same Worker as SHARE_BASE: our own
+ * domain rather than its workers.dev address, which ad blockers and work networks sometimes block and which
+ * carries the Cloudflare account name. Empty would run community features in preview mode.
+ */
+export const COMMUNITY_API = SHARE_BASE;
 
 /**
  * Content Security Policy for every page (the builder and the FAQ pages). GitHub Pages can't send headers,
@@ -22,7 +23,7 @@ export const CONTENT_SECURITY_POLICY = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob:",
-  `connect-src 'self' ${COMMUNITY_API} ${SHARE_BASE} https://cloudflareinsights.com`,
+  `connect-src 'self' ${SHARE_BASE} https://cloudflareinsights.com`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
