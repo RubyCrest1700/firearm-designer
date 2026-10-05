@@ -8,6 +8,7 @@ import { RETAILERS, offerUrl } from '../data/retailers';
 import { bestOffer, money, presetSelection, worst } from '../engine';
 import type { Part, Platform, Severity, Tier } from '../types';
 import { GUIDES, type FitChart, type Guide } from './content';
+import { titleCase } from '../text';
 
 export const SITE = 'https://dropinbuilds.com';
 const ANALYTICS_TOKEN = '00e0977ba6ee49a7b9a386502da1ef3f';
@@ -66,7 +67,7 @@ function chartHtml(platform: Platform, c: FitChart) {
     .join('');
   return `
     <section class="chart">
-      <h2>${esc(c.heading)}</h2>
+      <h2>${esc(titleCase(c.heading))}</h2>
       <p class="muted">${esc(c.intro)}</p>
       ${rows}
     </section>`;
@@ -74,7 +75,7 @@ function chartHtml(platform: Platform, c: FitChart) {
 
 /* ---------------------------------------------------------------- prices, picks */
 
-const TIER_LABEL: Record<Tier, string> = { budget: 'Budget pick', value: 'Best value', premium: 'Premium pick' };
+const TIER_LABEL: Record<Tier, string> = { budget: 'Budget Pick', value: 'Best Value', premium: 'Premium Pick' };
 const TIERS: Tier[] = ['budget', 'value', 'premium'];
 
 function priceHtml(part: Part) {
@@ -94,7 +95,7 @@ function picksHtml(platform: Platform, slots: string[]) {
       const list = picked.length ? picked : [...all].sort((x, y) => (bestOffer(x)?.price ?? 0) - (bestOffer(y)?.price ?? 0)).slice(0, 3);
       const name = platform.slots.find((s) => s.id === slot)?.name ?? slot;
       return `
-      <h3>${esc(name)}</h3>
+      <h3>${esc(titleCase(name))}</h3>
       <div class="cards">${list.map((p) => `
         <div class="card">
           ${p.pick ? `<p class="tier tier-${p.pick.tier}">${TIER_LABEL[p.pick.tier]}</p>` : ''}
@@ -113,7 +114,7 @@ function startersHtml(platform: Platform) {
     const sel = presetSelection(platform, tier);
     const ids = Object.values(sel);
     const total = ids.reduce((sum, id) => sum + (bestOffer(platform.parts.find((p) => p.id === id)!)?.price ?? 0), 0);
-    const name = tier === 'value' ? 'Best value' : tier[0].toUpperCase() + tier.slice(1);
+    const name = tier === 'value' ? 'Best Value' : tier[0].toUpperCase() + tier.slice(1);
     return `<a class="starter" href="${builderUrl(platform.id, ids)}"><b>${name} ${esc(platform.name)}</b><span>${ids.length} parts, ${money(total)} at the lowest prices we list</span></a>`;
   }).join('');
 }
@@ -149,13 +150,13 @@ ${o.jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).re
 <body>
 <header class="site-header"><div class="wrap header-row">
   <a class="brand" href="/">${MARK}<span class="brand-name">Drop-In <b>Builds</b></span></a>
-  <nav aria-label="Main"><a href="/#build">Build</a><a href="/#community">Community</a><a href="/guides/" aria-current="page">FAQ</a><a href="/#saved">My builds</a></nav>
+  <nav aria-label="Main"><a href="/">Home</a><a href="/#build">Build</a><a href="/#saved">My Builds</a><a href="/#community">Community</a><a href="/guides/" aria-current="page">FAQ</a></nav>
 </div></header>
 <main class="wrap">${o.body}</main>
 <footer class="site-footer"><div class="wrap">
   <p class="brand-name small">Drop-In <b>Builds</b></p>
   <p>Plan a build part by part, check that everything fits, and see where each part costs least. We don't sell anything.</p>
-  <p>Fit charts come from the same rules the builder uses. Prices marked sample aren't tracked yet; always confirm the price and fit with the retailer and the maker. Parts that are the serialized firearm ship to a licensed dealer, and laws vary by state.</p>
+  <p>Fit charts come from the same rules the builder uses. Prices marked Sample aren't tracked yet; always confirm the price and fit with the retailer and the maker. Parts that are the serialized firearm ship to a licensed dealer, and laws vary by state.</p>
   <p>Some retailer links may earn us a small commission at no extra cost to you. It never changes which parts we show or how we check fit.</p>
 </div></footer>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "${ANALYTICS_TOKEN}"}'></script>
@@ -173,18 +174,18 @@ export function guidePage(g: Guide, builtAt: string) {
     <h1>${esc(g.h1)}</h1>
     <p class="lede">${esc(g.lede)}</p>
     <section class="answers">
-      <h2>The short answer</h2>
+      <h2>The Short Answer</h2>
       <ul>${g.answers.map((a) => `<li>${a}</li>`).join('')}</ul>
-      <a class="cta" href="${builderUrl(platform.id)}">Check your own ${esc(platform.name)} build</a>
+      <a class="cta" href="${builderUrl(platform.id)}">Check Your Own ${esc(platform.name)} Build</a>
     </section>
     ${g.charts.map((c) => chartHtml(platform, c)).join('')}
     <section>
-      <h2>Parts worth a look</h2>
+      <h2>Parts Worth a Look</h2>
       <p class="muted">Our picks from the ${esc(platform.name)} catalog, with the lowest price we list${PRICES_UPDATED_AT ? ` (prices last checked ${shortDate(PRICES_UPDATED_AT)})` : ''}.</p>
       ${picksHtml(platform, g.picks)}
     </section>
     <section>
-      <h2>Start from a complete build</h2>
+      <h2>Start from a Complete Build</h2>
       <p class="muted">Every part already checked to fit. Open one in the builder and swap anything you like.</p>
       <div class="starters">${startersHtml(platform)}</div>
     </section>
@@ -215,39 +216,61 @@ function relatedHtml(g: Guide) {
   const maker = platformOf(g.platform).maker;
   const same = (x: Guide) => Number(platformOf(x.platform).maker === maker);
   const others = GUIDES.filter((x) => x !== g).sort((x, y) => same(y) - same(x)).slice(0, 4);
-  return `<section><h2>More fit questions</h2><ul class="guide-list">${others.map((x) => `<li><a href="/guides/${x.slug}/">${esc(x.h1)}</a></li>`).join('')}</ul></section>`;
+  return `<section><h2>More Fit Questions</h2><ul class="guide-list">${others.map((x) => `<li><a href="/guides/${x.slug}/">${esc(x.h1)}</a></li>`).join('')}</ul></section>`;
 }
 
-/** Site questions at the top of the FAQ page. Plain text answers, also published as FAQPage structured data. */
-const GENERAL_FAQ: { q: string; a: string }[] = [
-  { q: 'Is Drop-In Builds a store?', a: "No. We don't sell anything. You plan the build here, and every buy link goes to the retailer or maker, where you check out as usual." },
-  { q: 'How do you know the parts fit?', a: "Each part carries its real measurements and the maker's own fit notes, and the builder checks every part against the rest of your build. Anything that won't fit is marked as a conflict, and anything that needs a second look gets a heads-up. Always confirm fit with the maker before you buy." },
-  { q: 'Where do the prices come from?', a: "We check retailer and maker sites every night where they allow it, and show each part's price at every retailer we track. Prices marked Sample aren't tracked yet, so always confirm the price at the retailer." },
-  { q: 'What does FFL mean on a part?', a: 'FFL marks the serialized part, which is legally the firearm (a pistol frame or an AR lower receiver). It ships to a licensed dealer near you, who handles the transfer. Laws vary by state.' },
-  { q: 'Can I save, share or get price alerts on a build?', a: 'Yes. Save any build to My builds, copy a link that opens the exact build, or share it on the Community page. On My builds you can sign up for one email a day at most when a part in a saved build moves by $20 and 10% or more.' },
-  { q: 'Do you make money from the links?', a: 'Some retailer links may earn us a small commission at no extra cost to you. It never changes which parts we show or how we check fit.' },
+/** Site questions at the top of the FAQ page, in sections. Plain text answers, also published as FAQPage structured data. */
+const GENERAL_FAQ: { section: string; items: { q: string; a: string }[] }[] = [
+  { section: 'About Drop-In Builds', items: [
+    { q: 'Is Drop-In Builds a store?', a: "No. We don't sell anything. You plan the build here, and every buy link goes to the retailer or maker, where you check out as usual." },
+    { q: 'Do I need an account?', a: 'No. There is nothing to sign up for. Builds you save are kept in your browser, and Copy Link gives you a link that opens the same build on any other device.' },
+    { q: 'Which platforms can I build?', a: 'The AR-15 and AR-10 rifles, the Glock 17, 19 and 26, the Glock 43X and 48, the Sig P320 and the Sig P365. More platforms are on the way.' },
+    { q: 'Do you make money from the links?', a: 'Some retailer links may earn us a small commission at no extra cost to you. It never changes which parts we show or how we check fit.' },
+  ] },
+  { section: 'Using the Builder', items: [
+    { q: 'How do you know the parts fit?', a: "Each part carries its real measurements and the maker's own fit notes, and the builder checks every part against the rest of your build. Always confirm fit with the maker before you buy." },
+    { q: 'What do Conflict, Check and Note mean?', a: "Conflict means the part won't work with something already in your build. Check means it can work but needs something extra, like an adapter plate, or a second look at the maker's fit notes. Note is useful information that doesn't change whether it fits." },
+    { q: 'What is the Heads Up section?', a: "Things worth knowing about the build as a whole, like extra flash and blast from a short barrel, a light trigger pull, or ammo that must never go in that chamber. None of them stop the build from working." },
+    { q: 'What are starter builds?', a: 'For each platform we put together three complete, compatible builds: Budget, Best Value and Premium. Open one in the builder and swap any part you like.' },
+    { q: 'How accurate are the drawings and weights?', a: "Drawings are drawn to each part's real proportions from published dimensions and patent drawings, so they show how the build will look. They aren't for machining. Weights marked ≈ include estimates until we confirm the makers' listed weights." },
+    { q: 'Can I share a build?', a: 'Yes. Copy Link gives you a link that opens the exact build. A complete build with no conflicts can also be shared on the Community page, where other builders can vote on it.' },
+    { q: 'How are community builds featured?', a: 'Each week the builds with the most votes, and the most people clicking through to buy the parts, are featured at the top of the Community page.' },
+  ] },
+  { section: 'Prices and Alerts', items: [
+    { q: 'Where do the prices come from?', a: "We check retailer and maker sites every night where they allow it, and show each part's price at every retailer we track. Prices marked Sample aren't tracked yet, so always confirm the price at the retailer." },
+    { q: "Why isn't my favorite retailer listed?", a: "Some retailers don't allow automated price checks, and we respect that. We add retailers as they make their prices available to us." },
+    { q: 'How do price alerts work?', a: 'Save a build to My Builds, then enter your email there. We send one email a day at most, only when a part in a saved build moves by $20 and 10% or more. Every email has a one-click unsubscribe link.' },
+    { q: 'What do you do with my email address?', a: "We only use it to send the price alerts you asked for. We don't sell it or share it, and unsubscribing deletes it." },
+  ] },
+  { section: 'Buying and the Law', items: [
+    { q: 'What does FFL mean on a part?', a: 'FFL marks the serialized part, which is legally the firearm (a pistol frame or fire control unit, or an AR lower receiver). It ships to a licensed dealer near you, who handles the transfer and background check.' },
+    { q: 'Can every part ship to my state?', a: 'Not always. Some states limit magazine capacity, muzzle devices or other features, and retailers will not ship restricted items there. Check your state and local laws before you buy.' },
+    { q: 'Is it legal to build my own firearm?', a: "Laws vary by country, state and city, and they change. We don't give legal advice, so check the rules where you live, and buy the serialized part through a licensed dealer." },
+  ] },
 ];
+const FAQ_ITEMS = GENERAL_FAQ.flatMap((g) => g.items);
 
 export function indexPage(builtAt: string) {
   const makers = [...new Set(GUIDES.map((g) => platformOf(g.platform).maker))];
   const body = `
   <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <span>FAQ</span></nav>
-  <h1>Frequently asked questions</h1>
+  <h1>Frequently Asked Questions</h1>
   <p class="lede">How the site works, and straight answers to "will this fit?" for the most common pistol and rifle builds.</p>
+  ${GENERAL_FAQ.map((g) => `
   <section>
-    <h2>About Drop-In Builds</h2>
-    <div class="faq">${GENERAL_FAQ.map((f) => `
+    <h2>${esc(g.section)}</h2>
+    <div class="faq">${g.items.map((f) => `
       <details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join('')}
     </div>
-  </section>
+  </section>`).join('')}
   ${makers.map((m) => `
   <section>
-    <h2>${esc(m)} fit questions</h2>
+    <h2>${esc(m)} Fit Questions</h2>
     <ul class="guide-cards">${GUIDES.filter((g) => platformOf(g.platform).maker === m).map((g) => `
       <li><a href="/guides/${g.slug}/"><b>${esc(g.h1)}</b><span>${esc(g.description)}</span></a></li>`).join('')}
     </ul>
   </section>`).join('')}
-  <p><a class="cta" href="/#build">Open the builder</a></p>
+  <p><a class="cta" href="/#build">Open the Builder</a></p>
   <p class="muted">Every fit chart is checked part against part with the same rules the builder uses. Updated ${shortDate(builtAt)}.</p>`;
   return layout({
     title: 'FAQ: Glock, Sig P320, P365 and AR-15 Parts Compatibility | Drop-In Builds',
@@ -256,7 +279,7 @@ export function indexPage(builtAt: string) {
     body,
     jsonLd: [
       { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'FAQ', url: SITE + '/guides/' },
-      { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: GENERAL_FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+      { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: FAQ_ITEMS.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
     ],
   });
 }
@@ -295,9 +318,10 @@ a{color:var(--blue)}
 .brand-name b{font-weight:700;color:var(--cta)}
 .brand-name.small{font-size:16px;margin-bottom:8px}
 .site-header nav{display:flex;gap:4px}
-@media (max-width:560px){.header-row{gap:0}.site-header nav{width:100%;margin:0 -10px 4px}}
+@media (max-width:560px){.header-row{gap:0}.site-header nav{width:calc(100% + 16px);margin:0 -8px 4px;justify-content:space-between;gap:0}}
 .site-header nav a{color:var(--on-navy-muted);text-decoration:none;font-weight:600;font-size:15px;padding:8px 10px;border-radius:6px}
 .site-header nav a:hover{color:var(--on-navy);background:rgba(255,255,255,.08)}
+@media (max-width:560px){.site-header nav a{padding:8px;font-size:14.5px;white-space:nowrap}}
 main.wrap{padding-top:20px;padding-bottom:40px}
 .crumbs{font-size:14px;color:var(--muted);margin-bottom:8px}
 .crumbs a{color:var(--muted)}

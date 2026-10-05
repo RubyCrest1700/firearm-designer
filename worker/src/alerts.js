@@ -107,9 +107,9 @@ async function sendConfirm(env, row) {
   await send(env, {
     to: row.email, token: row.token,
     subject: 'Confirm your Drop-In Builds price alerts',
-    html: layout(env, row.token, `<h1 style="font-size:20px;margin:0 0 12px">Confirm your price alerts</h1>
+    html: layout(env, row.token, `<h1 style="font-size:20px;margin:0 0 12px">Confirm Your Price Alerts</h1>
 <p style="font-size:15px;line-height:1.5">Press the button and we'll email you when parts in your saved builds get cheaper or more expensive. At most one email a day.</p>
-<p style="margin:24px 0"><a href="${link}" style="background:#d4691e;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:bold;display:inline-block">Turn on price alerts</a></p>`, why),
+<p style="margin:24px 0"><a href="${link}" style="background:#d4691e;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:bold;display:inline-block">Turn On Price Alerts</a></p>`, why),
     text: `Confirm your Drop-In Builds price alerts:\n${link}\n\nWe'll email you when parts in your saved builds get cheaper or more expensive. At most one email a day.${footerText(env, row.token, why)}`,
   });
 }
@@ -146,7 +146,7 @@ function digest(env, token, moved) {
 <td style="padding:6px 0;border-top:1px solid #eee">${esc(c.name)}</td>
 <td style="padding:6px 0 6px 8px;border-top:1px solid #eee;text-align:right;white-space:nowrap;color:#8a939e"><s>${money(c.was)}</s></td>
 <td style="padding:6px 0 6px 8px;border-top:1px solid #eee;text-align:right;white-space:nowrap;font-weight:bold;color:${c.now < c.was ? '#2e7d4f' : '#b06d00'}">${c.now < c.was ? '↓' : '↑'} ${money(c.now)}</td></tr>`).join('')}</table>
-<p style="margin:0 0 24px"><a href="${buildLink(build)}" style="color:#d4691e;font-weight:bold">Open this build</a></p>`).join('');
+<p style="margin:0 0 24px"><a href="${buildLink(build)}" style="color:#d4691e;font-weight:bold">Open This Build</a></p>`).join('');
   const text = moved.map(({ build, changes, total }) => `${build.name} (now ${money(total)})\n${changes.map((c) => `  ${c.name}: ${money(c.was)} -> ${money(c.now)}`).join('\n')}\n  ${buildLink(build)}`).join('\n\n');
   return { subject, html: layout(env, token, html, why), text: text + footerText(env, token, why) };
 }
@@ -155,7 +155,7 @@ function digest(env, token, moved) {
 
 const page = (title, body) => new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)} | Drop-In Builds</title>
 <style>body{margin:0;font-family:system-ui,Arial,sans-serif;background:#f2f1ee;color:#1c2430}header{background:#0e2a47;color:#fff;padding:16px 24px;font-size:18px}header b{color:#e8853a}main{max-width:520px;margin:32px auto;padding:0 16px}a.btn{display:inline-block;background:#d4691e;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:bold}</style></head>
-<body><header>DROP-IN <b>BUILDS</b></header><main><h1>${esc(title)}</h1>${body}<p><a class="btn" href="${SITE}/#saved">Go to My builds</a></p></main></body></html>`, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+<body><header>DROP-IN <b>BUILDS</b></header><main><h1>${esc(title)}</h1>${body}<p><a class="btn" href="${SITE}/#saved">Go to My Builds</a></p></main></body></html>`, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
 
 /** Answers alert requests, or returns null for anything else. `json` and `who` come from api.js. */
 export async function alertsRoute(request, env, { path, url, json, who, now }) {
@@ -209,8 +209,8 @@ export async function alertsRoute(request, env, { path, url, json, who, now }) {
     const token = url.searchParams.get('t') ?? '';
     const r = TOKEN.test(token) ? await db.prepare('UPDATE alerts SET confirmed = 1 WHERE token = ?').bind(token).run() : { meta: { changes: 0 } };
     return r.meta.changes
-      ? page('Price alerts are on', '<p>We\'ll email you when parts in your saved builds change price, at most once a day. Builds you save later in the same browser are added automatically.</p>')
-      : page('This link has expired', '<p>Sign up again from My builds on the site.</p>');
+      ? page('Price Alerts Are On', '<p>We\'ll email you when parts in your saved builds change price, at most once a day. Builds you save later in the same browser are added automatically.</p>')
+      : page('This Link Has Expired', '<p>Sign up again from My Builds on the site.</p>');
   }
 
   // GET or POST /alerts/stop?t=<token>: unsubscribe this address from everything (POST is the one-click header)
@@ -219,7 +219,7 @@ export async function alertsRoute(request, env, { path, url, json, who, now }) {
     const row = TOKEN.test(token) ? await db.prepare('SELECT email FROM alerts WHERE token = ?').bind(token).first() : null;
     if (row) await db.prepare('DELETE FROM alerts WHERE email = ?').bind(row.email).run();
     if (request.method === 'POST') return new Response(null, { status: 204 });
-    return page('You\'re unsubscribed', '<p>We won\'t email this address again. Your saved builds are still on the site.</p>');
+    return page('You\'re Unsubscribed', '<p>We won\'t email this address again. Your saved builds are still on the site.</p>');
   }
 
   return null;

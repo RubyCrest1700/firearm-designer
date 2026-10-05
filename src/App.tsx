@@ -21,6 +21,7 @@ import { PriceChart } from './PriceChart';
 import { alertsAvailable, checkAlertSignup, loadAlertSignup, signUpForAlerts, stopAlerts, storeAlertSignup, syncAlertBuilds, type AlertSignup } from './alerts';
 import { MOVABLE, SIDE_LABEL, mountsFor, railLength, type Resolved } from './data/addons';
 import { GUIDES } from './guides/content';
+import { titleCase } from './text';
 import type { Build, Issue, Part, Placement, Platform, Severity, Side, Slot, Tier } from './types';
 
 const STORE_KEY = 'firearm-designer:v2';
@@ -127,7 +128,7 @@ export default function App() {
       if (!seen || localStorage.getItem(DROPS_SEEN_KEY) === seen) return;
       localStorage.setItem(DROPS_SEEN_KEY, seen);
     } catch { return; }
-    setToast(dropped.length === 1 ? `Price drop: "${dropped[0].name}" costs less than when you saved it. See My builds.` : `Price drop: ${dropped.length} of your saved builds cost less than when you saved them. See My builds.`);
+    setToast(dropped.length === 1 ? `Price drop: "${dropped[0].name}" costs less than when you saved it. See My Builds.` : `Price drop: ${dropped.length} of your saved builds cost less than when you saved them. See My Builds.`);
   }, []);
   useEffect(() => {
     if (!toast) return;
@@ -151,7 +152,7 @@ export default function App() {
   };
   const saveCopy = (name: string, pid: string, sel: Selection) => {
     setSaved((list) => [{ id: newId(), name, platform: pid, selection: { ...sel }, savedAt: new Date().toISOString(), prices: priceSnapshot(pid, sel) }, ...list]);
-    setToast(`Saved "${name}" to My builds`);
+    setToast(`Saved "${name}" to My Builds`);
   };
   const share = async (name: string, note: string) => {
     const sel = selections[platformId] ?? {};
@@ -169,7 +170,7 @@ export default function App() {
       setSaved((list) => [{ id, name, platform: platformId, selection: { ...sel }, savedAt: now, prices: priceSnapshot(platformId, sel) }, ...list]);
       setOpenSavedId(id);
     }
-    setToast(`Saved "${name}" to My builds`);
+    setToast(`Saved "${name}" to My Builds`);
   };
   const copyLink = async (pid: string, sel: Selection, communityId?: string) => {
     const url = shareUrl(pid, sel, communityId);
@@ -192,13 +193,14 @@ export default function App() {
             <span className="brand-name">Drop-In <b>Builds</b></span>
           </a>
           <nav className="site-nav" aria-label="Main">
+            <NavLink active={route === 'home'} onClick={() => go('home')}>Home</NavLink>
             <NavLink active={route === 'build'} onClick={() => go('build')}>Build</NavLink>
-            <NavLink active={route === 'community'} onClick={() => go('community')}>Community</NavLink>
-            <a className="nav-link" href="./guides/">FAQ</a>
             <NavLink active={route === 'saved'} onClick={() => go('saved')}>
-              My builds{saved.length > 0 && <span className="count">{saved.length}</span>}
+              My Builds{saved.length > 0 && <span className="count">{saved.length}</span>}
               {dropped.length > 0 && <span className="count drop" title={`Prices dropped on ${dropped.length} saved build${dropped.length > 1 ? 's' : ''}`}>↓</span>}
             </NavLink>
+            <NavLink active={route === 'community'} onClick={() => go('community')}>Community</NavLink>
+            <a className="nav-link" href="./guides/">FAQ</a>
           </nav>
           <p className="price-status">
             <span className={'pulse' + (PRICES_UPDATED_AT ? ' live' : '')} aria-hidden="true" />
@@ -267,7 +269,7 @@ export default function App() {
             <p>Plan a build part by part, check that everything fits, and see where each part costs least. We don't sell anything.</p>
           </div>
           <div>
-            <p className="foot-title">Good to know</p>
+            <p className="foot-title">Good to Know</p>
             <p>Prices marked Sample aren't tracked yet. Always confirm the price at the retailer.</p>
             <p>Parts marked FFL are serialized. They are legally the firearm and ship to a licensed dealer. Laws vary by state.</p>
             <p>Some retailer links may earn us a small commission at no extra cost to you. It never changes which parts we show or how we check fit.</p>
@@ -295,7 +297,7 @@ function PlatformMenu({ current, onPick }: { current: Platform; onPick: (id: str
   return (
     <div className="pmenu" ref={ref}>
       <button className="pmenu-btn" aria-expanded={open} aria-haspopup="true" onClick={() => setOpen(!open)}>
-        Change platform
+        Change Platform
         <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" /></svg>
       </button>
       {open && (
@@ -356,12 +358,12 @@ function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string) => void;
       <section className="hero">
         <div className="wrap hero-row">
           <div className="hero-copy">
-            <p className="kicker">Plan it before you buy it</p>
-            <h1>Build your next rifle or pistol, part by part.</h1>
+            <p className="kicker">Plan It Before You Buy It</p>
+            <h1>Build Your Next Rifle or Pistol, Part by Part</h1>
             <p className="lede">Pick a platform, choose every part, and we check that it all fits and show where each part costs least. We don't sell anything.</p>
             <div className="hero-actions">
-              <button className="btn primary big" onClick={onStart}>Start a build</button>
-              <button className="btn big" onClick={onBrowse}>Browse community builds</button>
+              <button className="btn primary big" onClick={onStart}>Start a Build</button>
+              <button className="btn big" onClick={onBrowse}>Browse Community Builds</button>
             </div>
             <p className="hero-facts">{PLATFORMS.length} platforms · {partCount} parts · {Object.keys(RETAILERS).length} retailers compared</p>
           </div>
@@ -373,7 +375,7 @@ function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string) => void;
 
       <div className="wrap">
         <section className="home-section">
-          <h2 className="home-h2">Pick a platform</h2>
+          <h2 className="home-h2">Pick a Platform</h2>
           {FAMILIES.map((fam) => (
             <div className="tile-family" key={fam}>
               <p className="tile-fam">{fam}s</p>
@@ -401,26 +403,26 @@ function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string) => void;
         </section>
 
         <section className="home-section">
-          <h2 className="home-h2">How it works</h2>
+          <h2 className="home-h2">How It Works</h2>
           <ol className="steps">
-            <li className="card"><b>Pick a platform</b><span>Start blank, or from a budget, value or premium build that already fits together.</span></li>
-            <li className="card"><b>Choose your parts</b><span>Every part is checked against the rest of the build. Anything that won't fit, or needs a second look, is flagged before you buy.</span></li>
-            <li className="card"><b>Buy at the best price</b><span>See each part's price at every retailer we track, save the build, and get an email if a part drops in price.</span></li>
+            <li className="card"><b>Pick a Platform</b><span>Start blank, or from a budget, value or premium build that already fits together.</span></li>
+            <li className="card"><b>Choose Your Parts</b><span>Every part is checked against the rest of the build. Anything that won't fit, or needs a second look, is flagged before you buy.</span></li>
+            <li className="card"><b>Buy at the Best Price</b><span>See each part's price at every retailer we track, save the build, and get an email if a part drops in price.</span></li>
           </ol>
         </section>
 
         <section className="home-section home-split">
           <div className="card home-panel">
-            <h2 className="home-h2">Community builds</h2>
+            <h2 className="home-h2">Community Builds</h2>
             <p>See what other builders put together, vote for the best ones, and open any build to make it your own.</p>
-            <button className="btn" onClick={onBrowse}>Browse community builds</button>
+            <button className="btn" onClick={onBrowse}>Browse Community Builds</button>
           </div>
           <div className="card home-panel">
-            <h2 className="home-h2">Common questions</h2>
+            <h2 className="home-h2">Common Questions</h2>
             <ul className="faq-links">
               {faqs.map((g) => <li key={g.slug}><a href={`./guides/${g.slug}/`}>{g.h1}</a></li>)}
             </ul>
-            <a className="link" href="./guides/">See all questions</a>
+            <a className="link" href="./guides/">See All Questions</a>
           </div>
         </section>
       </div>
@@ -466,9 +468,9 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
     <>
       <div className="wrap builder">
         <div className="builder-head">
-          <p className="kicker">{communityOpen ? <>Community build · {communityOpen.name}</> : openSaved ? <>My builds · {openSaved.name}</> : <>{platform.family} build · {platform.maker}</>}</p>
+          <p className="kicker">{communityOpen ? <>Community Build · {communityOpen.name}</> : openSaved ? <>My Builds · {openSaved.name}</> : <>{platform.family} Build · {platform.maker}</>}</p>
           <div className="title-row">
-            <h1>Build your {platform.name}</h1>
+            <h1>Build Your {platform.name}</h1>
             <PlatformMenu current={platform} onPick={(id) => { setPlatformId(id); setOpenSlot(null); }} />
           </div>
           <p className="lede">{platform.blurb}</p>
@@ -477,19 +479,19 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
         <div className="workbench">
           <div className="wb-center">
             <div className="bp-toolbar" role="toolbar" aria-label="Build actions">
-              <span className="tb-label">{chosen === 0 ? 'Start from' : 'Start over from'}</span>
+              <span className="tb-label">{chosen === 0 ? 'Start From' : 'Start Over From'}</span>
               {(['budget', 'value', 'premium'] as Tier[]).map((t) => (
                 <button key={t} className="chip" onClick={() => { setSelection(presetSelection(platform, t)); setOpenSlot(null); }}>
                   {TIER_LABEL[t]} <span className="chip-amt">{money(totalOf(platform, toBuild(platform, presetSelection(platform, t))))}</span>
                 </button>
               ))}
-              <button className="chip" onClick={onBrowseFeatured}>Community builds</button>
-              {chosen > 0 && <button className="chip chip-clear" onClick={() => { setSelection({}); setOpenSlot(null); }}>Clear build</button>}
+              <button className="chip" onClick={onBrowseFeatured}>Community Builds</button>
+              {chosen > 0 && <button className="chip chip-clear" onClick={() => { setSelection({}); setOpenSlot(null); }}>Clear Build</button>}
             </div>
             <figure className="blueprint">
               <div className="bp-strip">
-                <span>DWG FD-{platform.id.toUpperCase()} · Side elevation</span>
-                <button className="bp-zoom" aria-pressed={zoom} onClick={() => setZoom(!zoom)}>{zoom ? 'Fit drawing' : 'Zoom in'}</button>
+                <span>DWG FD-{platform.id.toUpperCase()} · Side Elevation</span>
+                <button className="bp-zoom" aria-pressed={zoom} onClick={() => setZoom(!zoom)}>{zoom ? 'Fit Drawing' : 'Zoom In'}</button>
                 <span className="bp-legend" aria-hidden="true">
                   <span className="lg lg-sel">Selected</span>
                   <span className="lg lg-hid">Internal</span>
@@ -561,7 +563,7 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
   return (
     <section className="card parts" aria-label="Parts list">
       <div className="parts-head" aria-hidden="true">
-        <span>#</span><span>Component</span><span className="r">Best price</span><span className="r">Fit</span>
+        <span>#</span><span>Component</span><span className="r">Best Price</span><span className="r">Fit</span>
       </div>
       {groupSlots(platform.slots).map(([group, slots]) => (
         <div className="parts-group" key={group}>
@@ -678,7 +680,7 @@ function Summary({ platform, build, issues, aware, states, status, total, openSa
   return (
     <aside className="summary" id="summary" aria-label="Build summary">
       <section className="card total-card">
-        <p className="kicker">Build total at best prices</p>
+        <p className="kicker">Build Total at Best Prices</p>
         <p className="total"><span>{dollars}</span><small>.{cents}</small></p>
         <p className="total-sub">
           {chosen.length} parts from {retailers} retailer{retailers === 1 ? '' : 's'}
@@ -694,38 +696,38 @@ function Summary({ platform, build, issues, aware, states, status, total, openSa
 
         {sharing ? (
           <form className="save-form" onSubmit={(e) => { e.preventDefault(); void submitShare(); }}>
-            <label htmlFor="share-name">Build name</label>
+            <label htmlFor="share-name">Build Name</label>
             <input id="share-name" value={name} onChange={(e) => setName(e.target.value)} autoFocus maxLength={60} />
-            <label htmlFor="share-note">What's it for? <span className="dim">(optional)</span></label>
+            <label htmlFor="share-note">What's It For? <span className="dim">(optional)</span></label>
             <textarea id="share-note" value={note} onChange={(e) => setNote(e.target.value)} maxLength={280} rows={3} placeholder="Daily carry, competition, home defense…" />
             <p className="form-note">Shared builds are public on the Community page. Just the name, note and parts list are shared.</p>
             {shareError && <p className="form-error" role="alert">{shareError}</p>}
             <div className="save-actions">
-              <button type="submit" className="btn primary" disabled={busy}>{busy ? 'Sharing…' : 'Share build'}</button>
+              <button type="submit" className="btn primary" disabled={busy}>{busy ? 'Sharing…' : 'Share Build'}</button>
               <button type="button" className="btn ghost" onClick={() => setSharing(false)}>Cancel</button>
             </div>
           </form>
         ) : saving ? (
           <form className="save-form" onSubmit={(e) => { e.preventDefault(); submit(!openSaved); }}>
-            <label htmlFor="build-name">Build name</label>
+            <label htmlFor="build-name">Build Name</label>
             <input id="build-name" value={name} onChange={(e) => setName(e.target.value)} autoFocus maxLength={60} />
             <div className="save-actions">
               {openSaved ? (
                 <>
-                  <button type="submit" className="btn primary">Update saved build</button>
-                  <button type="button" className="btn" onClick={() => submit(true)}>Save as new</button>
+                  <button type="submit" className="btn primary">Update Saved Build</button>
+                  <button type="button" className="btn" onClick={() => submit(true)}>Save as New</button>
                 </>
-              ) : <button type="submit" className="btn primary">Save build</button>}
+              ) : <button type="submit" className="btn primary">Save Build</button>}
               <button type="button" className="btn ghost" onClick={() => setSaving(false)}>Cancel</button>
             </div>
           </form>
         ) : (
           <div className="total-actions">
-            <button className="btn primary" onClick={startSave}>{openSaved ? 'Save changes' : 'Save build'}</button>
-            <button className="btn" onClick={onCopyLink}>Copy link</button>
+            <button className="btn primary" onClick={startSave}>{openSaved ? 'Save Changes' : 'Save Build'}</button>
+            <button className="btn" onClick={onCopyLink}>Copy Link</button>
             <button className="btn wide-row" onClick={startShare} disabled={!canShare}
               title={canShare ? 'Post this build to the Community page' : 'Finish the build and fix any conflicts to share it'}>
-              Share to community
+              Share to Community
             </button>
           </div>
         )}
@@ -744,7 +746,7 @@ function Summary({ platform, build, issues, aware, states, status, total, openSa
 
       {aware.length > 0 && (
         <section className="card">
-          <h2 className="card-title">Heads up</h2>
+          <h2 className="card-title">Heads Up</h2>
           <p className="card-note">Things to know about this build. None of them stop it from working.</p>
           <ul className="issues">
             {aware.map((a, n) => (
@@ -764,7 +766,7 @@ function Summary({ platform, build, issues, aware, states, status, total, openSa
       )}
 
       {chosen.length > 0 && <section className="card">
-        <h2 className="card-title">Buy it all from one store</h2>
+        <h2 className="card-title">Buy It All from One Store</h2>
         <p className="card-note">Fewer shipments can beat a lower parts total. In-stock parts only.</p>
         <table className="carts">
           <tbody>
@@ -838,14 +840,14 @@ function Picker({ platform, slot, number, build, place, selectedId, onChoose, on
         <header className="drawer-head">
           <div>
             <p className="kicker">Item {number} · {platform.name}</p>
-            <h2 id="picker-title">{slot.name}</h2>
+            <h2 id="picker-title">{titleCase(slot.name)}</h2>
             <p className="drawer-hint">{slot.hint}</p>
           </div>
           <button ref={closeRef} className="icon-btn" onClick={onClose} aria-label="Close">×</button>
         </header>
         <div className="drawer-tools">
           <div className="segctl" role="radiogroup" aria-label="Sort by">
-            {([['fit', 'Best fit'], ['price', 'Lowest price'], ['picks', 'Our picks']] as [SortKey, string][]).map(([k, label]) => (
+            {([['fit', 'Best Fit'], ['price', 'Lowest Price'], ['picks', 'Our Picks']] as [SortKey, string][]).map(([k, label]) => (
               <button key={k} role="radio" aria-checked={sort === k} className={sort === k ? 'on' : ''} onClick={() => setSort(k)}>{label}</button>
             ))}
           </div>
@@ -862,7 +864,7 @@ function Picker({ platform, slot, number, build, place, selectedId, onChoose, on
           ))}
           {candidates.length === 0 && <li className="cand-empty">Every option conflicts with your current build. Turn off the filter to see why.</li>}
         </ul>
-        {onRemove && <button className="btn ghost wide" onClick={onRemove}>Remove {slot.name.toLowerCase()} from build</button>}
+        {onRemove && <button className="btn ghost wide" onClick={onRemove}>Remove {titleCase(slot.name)} from Build</button>}
       </aside>
     </div>
   );
@@ -880,9 +882,9 @@ function Candidate({ part, issues, sev, selected, onChoose, onBuyClick }: {
     <li className={'cand ' + fit + (selected ? ' selected' : '')}>
       <div className="cand-top">
         <FitTag state={fit} />
-        {part.pick && <span className={'pick ' + part.pick.tier}>{TIER_LABEL[part.pick.tier]} pick</span>}
+        {part.pick && <span className={'pick ' + part.pick.tier}>{TIER_LABEL[part.pick.tier]} Pick</span>}
         {part.serialized && <span className="ffl">FFL</span>}
-        {selected && <span className="in-build">In your build</span>}
+        {selected && <span className="in-build">In Your Build</span>}
       </div>
       <div className="cand-mid">
         <div className="cand-body">
@@ -895,17 +897,17 @@ function Candidate({ part, issues, sev, selected, onChoose, onBuyClick }: {
           {best && <span className="amt">{money(best.price)}</span>}
           {best && <span className="src">{RETAILERS[best.retailer].name}{live ? '' : ' · sample'}</span>}
           <ChangeChip part={part} long />
-          {!selected && <button className="btn primary" onClick={onChoose}>Add to build</button>}
+          {!selected && <button className="btn primary" onClick={onChoose}>Add to Build</button>}
         </div>
       </div>
       <button className="compare" aria-expanded={showPrices} onClick={() => setShowPrices(!showPrices)}>
-        <span>{part.offers.length > 1 ? `Compare ${part.offers.length} retailers` : 'View retailer'}</span>
-        {hi > lo && <span className="save">Save up to {money(hi - lo)}</span>}
+        <span>{part.offers.length > 1 ? `Compare ${part.offers.length} Retailers` : 'View Retailer'}</span>
+        {hi > lo && <span className="save">Save Up to {money(hi - lo)}</span>}
         <span className="chev" aria-hidden="true">{showPrices ? '−' : '+'}</span>
       </button>
       {showPrices && (
         <div className="offers-wrap">
-          {hasHistory(part) && <PriceChart points={partSeries(part, daysAgo(90))} label="Best price, last 90 days" />}
+          {hasHistory(part) && <PriceChart points={partSeries(part, daysAgo(90))} label="Best Price, Last 90 Days" />}
           <table className="offers">
             <thead><tr><th>Retailer</th><th className="num">Price</th><th>Stock</th><th>Checked</th><th /></tr></thead>
             <tbody>
@@ -913,7 +915,7 @@ function Candidate({ part, issues, sev, selected, onChoose, onBuyClick }: {
                 <tr key={o.retailer} className={best && o.retailer === best.retailer ? 'best' : ''}>
                   <td>{RETAILERS[o.retailer].name}</td>
                   <td className="num">{money(o.price)}</td>
-                  <td>{o.inStock ? 'In stock' : <span className="oos">Out</span>}</td>
+                  <td>{o.inStock ? 'In Stock' : <span className="oos">Out</span>}</td>
                   <td className="dim">{o.checkedAt ? `Live ${shortDate(o.checkedAt)}` : 'Sample'}</td>
                   <td className="num"><a href={o.url ?? offerUrl(o.retailer, `${part.brand} ${part.name}`)} target="_blank" rel="noopener noreferrer" onClick={onBuyClick}>{o.url ? 'View ↗' : 'Search ↗'}</a></td>
                 </tr>
@@ -959,7 +961,7 @@ function topParts(build: Build) {
     .sort((a, b) => (bestOffer(b)?.price ?? 0) - (bestOffer(a)?.price ?? 0)).slice(0, 3);
 }
 
-const SORT_LABEL: [CommunitySort, string][] = [['top', 'Top voted'], ['new', 'Newest'], ['bought', 'Most bought']];
+const SORT_LABEL: [CommunitySort, string][] = [['top', 'Top Voted'], ['new', 'Newest'], ['bought', 'Most Bought']];
 
 function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onStart, onToast }: {
   onOpen: (b: CommunityBuild) => void; onOpenStarter: (fb: FeaturedBuild) => void; onCopyLink: (b: CommunityBuild) => void;
@@ -1016,7 +1018,7 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onStart, onT
         key={b.id}
         platformId={b.platform}
         selection={sel}
-        badge={rank !== undefined ? <span className="tier-badge value">#{rank + 1} this week</span> : undefined}
+        badge={rank !== undefined ? <span className="tier-badge value">#{rank + 1} This Week</span> : undefined}
         title={b.name}
         meta={<>{platform.name} · {partIds(sel).length} parts · Shared {shortDate(b.createdAt, true)}</>}
         body={<>
@@ -1038,9 +1040,9 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onStart, onT
             <button className={'btn vote' + (voted ? ' on' : '')} aria-pressed={voted} onClick={() => void toggleVote(b)}>
               ▲ {voted ? 'Voted' : 'Vote'}
             </button>
-            <button className="btn primary" onClick={() => onOpen(b)}>Open in builder</button>
+            <button className="btn primary" onClick={() => onOpen(b)}>Open in Builder</button>
             <button className="btn ghost" onClick={() => onSave(b.name, b.platform, sel)}>Save</button>
-            <button className="btn ghost" onClick={() => onCopyLink(b)}>Copy link</button>
+            <button className="btn ghost" onClick={() => onCopyLink(b)}>Copy Link</button>
             <button className="btn ghost" onClick={() => setConfirmReport(b.id)}>Report</button>
           </>
         )}
@@ -1053,7 +1055,7 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onStart, onT
     <div className="wrap page">
       <div className="page-head">
         <p className="kicker">Community</p>
-        <h1>Builds from the community</h1>
+        <h1>Builds from the Community</h1>
         <p className="lede">Real builds shared by other builders. Vote for the ones you'd run. The best each week, by votes and by how many people click through to buy the parts, get featured at the top.</p>
       </div>
       {!communityLive && (
@@ -1062,14 +1064,14 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onStart, onT
 
       {featured.length > 0 && (
         <section className="community-section">
-          <h2 className="section-title">Featured this week</h2>
+          <h2 className="section-title">Featured This Week</h2>
           <div className="card-grid">{featured.map((b, i) => card(b, i))}</div>
         </section>
       )}
 
       <section className="community-section">
         <div className="section-head">
-          <h2 className="section-title">All shared builds</h2>
+          <h2 className="section-title">All Shared Builds</h2>
           <div className="segctl" role="radiogroup" aria-label="Sort by">
             {SORT_LABEL.map(([k, label]) => (
               <button key={k} role="radio" aria-checked={sort === k} className={sort === k ? 'on' : ''} onClick={() => setSort(k)}>{label}</button>
@@ -1084,16 +1086,16 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onStart, onT
         {error && <p className="form-error" role="alert">{error}</p>}
         {builds === null ? <p className="dim">Loading shared builds…</p> : builds.length === 0 ? (
           <div className="empty-state card">
-            <h2>No shared builds here yet</h2>
-            <p>Be the first. Put together a complete build, then press Share to community.</p>
-            <div className="build-card-actions"><button className="btn primary" onClick={onStart}>Start a build</button></div>
+            <h2>No Shared Builds Here Yet</h2>
+            <p>Be the first. Put together a complete build, then press Share to Community.</p>
+            <div className="build-card-actions"><button className="btn primary" onClick={onStart}>Start a Build</button></div>
           </div>
         ) : <div className="card-grid">{builds.map((b) => card(b))}</div>}
       </section>
 
       <section className="community-section">
-        <h2 className="section-title">Starter builds</h2>
-        <p className="section-note">Our own Budget, Best value and Premium lists for each platform. Complete, compatible and a good place to begin.</p>
+        <h2 className="section-title">Starter Builds</h2>
+        <p className="section-note">Our own Budget, Best Value and Premium lists for each platform. Complete, compatible and a good place to begin.</p>
         <div className="card-grid">
           {starters.map((fb) => {
             const { build } = buildOf(fb.platform.id, fb.selection);
@@ -1111,7 +1113,7 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onStart, onT
                   <ul className="highlights">{topParts(build).map((p) => <li key={p.id}><span className="brand-dim">{p.brand}</span> {p.name}</li>)}</ul>
                 </>}
                 actions={<>
-                  <button className="btn primary" onClick={() => onOpenStarter(fb)}>Open in builder</button>
+                  <button className="btn primary" onClick={() => onOpenStarter(fb)}>Open in Builder</button>
                   <button className="btn" onClick={() => onSave(fb.name, fb.platform.id, fb.selection)}>Save</button>
                 </>}
               />
@@ -1140,18 +1142,18 @@ function AlertsPanel({ signup, hasBuilds, onSignUp, onRefresh, onStop }: {
   if (signup) return (
     <section className="alerts-panel card on">
       <div>
-        <h2>{signup.confirmed ? 'Price alert emails are on' : 'Check your inbox'}</h2>
+        <h2>{signup.confirmed ? 'Price Alert Emails Are On' : 'Check Your Inbox'}</h2>
         <p>{signup.confirmed
           ? <>We'll email <b>{signup.email}</b> when parts in your saved builds go up or down in price, at most once a day. Builds you save here are added automatically.</>
           : <>We sent a link to <b>{signup.email}</b>. Press it to turn on price alerts.</>}</p>
       </div>
-      <button className="btn ghost" disabled={busy} onClick={async () => { setBusy(true); await onStop(); setBusy(false); }}>{signup.confirmed ? 'Turn off' : 'Cancel'}</button>
+      <button className="btn ghost" disabled={busy} onClick={async () => { setBusy(true); await onStop(); setBusy(false); }}>{signup.confirmed ? 'Turn Off' : 'Cancel'}</button>
     </section>
   );
   return (
     <section className="alerts-panel card">
       <div>
-        <h2>Get price alerts by email</h2>
+        <h2>Get Price Alerts by Email</h2>
         <p>{hasBuilds ? 'We\'ll email you when parts in your saved builds get cheaper or more expensive.' : 'Save a build, then get an email when its parts get cheaper or more expensive.'} One email a day at most, only when something changed. We only use your address for these alerts.</p>
       </div>
       <form onSubmit={async (e) => {
@@ -1162,7 +1164,7 @@ function AlertsPanel({ signup, hasBuilds, onSignUp, onRefresh, onStop }: {
       }}>
         <label className="sr" htmlFor="alert-email">Email address</label>
         <input id="alert-email" type="email" required autoComplete="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={254} />
-        <button className="btn primary" type="submit" disabled={busy}>{busy ? 'Sending…' : 'Email me'}</button>
+        <button className="btn primary" type="submit" disabled={busy}>{busy ? 'Sending…' : 'Email Me'}</button>
         {error && <p className="form-error" role="alert">{error}</p>}
       </form>
     </section>
@@ -1174,7 +1176,7 @@ function PriceSinceSaved({ s }: { s: SavedBuild }) {
   const { changes, drop } = priceChanges(s);
   if (!s.prices || !Object.keys(s.prices).length) return null;
   const { build } = buildOf(s.platform, s.selection);
-  const chart = <PriceChart points={totalSeries(Object.values(build).filter((p): p is Part => !!p), s.savedAt.slice(0, 10))} label="Build total since you saved it" />;
+  const chart = <PriceChart points={totalSeries(Object.values(build).filter((p): p is Part => !!p), s.savedAt.slice(0, 10))} label="Build Total Since You Saved It" />;
   if (Math.abs(drop) < 1) return <><p className="since-saved flat">Same price as when you saved it</p>{chart}</>;
   return (
     <div className={'since-saved ' + (drop > 0 ? 'down' : 'up')}>
@@ -1201,18 +1203,18 @@ function SavedPage({ saved, alerts, onOpen, onRename, onDuplicate, onDelete, onC
   return (
     <div className="wrap page">
       <div className="page-head">
-        <p className="kicker">My builds</p>
-        <h1>Your saved builds</h1>
-        <p className="lede">Builds are saved in this browser. We check prices every night, and each build shows what changed since you saved it. Use Copy link to open one on another device or send it to someone.</p>
+        <p className="kicker">My Builds</p>
+        <h1>Your Saved Builds</h1>
+        <p className="lede">Builds are saved in this browser. We check prices every night, and each build shows what changed since you saved it. Use Copy Link to open one on another device or send it to someone.</p>
       </div>
       {alerts}
       {saved.length === 0 ? (
         <div className="empty-state card">
-          <h2>No saved builds yet</h2>
-          <p>Put a build together and press Save build, or save one from the Community page to start from.</p>
+          <h2>No Saved Builds Yet</h2>
+          <p>Put a build together and press Save Build, or save one from the Community page to start from.</p>
           <div className="build-card-actions">
-            <button className="btn primary" onClick={onStart}>Start a build</button>
-            <button className="btn" onClick={onBrowse}>Browse community builds</button>
+            <button className="btn primary" onClick={onStart}>Start a Build</button>
+            <button className="btn" onClick={onBrowse}>Browse Community Builds</button>
           </div>
         </div>
       ) : (
@@ -1226,7 +1228,7 @@ function SavedPage({ saved, alerts, onOpen, onRename, onDuplicate, onDelete, onC
                 selection={s.selection}
                 title={renaming === s.id ? (
                   <form className="rename" onSubmit={(e) => { e.preventDefault(); if (draft.trim()) onRename(s.id, draft.trim()); setRenaming(null); }}>
-                    <label className="sr" htmlFor={`rename-${s.id}`}>Build name</label>
+                    <label className="sr" htmlFor={`rename-${s.id}`}>Build Name</label>
                     <input id={`rename-${s.id}`} value={draft} onChange={(e) => setDraft(e.target.value)} autoFocus maxLength={60} />
                     <button className="btn primary" type="submit">Save</button>
                   </form>
@@ -1242,7 +1244,7 @@ function SavedPage({ saved, alerts, onOpen, onRename, onDuplicate, onDelete, onC
                 ) : (
                   <>
                     <button className="btn primary" onClick={() => onOpen(s)}>Open</button>
-                    <button className="btn" onClick={() => onCopyLink(s)}>Copy link</button>
+                    <button className="btn" onClick={() => onCopyLink(s)}>Copy Link</button>
                     <button className="btn ghost" onClick={() => { setRenaming(s.id); setDraft(s.name); }}>Rename</button>
                     <button className="btn ghost" onClick={() => onDuplicate(s)}>Duplicate</button>
                     <button className="btn ghost" onClick={() => setConfirmDelete(s.id)}>Delete</button>

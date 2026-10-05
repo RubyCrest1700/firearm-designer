@@ -138,8 +138,8 @@ a.nav-link { text-decoration: none; }
   .header-row { gap: 0 16px; }
   .brand { order: 1; }
   .price-status { order: 2; margin-left: auto; }
-  .site-nav { order: 3; width: calc(100% + 32px); margin: 0 -16px; padding: 0 8px; border-top: 1px solid rgba(255,255,255,.08); }
-  .nav-link { padding: 12px 10px 10px; font-size: 15px; }
+  .site-nav { order: 3; width: calc(100% + 32px); margin: 0 -16px; padding: 0 6px; justify-content: space-between; border-top: 1px solid rgba(255,255,255,.08); }
+  .nav-link { padding: 12px 8px 10px; font-size: 14.5px; white-space: nowrap; }
   .site-header { position: static; }
   .brand { padding: 8px 0; }
 }

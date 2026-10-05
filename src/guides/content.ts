@@ -85,7 +85,7 @@ export const GUIDES: Guide[] = [
   {
     slug: 'glock-19-threaded-barrels',
     title: 'Glock 19 Threaded Barrels: 1/2x28 vs M13.5x1 LH and What Fits',
-    h1: 'Glock 19 threaded barrels: which thread, which slide, which sights',
+    h1: 'Glock 19 Threaded Barrels: Which Thread, Which Slide, Which Sights',
     description: 'Threaded Glock 19 barrels come in 1/2x28 and M13.5x1 left-hand. See which muzzle devices thread on, which slides take each barrel, and which sights clear a can.',
     platform: 'glock19',
     lede: 'A threaded barrel opens up compensators, thread protectors and suppressors, but the muzzle device has to match the thread exactly, and the barrel still has to match the slide.',
@@ -160,7 +160,7 @@ export const GUIDES: Guide[] = [
   {
     slug: 'sig-p365-slide-grip-compatibility',
     title: 'Sig P365 vs P365XL: Slide, Grip, Barrel and Optic Compatibility',
-    h1: 'Mixing P365 and P365XL slides, grips and barrels',
+    h1: 'Mixing P365 and P365XL Slides, Grips and Barrels',
     description: 'Will a P365XL slide fit a standard P365 grip? A fit chart for P365 grips, slides, barrels, recoil springs, magazines and RMSc red dots.',
     platform: 'p365',
     lede: 'The P365 fire control unit fits every P365 grip and slide, so you can mix the standard and XL parts. What has to line up is the barrel and recoil spring for the slide, and the magazine for the grip.',
