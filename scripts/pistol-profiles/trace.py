@@ -21,6 +21,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 OUT = os.path.join(ROOT, 'src', 'data', 'pistolProfiles.ts')
 CACHE = os.path.join(tempfile.gettempdir(), 'pistol-profiles')
 
+def box(x0, y0, x1, y1):
+    return [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+
+
 REFS = {
   'p320': dict(
     pdf='https://patentimages.storage.googleapis.com/45/e2/a2/67dcac81582eca/USD815233.pdf', page=7, im='-rotate 90',
@@ -77,7 +81,18 @@ REFS = {
     x0=667, y0=741, sx=204.5, sy=184.0, bottom=1668, th=30, merge=3,
     stipple=dict(box=(560, 690, 2100, 1720), panel_y=1250, panel_y1=1630, hole_box=(1100, 1035, 1465, 1250)),
     # The trigger is drawn from part data, so its lines inside the guard are left out.
-    detail_erase=[[(1100, 1035), (1465, 1035), (1465, 1250), (1100, 1250)]],
+    # The grip panels' edges come out of the stipple in broken pieces, so the three bands between them are
+    # picked by hand from the drawing instead. Also left out: the takedown lever's broken outline and two scraps
+    # at the slide's rear corner; the thin sliver at the front of the magwell isn't a magazine window.
+    detail_erase=[box(1100, 1035, 1465, 1250), box(560, 1250, 1200, 1680), box(780, 900, 950, 970), box(670, 755, 750, 790), box(665, 800, 707, 880)],
+    no_window=True,
+    frame_lines=[
+        [(597, 1600), (613, 1527), (633, 1460), (660, 1380), (693, 1293), (727, 1213), (760, 1127), (768, 1087)],
+        [(780, 1080), (827, 1107), (867, 1147), (897, 1193), (913, 1247), (917, 1293), (907, 1340), (880, 1387), (840, 1423),
+         (780, 1453), (730, 1487), (693, 1527), (673, 1567), (663, 1607)],
+        [(873, 1097), (870, 1133), (893, 1173), (917, 1220), (930, 1273), (923, 1327), (900, 1373), (873, 1420), (853, 1467),
+         (843, 1513), (847, 1567), (853, 1620)],
+    ],
     slide=[(560, 690), (2100, 690), (2100, 990), (1888, 990), (1888, 905), (560, 905)],
     guard_seed=(1340, 1140),
     marks=dict(slideFront=2085, muzzle=2090, bore=815, spring=875, slideBottom=905, nose=985,
@@ -95,7 +110,12 @@ REFS = {
     guard_seed=(2000, 1250),
     hole_poly=[(1500, 1112), (1600, 1050), (1710, 1000), (2000, 998), (2070, 1010), (2115, 1050), (2130, 1120), (2125, 1300),
                (2100, 1350), (2050, 1378), (1700, 1380), (1600, 1372), (1520, 1345), (1470, 1300), (1455, 1240), (1462, 1170)],
-    detail_erase=[[(1440, 990), (2140, 990), (2140, 1390), (1440, 1390)]],
+    # Detail lines left out: the guard (drawn in code), the hatching down the slide's rear face, the rail's
+    # dash ticks, the slide serrations (drawn in code), and the unclaimed magazine floor plate showing through the magwell.
+    detail_erase=[box(1440, 990, 2140, 1425), box(482, 417, 553, 729), box(2205, 930, 2718, 992), box(2614, 850, 2718, 992),
+                  box(690, 1775, 1210, 1855), box(1028, 1834, 1210, 1940), box(534, 1847, 690, 1940),
+                  box(686, 491, 1262, 700), box(2040, 483, 2332, 700)],
+    min_det=30, det_smooth=4, win_eps=8, frame_open=25,
     marks=dict(slideFront=2713, muzzle=2716, bore=575, spring=860, slideBottom=757, nose=757,
                rearSerr=1300, frontSerr=2050, port0=1569, port1=2006, rail0=2250, dust=2710, railBottom=995),
   ),
@@ -268,7 +288,7 @@ def run(key, c):
         xs = np.nonzero(sreg[y])[0]
         sil[y, xs.min():xs.max() + 1] |= smask[y, xs.min():xs.max() + 1]
     slide = smooth(smask & sil, blur=1.5)
-    frame = smooth(sil & ~smask, open_k=11)
+    frame = smooth(sil & ~smask, open_k=c.get('frame_open', 11))
 
     # Trigger guard opening: flood the closed line drawing from a point inside the guard.
     closed = cv2.morphologyEx(lines.astype(np.uint8) * 255, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
@@ -307,14 +327,15 @@ def run(key, c):
                 if x >= 0 and r8[y, x] and not edge[y, x]:
                     seg.append((x, y))
                     continue
-                if len(seg) >= 8:
+                if len(seg) >= c.get('min_det', 8):
                     det.append(seg)
                 seg = []
         piece = {
             'outline': [flat([(X(x), Y(y)) for x, y in cv2.approxPolyDP(cc.astype(np.float32), 1.2, True).reshape(-1, 2)]) for cc in cs],
-            'detail': [flat([(X(x), Y(y)) for x, y in cv2.approxPolyDP(np.array(s, np.float32).reshape(-1, 1, 2), 1.3, False).reshape(-1, 2)]) for s in det],
+            'detail': [flat([(X(x), Y(y)) for x, y in cv2.approxPolyDP(soften(s, c.get('det_smooth', 0)), 1.3, False).reshape(-1, 2)]) for s in det],
         }
         if name == 'frame':
+            piece['detail'] += [flat([(X(x), Y(y)) for x, y in spline(ln)]) for ln in c.get('frame_lines', [])]
             piece['hole'] = flat([(X(x), Y(y)) for x, y in cv2.approxPolyDP(hole_c.astype(np.float32), 1.2, True).reshape(-1, 2)])
         out[name] = piece
 
@@ -344,11 +365,11 @@ def run(key, c):
     win = (win > 0) & ~frame
     n2, lab2, st2, _ = cv2.connectedComponentsWithStats(win.astype(np.uint8))
     window = None
-    if n2 > 1:
+    if n2 > 1 and not c.get('no_window'):
         big = 1 + np.argmax(st2[1:, cv2.CC_STAT_AREA])
         if st2[big, cv2.CC_STAT_AREA] > 0.02 * sx * sy:
             wc, _ = cv2.findContours((lab2 == big).astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-            window = flat([(X(x), Y(y)) for x, y in cv2.approxPolyDP(wc[0].astype(np.float32), 1.2, True).reshape(-1, 2)])
+            window = flat([(X(x), Y(y)) for x, y in cv2.approxPolyDP(wc[0].astype(np.float32), c.get('win_eps', 1.2), True).reshape(-1, 2)])
     out['marks'] = {
         'slide': X(m['slideFront']), 'muzzle': X(m['muzzle']), 'tang': X(fx.min()),
         'bore': Y(m['bore']), 'spring': Y(m['spring']), 'sh': Y(m['slideBottom']), 'nose': Y(m['nose']),
@@ -360,6 +381,28 @@ def run(key, c):
     }
     print(key, {k: (len(v['outline']), len(v['detail']), sum(len(d) // 2 for d in v['detail'])) for k, v in out.items() if k != 'marks'}, out['marks'], file=sys.stderr)
     return out
+
+
+def spline(pts, n=6):
+    """A Catmull-Rom curve through hand-picked points, n samples per span."""
+    p = np.array([pts[0]] + list(pts) + [pts[-1]], np.float64)
+    out = []
+    for i in range(1, len(p) - 2):
+        for t in np.linspace(0, 1, n, endpoint=False):
+            a, b, c, d = p[i - 1], p[i], p[i + 1], p[i + 2]
+            out.append(0.5 * (2 * b + (c - a) * t + (2 * a - 5 * b + 4 * c - d) * t * t + (3 * b - a - 3 * c + d) * t ** 3))
+    out.append(p[-2])
+    return [tuple(v) for v in out]
+
+
+def soften(seg, w):
+    """A skeleton polyline as float points, averaged over w neighbours each side to take out the wobble of traced dashes."""
+    a = np.array(seg, np.float32)
+    if w and len(a) > 2 * w:
+        k = np.ones(2 * w + 1, np.float32) / (2 * w + 1)
+        pad = np.concatenate([np.repeat(a[:1], w, 0), a, np.repeat(a[-1:], w, 0)])
+        a = np.stack([np.convolve(pad[:, i], k, 'valid') for i in range(2)], 1)
+    return a.reshape(-1, 1, 2)
 
 
 def flat(pts):

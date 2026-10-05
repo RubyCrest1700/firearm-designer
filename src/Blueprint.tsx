@@ -612,6 +612,27 @@ const TRIGGERS: Record<ProfileKey, { face: number; curved: (y0: number) => strin
   },
 };
 
+/** The Hellcat's slide serrations, drawn from US D998,740 FIG. 4 (the traced dashes come out ragged): slanted lands
+ *  with a cut beside each, five at the rear and three at the front. Patent pixels, mapped to inches by the trace's scale. */
+const HELLCAT_SERR: { pts: number[]; close: boolean }[] = (() => {
+  const P = (pts: number[]) => pts.map((v, i) => Math.round(((v - (i % 2 ? 415 : 480)) / 385.8) * 1000) / 1000);
+  const out: { pts: number[]; close: boolean }[] = [];
+  const land = (tx: number, top: number, lean: number, w: number) => out.push({ pts: P([tx, top, tx + w, top, tx + w - lean, 688, tx - lean, 688]), close: true });
+  const cut = (x0: number, y0: number, x1: number, y1: number, w: number) => out.push({ pts: P([x0, y0, x0 + w, y0, x1 + w, y1, x1, y1]), close: true });
+  for (let k = 0; k < 5; k++) {
+    const tx = 725 + 105.5 * k;
+    land(tx, 494, 32, 61);
+    cut(tx + 66, 506, tx + 41, 654, 26);
+  }
+  out.push({ pts: P([1252, 494, 1220, 688]), close: false });
+  for (let k = 0; k < 3; k++) {
+    const tx = 2085 + 105 * k;
+    land(tx, 479, 37, 65);
+    if (k < 2) cut(tx + 74, 492, tx + 41, 672, 22);
+  }
+  return out;
+})();
+
 /** Monotone stretch along x: up to a nothing moves, [a, b] grows or shrinks by d (never below minZone),
  *  [b, end] shifts and absorbs whatever [a, b] could not, and everything past end shifts by d. */
 function stretchX(a: number, b: number, end: number, d: number, minZone = 0.15) {
@@ -894,6 +915,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     const face = `M${f(SL - 0.05)},${f(mk.bore - 0.2)} L${f(SL - 0.05)},${f(mk.bore + 0.2)}`;
     slideDetail = `${lines} ${rearSerr} ${fSerr} ${extractor} ${face}`;
   }
+  if (key === 'hellcat') slideDetail += ' ' + HELLCAT_SERR.map((p) => polyPath(scS(p.pts), slideMap, p.close)).join(' ');
   const yGB = Math.max(heel[1], toe[1]);
   return {
     key, SL, muzzle: sx(mk.muzzle), tang, bc: mk.bore, springY: mk.spring, sh: mk.sh,
