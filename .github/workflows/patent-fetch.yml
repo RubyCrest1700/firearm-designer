@@ -1,0 +1,23 @@
+name: Fetch patent drawings (scratch)
+on:
+  workflow_dispatch:
+    inputs:
+      numbers:
+        description: Patent numbers, space separated (for example D745627 10036609)
+        required: true
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 fetch.py
+        env:
+          NUMS: ${{ inputs.numbers }}
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add patents
+          git commit -m "Fetch patent PDFs" || echo "nothing to commit"
+          git push
