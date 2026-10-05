@@ -261,6 +261,321 @@
    "basis": "estimate",
    "src": null
   },
+  "a9-bbl-aero16": {
+   "oz": 24.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-bbl-aero55": {
+   "oz": 12.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-bbl-ba45": {
+   "oz": 10.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-bbl-faxon105": {
+   "oz": 17.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-bbl-faxon16": {
+   "oz": 23.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-bbl-faxon85": {
+   "oz": 15.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-bcg-aero": {
+   "oz": 22.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-bcg-faxon": {
+   "oz": 24.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-bcg-jp": {
+   "oz": 24.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-bcg-kak": {
+   "oz": 21.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-bcg-psa": {
+   "oz": 21.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-bcg-toolcraft": {
+   "oz": 21.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-brace-sba3": {
+   "oz": 10.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-brace-sba4": {
+   "oz": 12.3,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-buf-aero": {
+   "oz": 12.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-buf-kak": {
+   "oz": 8.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-buf-spikes": {
+   "oz": 8.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-buf-std": {
+   "oz": 9.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-ch-aero": {
+   "oz": 1.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-ch-bcm": {
+   "oz": 1.9,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-ch-radian": {
+   "oz": 1.7,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-grip-bcm": {
+   "oz": 2.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-grip-k2": {
+   "oz": 3.1,
+   "basis": "published",
+   "src": "https://www.primaryarms.com/magpul-moe-k2-plus-pistol-grip-black"
+  },
+  "a9-grip-moe": {
+   "oz": 2.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-hg-aero15": {
+   "oz": 7.95,
+   "basis": "published",
+   "src": "https://www.aeroprecisionusa.com/ar15-15-atlas-s-one-m-lok-handguard-anodized-black"
+  },
+  "a9-hg-aero9": {
+   "oz": 8.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-hg-bcm13": {
+   "oz": 9.9,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-hg-bcm7": {
+   "oz": 6.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-hg-mi7": {
+   "oz": 7.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-hg-psa": {
+   "oz": 10.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-lower-aero": {
+   "oz": 8.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-lower-fm": {
+   "oz": 9.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-lower-jp": {
+   "oz": 9.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-lower-nfa": {
+   "oz": 8.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-lower-psa": {
+   "oz": 7.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-lower-spikes": {
+   "oz": 8.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-lpk-aero": {
+   "oz": 5.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-lpk-bcm": {
+   "oz": 5.3,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-lpk-psa": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-mag-g17": {
+   "oz": 2.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-mag-g33": {
+   "oz": 5.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-mag-gl9": {
+   "oz": 3.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-mag-metalform": {
+   "oz": 5.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-mag-psasmg": {
+   "oz": 5.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-mz-a2": {
+   "oz": 2.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-mz-kak": {
+   "oz": 2.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-mz-odin": {
+   "oz": 2.8,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-mz-psa": {
+   "oz": 3.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-opt-aimpoint": {
+   "oz": 11.6,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-opt-exps3": {
+   "oz": 11.2,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-opt-holosun": {
+   "oz": 8.9,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-opt-romeo5x": {
+   "oz": 5.6,
+   "basis": "published",
+   "src": "https://www.sigsauer.com/romeo5x-1x20-mm.html"
+  },
+  "a9-stock-b5": {
+   "oz": 8.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-stock-ctr": {
+   "oz": 10.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-stock-moesl": {
+   "oz": 9.3,
+   "basis": "published",
+   "src": "https://magpul.com/moe-sl-carbine-stock-mil-spec.html"
+  },
+  "a9-stock-psa": {
+   "oz": 7.5,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-trig-alg": {
+   "oz": 2.3,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-trig-angstadt": {
+   "oz": 2.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-trig-cmc": {
+   "oz": 3.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-trig-psa": {
+   "oz": 2.4,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-upper-aero": {
+   "oz": 7.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-upper-m4e1": {
+   "oz": 7.0,
+   "basis": "estimate",
+   "src": null
+  },
+  "a9-upper-psa": {
+   "oz": 7.5,
+   "basis": "estimate",
+   "src": null
+  },
   "ar-bbl-300": {
    "oz": 30.0,
    "basis": "estimate",

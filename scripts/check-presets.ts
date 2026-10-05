@@ -32,6 +32,7 @@ const IFACES: Iface[] = [
   ['ar15', 'barrel', 'gas', 'gastube', 'length'],
   ['ar15', 'barrel', 'bolt', 'bcg', 'bolt'],
   ['ar10', 'barrel', 'thread', 'muzzle', 'thread'],
+  ['ar9', 'lower', 'mag', 'mag', 'family'],
   ['ar10', 'barrel', 'journal', 'gasblock', 'journal'],
   ['ar10', 'barrel', 'gas', 'gastube', 'length'],
   ['glock17', 'barrel', 'thread', 'muzzle', 'thread'],

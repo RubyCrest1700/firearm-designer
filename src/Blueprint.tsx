@@ -77,6 +77,31 @@ const MAG_X = 4.2, MAG_Y = 3.0;
 const AR_RAIL = Math.min(...AR_PROFILES.upper.outline[0].filter((_, i) => i % 2));
 /** Rear of the stock's butt in the traced drawing, which shows it on a carbine buffer tube. */
 const AR_STOCK_REAR = Math.min(...AR_PROFILES.stock.outline[0].filter((_, i) => !(i % 2)));
+/** Detail lines of the Glock-magazine 9mm lower, placed by hand on US D782,596 FIG. 1 in receiver inches: the
+ *  buffer tower, the takedown pin ring, the selector and pin holes, the mag catch boss and button, and the mag well ribs. */
+const LOWER9_DETAIL: number[][] = [
+  [-0.413, -0.246, -0.046, -0.246],
+  [-0.413, 0.241, 0.043, 0.241],
+  [-0.46, 0.924, 0.11, 0.916],
+  [-0.354, 0.935, -0.354, 1.294],
+  [0.094, 1.033, 0.336, 1.17, 0.511, 1.326, 0.656, 1.54, 0.745, 1.774, 0.773, 1.93],
+  [0.773, 1.942, 1.331, 1.942],
+  [1.35, 1.895, 2.064, 1.907],
+  [3.417, 0.674, 3.417, 1.013, 4.021, 1.013],
+  [3.417, 1.852, 3.417, 1.762, 4.021, 1.762],
+  [3.709, 1.013, 3.709, 0.721, 6.674, 0.721],
+  [4.08, 1.337, 6.194, 1.337, 6.225, 1.384, 6.233, 1.482],
+  [4.08, 1.657, 6.167, 1.657],
+  [6.42, 0.998, 4.458, 0.998, 4.408, 1.049, 4.4, 1.883, 4.509, 1.93, 4.626, 2.047, 4.673, 2.203, 4.607, 2.632, 4.579, 2.846, 5.944, 2.605],
+  [3.885, 1.891, 4.372, 1.891],
+  [3.979, 1.033, 4.006, 1.04, 4.026, 1.06, 4.033, 1.088, 4.033, 1.626, 4.026, 1.653, 4.006, 1.673, 3.979, 1.68, 3.581, 1.68, 3.554, 1.673, 3.534, 1.653, 3.526, 1.626, 3.526, 1.088, 3.534, 1.06, 3.554, 1.04, 3.581, 1.033, 3.979, 1.033],
+  [0.745, 0.857, 0.742, 0.884, 0.734, 0.91, 0.719, 0.933, 0.7, 0.952, 0.677, 0.966, 0.652, 0.975, 0.625, 0.978, 0.598, 0.975, 0.572, 0.966, 0.549, 0.952, 0.53, 0.933, 0.516, 0.91, 0.507, 0.884, 0.504, 0.857, 0.507, 0.831, 0.516, 0.805, 0.53, 0.782, 0.549, 0.763, 0.572, 0.749, 0.598, 0.74, 0.625, 0.737, 0.652, 0.74, 0.677, 0.749, 0.7, 0.763, 0.719, 0.782, 0.734, 0.805, 0.742, 0.831, 0.745, 0.857],
+  [0.808, 0.857, 0.803, 0.898, 0.79, 0.937, 0.768, 0.972, 0.739, 1.001, 0.704, 1.023, 0.665, 1.036, 0.625, 1.041, 0.584, 1.036, 0.545, 1.023, 0.51, 1.001, 0.481, 0.972, 0.459, 0.937, 0.446, 0.898, 0.441, 0.857, 0.446, 0.817, 0.459, 0.778, 0.481, 0.743, 0.51, 0.714, 0.545, 0.692, 0.584, 0.679, 0.625, 0.674, 0.665, 0.679, 0.704, 0.692, 0.739, 0.714, 0.768, 0.743, 0.79, 0.778, 0.803, 0.817, 0.808, 0.857],
+  [1.592, 1.318, 1.587, 1.358, 1.574, 1.396, 1.553, 1.43, 1.524, 1.458, 1.49, 1.479, 1.452, 1.493, 1.412, 1.497, 1.372, 1.493, 1.335, 1.479, 1.301, 1.458, 1.272, 1.43, 1.251, 1.396, 1.237, 1.358, 1.233, 1.318, 1.237, 1.278, 1.251, 1.24, 1.272, 1.206, 1.301, 1.177, 1.335, 1.156, 1.372, 1.143, 1.412, 1.138, 1.452, 1.143, 1.49, 1.156, 1.524, 1.177, 1.553, 1.206, 1.574, 1.24, 1.587, 1.278, 1.592, 1.318],
+  [2.582, 1.528, 2.581, 1.545, 2.575, 1.56, 2.566, 1.575, 2.555, 1.586, 2.54, 1.595, 2.525, 1.601, 2.508, 1.602, 2.492, 1.601, 2.476, 1.595, 2.462, 1.586, 2.45, 1.575, 2.442, 1.56, 2.436, 1.545, 2.434, 1.528, 2.436, 1.512, 2.442, 1.496, 2.45, 1.482, 2.462, 1.47, 2.476, 1.462, 2.492, 1.456, 2.508, 1.454, 2.525, 1.456, 2.54, 1.462, 2.555, 1.47, 2.566, 1.482, 2.575, 1.496, 2.581, 1.512, 2.582, 1.528],
+  [3.401, 1.228, 3.4, 1.244, 3.394, 1.26, 3.385, 1.274, 3.374, 1.286, 3.359, 1.295, 3.344, 1.3, 3.327, 1.302, 3.311, 1.3, 3.295, 1.295, 3.281, 1.286, 3.269, 1.274, 3.261, 1.26, 3.255, 1.244, 3.253, 1.228, 3.255, 1.212, 3.261, 1.196, 3.269, 1.182, 3.281, 1.17, 3.295, 1.161, 3.311, 1.156, 3.327, 1.154, 3.344, 1.156, 3.359, 1.161, 3.374, 1.17, 3.385, 1.182, 3.394, 1.196, 3.4, 1.212, 3.401, 1.228],
+  [6.865, 0.857, 6.862, 0.884, 6.853, 0.908, 6.839, 0.93, 6.821, 0.949, 6.798, 0.963, 6.774, 0.972, 6.748, 0.974, 6.722, 0.972, 6.697, 0.963, 6.675, 0.949, 6.656, 0.93, 6.642, 0.908, 6.634, 0.884, 6.631, 0.857, 6.634, 0.831, 6.642, 0.807, 6.656, 0.785, 6.675, 0.766, 6.697, 0.752, 6.722, 0.743, 6.748, 0.741, 6.774, 0.743, 6.798, 0.752, 6.821, 0.766, 6.839, 0.785, 6.853, 0.807, 6.862, 0.831, 6.865, 0.857],
+];
 type ArStockKey = 'stockA2' | 'stockPrs' | 'stockMoeRifle' | 'stockUbr' | 'stockMoeSl' | 'stockCtr';
 const same: Map2 = (x, y) => [x, y];
 /** Outline and detail paths of a traced AR piece. */
@@ -98,6 +123,9 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
   const oy = 170;
   const T = makeT(S, ox, oy);
   const big = platform.id === 'ar10';
+  // AR-9: straight blowback (no gas system); Glock-magazine lowers use their own trace, Colt-pattern ones the AR-15's.
+  const nine = platform.id === 'ar9';
+  const glock9 = nine && b.lower?.attrs.mag !== 'colt';
   const kx = big ? 1.13 : 1; // AR-10 receivers are longer and taller
   const ky = big ? 1.08 : 1;
   const RF = 7 * kx; // front face of upper receiver
@@ -156,9 +184,10 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
   P.push({ slot: 'stock', z: 2, row: 'bottom', target: px(rear + 2.2, 1.6), el: <><path d={T(sd)} /><path className="detail" d={T(stockDet)} /></> });
 
   // Lower receiver, A2-style grip and trigger: traced from US 10,184,737 FIG. 2A (see scripts/pistol-profiles/ar.py).
-  const lower = arPaths(AR_PROFILES.lower);
+  // The Glock-magazine 9mm lower is traced from US D782,596 FIG. 1; its trigger guard and web openings are holes.
+  const lower = arPaths(glock9 ? AR_PROFILES.lower9 : AR_PROFILES.lower);
   P.push({ slot: 'lower', z: 4, row: 'bottom', target: px(5.6 * kx, 2.4 * ky),
-    el: <><path d={R(lower.o)} /><path className="detail" d={R(lower.d)} /></> });
+    el: <><path d={R(lower.o)} fillRule={glock9 ? 'evenodd' : undefined} /><path className="detail" d={R(glock9 ? LOWER9_DETAIL.map((l) => polyPath(l, same, false)).join(' ') : lower.d)} /></> });
 
   // Lower parts kit: the selector's right-side stub over its detent (the lower drawing shows the hole).
   P.push({ slot: 'lpk', z: 6, row: 'bottom', target: px(1.43 * kx, 1.29 * ky),
@@ -191,6 +220,27 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
 
   // Magazine. The AR-15's is the PMAG traced from US D712,500 FIG. 2, its stop ledge at the bottom of the mag well.
   const pmag = arPaths(AR_PROFILES.pmag, (x, y) => [MAG_X + x, MAG_Y + y]);
+  if (nine) {
+    // 9mm magazines are straight boxes. A Glock mag follows the rear wall of the 9mm lower's mag well (marks traced
+    // with it) and ends in a floor plate; Colt SMG mags sit at the back of the AR-15 mag well.
+    const rounds = typeof b.mag?.attrs.rounds === 'number' ? b.mag.attrs.rounds : glock9 ? 17 : 32;
+    const m = AR_PROFILES.marks;
+    const [ax, ay] = glock9 ? [m.mag9RearTopX, m.mag9RearTopY] : [4.3, 1.0];
+    const lean = glock9 ? (m.mag9RearBottomX - ax) / (m.mag9RearBottomY - ay) : 0;
+    const top = glock9 ? ay : 0.75; // feed lips at the top of the mag well, like the PMAG
+    const len = glock9 ? 5.0 + (rounds - 17) * 0.29 : 3.3 + rounds * 0.165; // G17 5.0", 33 rd 9.6"; Colt 32 rd 8.6"
+    const w = glock9 ? 1.25 : 1.12;
+    const at = (x: number, y: number): [number, number] => [ax + (y - ay) * lean + x, y];
+    const bot = top + len, fp = glock9 ? 0.34 : 0.22; // floor plate height
+    const pts = [at(0, top), at(w, top), at(w, bot - fp), at(w + (glock9 ? 0.1 : 0.04), bot - fp + 0.05), at(w + (glock9 ? 0.1 : 0.04), bot - 0.05),
+      at(w + (glock9 ? 0.04 : 0), bot), at(-0.04, bot), at(-0.06, bot - 0.05), at(-0.06, bot - fp + 0.05), at(0, bot - fp)];
+    const pp = (q: [number, number][]) => q.map(([x, y], i) => `${i ? 'L' : 'M'}${f(x)},${f(y)}`).join(' ');
+    const seam = pp([at(-0.06, bot - fp + 0.05), at(w + (glock9 ? 0.1 : 0.04), bot - fp + 0.05)]);
+    // Colt mags have stamped ribs down the sides.
+    const ribs = glock9 ? '' : ` ${pp([at(0.3, 3.4), at(0.3, bot - fp - 0.4)])} ${pp([at(w - 0.3, 3.4), at(w - 0.3, bot - fp - 0.4)])}`;
+    P.push({ slot: 'mag', z: 3, row: 'bottom', target: px(ax + (bot - 1 - ay) * lean + w / 2, bot - 1),
+      el: <><path d={T(pp(pts) + ' Z')} /><path className="detail" d={T(seam + ribs)} /></> });
+  } else
   P.push({ slot: 'mag', z: 3, row: 'bottom', target: px(big ? 5.5 * kx : 6.2, big ? 6.2 : 6.6),
     el: big
       ? <><path d={T('M3.98,3.0 L6.55,3.0 C6.65,4.8 6.85,6.4 7.05,7.75 L7.1,7.98 L4.6,8.12 L4.55,7.9 C4.3,6.3 4.1,4.7 3.98,3.0 Z', kx, 1)} /><path className="detail" d={T('M4.2,4.4 L6.65,4.32 M4.35,5.8 L6.85,5.7 M4.5,7.2 L7.0,7.1', kx, 1)} /></>
@@ -206,13 +256,13 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
   P.push({ slot: 'charging', z: 8, row: 'top', target: px(-0.55 * kx, -0.62 * ky),
     el: <path d={R('M-0.78,-0.76 L0.05,-0.76 L0.05,-0.5 L-0.78,-0.5 Q-0.98,-0.53 -0.98,-0.63 Q-0.98,-0.73 -0.78,-0.76 Z')} /> });
   P.push({ slot: 'bcg', internal: true, z: 20, row: 'top', target: px(2.4 * kx, 0.3 * ky),
-    el: <path d={R('M0.4,-0.45 L5.85,-0.45 L5.85,0.45 L0.4,0.45 Z M3.2,-0.45 L3.2,-0.76 L4.6,-0.76 L4.6,-0.45 M5.85,-0.3 L6.45,-0.3 L6.45,0.3 L5.85,0.3')} /> });
+    el: <path d={R(`M0.4,-0.45 L5.85,-0.45 L5.85,0.45 L0.4,0.45 Z ${nine ? '' : 'M3.2,-0.45 L3.2,-0.76 L4.6,-0.76 L4.6,-0.45'} M5.85,-0.3 L6.45,-0.3 L6.45,0.3 L5.85,0.3`)} /> });
 
   // Barrel, gas system, handguard, muzzle
   const L = typeof b.barrel?.attrs.length === 'number' ? b.barrel.attrs.length : big ? 18 : 16;
   const BX = BF + L; // muzzle
   const gas = (b.barrel?.attrs.gas as string) ?? (b.gastube?.attrs.length as string) ?? 'midlength';
-  const GX = BF + GAS_FROM_BOLT[gas];
+  const GX = nine ? RF - 0.6 : BF + GAS_FROM_BOLT[gas];
   const hg = b.handguard;
   const freeFloat = hg ? hg.attrs.freeFloat !== false : true;
   const H = typeof hg?.attrs.length === 'number' ? hg.attrs.length : freeFloat ? (big ? 15 : 13.5) : 9;
@@ -221,12 +271,14 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
 
   P.push({ slot: 'barrel', z: 9, row: 'top', target: px(Math.max(HX, GX + 0.6) + (BX - Math.max(HX, GX + 0.6)) / 2, 0.3),
     el: <>
-      <path d={T(`M${f(RF)},-0.42 L${f(GX)},-0.375 L${f(GX + 0.9)},-0.31 L${f(BX)},-0.29 L${f(BX)},0.29 L${f(GX + 0.9)},0.31 L${f(GX)},0.375 L${f(RF)},0.42 Z`)} />
+      <path d={T(nine
+        ? `M${f(RF)},-0.42 L${f(RF + 0.9)},-0.42 L${f(RF + 1.0)},-0.36 L${f(BX)},-0.36 L${f(BX)},0.36 L${f(RF + 1.0)},0.36 L${f(RF + 0.9)},0.42 L${f(RF)},0.42 Z`
+        : `M${f(RF)},-0.42 L${f(GX)},-0.375 L${f(GX + 0.9)},-0.31 L${f(BX)},-0.29 L${f(BX)},0.29 L${f(GX + 0.9)},0.31 L${f(GX)},0.375 L${f(RF)},0.42 Z`)} />
       <path className="hidden-line" d={T(`M${f(BF)},-0.5 L${f(RF)},-0.5 M${f(BF)},0.5 L${f(RF)},0.5`)} />
     </> });
-  P.push({ slot: 'gastube', internal: true, z: 21, row: 'top', target: px((4.6 * kx + GX) / 2, -0.62),
+  if (!nine) P.push({ slot: 'gastube', internal: true, z: 21, row: 'top', target: px((4.6 * kx + GX) / 2, -0.62),
     el: <path d={T(`M${f(4.6 * kx)},-0.62 L${f(GX)},-0.62`)} /> });
-  P.push({ slot: 'gasblock', internal: !fsb && GX + 0.6 < HX, z: fsb ? 12 : 10, row: 'top', target: px(GX + 0.1, fsb ? -2.0 : -0.3),
+  if (!nine) P.push({ slot: 'gasblock', internal: !fsb && GX + 0.6 < HX, z: fsb ? 12 : 10, row: 'top', target: px(GX + 0.1, fsb ? -2.0 : -0.3),
     el: fsb
       ? <>
           <path d={T(`M${f(GX - 0.62)},-0.98 L${f(GX + 0.62)},-0.98 L${f(GX + 0.62)},0.62 L${f(GX - 0.62)},0.62 Z M${f(GX - 0.42)},-0.98 Q${f(GX - 0.5)},-2.42 ${f(GX - 0.16)},-2.47 L${f(GX + 0.16)},-2.47 Q${f(GX + 0.5)},-2.42 ${f(GX + 0.42)},-0.98 M${f(GX)},0.62 L${f(GX)},1.02 L${f(GX + 0.55)},1.02 L${f(GX + 0.55)},0.62`)} />
@@ -420,7 +472,8 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
     center: [f(ox + (rear - 0.6) * S), f(ox + (front + 0.6) * S), oy],
     dims: [[f(ox + rear * S), f(ox + front * S), 462, `${inch(front - rear)} overall`], [f(ox + BF * S), f(ox + BX * S), oy + 2.05 * S, `${inch(L)} barrel`]],
     rows: [26, 424],
-    spec: `${b.barrel?.attrs.caliber ?? (big ? '.308 Win' : '5.56 NATO')} · ${inch(L)} barrel · ${gas} gas`,
+    spec: nine ? `${b.barrel?.attrs.caliber ?? '9mm'} · ${inch(L)} barrel · ${glock9 ? 'Glock' : 'Colt SMG'} mags · blowback`
+      : `${b.barrel?.attrs.caliber ?? (big ? '.308 Win' : '5.56 NATO')} · ${inch(L)} barrel · ${gas} gas`,
   };
 }
 
