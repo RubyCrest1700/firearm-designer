@@ -1441,7 +1441,7 @@ function ak(platform: Platform, b: Build): Scene {
   const floor = `M${mg(8.45, 8.0)} L${mg(10.42, 6.84)}`;
   // A line along the body, following its curve: the stamped rib on a steel mag, the texture panel's edge on a polymer one.
   const inset = (pts: number[][], d: number, y0: number, y1: number) => curve(pts.filter(([, y]) => y >= y0 && y <= y1).map(([x, y]) => [x + d, y]));
-  const ribs = steel ? inset(frontE, -0.32, 1.8, 6.8) : inset(rearE, 0.36, 1.8, 7.0);
+  const ribs = steel ? [-0.3, -0.75, -1.2].map((d) => inset(frontE, d, 1.6, 7.0)).join(' ') : inset(rearE, 0.36, 1.8, 7.0);
   P.push({ slot: 'mag', z: 3, row: 'bottom', target: px(8.4, 4.8), el: <><path d={T(magD)} /><path className="detail" d={T(`${floor} ${ribs}`)} /></> });
 
   // Optic mount and optic
@@ -1728,13 +1728,13 @@ function m1911(platform: Platform, b: Build): Scene {
   P.push({ slot: 'pistol', z: 8, row: 'top', target: px(5.2, 0.5), el: <>
     <path fillRule="evenodd" d={T(slideD)} />
     <path className="detail" d={T(slideDet)} />
-    {!dbl && <path d={T('M7.48,0.2 L7.6,0.2 L7.6,0.92 L7.48,0.92 Z M7.48,1.04 L7.54,1.04 L7.54,1.38 L7.48,1.38 Z')} />}
+    {!dbl && <path d={T(`M7.48,0.2 L7.6,0.2 L7.6,0.92 L7.48,0.92 Z M7.48,1.04 L7.54,1.04 L7.54,1.38 L7.48,1.38 Z ${OC(7.38, 1.22, 0.12)}`)} />}
   </> });
 
   /* Slide stop: thumb piece forward of the grip, the lever along the frame and its pin above the trigger guard */
   P.push({ slot: 'pistol', z: 6.5, row: 'bottom', target: px(2.4, 1.15), el: <>
-    <path d={T('M1.98,1.0 L3.25,1.04 Q3.44,1.08 3.44,1.25 Q3.44,1.42 3.25,1.42 Q3.08,1.42 3.02,1.3 L2.35,1.22 Q2.1,1.22 2.0,1.14 Q1.94,1.07 1.98,1.0 Z')} />
-    <path className="detail" d={T(`${OC(3.25, 1.25, 0.07)} M2.06,1.05 L2.06,1.15 M2.13,1.04 L2.13,1.17 M2.2,1.04 L2.2,1.18`)} />
+    <path d={T('M2.3,1.0 L3.0,1.0 Q3.1,1.0 3.1,1.1 L3.1,1.14 Q3.1,1.18 3.14,1.18 L3.25,1.1 Q3.44,1.08 3.44,1.25 Q3.44,1.42 3.25,1.42 Q3.1,1.4 3.04,1.32 L2.4,1.32 Q2.26,1.32 2.26,1.18 L2.26,1.06 Q2.26,1.0 2.3,1.0 Z')} />
+    <path className="detail" d={T(`${OC(3.25, 1.25, 0.07)} M2.4,1.04 L2.4,1.28 M2.5,1.04 L2.5,1.28 M2.6,1.04 L2.6,1.28 M2.7,1.04 L2.7,1.28 M2.8,1.04 L2.8,1.28 M2.9,1.04 L2.9,1.28`)} />
   </> });
 
   /* Barrel: hood in the ejection port, the rest hidden in the slide; threads past the bushing */
@@ -1764,7 +1764,7 @@ function m1911(platform: Platform, b: Build): Scene {
 
   /* Hammer, cocked: the GI spur, or the Commander-style ring hammer most upgrades and modern 1911s use */
   const hammerD = ring
-    ? 'M-0.02,0.97 L-0.04,0.5 Q-0.08,0.28 -0.3,0.26 Q-0.56,0.28 -0.6,0.5 Q-0.6,0.7 -0.42,0.76 Q-0.32,0.82 -0.3,0.97 Z ' + OC(-0.31, 0.5, 0.1)
+    ? 'M-0.02,0.97 L-0.04,0.62 Q-0.1,0.34 -0.36,0.32 Q-0.62,0.36 -0.62,0.6 Q-0.6,0.76 -0.42,0.8 Q-0.32,0.86 -0.3,0.97 Z ' + OC(-0.36, 0.56, 0.11)
     : 'M-0.02,0.97 L-0.04,0.42 Q-0.06,0.3 -0.2,0.27 Q-0.45,0.28 -0.62,0.42 L-0.76,0.52 Q-0.78,0.57 -0.72,0.58 Q-0.52,0.56 -0.4,0.66 Q-0.3,0.78 -0.3,0.97 Z';
   P.push({ slot: dbl ? 'pistol' : own('hammer'), z: 2.5, row: 'top', target: px(-0.3, 0.45), el: <>
     <path fillRule="evenodd" d={T(hammerD)} />
