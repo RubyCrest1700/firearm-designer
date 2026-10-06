@@ -216,7 +216,7 @@ ${o.jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).re
 <body>
 <header class="site-header"><div class="wrap header-row">
   <a class="brand" href="/">${MARK}<span class="brand-name">Drop-In <b>Builds</b></span></a>
-  <nav aria-label="Main"><a href="/">Home</a><a href="/#build"${current === 'build' ? ' aria-current="page"' : ''}>Build</a><a href="/#saved">My Builds</a><a href="/#community">Community</a><a href="/guides/"${current === 'faq' ? ' aria-current="page"' : ''}>FAQ</a></nav>
+  <nav aria-label="Main"><a href="/">Home</a><a href="/#build"${current === 'build' ? ' aria-current="page"' : ''}>Build</a><a href="/#saved">My Builds</a><a href="/#community">Community</a><a href="/faq/"${current === 'faq' ? ' aria-current="page"' : ''}>FAQ</a></nav>
 </div></header>
 <main class="wrap">${o.body}</main>
 <footer class="site-footer"><div class="wrap">
@@ -233,9 +233,9 @@ ${o.jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).re
 
 export function guidePage(g: Guide, builtAt: string) {
   const platform = platformOf(g.platform);
-  const path = `/guides/${g.slug}/`;
+  const path = `/faq/${g.slug}/`;
   const body = `
-  <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="/guides/">FAQ</a> › <span>${esc(g.crumb ?? platform.name)}</span></nav>
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="/faq/">FAQ</a> › <span>${esc(g.crumb ?? platform.name)}</span></nav>
   <article>
     <h1>${esc(g.h1)}</h1>
     <p class="lede">${esc(g.lede)}</p>
@@ -271,7 +271,7 @@ export function guidePage(g: Guide, builtAt: string) {
       { '@context': 'https://schema.org', '@type': 'Article', headline: g.title, description: g.description, dateModified: builtAt, mainEntityOfPage: SITE + path, publisher: { '@type': 'Organization', name: 'Drop-In Builds', url: SITE } },
       { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Home', item: SITE + '/' },
-        { '@type': 'ListItem', position: 2, name: 'FAQ', item: SITE + '/guides/' },
+        { '@type': 'ListItem', position: 2, name: 'FAQ', item: SITE + '/faq/' },
         { '@type': 'ListItem', position: 3, name: g.title, item: SITE + path },
       ] },
     ],
@@ -282,7 +282,7 @@ function relatedHtml(g: Guide) {
   const maker = platformOf(g.platform).maker;
   const same = (x: Guide) => Number(platformOf(x.platform).maker === maker);
   const others = GUIDES.filter((x) => x !== g).sort((x, y) => same(y) - same(x)).slice(0, 4);
-  return `<section><h2>More Fit Questions</h2><ul class="guide-list">${others.map((x) => `<li><a href="/guides/${x.slug}/">${esc(x.h1)}</a></li>`).join('')}</ul></section>`;
+  return `<section><h2>More Fit Questions</h2><ul class="guide-list">${others.map((x) => `<li><a href="/faq/${x.slug}/">${esc(x.h1)}</a></li>`).join('')}</ul></section>`;
 }
 
 /** Site questions at the top of the FAQ page, in sections. Plain text answers, also published as FAQPage structured data. */
@@ -333,7 +333,7 @@ export function indexPage(builtAt: string) {
   <section>
     <h2>${esc(m)} Fit Questions</h2>
     <ul class="guide-cards">${GUIDES.filter((g) => platformOf(g.platform).maker === m).map((g) => `
-      <li><a href="/guides/${g.slug}/"><b>${esc(g.h1)}</b><span>${esc(g.description)}</span></a></li>`).join('')}
+      <li><a href="/faq/${g.slug}/"><b>${esc(g.h1)}</b><span>${esc(g.description)}</span></a></li>`).join('')}
     </ul>
   </section>`).join('')}
   <p><a class="cta" href="/#build">Open the Builder</a></p>
@@ -341,10 +341,10 @@ export function indexPage(builtAt: string) {
   return layout({
     title: 'FAQ: Glock, Sig, M&P, Hellcat and AR-15 Parts Compatibility | Drop-In Builds',
     description: 'How Drop-In Builds works, plus fit charts for Glock, Sig, S&W M&P 2.0, Springfield Hellcat and AR-15 parts: slides, frames, barrels, optics and more.',
-    path: '/guides/',
+    path: '/faq/',
     body,
     jsonLd: [
-      { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'FAQ', url: SITE + '/guides/' },
+      { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'FAQ', url: SITE + '/faq/' },
       { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: FAQ_ITEMS.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
     ],
   });
@@ -426,7 +426,7 @@ export function platformPage(platform: Platform) {
       <p class="muted">Every ${esc(platform.name)} part we list, cheapest first, with the lowest price we found${PRICES_UPDATED_AT ? ` (prices last checked ${shortDate(PRICES_UPDATED_AT)})` : ''}. The builder checks how each one fits with the rest of your parts.</p>
       ${slotTableHtml(platform)}
     </section>
-    ${related.length ? `<section><h2>Fit Questions</h2><ul class="guide-list">${related.map((g) => `<li><a href="/guides/${g.slug}/">${esc(g.h1)}</a></li>`).join('')}</ul></section>` : ''}
+    ${related.length ? `<section><h2>Fit Questions</h2><ul class="guide-list">${related.map((g) => `<li><a href="/faq/${g.slug}/">${esc(g.h1)}</a></li>`).join('')}</ul></section>` : ''}
     <section><h2>Other Platforms</h2><ul class="guide-list cols">${others.map((p) => `<li><a href="/build/${platformSlug(p)}/">${esc(p.name)}</a></li>`).join('')}</ul></section>
   </article>`;
   return layout({
@@ -482,13 +482,13 @@ export function notFoundPage() {
     jsonLd: [],
     body: `<h1>Page Not Found</h1>
   <p>That address doesn't match a page on Drop-In Builds. It may have been mistyped, or the page may have moved.</p>
-  <p><a href="/">Go to the Home Page</a> · <a href="/#build">Start a Build</a> · <a href="/guides/">Read the FAQ</a></p>`,
+  <p><a href="/">Go to the Home Page</a> · <a href="/#build">Start a Build</a> · <a href="/faq/">Read the FAQ</a></p>`,
   });
 }
 
 export function sitemap(builtAt: string) {
   const day = builtAt.slice(0, 10);
-  const urls = ['/', '/build/', ...PLATFORMS.map((p) => `/build/${platformSlug(p)}/`), '/guides/', ...GUIDES.map((g) => `/guides/${g.slug}/`)];
+  const urls = ['/', '/build/', ...PLATFORMS.map((p) => `/build/${platformSlug(p)}/`), '/faq/', ...GUIDES.map((g) => `/faq/${g.slug}/`)];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map((u) => `  <url><loc>${SITE}${u}</loc><lastmod>${day}</lastmod></url>`).join('\n')}
@@ -596,3 +596,20 @@ section{margin:0}
 .guide-list.cols{columns:2 200px}
 .site-footer{border-top:1px solid var(--line);padding:24px 0 40px;color:var(--muted);font-size:14px}
 `;
+
+/** The FAQ moved from /guides/ to /faq/. GitHub Pages can't send real redirects, so each old address gets a
+ *  page that forwards at once; search engines read an instant refresh plus a canonical link as a permanent move. */
+export function redirectPage(path: string) {
+  const to = esc(SITE + path);
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Moved | Drop-In Builds</title>
+<link rel="canonical" href="${to}">
+<meta http-equiv="refresh" content="0; url=${to}">
+</head>
+<body><p>This page moved to <a href="${to}">${to}</a>.</p></body>
+</html>
+`;
+}
