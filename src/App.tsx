@@ -199,7 +199,7 @@ export default function App() {
               {dropped.length > 0 && <span className="count drop" title={`Prices dropped on ${dropped.length} saved build${dropped.length > 1 ? 's' : ''}`}>↓</span>}
             </NavLink>
             <NavLink active={route === 'community'} onClick={() => go('community')}>Community</NavLink>
-            <a className="nav-link" href="./guides/">FAQ</a>
+            <a className="nav-link" href="./faq/">FAQ</a>
           </nav>
           <p className="price-status">
             <span className={'pulse' + (PRICES_UPDATED_AT ? ' live' : '')} aria-hidden="true" />
@@ -433,9 +433,9 @@ function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string) => void;
           <div className="card home-panel">
             <h2 className="home-h2">Common Questions</h2>
             <ul className="faq-links">
-              {faqs.map((g) => <li key={g.slug}><a href={`./guides/${g.slug}/`}>{g.h1}</a></li>)}
+              {faqs.map((g) => <li key={g.slug}><a href={`./faq/${g.slug}/`}>{g.h1}</a></li>)}
             </ul>
-            <a className="link" href="./guides/">See All Questions</a>
+            <a className="link" href="./faq/">See All Questions</a>
           </div>
         </section>
       </div>

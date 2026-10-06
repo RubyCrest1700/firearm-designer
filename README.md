@@ -13,17 +13,17 @@ Platforms: AR-15, AR-10 (DPMS and Armalite patterns), Glock 17, 19, 26, Glock 43
     npm test               # price extractor and robots.txt tests
     npm run check-data     # every preset build is complete and conflict-free
     npm run build          # type-check + production build to dist/, then the guide pages
-    npm run guides         # write dist/guides/, sitemap.xml and robots.txt (runs as part of build)
+    npm run guides         # write dist/faq/ (and /guides/ forwards), sitemap.xml and robots.txt (runs as part of build)
     npm run update-prices  # refresh data/prices.json from retailer pages
     npm run artifact       # inline the build into dist/artifact.html (single-file preview)
 
 ## Guide pages
 
-`src/guides/content.ts` holds the hand-written text of each guide (`/guides/<slug>/`): the question,
+`src/guides/content.ts` holds the hand-written text of each guide (`/faq/<slug>/`): the question,
 short answers, which fit charts to show and sources. `src/guides/render.ts` turns them into static
 HTML at build time, running the builder's own rules on every pair of parts for the fit charts and
 reading prices from the same catalog, so the guides refresh with the nightly price deploy. Add a
-guide by adding an entry to `GUIDES`; it is listed on `/guides/` and in `sitemap.xml` automatically.
+guide by adding an entry to `GUIDES`; it is listed on `/faq/` and in `sitemap.xml` automatically.
 
 ## Hosting and live prices ($0)
 
