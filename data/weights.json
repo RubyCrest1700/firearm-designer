@@ -1,2505 +1,3305 @@
 {
- "_note": "Ounces as sold. basis \"estimate\" = typical figure, not yet checked against a maker listing; \"published\" = listed weight at src. scripts/read-weights.mjs reads listed weights from tracked product pages.",
- "parts": {
-  "a10-bbl-aero16": {
-   "oz": 48.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-bbl-ba18": {
-   "oz": 46.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-bbl-ba20": {
-   "oz": 55.5,
-   "basis": "published",
-   "src": "https://www.ballisticadvantage.com/20-308-heavy-profile-rifle-length-ar-308-barrel-modern-series.html"
-  },
-  "a10-bbl-criterion": {
-   "oz": 65.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-bbl-psa18": {
-   "oz": 50.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-bcg-jp": {
-   "oz": 15.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-bcg-psa": {
-   "oz": 19.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-bcg-toolcraft": {
-   "oz": 19.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-bcg-young": {
-   "oz": 20.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-buf-aero": {
-   "oz": 11.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-buf-psa": {
-   "oz": 11.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-ch-armalite": {
-   "oz": 1.7,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-ch-dpms": {
-   "oz": 1.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-ch-radian": {
-   "oz": 1.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-gb-750": {
-   "oz": 1.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-gb-875": {
-   "oz": 1.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-gb-sa750": {
-   "oz": 1.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-grip-bcm": {
-   "oz": 2.7,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-grip-moe": {
-   "oz": 2.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-gt-mid": {
-   "oz": 0.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-gt-rifle": {
-   "oz": 0.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-hg-armalite": {
-   "oz": 16.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-hg-atlas": {
-   "oz": 13.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-hg-psa": {
-   "oz": 14.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-hg-seekins": {
-   "oz": 14.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-lower-aero": {
-   "oz": 11.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-lower-armalite": {
-   "oz": 12.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-lower-psa": {
-   "oz": 11.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-lower-seekins": {
-   "oz": 13.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-lpk-armalite": {
-   "oz": 8.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-lpk-dpms": {
-   "oz": 3.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-mag-armalite": {
-   "oz": 10.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-mag-pmag": {
-   "oz": 8.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-mz-a2": {
-   "oz": 2.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-mz-a2-556": {
-   "oz": 1.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-mz-pa": {
-   "oz": 3.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-mz-sf3p": {
-   "oz": 2.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-opt-slx16": {
-   "oz": 17.9,
-   "basis": "published",
-   "src": "https://www.primaryarms.com/KIT-PA-SLX-1-6X24S-NOVA-PADLXSM"
-  },
-  "a10-opt-venom": {
-   "oz": 39.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-opt-vortex": {
-   "oz": 23.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-stock-ctr": {
-   "oz": 10.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-stock-moesl": {
-   "oz": 9.6,
-   "basis": "published",
-   "src": "https://www.primaryarms.com/magpul-moe-slim-line-carbine-stock-mil-spec-black-mag347-blk"
-  },
-  "a10-stock-psa": {
-   "oz": 7.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-stock-ubr": {
-   "oz": 21.3,
-   "basis": "published",
-   "src": "https://www.primaryarms.com/Magpul-UBR-GEN2-Collapsible-Stock-Black"
-  },
-  "a10-trig-alg": {
-   "oz": 2.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-trig-geissele": {
-   "oz": 2.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-trig-larue": {
-   "oz": 3.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-trig-psa": {
-   "oz": 2.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-upper-aero": {
-   "oz": 9.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-upper-armalite": {
-   "oz": 10.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-upper-psa": {
-   "oz": 9.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "a10-upper-seekins": {
-   "oz": 11.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-bbl-300": {
-   "oz": 30.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-bbl-aero16": {
-   "oz": 32.0,
-   "basis": "published",
-   "src": "https://www.aeroprecisionusa.com/556-16-mid-cmv-barrel"
-  },
-  "ar-bbl-arc18": {
-   "oz": 41.3,
-   "basis": "published",
-   "src": "https://www.ballisticadvantage.com/18-6mm-arc-spr-rifle-length-ar-15-barrel-premium-series.html"
-  },
-  "ar-bbl-ba10": {
-   "oz": 22.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-bbl-ba115": {
-   "oz": 20.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-bbl-ba16": {
-   "oz": 28.0,
-   "basis": "published",
-   "src": "https://www.primaryarms.com/ballistic-advantage-ar-15-5-56-nato-16-mid-length-barrel-1-2x28-babl556015m"
-  },
-  "ar-bbl-ba18spr": {
-   "oz": 31.0,
-   "basis": "published",
-   "src": "https://www.ballisticadvantage.com/18-223-wylde-spr-fluted-stainless-steel-rifle-length-ar-15-barrel-premium-series.html"
-  },
-  "ar-bbl-ba20": {
-   "oz": 35.6,
-   "basis": "published",
-   "src": "https://www.ballisticadvantage.com/20-5-56-government-rifle-length-ar-15-barrel-modern-series.html"
-  },
-  "ar-bbl-ba300-9": {
-   "oz": 19.0,
-   "basis": "published",
-   "src": "https://www.ballisticadvantage.com/9-300-blackout-pistol-length-ar-15-barrel-modern-series.html"
-  },
-  "ar-bbl-ba75": {
-   "oz": 22.4,
-   "basis": "published",
-   "src": "https://www.ballisticadvantage.com/7-5-5-56-pistol-length-ar-15-barrel-modern-series.html"
-  },
-  "ar-bbl-bcm": {
-   "oz": 30.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-bbl-criterion": {
-   "oz": 36.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-bbl-faxon": {
-   "oz": 22.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-bbl-grendel18": {
-   "oz": 40.1,
-   "basis": "published",
-   "src": "https://www.ballisticadvantage.com/18-6-5-grendel-spr-rifle-length-ar-15-barrel-premium-series.html"
-  },
-  "ar-bbl-grendel20": {
-   "oz": 31.7,
-   "basis": "published",
-   "src": "https://faxonfirearms.com/faxon-match-series-20-heavy-fluted-6-5-grendel-rifle-length-416-r-stainless-qpq-nitride-5r-nickel-teflon-extension-ar-15-barrel"
-  },
-  "ar-bbl-psa16": {
-   "oz": 28.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-bcg-aero": {
-   "oz": 11.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-bcg-bcm": {
-   "oz": 11.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-bcg-grendel": {
-   "oz": 11.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-bcg-psa": {
-   "oz": 11.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-bcg-toolcraft": {
-   "oz": 11.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-buf-aero": {
-   "oz": 9.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-buf-psa": {
-   "oz": 9.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-buf-rifle": {
-   "oz": 11.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-buf-vltor": {
-   "oz": 11.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-ch-aero": {
-   "oz": 1.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-ch-bcm": {
-   "oz": 1.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-ch-geissele": {
-   "oz": 1.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-ch-radian": {
-   "oz": 1.7,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-gb-aero625": {
-   "oz": 1.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-gb-aero750": {
-   "oz": 1.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-gb-fsb": {
-   "oz": 4.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-gb-sa625": {
-   "oz": 1.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-gb-sa750": {
-   "oz": 1.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-gb-slr750": {
-   "oz": 1.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-grip-bcm": {
-   "oz": 2.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-grip-hogue": {
-   "oz": 3.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-grip-k2": {
-   "oz": 3.1,
-   "basis": "published",
-   "src": "https://www.primaryarms.com/magpul-moe-k2-plus-pistol-grip-black"
-  },
-  "ar-grip-moe": {
-   "oz": 2.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-grip-moeplus": {
-   "oz": 3.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-gt-carbine": {
-   "oz": 0.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-gt-mid": {
-   "oz": 0.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-gt-pistol": {
-   "oz": 0.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-gt-rifle": {
-   "oz": 1.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-hg-aero15": {
-   "oz": 7.95,
-   "basis": "published",
-   "src": "https://www.aeroprecisionusa.com/ar15-15-atlas-s-one-m-lok-handguard-anodized-black"
-  },
-  "ar-hg-aero9": {
-   "oz": 8.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-hg-bcm": {
-   "oz": 9.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-hg-bcm10": {
-   "oz": 8.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-hg-geissele": {
-   "oz": 14.9,
-   "basis": "published",
-   "src": "https://geissele.com/13-5-super-modular-rail-mk16-m-lokr.html"
-  },
-  "ar-hg-mi": {
-   "oz": 11.4,
-   "basis": "published",
-   "src": "https://www.primaryarms.com/midwest-industries-15in-combat-rail-m-lok-ar-15-handguard-black"
-  },
-  "ar-hg-mi7": {
-   "oz": 7.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-hg-mi9": {
-   "oz": 8.0,
-   "basis": "published",
-   "src": "https://www.primaryarms.com/midwest-industries-9.25in-combat-rail-m-lok-ar-15-handguard-black"
-  },
-  "ar-hg-moe": {
-   "oz": 7.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-hg-moecarb": {
-   "oz": 7.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-hg-moerifle": {
-   "oz": 10.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-hg-psa": {
-   "oz": 10.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-lower-aero": {
-   "oz": 8.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-lower-anderson": {
-   "oz": 7.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-lower-psa": {
-   "oz": 7.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-lower-seekins": {
-   "oz": 9.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-lower-spikes": {
-   "oz": 8.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-lpk-aero": {
-   "oz": 5.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-lpk-bcm": {
-   "oz": 5.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-lpk-cmmg": {
-   "oz": 4.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-lpk-psa": {
-   "oz": 5.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-mz-a2": {
-   "oz": 2.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-mz-a2-30": {
-   "oz": 2.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-mz-lantac": {
-   "oz": 2.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-mz-pa": {
-   "oz": 2.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-mz-sf3p": {
-   "oz": 2.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-mz-sf3p30": {
-   "oz": 2.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-mz-vg6": {
-   "oz": 2.1,
-   "basis": "published",
-   "src": "https://www.at3tactical.com/products/vg6-precision-gamma-556-muzzle-brake"
-  },
-  "ar-mz-warcomp": {
-   "oz": 2.7,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-opt-aimpoint": {
-   "oz": 11.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-opt-exps3": {
-   "oz": 11.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-opt-holosun": {
-   "oz": 8.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-opt-romeo5x": {
-   "oz": 5.6,
-   "basis": "published",
-   "src": "https://www.sigsauer.com/romeo5x-1x20-mm.html"
-  },
-  "ar-opt-slx16": {
-   "oz": 17.9,
-   "basis": "published",
-   "src": "https://www.primaryarms.com/KIT-PA-SLX-1-6X24S-NOVA-PADLXSM"
-  },
-  "ar-opt-vortex": {
-   "oz": 24.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-stock-a2": {
-   "oz": 16.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-stock-b5": {
-   "oz": 8.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-stock-bcm": {
-   "oz": 6.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-stock-ctr": {
-   "oz": 10.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-stock-moerifle": {
-   "oz": 17.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-stock-moesl": {
-   "oz": 9.3,
-   "basis": "published",
-   "src": "https://magpul.com/moe-sl-carbine-stock-mil-spec.html"
-  },
-  "ar-stock-prs": {
-   "oz": 32.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-stock-psa": {
-   "oz": 7.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-stock-ubr": {
-   "oz": 21.3,
-   "basis": "published",
-   "src": "https://www.primaryarms.com/Magpul-UBR-GEN2-Collapsible-Stock-Black"
-  },
-  "ar-trig-alg": {
-   "oz": 2.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-trig-cmc": {
-   "oz": 3.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-trig-geissele": {
-   "oz": 2.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-trig-larue": {
-   "oz": 3.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-trig-psa": {
-   "oz": 2.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-trig-rise": {
-   "oz": 2.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-upper-aero": {
-   "oz": 7.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-upper-anderson": {
-   "oz": 6.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-upper-bcm": {
-   "oz": 8.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "ar-upper-psa": {
-   "oz": 7.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-fcg-apex34": {
-   "oz": 1.7,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-fcg-apex5": {
-   "oz": 1.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-fcg-oem34": {
-   "oz": 1.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-fcg-oem5": {
-   "oz": 1.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-fcg-timney": {
-   "oz": 1.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-fcg-zev": {
-   "oz": 1.7,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-mag-oem10": {
-   "oz": 2.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-mag-oem15": {
-   "oz": 2.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-mag-oem17": {
-   "oz": 2.7,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-mag-oem24": {
-   "oz": 3.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-mag-pmag12": {
-   "oz": 1.5,
-   "basis": "published",
-   "src": "https://magpul.com/pmag-12-gl9-glock-g26.html"
-  },
-  "g-mag-pmag15": {
-   "oz": 1.9,
-   "basis": "published",
-   "src": "https://magpul.com/pmag-15-gl9-glock-g19.html"
-  },
-  "g-mag-pmag17": {
-   "oz": 1.7,
-   "basis": "published",
-   "src": "https://magpul.com/pmag-17-gl9-glock-17.html"
-  },
-  "g-mag-pmag21": {
-   "oz": 3.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-mz-tcomp": {
-   "oz": 1.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-mz-tp12": {
-   "oz": 0.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-mz-tpm": {
-   "oz": 0.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-opt-407c": {
-   "oz": 1.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-opt-507c": {
-   "oz": 1.5,
-   "basis": "published",
-   "src": "https://www.primaryarms.com/holosun-hs507c-x2-pistol-red-dot-sight-2-moa"
-  },
-  "g-opt-507k": {
-   "oz": 1.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-opt-acro": {
-   "oz": 2.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-opt-epsc": {
-   "oz": 1.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-opt-mps": {
-   "oz": 2.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-opt-rmr": {
-   "oz": 1.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-opt-sro": {
-   "oz": 1.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-sight-ameriglo": {
-   "oz": 0.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-sight-dawson": {
-   "oz": 0.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-sight-nf": {
-   "oz": 0.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-sight-oem": {
-   "oz": 0.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-sight-trijicon": {
-   "oz": 0.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-sight-truglo": {
-   "oz": 0.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-spk-lw": {
-   "oz": 1.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-spk-oem34": {
-   "oz": 1.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "g-spk-oem5": {
-   "oz": 1.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-bbl-ba": {
-   "oz": 4.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-bbl-faxon": {
-   "oz": 3.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-bbl-faxont": {
-   "oz": 4.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-bbl-lw": {
-   "oz": 4.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-bbl-lwm": {
-   "oz": 4.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-bbl-oem34": {
-   "oz": 3.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-bbl-oem5": {
-   "oz": 4.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-frame-g3": {
-   "oz": 3.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-frame-g4": {
-   "oz": 3.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-frame-g5": {
-   "oz": 3.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-frame-lw": {
-   "oz": 4.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-hol-g17": {
-   "oz": 4.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-hol-g17-tlr7a": {
-   "oz": 5.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-hol-g17-x300": {
-   "oz": 6.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-rsa-g3": {
-   "oz": 0.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-rsa-g4": {
-   "oz": 1.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-rsa-g45": {
-   "oz": 1.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-rsa-ismi": {
-   "oz": 1.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-slide-brn": {
-   "oz": 10.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-slide-g3": {
-   "oz": 11.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-slide-g4": {
-   "oz": 11.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-slide-g5": {
-   "oz": 13.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-slide-ggp": {
-   "oz": 10.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-slide-mos": {
-   "oz": 13.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "g17-slide-zev": {
-   "oz": 9.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-bbl-ba": {
-   "oz": 4.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-bbl-faxon": {
-   "oz": 3.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-bbl-faxont": {
-   "oz": 3.7,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-bbl-lw": {
-   "oz": 4.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-bbl-lwm": {
-   "oz": 4.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-bbl-oem34": {
-   "oz": 3.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-bbl-oem5": {
-   "oz": 3.7,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-frame-g3": {
-   "oz": 3.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-frame-g4": {
-   "oz": 3.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-frame-g5": {
-   "oz": 3.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-frame-lw": {
-   "oz": 3.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-hol-g19": {
-   "oz": 3.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-hol-g19-tlr7a": {
-   "oz": 5.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-hol-g19-x300": {
-   "oz": 6.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-rsa-g3": {
-   "oz": 0.7,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-rsa-g4": {
-   "oz": 1.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-rsa-g45": {
-   "oz": 0.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-rsa-ismi": {
-   "oz": 1.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-slide-brn": {
-   "oz": 10.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-slide-g3": {
-   "oz": 10.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-slide-g4": {
-   "oz": 11.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-slide-g5": {
-   "oz": 12.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-slide-ggp": {
-   "oz": 10.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-slide-mos": {
-   "oz": 12.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "g19-slide-zev": {
-   "oz": 8.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "g26-bbl-faxon": {
-   "oz": 2.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "g26-bbl-lw": {
-   "oz": 3.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "g26-bbl-lwm": {
-   "oz": 3.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "g26-bbl-oem34": {
-   "oz": 3.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "g26-bbl-oem5": {
-   "oz": 3.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "g26-frame-g3": {
-   "oz": 2.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "g26-frame-g4": {
-   "oz": 2.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "g26-frame-g5": {
-   "oz": 2.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "g26-hol-g26": {
-   "oz": 3.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "g26-hol-g26-tlr7a": {
-   "oz": 5.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "g26-hol-g26-x300": {
-   "oz": 5.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "g26-rsa-g45": {
-   "oz": 1.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "g26-slide-brn": {
-   "oz": 9.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "g26-slide-g3": {
-   "oz": 10.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "g26-slide-g4": {
-   "oz": 10.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "g26-slide-g5": {
-   "oz": 11.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "g26-slide-mos": {
-   "oz": 11.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "g26-slide-zev": {
-   "oz": 8.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-bbl-20lw": {
-   "oz": 5.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-bbl-20lwd": {
-   "oz": 5.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-bbl-20lwt": {
-   "oz": 5.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-bbl-20oem": {
-   "oz": 5.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-bbl-20to40": {
-   "oz": 5.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-bbl-21lw": {
-   "oz": 5.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-bbl-21lwdt": {
-   "oz": 5.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-bbl-21lwt": {
-   "oz": 5.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-bbl-21oem": {
-   "oz": 5.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-fcg-cmc": {
-   "oz": 1.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-fcg-oem": {
-   "oz": 1.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-fcg-ow": {
-   "oz": 1.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-frame-g3": {
-   "oz": 5.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-frame-g4": {
-   "oz": 5.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-frame-lw": {
-   "oz": 5.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-frame-sf": {
-   "oz": 5.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-hol-g20": {
-   "oz": 4.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-hol-g20-tlr7a": {
-   "oz": 6.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-hol-g20-x300": {
-   "oz": 6.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-hol-g21": {
-   "oz": 4.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-hol-g21-tlr7a": {
-   "oz": 6.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-hol-g21-x300": {
-   "oz": 6.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-mag-20": {
-   "oz": 3.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-mag-20-10": {
-   "oz": 3.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-mag-20ets": {
-   "oz": 3.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-mag-20ets20": {
-   "oz": 3.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-mag-21": {
-   "oz": 3.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-mag-21-10": {
-   "oz": 3.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-mag-21ets": {
-   "oz": 3.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-mag-21ets18": {
-   "oz": 3.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-mz-tp578": {
-   "oz": 0.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-mz-tp916": {
-   "oz": 0.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-opt-407c": {
-   "oz": 1.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-opt-507c": {
-   "oz": 1.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-opt-acro": {
-   "oz": 2.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-opt-rmr": {
-   "oz": 1.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-opt-sro": {
-   "oz": 1.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-rsa-g3": {
-   "oz": 0.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-rsa-g4": {
-   "oz": 0.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-rsa-ismi": {
-   "oz": 1.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-sight-bt": {
-   "oz": 0.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-sight-hdxr": {
-   "oz": 0.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-sight-oem": {
-   "oz": 0.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-slide-20brn": {
-   "oz": 13.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-slide-20g3": {
-   "oz": 13.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-slide-20g4": {
-   "oz": 13.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-slide-20mos": {
-   "oz": 13.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-slide-20zp": {
-   "oz": 13.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-slide-21g3": {
-   "oz": 13.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-slide-21g4": {
-   "oz": 13.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-slide-21mos": {
-   "oz": 13.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-spk-lw": {
-   "oz": 0.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "gl-spk-oem": {
-   "oz": 0.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-bbl-43x": {
-   "oz": 2.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-bbl-43xtp": {
-   "oz": 2.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-bbl-48": {
-   "oz": 2.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-bbl-48tp": {
-   "oz": 3.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-fcg-apex": {
-   "oz": 1.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-fcg-oem": {
-   "oz": 1.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-frame-43x": {
-   "oz": 2.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-frame-43xr": {
-   "oz": 2.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-frame-48": {
-   "oz": 2.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-hol-g43x": {
-   "oz": 3.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-hol-g43x-tlr7sub": {
-   "oz": 4.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-hol-g48": {
-   "oz": 3.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-hol-g48-tlr7sub": {
-   "oz": 5.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-mag-oem10": {
-   "oz": 1.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-mag-s15": {
-   "oz": 2.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-opt-507k": {
-   "oz": 1.0,
-   "basis": "published",
-   "src": "https://www.primaryarms.com/holosun-hs507k-x2-compact-pistol-red-dot-sight-2-moa"
-  },
-  "gs-opt-epsc": {
-   "oz": 1.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-opt-rmr": {
-   "oz": 1.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-opt-rmsc": {
-   "oz": 0.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-rsa-43x": {
-   "oz": 0.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-rsa-48": {
-   "oz": 0.7,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-sight-ameriglo": {
-   "oz": 0.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-sight-oem": {
-   "oz": 0.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-slide-43x": {
-   "oz": 9.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-slide-43xmos": {
-   "oz": 9.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-slide-48": {
-   "oz": 10.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-slide-48mos": {
-   "oz": 10.7,
-   "basis": "estimate",
-   "src": null
-  },
-  "gs-spk-oem": {
-   "oz": 0.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-3": {
-   "oz": 18.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-bbl-3": {
-   "oz": 2.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-bbl-3t": {
-   "oz": 3.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-bbl-apex": {
-   "oz": 3.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-bbl-pro": {
-   "oz": 3.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-bbl-prot": {
-   "oz": 3.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-bbl-tp": {
-   "oz": 3.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-hol-3": {
-   "oz": 3.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-hol-3-tlr7sub": {
-   "oz": 5.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-hol-pro": {
-   "oz": 3.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-hol-pro-tlr7sub": {
-   "oz": 5.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-mag-10": {
-   "oz": 2.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-mag-11": {
-   "oz": 2.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-mag-13": {
-   "oz": 2.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-mag-15": {
-   "oz": 2.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-mag-p10": {
-   "oz": 2.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-mag-p15": {
-   "oz": 2.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-mag-p17": {
-   "oz": 2.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-mz-tp": {
-   "oz": 0.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-opt-407k": {
-   "oz": 1.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-opt-507k": {
-   "oz": 1.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-opt-eps": {
-   "oz": 1.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-opt-r0": {
-   "oz": 0.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-opt-rmsc": {
-   "oz": 0.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-pro": {
-   "oz": 21.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-procomp": {
-   "oz": 21.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-prot": {
-   "oz": 21.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-rsa-3": {
-   "oz": 0.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-rsa-apex": {
-   "oz": 0.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-sight-ag": {
-   "oz": 0.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-sight-nf": {
-   "oz": 0.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-sight-trooper": {
-   "oz": 0.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-slide-apex": {
-   "oz": 8.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-slide-tp": {
-   "oz": 8.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "hc-trig-apex": {
-   "oz": 0.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-bbl-apexc": {
-   "oz": 4.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-bbl-eb": {
-   "oz": 4.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-bbl-faxc": {
-   "oz": 4.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-bbl-faxfs": {
-   "oz": 4.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-bbl-sw": {
-   "oz": 4.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-c4": {
-   "oz": 23.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-fs": {
-   "oz": 24.7,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-fst": {
-   "oz": 25.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-hol-c": {
-   "oz": 3.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-hol-c-tlr7a": {
-   "oz": 5.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-hol-c-x300": {
-   "oz": 6.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-hol-fs": {
-   "oz": 3.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-hol-fs-tlr7a": {
-   "oz": 5.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-hol-fs-x300": {
-   "oz": 6.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-mag-10": {
-   "oz": 3.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-mag-15": {
-   "oz": 2.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-mag-17": {
-   "oz": 3.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-mag-23": {
-   "oz": 3.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-mz-tp": {
-   "oz": 0.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-opt-407k": {
-   "oz": 1.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-opt-507c": {
-   "oz": 1.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-opt-acro": {
-   "oz": 2.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-opt-dpp": {
-   "oz": 1.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-opt-rmr": {
-   "oz": 1.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-opt-venom": {
-   "oz": 1.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-rsa-fs": {
-   "oz": 0.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-sight-hdxr": {
-   "oz": 0.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-sight-sup": {
-   "oz": 0.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-slide-c": {
-   "oz": 9.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-slide-fs": {
-   "oz": 10.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-trig-apexcurve": {
-   "oz": 0.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-trig-apexflat": {
-   "oz": 0.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "mp-trig-timney": {
-   "oz": 0.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-bbl-c9": {
-   "oz": 4.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-bbl-f45": {
-   "oz": 5.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-bbl-f9": {
-   "oz": 4.7,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-bbl-faxonc": {
-   "oz": 3.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-bbl-s9": {
-   "oz": 3.7,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-bbl-tpc": {
-   "oz": 4.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-case-pelican": {
-   "oz": 46.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-case-savior": {
-   "oz": 38.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-fcu-std": {
-   "oz": 3.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-fcu-x": {
-   "oz": 3.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-grip-45": {
-   "oz": 4.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-grip-axg": {
-   "oz": 11.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-grip-carry": {
-   "oz": 3.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-grip-compact": {
-   "oz": 3.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-grip-sub": {
-   "oz": 3.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-grip-wilson": {
-   "oz": 4.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-grip-xcarry": {
-   "oz": 4.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-grip-xfull": {
-   "oz": 4.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-light-tlr7a": {
-   "oz": 2.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-light-tlr7sub-g": {
-   "oz": 2.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-light-tlr7sub-h": {
-   "oz": 2.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-light-tlr7sub-p": {
-   "oz": 2.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-light-tlr7sub-s": {
-   "oz": 2.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-light-x300": {
-   "oz": 4.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-mag-mecgar17": {
-   "oz": 3.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-mag-sig12": {
-   "oz": 2.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-mag-sig15": {
-   "oz": 2.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-mag-sig17": {
-   "oz": 3.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-mag-sig45": {
-   "oz": 3.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-opt-407c": {
-   "oz": 1.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-opt-507c": {
-   "oz": 1.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-opt-r1p": {
-   "oz": 1.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-opt-romeox": {
-   "oz": 1.7,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-slide-45": {
-   "oz": 13.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-slide-compact": {
-   "oz": 11.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-slide-compor": {
-   "oz": 11.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-slide-m18": {
-   "oz": 11.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-slide-sub": {
-   "oz": 11.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-slide-xfull": {
-   "oz": 13.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-spr-c": {
-   "oz": 0.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-spr-f": {
-   "oz": 0.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "p-spr-s": {
-   "oz": 0.7,
-   "basis": "estimate",
-   "src": null
-  },
-  "p320-hol-compact": {
-   "oz": 3.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "p320-hol-compact-tlr7a": {
-   "oz": 4.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "p320-hol-compact-x300": {
-   "oz": 4.7,
-   "basis": "estimate",
-   "src": null
-  },
-  "p320-hol-full": {
-   "oz": 3.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "p320-hol-full-tlr7a": {
-   "oz": 4.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "p320-hol-full-x300": {
-   "oz": 5.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "p320-hol-subcompact": {
-   "oz": 3.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "p320-hol-subcompact-tlr7a": {
-   "oz": 4.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "p320-hol-subcompact-x300": {
-   "oz": 4.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-bbl-std": {
-   "oz": 2.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-bbl-tp": {
-   "oz": 2.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-bbl-tpstd": {
-   "oz": 2.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-bbl-xl": {
-   "oz": 2.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-bbl-xlthr": {
-   "oz": 3.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-fcu": {
-   "oz": 2.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-fcu-flat": {
-   "oz": 2.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-grip-std": {
-   "oz": 2.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-grip-wilson": {
-   "oz": 3.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-grip-xl": {
-   "oz": 3.3,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-hol-std": {
-   "oz": 3.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-hol-std-tlr7sub": {
-   "oz": 3.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-hol-xl": {
-   "oz": 3.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-hol-xl-tlr7sub": {
-   "oz": 4.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-mag-10": {
-   "oz": 2.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-mag-12": {
-   "oz": 2.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-mag-15": {
-   "oz": 2.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-opt-407k": {
-   "oz": 1.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-opt-507k": {
-   "oz": 1.0,
-   "basis": "published",
-   "src": "https://www.primaryarms.com/holosun-hs507k-x2-compact-pistol-red-dot-sight-2-moa"
-  },
-  "p365-opt-eps": {
-   "oz": 1.0,
-   "basis": "published",
-   "src": "https://www.primaryarms.com/holosun-eps-carry-mrs-enclosed-pistol-sight-multiple-reticle-red-reticle"
-  },
-  "p365-opt-r0": {
-   "oz": 1.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-opt-rmrcc": {
-   "oz": 1.1,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-opt-rmsc": {
-   "oz": 0.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-slide-spectre": {
-   "oz": 10.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-slide-std": {
-   "oz": 8.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-slide-xl": {
-   "oz": 9.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-spr-std": {
-   "oz": 0.4,
-   "basis": "estimate",
-   "src": null
-  },
-  "p365-spr-xl": {
-   "oz": 0.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "r-case-sav36": {
-   "oz": 112.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "r-case-sav42": {
-   "oz": 128.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "r-case-v700": {
-   "oz": 282.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "r-case-v730": {
-   "oz": 360.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "r-fg-afg2": {
-   "oz": 1.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "r-fg-bcmvg": {
-   "oz": 1.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "r-fg-kag": {
-   "oz": 0.9,
-   "basis": "estimate",
-   "src": null
-  },
-  "r-fg-mvg": {
-   "oz": 1.6,
-   "basis": "estimate",
-   "src": null
-  },
-  "r-fg-stop": {
-   "oz": 0.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "r-laser-cmr301": {
-   "oz": 4.2,
-   "basis": "estimate",
-   "src": null
-  },
-  "r-laser-ls117": {
-   "oz": 3.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "r-light-hlx": {
-   "oz": 6.4,
-   "basis": "published",
-   "src": "https://www.primaryarms.com/streamlight-protac-rail-mount-hl-x-1000-lumen-weapon-light-tapeswitch"
-  },
-  "r-light-m600": {
-   "oz": 7.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "r-light-rein": {
-   "oz": 4.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "r-mag-hm3x": {
-   "oz": 9.8,
-   "basis": "published",
-   "src": "https://www.primaryarms.com/holosun-hm3x-3x-magnifier"
-  },
-  "r-mag-vmx3t": {
-   "oz": 15.0,
-   "basis": "estimate",
-   "src": null
-  },
-  "r-qd-magpul": {
-   "oz": 0.6,
-   "basis": "published",
-   "src": "https://magpul.com/m-lok-qd-sling-mount.html"
-  },
-  "r-rail-5": {
-   "oz": 0.5,
-   "basis": "estimate",
-   "src": null
-  },
-  "r-rail-9": {
-   "oz": 0.8,
-   "basis": "estimate",
-   "src": null
-  },
-  "r-sling-ms4": {
-   "oz": 9.0,
-   "basis": "estimate",
-   "src": null
+  "_note": "Ounces as sold. basis \"estimate\" = typical figure, not yet checked against a maker listing; \"published\" = listed weight at src. scripts/read-weights.mjs reads listed weights from tracked product pages.",
+  "parts": {
+    "a10-bbl-aero16": {
+      "oz": 48.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-bbl-ba18": {
+      "oz": 46.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-bbl-ba20": {
+      "oz": 55.5,
+      "basis": "published",
+      "src": "https://www.ballisticadvantage.com/20-308-heavy-profile-rifle-length-ar-308-barrel-modern-series.html"
+    },
+    "a10-bbl-criterion": {
+      "oz": 65.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-bbl-psa18": {
+      "oz": 50.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-bcg-jp": {
+      "oz": 15.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-bcg-psa": {
+      "oz": 19.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-bcg-toolcraft": {
+      "oz": 19.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-bcg-young": {
+      "oz": 20.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-buf-aero": {
+      "oz": 11.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-buf-psa": {
+      "oz": 11.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-ch-armalite": {
+      "oz": 1.7,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-ch-dpms": {
+      "oz": 1.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-ch-radian": {
+      "oz": 1.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-gb-750": {
+      "oz": 1.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-gb-875": {
+      "oz": 1.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-gb-sa750": {
+      "oz": 1.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-grip-bcm": {
+      "oz": 2.7,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-grip-moe": {
+      "oz": 2.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-gt-mid": {
+      "oz": 0.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-gt-rifle": {
+      "oz": 0.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-hg-armalite": {
+      "oz": 16.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-hg-atlas": {
+      "oz": 13.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-hg-psa": {
+      "oz": 14.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-hg-seekins": {
+      "oz": 14.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-lower-aero": {
+      "oz": 11.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-lower-armalite": {
+      "oz": 12.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-lower-psa": {
+      "oz": 11.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-lower-seekins": {
+      "oz": 13.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-lpk-armalite": {
+      "oz": 8.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-lpk-dpms": {
+      "oz": 3.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-mag-armalite": {
+      "oz": 10.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-mag-pmag": {
+      "oz": 8.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-mz-a2": {
+      "oz": 2.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-mz-a2-556": {
+      "oz": 1.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-mz-pa": {
+      "oz": 3.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-mz-sf3p": {
+      "oz": 2.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-opt-slx16": {
+      "oz": 17.9,
+      "basis": "published",
+      "src": "https://www.primaryarms.com/KIT-PA-SLX-1-6X24S-NOVA-PADLXSM"
+    },
+    "a10-opt-venom": {
+      "oz": 39.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-opt-vortex": {
+      "oz": 23.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-stock-ctr": {
+      "oz": 10.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-stock-moesl": {
+      "oz": 9.6,
+      "basis": "published",
+      "src": "https://www.primaryarms.com/magpul-moe-slim-line-carbine-stock-mil-spec-black-mag347-blk"
+    },
+    "a10-stock-psa": {
+      "oz": 7.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-stock-ubr": {
+      "oz": 21.3,
+      "basis": "published",
+      "src": "https://www.primaryarms.com/Magpul-UBR-GEN2-Collapsible-Stock-Black"
+    },
+    "a10-trig-alg": {
+      "oz": 2.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-trig-geissele": {
+      "oz": 2.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-trig-larue": {
+      "oz": 3.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-trig-psa": {
+      "oz": 2.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-upper-aero": {
+      "oz": 9.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-upper-armalite": {
+      "oz": 10.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-upper-psa": {
+      "oz": 9.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-upper-seekins": {
+      "oz": 11.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-grip-hogue": {
+      "oz": 4.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-grip-moe": {
+      "oz": 2.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-grip-moeplus": {
+      "oz": 3.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-grip-uspalm": {
+      "oz": 3.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-hg-moe": {
+      "oz": 4.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-hg-uspalm": {
+      "oz": 7.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-hg-zhukov": {
+      "oz": 9.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-mag-bulg": {
+      "oz": 9.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-mag-m3": {
+      "oz": 7.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-mount-mi": {
+      "oz": 6.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-mount-rsr": {
+      "oz": 7.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-mount-tws": {
+      "oz": 6.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-mount-ultimak": {
+      "oz": 6.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-mz-74": {
+      "oz": 4.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-mz-jmac": {
+      "oz": 5.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-mz-pws": {
+      "oz": 3.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-opt-510c": {
+      "oz": 8.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-opt-exps3": {
+      "oz": 11.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-opt-se16": {
+      "oz": 25.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-opt-t2": {
+      "oz": 4.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-psa": {
+      "oz": 115.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-rak74": {
+      "oz": 118.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-stock-moe": {
+      "oz": 15.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-stock-strike": {
+      "oz": 20.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-stock-zhukov": {
+      "oz": 17.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-trig-algel": {
+      "oz": 4.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-trig-algul": {
+      "oz": 4.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "a74-trig-tapco": {
+      "oz": 4.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-bbl-aero16": {
+      "oz": 24.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-bbl-aero55": {
+      "oz": 12.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-bbl-ba45": {
+      "oz": 10.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-bbl-faxon105": {
+      "oz": 17.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-bbl-faxon16": {
+      "oz": 23.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-bbl-faxon85": {
+      "oz": 15.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-bcg-aero": {
+      "oz": 22.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-bcg-faxon": {
+      "oz": 24.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-bcg-jp": {
+      "oz": 24.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-bcg-kak": {
+      "oz": 21.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-bcg-psa": {
+      "oz": 21.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-bcg-toolcraft": {
+      "oz": 21.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-brace-sba3": {
+      "oz": 10.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-brace-sba4": {
+      "oz": 12.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-buf-aero": {
+      "oz": 12.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-buf-kak": {
+      "oz": 8.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-buf-spikes": {
+      "oz": 8.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-buf-std": {
+      "oz": 9.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-ch-aero": {
+      "oz": 1.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-ch-bcm": {
+      "oz": 1.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-ch-radian": {
+      "oz": 1.7,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-grip-bcm": {
+      "oz": 2.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-grip-k2": {
+      "oz": 3.1,
+      "basis": "published",
+      "src": "https://www.primaryarms.com/magpul-moe-k2-plus-pistol-grip-black"
+    },
+    "a9-grip-moe": {
+      "oz": 2.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-hg-aero15": {
+      "oz": 7.95,
+      "basis": "published",
+      "src": "https://www.aeroprecisionusa.com/ar15-15-atlas-s-one-m-lok-handguard-anodized-black"
+    },
+    "a9-hg-aero9": {
+      "oz": 8.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-hg-bcm13": {
+      "oz": 9.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-hg-bcm7": {
+      "oz": 6.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-hg-mi7": {
+      "oz": 7.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-hg-psa": {
+      "oz": 10.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-lower-aero": {
+      "oz": 8.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-lower-fm": {
+      "oz": 9.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-lower-jp": {
+      "oz": 9.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-lower-nfa": {
+      "oz": 8.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-lower-psa": {
+      "oz": 7.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-lower-spikes": {
+      "oz": 8.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-lpk-aero": {
+      "oz": 5.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-lpk-bcm": {
+      "oz": 5.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-lpk-psa": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-mag-g17": {
+      "oz": 2.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-mag-g33": {
+      "oz": 5.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-mag-gl9": {
+      "oz": 3.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-mag-metalform": {
+      "oz": 5.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-mag-psasmg": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-mz-a2": {
+      "oz": 2.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-mz-kak": {
+      "oz": 2.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-mz-odin": {
+      "oz": 2.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-mz-psa": {
+      "oz": 3.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-opt-aimpoint": {
+      "oz": 11.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-opt-exps3": {
+      "oz": 11.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-opt-holosun": {
+      "oz": 8.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-opt-romeo5x": {
+      "oz": 5.6,
+      "basis": "published",
+      "src": "https://www.sigsauer.com/romeo5x-1x20-mm.html"
+    },
+    "a9-stock-b5": {
+      "oz": 8.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-stock-ctr": {
+      "oz": 10.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-stock-moesl": {
+      "oz": 9.3,
+      "basis": "published",
+      "src": "https://magpul.com/moe-sl-carbine-stock-mil-spec.html"
+    },
+    "a9-stock-psa": {
+      "oz": 7.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-trig-alg": {
+      "oz": 2.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-trig-angstadt": {
+      "oz": 2.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-trig-cmc": {
+      "oz": 3.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-trig-psa": {
+      "oz": 2.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-upper-aero": {
+      "oz": 7.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-upper-m4e1": {
+      "oz": 7.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-upper-psa": {
+      "oz": 7.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-grip-hogue": {
+      "oz": 4.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-grip-moe": {
+      "oz": 2.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-grip-moeplus": {
+      "oz": 3.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-grip-uspalm": {
+      "oz": 3.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-hg-moe": {
+      "oz": 4.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-hg-uspalm": {
+      "oz": 7.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-hg-zhukov": {
+      "oz": 9.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-kr103": {
+      "oz": 126.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-mag-circle10": {
+      "oz": 12.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-mag-m3": {
+      "oz": 8.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-mag-moe": {
+      "oz": 8.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-mag-uspalm": {
+      "oz": 9.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-mount-mi": {
+      "oz": 6.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-mount-rsr": {
+      "oz": 7.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-mount-tws": {
+      "oz": 6.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-mount-ultimak": {
+      "oz": 6.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-mz-jmac14": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-mz-jmac24": {
+      "oz": 5.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-mz-pws": {
+      "oz": 3.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-mz-slant": {
+      "oz": 2.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-opt-510c": {
+      "oz": 8.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-opt-exps3": {
+      "oz": 11.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-opt-se16": {
+      "oz": 25.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-opt-t2": {
+      "oz": 4.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-psa-103": {
+      "oz": 125.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-psa-gf3": {
+      "oz": 118.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-rak47": {
+      "oz": 120.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-sam7sf": {
+      "oz": 131.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-stock-moe": {
+      "oz": 15.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-stock-strike": {
+      "oz": 20.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-stock-zhukov": {
+      "oz": 17.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-trig-algel": {
+      "oz": 4.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-trig-algul": {
+      "oz": 4.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-trig-tapco": {
+      "oz": 4.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-wasr": {
+      "oz": 120.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "akm-zpap": {
+      "oz": 130.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-bbl-300": {
+      "oz": 30.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-bbl-aero16": {
+      "oz": 32.0,
+      "basis": "published",
+      "src": "https://www.aeroprecisionusa.com/556-16-mid-cmv-barrel"
+    },
+    "ar-bbl-arc18": {
+      "oz": 41.3,
+      "basis": "published",
+      "src": "https://www.ballisticadvantage.com/18-6mm-arc-spr-rifle-length-ar-15-barrel-premium-series.html"
+    },
+    "ar-bbl-ba10": {
+      "oz": 22.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-bbl-ba115": {
+      "oz": 20.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-bbl-ba16": {
+      "oz": 28.0,
+      "basis": "published",
+      "src": "https://www.primaryarms.com/ballistic-advantage-ar-15-5-56-nato-16-mid-length-barrel-1-2x28-babl556015m"
+    },
+    "ar-bbl-ba18spr": {
+      "oz": 31.0,
+      "basis": "published",
+      "src": "https://www.ballisticadvantage.com/18-223-wylde-spr-fluted-stainless-steel-rifle-length-ar-15-barrel-premium-series.html"
+    },
+    "ar-bbl-ba20": {
+      "oz": 35.6,
+      "basis": "published",
+      "src": "https://www.ballisticadvantage.com/20-5-56-government-rifle-length-ar-15-barrel-modern-series.html"
+    },
+    "ar-bbl-ba300-9": {
+      "oz": 19.0,
+      "basis": "published",
+      "src": "https://www.ballisticadvantage.com/9-300-blackout-pistol-length-ar-15-barrel-modern-series.html"
+    },
+    "ar-bbl-ba75": {
+      "oz": 22.4,
+      "basis": "published",
+      "src": "https://www.ballisticadvantage.com/7-5-5-56-pistol-length-ar-15-barrel-modern-series.html"
+    },
+    "ar-bbl-bcm": {
+      "oz": 30.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-bbl-criterion": {
+      "oz": 36.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-bbl-faxon": {
+      "oz": 22.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-bbl-grendel18": {
+      "oz": 40.1,
+      "basis": "published",
+      "src": "https://www.ballisticadvantage.com/18-6-5-grendel-spr-rifle-length-ar-15-barrel-premium-series.html"
+    },
+    "ar-bbl-grendel20": {
+      "oz": 31.7,
+      "basis": "published",
+      "src": "https://faxonfirearms.com/faxon-match-series-20-heavy-fluted-6-5-grendel-rifle-length-416-r-stainless-qpq-nitride-5r-nickel-teflon-extension-ar-15-barrel"
+    },
+    "ar-bbl-psa16": {
+      "oz": 28.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-bcg-aero": {
+      "oz": 11.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-bcg-bcm": {
+      "oz": 11.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-bcg-grendel": {
+      "oz": 11.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-bcg-psa": {
+      "oz": 11.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-bcg-toolcraft": {
+      "oz": 11.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-buf-aero": {
+      "oz": 9.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-buf-psa": {
+      "oz": 9.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-buf-rifle": {
+      "oz": 11.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-buf-vltor": {
+      "oz": 11.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-ch-aero": {
+      "oz": 1.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-ch-bcm": {
+      "oz": 1.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-ch-geissele": {
+      "oz": 1.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-ch-radian": {
+      "oz": 1.7,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-gb-aero625": {
+      "oz": 1.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-gb-aero750": {
+      "oz": 1.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-gb-fsb": {
+      "oz": 4.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-gb-sa625": {
+      "oz": 1.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-gb-sa750": {
+      "oz": 1.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-gb-slr750": {
+      "oz": 1.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-grip-bcm": {
+      "oz": 2.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-grip-hogue": {
+      "oz": 3.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-grip-k2": {
+      "oz": 3.1,
+      "basis": "published",
+      "src": "https://www.primaryarms.com/magpul-moe-k2-plus-pistol-grip-black"
+    },
+    "ar-grip-moe": {
+      "oz": 2.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-grip-moeplus": {
+      "oz": 3.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-gt-carbine": {
+      "oz": 0.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-gt-mid": {
+      "oz": 0.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-gt-pistol": {
+      "oz": 0.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-gt-rifle": {
+      "oz": 1.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-hg-aero15": {
+      "oz": 7.95,
+      "basis": "published",
+      "src": "https://www.aeroprecisionusa.com/ar15-15-atlas-s-one-m-lok-handguard-anodized-black"
+    },
+    "ar-hg-aero9": {
+      "oz": 8.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-hg-bcm": {
+      "oz": 9.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-hg-bcm10": {
+      "oz": 8.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-hg-geissele": {
+      "oz": 14.9,
+      "basis": "published",
+      "src": "https://geissele.com/13-5-super-modular-rail-mk16-m-lokr.html"
+    },
+    "ar-hg-mi": {
+      "oz": 11.4,
+      "basis": "published",
+      "src": "https://www.primaryarms.com/midwest-industries-15in-combat-rail-m-lok-ar-15-handguard-black"
+    },
+    "ar-hg-mi7": {
+      "oz": 7.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-hg-mi9": {
+      "oz": 8.0,
+      "basis": "published",
+      "src": "https://www.primaryarms.com/midwest-industries-9.25in-combat-rail-m-lok-ar-15-handguard-black"
+    },
+    "ar-hg-moe": {
+      "oz": 7.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-hg-moecarb": {
+      "oz": 7.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-hg-moerifle": {
+      "oz": 10.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-hg-psa": {
+      "oz": 10.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-lower-aero": {
+      "oz": 8.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-lower-anderson": {
+      "oz": 7.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-lower-psa": {
+      "oz": 7.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-lower-seekins": {
+      "oz": 9.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-lower-spikes": {
+      "oz": 8.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-lpk-aero": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-lpk-bcm": {
+      "oz": 5.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-lpk-cmmg": {
+      "oz": 4.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-lpk-psa": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-mz-a2": {
+      "oz": 2.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-mz-a2-30": {
+      "oz": 2.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-mz-lantac": {
+      "oz": 2.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-mz-pa": {
+      "oz": 2.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-mz-sf3p": {
+      "oz": 2.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-mz-sf3p30": {
+      "oz": 2.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-mz-vg6": {
+      "oz": 2.1,
+      "basis": "published",
+      "src": "https://www.at3tactical.com/products/vg6-precision-gamma-556-muzzle-brake"
+    },
+    "ar-mz-warcomp": {
+      "oz": 2.7,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-opt-aimpoint": {
+      "oz": 11.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-opt-exps3": {
+      "oz": 11.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-opt-holosun": {
+      "oz": 8.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-opt-romeo5x": {
+      "oz": 5.6,
+      "basis": "published",
+      "src": "https://www.sigsauer.com/romeo5x-1x20-mm.html"
+    },
+    "ar-opt-slx16": {
+      "oz": 17.9,
+      "basis": "published",
+      "src": "https://www.primaryarms.com/KIT-PA-SLX-1-6X24S-NOVA-PADLXSM"
+    },
+    "ar-opt-vortex": {
+      "oz": 24.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-stock-a2": {
+      "oz": 16.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-stock-b5": {
+      "oz": 8.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-stock-bcm": {
+      "oz": 6.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-stock-ctr": {
+      "oz": 10.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-stock-moerifle": {
+      "oz": 17.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-stock-moesl": {
+      "oz": 9.3,
+      "basis": "published",
+      "src": "https://magpul.com/moe-sl-carbine-stock-mil-spec.html"
+    },
+    "ar-stock-prs": {
+      "oz": 32.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-stock-psa": {
+      "oz": 7.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-stock-ubr": {
+      "oz": 21.3,
+      "basis": "published",
+      "src": "https://www.primaryarms.com/Magpul-UBR-GEN2-Collapsible-Stock-Black"
+    },
+    "ar-trig-alg": {
+      "oz": 2.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-trig-cmc": {
+      "oz": 3.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-trig-geissele": {
+      "oz": 2.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-trig-larue": {
+      "oz": 3.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-trig-psa": {
+      "oz": 2.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-trig-rise": {
+      "oz": 2.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-upper-aero": {
+      "oz": 7.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-upper-anderson": {
+      "oz": 6.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-upper-bcm": {
+      "oz": 8.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-upper-psa": {
+      "oz": 7.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-fcg-apex34": {
+      "oz": 1.7,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-fcg-apex5": {
+      "oz": 1.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-fcg-oem34": {
+      "oz": 1.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-fcg-oem5": {
+      "oz": 1.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-fcg-timney": {
+      "oz": 1.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-fcg-zev": {
+      "oz": 1.7,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-mag-oem10": {
+      "oz": 2.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-mag-oem15": {
+      "oz": 2.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-mag-oem17": {
+      "oz": 2.7,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-mag-oem24": {
+      "oz": 3.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-mag-pmag12": {
+      "oz": 1.5,
+      "basis": "published",
+      "src": "https://magpul.com/pmag-12-gl9-glock-g26.html"
+    },
+    "g-mag-pmag15": {
+      "oz": 1.9,
+      "basis": "published",
+      "src": "https://magpul.com/pmag-15-gl9-glock-g19.html"
+    },
+    "g-mag-pmag17": {
+      "oz": 1.7,
+      "basis": "published",
+      "src": "https://magpul.com/pmag-17-gl9-glock-17.html"
+    },
+    "g-mag-pmag21": {
+      "oz": 3.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-mz-tcomp": {
+      "oz": 1.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-mz-tp12": {
+      "oz": 0.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-mz-tpm": {
+      "oz": 0.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-opt-407c": {
+      "oz": 1.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-opt-507c": {
+      "oz": 1.5,
+      "basis": "published",
+      "src": "https://www.primaryarms.com/holosun-hs507c-x2-pistol-red-dot-sight-2-moa"
+    },
+    "g-opt-507k": {
+      "oz": 1.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-opt-acro": {
+      "oz": 2.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-opt-epsc": {
+      "oz": 1.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-opt-mps": {
+      "oz": 2.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-opt-rmr": {
+      "oz": 1.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-opt-sro": {
+      "oz": 1.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-sight-ameriglo": {
+      "oz": 0.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-sight-dawson": {
+      "oz": 0.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-sight-nf": {
+      "oz": 0.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-sight-oem": {
+      "oz": 0.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-sight-trijicon": {
+      "oz": 0.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-sight-truglo": {
+      "oz": 0.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-spk-lw": {
+      "oz": 1.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-spk-oem34": {
+      "oz": 1.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-spk-oem5": {
+      "oz": 1.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-bbl-ba": {
+      "oz": 4.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-bbl-faxon": {
+      "oz": 3.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-bbl-faxont": {
+      "oz": 4.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-bbl-lw": {
+      "oz": 4.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-bbl-lwm": {
+      "oz": 4.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-bbl-oem34": {
+      "oz": 3.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-bbl-oem5": {
+      "oz": 4.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-frame-g3": {
+      "oz": 3.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-frame-g4": {
+      "oz": 3.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-frame-g5": {
+      "oz": 3.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-frame-lw": {
+      "oz": 4.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-hol-g17": {
+      "oz": 4.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-hol-g17-tlr7a": {
+      "oz": 5.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-hol-g17-x300": {
+      "oz": 6.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-rsa-g3": {
+      "oz": 0.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-rsa-g4": {
+      "oz": 1.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-rsa-g45": {
+      "oz": 1.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-rsa-ismi": {
+      "oz": 1.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-slide-brn": {
+      "oz": 10.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-slide-g3": {
+      "oz": 11.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-slide-g4": {
+      "oz": 11.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-slide-g5": {
+      "oz": 13.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-slide-ggp": {
+      "oz": 10.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-slide-mos": {
+      "oz": 13.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "g17-slide-zev": {
+      "oz": 9.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-bbl-ba": {
+      "oz": 4.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-bbl-faxon": {
+      "oz": 3.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-bbl-faxont": {
+      "oz": 3.7,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-bbl-lw": {
+      "oz": 4.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-bbl-lwm": {
+      "oz": 4.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-bbl-oem34": {
+      "oz": 3.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-bbl-oem5": {
+      "oz": 3.7,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-frame-g3": {
+      "oz": 3.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-frame-g4": {
+      "oz": 3.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-frame-g5": {
+      "oz": 3.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-frame-lw": {
+      "oz": 3.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-hol-g19": {
+      "oz": 3.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-hol-g19-tlr7a": {
+      "oz": 5.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-hol-g19-x300": {
+      "oz": 6.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-rsa-g3": {
+      "oz": 0.7,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-rsa-g4": {
+      "oz": 1.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-rsa-g45": {
+      "oz": 0.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-rsa-ismi": {
+      "oz": 1.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-slide-brn": {
+      "oz": 10.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-slide-g3": {
+      "oz": 10.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-slide-g4": {
+      "oz": 11.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-slide-g5": {
+      "oz": 12.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-slide-ggp": {
+      "oz": 10.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-slide-mos": {
+      "oz": 12.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "g19-slide-zev": {
+      "oz": 8.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "g26-bbl-faxon": {
+      "oz": 2.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "g26-bbl-lw": {
+      "oz": 3.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "g26-bbl-lwm": {
+      "oz": 3.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "g26-bbl-oem34": {
+      "oz": 3.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "g26-bbl-oem5": {
+      "oz": 3.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "g26-frame-g3": {
+      "oz": 2.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "g26-frame-g4": {
+      "oz": 2.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "g26-frame-g5": {
+      "oz": 2.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "g26-hol-g26": {
+      "oz": 3.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "g26-hol-g26-tlr7a": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "g26-hol-g26-x300": {
+      "oz": 5.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "g26-rsa-g45": {
+      "oz": 1.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "g26-slide-brn": {
+      "oz": 9.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "g26-slide-g3": {
+      "oz": 10.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "g26-slide-g4": {
+      "oz": 10.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "g26-slide-g5": {
+      "oz": 11.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "g26-slide-mos": {
+      "oz": 11.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "g26-slide-zev": {
+      "oz": 8.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-bbl-20lw": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-bbl-20lwd": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-bbl-20lwt": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-bbl-20oem": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-bbl-20to40": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-bbl-21lw": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-bbl-21lwdt": {
+      "oz": 5.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-bbl-21lwt": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-bbl-21oem": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-fcg-cmc": {
+      "oz": 1.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-fcg-oem": {
+      "oz": 1.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-fcg-ow": {
+      "oz": 1.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-frame-g3": {
+      "oz": 5.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-frame-g4": {
+      "oz": 5.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-frame-lw": {
+      "oz": 5.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-frame-sf": {
+      "oz": 5.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-hol-g20": {
+      "oz": 4.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-hol-g20-tlr7a": {
+      "oz": 6.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-hol-g20-x300": {
+      "oz": 6.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-hol-g21": {
+      "oz": 4.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-hol-g21-tlr7a": {
+      "oz": 6.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-hol-g21-x300": {
+      "oz": 6.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-mag-20": {
+      "oz": 3.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-mag-20-10": {
+      "oz": 3.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-mag-20ets": {
+      "oz": 3.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-mag-20ets20": {
+      "oz": 3.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-mag-21": {
+      "oz": 3.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-mag-21-10": {
+      "oz": 3.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-mag-21ets": {
+      "oz": 3.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-mag-21ets18": {
+      "oz": 3.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-mz-tp578": {
+      "oz": 0.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-mz-tp916": {
+      "oz": 0.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-opt-407c": {
+      "oz": 1.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-opt-507c": {
+      "oz": 1.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-opt-acro": {
+      "oz": 2.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-opt-rmr": {
+      "oz": 1.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-opt-sro": {
+      "oz": 1.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-rsa-g3": {
+      "oz": 0.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-rsa-g4": {
+      "oz": 0.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-rsa-ismi": {
+      "oz": 1.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-sight-bt": {
+      "oz": 0.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-sight-hdxr": {
+      "oz": 0.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-sight-oem": {
+      "oz": 0.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-slide-20brn": {
+      "oz": 13.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-slide-20g3": {
+      "oz": 13.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-slide-20g4": {
+      "oz": 13.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-slide-20mos": {
+      "oz": 13.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-slide-20zp": {
+      "oz": 13.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-slide-21g3": {
+      "oz": 13.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-slide-21g4": {
+      "oz": 13.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-slide-21mos": {
+      "oz": 13.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-spk-lw": {
+      "oz": 0.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "gl-spk-oem": {
+      "oz": 0.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-bbl-43x": {
+      "oz": 2.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-bbl-43xtp": {
+      "oz": 2.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-bbl-48": {
+      "oz": 2.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-bbl-48tp": {
+      "oz": 3.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-fcg-apex": {
+      "oz": 1.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-fcg-oem": {
+      "oz": 1.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-frame-43x": {
+      "oz": 2.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-frame-43xr": {
+      "oz": 2.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-frame-48": {
+      "oz": 2.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-hol-g43x": {
+      "oz": 3.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-hol-g43x-tlr7sub": {
+      "oz": 4.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-hol-g48": {
+      "oz": 3.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-hol-g48-tlr7sub": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-mag-oem10": {
+      "oz": 1.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-mag-s15": {
+      "oz": 2.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-opt-507k": {
+      "oz": 1.0,
+      "basis": "published",
+      "src": "https://www.primaryarms.com/holosun-hs507k-x2-compact-pistol-red-dot-sight-2-moa"
+    },
+    "gs-opt-epsc": {
+      "oz": 1.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-opt-rmr": {
+      "oz": 1.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-opt-rmsc": {
+      "oz": 0.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-rsa-43x": {
+      "oz": 0.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-rsa-48": {
+      "oz": 0.7,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-sight-ameriglo": {
+      "oz": 0.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-sight-oem": {
+      "oz": 0.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-slide-43x": {
+      "oz": 9.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-slide-43xmos": {
+      "oz": 9.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-slide-48": {
+      "oz": 10.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-slide-48mos": {
+      "oz": 10.7,
+      "basis": "estimate",
+      "src": null
+    },
+    "gs-spk-oem": {
+      "oz": 0.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-3": {
+      "oz": 18.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-bbl-3": {
+      "oz": 2.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-bbl-3t": {
+      "oz": 3.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-bbl-apex": {
+      "oz": 3.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-bbl-pro": {
+      "oz": 3.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-bbl-prot": {
+      "oz": 3.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-bbl-tp": {
+      "oz": 3.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-hol-3": {
+      "oz": 3.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-hol-3-tlr7sub": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-hol-pro": {
+      "oz": 3.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-hol-pro-tlr7sub": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-mag-10": {
+      "oz": 2.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-mag-11": {
+      "oz": 2.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-mag-13": {
+      "oz": 2.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-mag-15": {
+      "oz": 2.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-mag-p10": {
+      "oz": 2.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-mag-p15": {
+      "oz": 2.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-mag-p17": {
+      "oz": 2.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-mz-tp": {
+      "oz": 0.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-opt-407k": {
+      "oz": 1.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-opt-507k": {
+      "oz": 1.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-opt-eps": {
+      "oz": 1.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-opt-r0": {
+      "oz": 0.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-opt-rmsc": {
+      "oz": 0.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-pro": {
+      "oz": 21.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-procomp": {
+      "oz": 21.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-prot": {
+      "oz": 21.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-rsa-3": {
+      "oz": 0.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-rsa-apex": {
+      "oz": 0.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-sight-ag": {
+      "oz": 0.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-sight-nf": {
+      "oz": 0.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-sight-trooper": {
+      "oz": 0.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-slide-apex": {
+      "oz": 8.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-slide-tp": {
+      "oz": 8.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "hc-trig-apex": {
+      "oz": 0.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-bul-sas": {
+      "oz": 34.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-girsan": {
+      "oz": 40.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-hol-39": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-hol-39-tlr7a": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-hol-39-x300": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-hol-44": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-hol-44-tlr7a": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-hol-44-x300": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-hol-5": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-hol-5-tlr7a": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-hol-5-x300": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-mag-bul": {
+      "oz": 4.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-mag-pr17": {
+      "oz": 4.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-mag-pr20": {
+      "oz": 4.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-mag-st16": {
+      "oz": 4.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-mag-st17": {
+      "oz": 4.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-mag-st20": {
+      "oz": 4.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-mw-dawsonpr": {
+      "oz": 1.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-mw-dawsonst": {
+      "oz": 1.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-opt-507c": {
+      "oz": 1.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-opt-508t": {
+      "oz": 1.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-opt-acro": {
+      "oz": 2.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-opt-dpp": {
+      "oz": 2.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-opt-rmr": {
+      "oz": 1.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-opt-sro": {
+      "oz": 1.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-prodigy425": {
+      "oz": 32.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-prodigy5": {
+      "oz": 33.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-sgt-dawsonpr": {
+      "oz": 0.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-sgt-dawsonst": {
+      "oz": 0.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-sgt-dawsonsto": {
+      "oz": 0.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-staccato-c2": {
+      "oz": 31.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-staccato-p": {
+      "oz": 33.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m21-staccato-xc": {
+      "oz": 38.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-bbl-apexc": {
+      "oz": 4.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-bbl-eb": {
+      "oz": 4.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-bbl-faxc": {
+      "oz": 4.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-bbl-faxfs": {
+      "oz": 4.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-bbl-sw": {
+      "oz": 4.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-c4": {
+      "oz": 23.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-fs": {
+      "oz": 24.7,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-fst": {
+      "oz": 25.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-hol-c": {
+      "oz": 3.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-hol-c-tlr7a": {
+      "oz": 5.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-hol-c-x300": {
+      "oz": 6.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-hol-fs": {
+      "oz": 3.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-hol-fs-tlr7a": {
+      "oz": 5.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-hol-fs-x300": {
+      "oz": 6.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-mag-10": {
+      "oz": 3.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-mag-15": {
+      "oz": 2.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-mag-17": {
+      "oz": 3.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-mag-23": {
+      "oz": 3.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-mz-tp": {
+      "oz": 0.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-opt-407k": {
+      "oz": 1.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-opt-507c": {
+      "oz": 1.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-opt-acro": {
+      "oz": 2.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-opt-dpp": {
+      "oz": 1.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-opt-rmr": {
+      "oz": 1.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-opt-venom": {
+      "oz": 1.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-rsa-fs": {
+      "oz": 0.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-sight-hdxr": {
+      "oz": 0.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-sight-sup": {
+      "oz": 0.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-slide-c": {
+      "oz": 9.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-slide-fs": {
+      "oz": 10.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-trig-apexcurve": {
+      "oz": 0.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-trig-apexflat": {
+      "oz": 0.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "mp-trig-timney": {
+      "oz": 0.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-bbl-c9": {
+      "oz": 4.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-bbl-f45": {
+      "oz": 5.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-bbl-f9": {
+      "oz": 4.7,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-bbl-faxonc": {
+      "oz": 3.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-bbl-s9": {
+      "oz": 3.7,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-bbl-tpc": {
+      "oz": 4.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-case-pelican": {
+      "oz": 46.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-case-savior": {
+      "oz": 38.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-fcu-std": {
+      "oz": 3.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-fcu-x": {
+      "oz": 3.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-grip-45": {
+      "oz": 4.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-grip-axg": {
+      "oz": 11.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-grip-carry": {
+      "oz": 3.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-grip-compact": {
+      "oz": 3.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-grip-sub": {
+      "oz": 3.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-grip-wilson": {
+      "oz": 4.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-grip-xcarry": {
+      "oz": 4.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-grip-xfull": {
+      "oz": 4.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-light-tlr7a": {
+      "oz": 2.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-light-tlr7sub-g": {
+      "oz": 2.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-light-tlr7sub-h": {
+      "oz": 2.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-light-tlr7sub-p": {
+      "oz": 2.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-light-tlr7sub-s": {
+      "oz": 2.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-light-x300": {
+      "oz": 4.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-mag-mecgar17": {
+      "oz": 3.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-mag-sig12": {
+      "oz": 2.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-mag-sig15": {
+      "oz": 2.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-mag-sig17": {
+      "oz": 3.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-mag-sig45": {
+      "oz": 3.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-opt-407c": {
+      "oz": 1.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-opt-507c": {
+      "oz": 1.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-opt-r1p": {
+      "oz": 1.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-opt-romeox": {
+      "oz": 1.7,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-slide-45": {
+      "oz": 13.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-slide-compact": {
+      "oz": 11.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-slide-compor": {
+      "oz": 11.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-slide-m18": {
+      "oz": 11.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-slide-sub": {
+      "oz": 11.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-slide-xfull": {
+      "oz": 13.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-spr-c": {
+      "oz": 0.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-spr-f": {
+      "oz": 0.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-spr-s": {
+      "oz": 0.7,
+      "basis": "estimate",
+      "src": null
+    },
+    "p320-hol-compact": {
+      "oz": 3.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "p320-hol-compact-tlr7a": {
+      "oz": 4.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "p320-hol-compact-x300": {
+      "oz": 4.7,
+      "basis": "estimate",
+      "src": null
+    },
+    "p320-hol-full": {
+      "oz": 3.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "p320-hol-full-tlr7a": {
+      "oz": 4.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "p320-hol-full-x300": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "p320-hol-subcompact": {
+      "oz": 3.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "p320-hol-subcompact-tlr7a": {
+      "oz": 4.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "p320-hol-subcompact-x300": {
+      "oz": 4.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-bbl-std": {
+      "oz": 2.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-bbl-tp": {
+      "oz": 2.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-bbl-tpstd": {
+      "oz": 2.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-bbl-xl": {
+      "oz": 2.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-bbl-xlthr": {
+      "oz": 3.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-fcu": {
+      "oz": 2.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-fcu-flat": {
+      "oz": 2.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-grip-std": {
+      "oz": 2.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-grip-wilson": {
+      "oz": 3.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-grip-xl": {
+      "oz": 3.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-hol-std": {
+      "oz": 3.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-hol-std-tlr7sub": {
+      "oz": 3.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-hol-xl": {
+      "oz": 3.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-hol-xl-tlr7sub": {
+      "oz": 4.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-mag-10": {
+      "oz": 2.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-mag-12": {
+      "oz": 2.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-mag-15": {
+      "oz": 2.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-opt-407k": {
+      "oz": 1.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-opt-507k": {
+      "oz": 1.0,
+      "basis": "published",
+      "src": "https://www.primaryarms.com/holosun-hs507k-x2-compact-pistol-red-dot-sight-2-moa"
+    },
+    "p365-opt-eps": {
+      "oz": 1.0,
+      "basis": "published",
+      "src": "https://www.primaryarms.com/holosun-eps-carry-mrs-enclosed-pistol-sight-multiple-reticle-red-reticle"
+    },
+    "p365-opt-r0": {
+      "oz": 1.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-opt-rmrcc": {
+      "oz": 1.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-opt-rmsc": {
+      "oz": 0.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-slide-spectre": {
+      "oz": 10.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-slide-std": {
+      "oz": 8.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-slide-xl": {
+      "oz": 9.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-spr-std": {
+      "oz": 0.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-spr-xl": {
+      "oz": 0.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "r-case-sav36": {
+      "oz": 112.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "r-case-sav42": {
+      "oz": 128.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "r-case-v700": {
+      "oz": 282.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "r-case-v730": {
+      "oz": 360.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "r-fg-afg2": {
+      "oz": 1.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "r-fg-bcmvg": {
+      "oz": 1.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "r-fg-kag": {
+      "oz": 0.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "r-fg-mvg": {
+      "oz": 1.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "r-fg-stop": {
+      "oz": 0.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "r-laser-cmr301": {
+      "oz": 4.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "r-laser-ls117": {
+      "oz": 3.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "r-light-hlx": {
+      "oz": 6.4,
+      "basis": "published",
+      "src": "https://www.primaryarms.com/streamlight-protac-rail-mount-hl-x-1000-lumen-weapon-light-tapeswitch"
+    },
+    "r-light-m600": {
+      "oz": 7.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "r-light-rein": {
+      "oz": 4.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "r-mag-hm3x": {
+      "oz": 9.8,
+      "basis": "published",
+      "src": "https://www.primaryarms.com/holosun-hm3x-3x-magnifier"
+    },
+    "r-mag-vmx3t": {
+      "oz": 15.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "r-qd-magpul": {
+      "oz": 0.6,
+      "basis": "published",
+      "src": "https://magpul.com/m-lok-qd-sling-mount.html"
+    },
+    "r-rail-5": {
+      "oz": 0.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "r-rail-9": {
+      "oz": 0.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "r-sling-ms4": {
+      "oz": 9.0,
+      "basis": "estimate",
+      "src": null
+    }
   }
- }
 }

@@ -48,6 +48,7 @@ REFS = {
     guard_seed=(1450, 1650),
     # Two stray shading strokes on the slide.
     erase=[(1130, 1190, 1160, 1290), (1250, 1180, 1280, 1260)],
+    win_eps=14,
     marks=dict(slideFront=2132, muzzle=2150, bore=1210, spring=1380, slideBottom=1322, nose=1322,
                rearSerr=855, frontSerr=1650, port0=None, port1=None, rail0=1580, dust=2133, railBottom=1478),
   ),
@@ -84,7 +85,9 @@ REFS = {
     # The grip panels' edges come out of the stipple in broken pieces, so the three bands between them are
     # picked by hand from the drawing instead. Also left out: the takedown lever's broken outline and two scraps
     # at the slide's rear corner; the thin sliver at the front of the magwell isn't a magazine window.
-    detail_erase=[box(1100, 1035, 1465, 1250), box(560, 1250, 1200, 1680), box(780, 900, 950, 970), box(670, 755, 750, 790), box(665, 800, 707, 880)],
+    # The slide's scalloped serrations come out of the stipple as wobbly loops, so they are drawn in code (MP_SERR).
+    detail_erase=[box(1100, 1035, 1465, 1250), box(560, 1250, 1200, 1680), box(780, 900, 950, 970), box(670, 755, 750, 790), box(665, 800, 707, 880),
+                  box(640, 730, 1070, 910), box(1760, 830, 2080, 905), box(1150, 755, 1205, 815)],
     no_window=True,
     frame_lines=[
         [(597, 1600), (613, 1527), (633, 1460), (660, 1380), (693, 1293), (727, 1213), (760, 1127), (768, 1087)],
@@ -114,7 +117,8 @@ REFS = {
     # dash ticks, the slide serrations (drawn in code), and the unclaimed magazine floor plate showing through the magwell.
     detail_erase=[box(1440, 990, 2140, 1425), box(482, 417, 553, 729), box(2205, 930, 2718, 992), box(2614, 850, 2718, 992),
                   box(690, 1775, 1210, 1855), box(1028, 1834, 1210, 1940), box(534, 1847, 690, 1940),
-                  box(686, 491, 1262, 700), box(2040, 483, 2332, 700)],
+                  box(686, 491, 1262, 700), box(2040, 483, 2332, 700),
+                  box(924, 1071, 1444, 1420)],
     min_det=30, det_smooth=4, win_eps=8, frame_open=25,
     marks=dict(slideFront=2713, muzzle=2716, bore=575, spring=860, slideBottom=757, nose=757,
                rearSerr=1300, frontSerr=2050, port0=1569, port1=2006, rail0=2250, dust=2710, railBottom=995),

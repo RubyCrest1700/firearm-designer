@@ -1,0 +1,245 @@
+{
+  "_note": "Part weights for the shelved 1911 and 2011 platforms (see README.md).",
+  "parts": {
+    "m11-bbl-kart45": {
+      "oz": 4.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-bbl-kart9": {
+      "oz": 4.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-bbl-sl45t": {
+      "oz": 5.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-bbl-sl9t": {
+      "oz": 5.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-bbl-wc45": {
+      "oz": 4.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-bbl-wc45c": {
+      "oz": 4.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-colt-s70": {
+      "oz": 37.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-dw-heritage": {
+      "oz": 38.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-grp-altamont": {
+      "oz": 1.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-grp-hogue": {
+      "oz": 2.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-grp-lok": {
+      "oz": 1.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-grp-magpul": {
+      "oz": 1.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-grp-vzop": {
+      "oz": 1.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-grp-vzrecon": {
+      "oz": 1.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-gs-ebmg": {
+      "oz": 0.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-gs-wchr": {
+      "oz": 0.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-ham-eb": {
+      "oz": 0.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-ham-wcbp": {
+      "oz": 0.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-hol-cmd": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-hol-gov": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-kimber-c2": {
+      "oz": 38.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-mag-cmc": {
+      "oz": 3.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-mag-mg45": {
+      "oz": 3.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-mag-mg9": {
+      "oz": 3.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-mag-wc47d": {
+      "oz": 3.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-mag-wc9": {
+      "oz": 3.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-mw-sa": {
+      "oz": 2.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-mw-wcmsh": {
+      "oz": 1.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-mw-wcsc": {
+      "oz": 2.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-ria-gifs": {
+      "oz": 39.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-ria-gims": {
+      "oz": 36.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-ruger-cmd": {
+      "oz": 36.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-ruger-gov": {
+      "oz": 39.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-sa-garrison": {
+      "oz": 40.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-sa-garrison9": {
+      "oz": 40.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-saf-ebambi": {
+      "oz": 0.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-saf-wcambi": {
+      "oz": 0.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-saf-wcext": {
+      "oz": 0.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-sgt-dawson": {
+      "oz": 0.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-sgt-nf": {
+      "oz": 0.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-sgt-novak": {
+      "oz": 0.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-sgt-tribt": {
+      "oz": 0.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-spr-wcrod": {
+      "oz": 1.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-spr-wolffc": {
+      "oz": 0.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-spr-wolffg": {
+      "oz": 0.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-tisas-a1": {
+      "oz": 39.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-trg-eb": {
+      "oz": 0.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "m11-trg-wcul": {
+      "oz": 0.4,
+      "basis": "estimate",
+      "src": null
+    }
+  }
+}
