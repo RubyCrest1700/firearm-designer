@@ -10,8 +10,13 @@ const securityPolicy = (): Plugin => ({
     html.replace('<meta charset="UTF-8" />', `<meta charset="UTF-8" />\n    <meta http-equiv="Content-Security-Policy" content="${CONTENT_SECURITY_POLICY}" />\n    <meta name="referrer" content="strict-origin-when-cross-origin" />`),
 });
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react(), securityPolicy()],
   base: './',
-  build: { cssCodeSplit: false, assetsInlineLimit: 100000000 },
-});
+  build: {
+    cssCodeSplit: false,
+    assetsInlineLimit: 100000000,
+    // The drawings load as a second file (see src/drawings.tsx). The one-page Artifact preview keeps everything in one.
+    rollupOptions: mode === 'artifact' ? { output: { inlineDynamicImports: true } } : {},
+  },
+}));
