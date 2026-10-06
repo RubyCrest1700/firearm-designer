@@ -7,7 +7,8 @@ import {
 } from './engine';
 import { findParts, isLink, type Found } from './find';
 import { ComparePage, loadCompare, storeCompare, type CompareItem } from './Compare';
-import { Blueprint, sceneFor, type RegionState } from './Blueprint';
+import type { RegionState } from './Blueprint';
+import { Blueprint, useDrawings } from './drawings';
 import { buildStatus, statesFor } from './status';
 import {
   FEATURED, TIER_LABEL, buildOf, droppedBuilds, loadSavedBuilds, priceChanges, priceSnapshot, newId, readSharedBuild, selectionFromParts, shareUrl, checkShareLinks, storeSavedBuilds, totalOf,
@@ -464,7 +465,8 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
   const build = toBuild(platform, selection);
   const place = placementOf(selection);
   const { issues, states } = statesFor(platform, build, place);
-  const scene = sceneFor(platform, build, place);
+  const drawings = useDrawings();
+  const spec = drawings ? drawings.sceneFor(platform, build, place).spec : '';
   const mounts = platform.family === 'Rifle' ? mountsFor(build, place, railLength(build, platform.id === 'ar10')) : {};
   const setMount = (slot: string, side: Side, at: number) => setSelection({ ...selection, ['@' + slot]: encodeMount(side, at) });
   const owned = ownedOf(selection);
@@ -540,7 +542,7 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
               </div>
               <figcaption className="title-block">
                 <div><span>Platform</span><b>{platform.name}</b></div>
-                <div><span>Spec</span><b>{scene.spec}</b></div>
+                <div><span>Spec</span><b>{spec}</b></div>
                 <div><span>Parts</span><b>{chosen} of {platform.slots.length}</b></div>
                 <div><span>Status</span><b className={'tb-' + status.cls}>{status.text}</b></div>
                 <div><span>Weight</span><b title={weightTitle}>{chosen ? `${weight.estimated ? '≈ ' : ''}${formatWeight(weight.oz, rifle)}` : '—'}</b></div>

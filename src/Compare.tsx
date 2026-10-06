@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { PLATFORMS } from './data';
-import { Blueprint, type RegionState } from './Blueprint';
+import type { RegionState } from './Blueprint';
+import { Blueprint } from './drawings';
 import { bestOffer, money, ownedOf, partIds, type Selection } from './engine';
 import { FEATURED, buildOf, selectionFromParts, totalOf, type SavedBuild } from './store';
 import { listBuilds, type CommunityBuild } from './community';
