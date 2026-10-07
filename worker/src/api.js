@@ -7,7 +7,7 @@ import { sharePage } from './share.js';
 import { alertsRoute } from './alerts.js';
 
 /** Keep in sync with the platform ids in src/data. */
-export const PLATFORM_IDS = ['ar15', 'ar10', 'ar9', 'akm', 'glock17', 'glock19', 'glock26', 'glock43x', 'glock20', 'p320', 'p365', 'mp2', 'hellcat'];
+export const PLATFORM_IDS = ['ar15', 'ar10', 'ar9', 'glock17', 'glock19', 'glock26', 'glock43x', 'glock20', 'p320', 'p365', 'mp2', 'hellcat'];
 /** SQL list of the live platforms. Builds for a shelved platform stay in the database but aren't listed or opened. */
 export const LIVE_PLATFORMS = PLATFORM_IDS.map((p) => `'${p}'`).join(', ');
 
