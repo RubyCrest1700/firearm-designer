@@ -16,8 +16,9 @@ const ANALYTICS_TOKEN = '00e0977ba6ee49a7b9a386502da1ef3f';
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const label = (p: Part) => (p.name.startsWith(p.brand) ? p.name : `${p.brand} ${p.name}`);
-const platformOf = (id: string) => {
-  const p = PLATFORMS.find((x) => x.id === id);
+/** A guide's platform: a builder, or a model inside one (a Glock 19 guide charts the Glock 19's own parts). */
+const platformOf = (id: string): PageView => {
+  const p = PAGE_VIEWS.find((x) => x.pageId === id);
   if (!p) throw new Error(`Guide platform ${id} is not in the catalog`);
   return p;
 };
@@ -291,7 +292,7 @@ const GENERAL_FAQ: { section: string; items: { q: string; a: string }[] }[] = [
   { section: 'About Drop-In Builds', items: [
     { q: 'Is Drop-In Builds a store?', a: "No. We don't sell anything. You plan the build here, and every buy link goes to the retailer or maker, where you check out as usual." },
     { q: 'Do I need an account?', a: 'No. There is nothing to sign up for. Builds you save are kept in your browser, and Copy Link gives you a link that opens the same build on any other device.' },
-    { q: 'Which platforms can I build?', a: 'The AR-15 and AR-10 rifles, the Glock 17, 19 and 26, the Glock 43X and 48, the Glock 20 and 21, the Sig P320, the Sig P365, the S&W M&P 2.0 and the Springfield Hellcat. More platforms are on the way.' },
+    { q: 'Which platforms can I build?', a: 'The AR-15, AR-10 and AR-9, the Glock 17, 19 and 26, the Glock 43X and 48, the Glock 20 and 21, the Sig P320, the Sig P365, the S&W M&P 2.0 and the Springfield Hellcat. More platforms are on the way.' },
     { q: 'Do you make money from the links?', a: 'Some retailer links may earn us a small commission at no extra cost to you. It never changes which parts we show or how we check fit.' },
   ] },
   { section: 'Using the Builder', items: [
@@ -359,11 +360,21 @@ export function indexPage(builtAt: string) {
  * added later get a page automatically, with an address made from their name.
  */
 const PLATFORM_SLUGS: Record<string, string> = {
-  ar15: 'ar-15', ar10: 'ar-10', glock17: 'glock-17', glock19: 'glock-19', glock26: 'glock-26', glock43x: 'glock-43x-48',
+  ar15: 'ar-15', ar10: 'ar-10', glock9: 'glock-17-19-26', glock17: 'glock-17', glock19: 'glock-19', glock26: 'glock-26', glock43x: 'glock-43x-48',
   glock20: 'glock-20-21', p320: 'sig-p320', p365: 'sig-p365', mp2: 'smith-wesson-mp-2-0', hellcat: 'springfield-hellcat',
 };
-export const platformSlug = (p: Platform) =>
-  PLATFORM_SLUGS[p.id] ?? p.name.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+/**
+ * The pages: one per builder, plus one per model inside a builder that has models, so the Glock 17, 19 and 26
+ * keep their own pages (with their own starter builds and parts) inside the Glock 17 / 19 / 26 builder.
+ */
+export interface PageView extends Platform { pageId: string }
+export const PAGE_VIEWS: PageView[] = PLATFORMS.flatMap((p) => [
+  { ...p, pageId: p.id },
+  ...(p.models ?? []).map((m) => ({ ...p, pageId: m.id, name: m.name, blurb: m.blurb, presets: m.presets, parts: m.parts ? p.parts.filter(m.parts) : p.parts })),
+]);
+
+export const platformSlug = (p: Platform & { pageId?: string }) =>
+  PLATFORM_SLUGS[p.pageId ?? p.id] ?? p.name.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 const partsByPrice = (parts: Part[]) => [...parts].sort((x, y) => (bestOffer(x)?.price ?? 0) - (bestOffer(y)?.price ?? 0));
 
@@ -402,19 +413,26 @@ function slotTableHtml(platform: Platform) {
     .join('');
 }
 
-export function platformPage(platform: Platform) {
+/** A model's page says which builder it lives in. */
+function includesHtml(platform: PageView) {
+  if (platform.pageId === platform.id) return '';
+  const builder = PLATFORMS.find((p) => p.id === platform.id)!;
+  return `\n    <p class="includes">Built in our ${esc(builder.name)} builder, where frames and slides mix freely.</p>`;
+}
+
+export function platformPage(platform: PageView) {
   const slug = platformSlug(platform);
   const path = `/build/${slug}/`;
   const brands = new Set(platform.parts.map((p) => p.brand)).size;
-  const guides = GUIDES.filter((g) => g.platform === platform.id);
+  const guides = GUIDES.filter((g) => platformOf(g.platform).id === platform.id);
   const related = guides.length ? guides : GUIDES.filter((g) => platformOf(g.platform).maker === platform.maker).slice(0, 4);
-  const others = PLATFORMS.filter((p) => p !== platform);
+  const others = PAGE_VIEWS.filter((p) => p.pageId !== platform.pageId);
   const budget = Object.values(presetSelection(platform, 'budget')).reduce((sum, id) => sum + (bestOffer(platform.parts.find((p) => p.id === id)!)?.price ?? 0), 0);
   const body = `
   <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="/build/">Platforms</a> › <span>${esc(platform.name)}</span></nav>
   <article>
     <h1>${esc(platform.name)} Build Planner: Parts, Fit and Prices</h1>
-    <p class="lede">${esc(platform.blurb)} ${platform.parts.length} parts from ${brands} brands, each checked for fit against the rest of your build, with prices compared across retailers.</p>
+    <p class="lede">${esc(platform.blurb)} ${platform.parts.length} parts from ${brands} brands, each checked for fit against the rest of your build, with prices compared across retailers.</p>${includesHtml(platform)}
     <a class="cta" href="${builderUrl(platform.id)}">Open the ${esc(platform.name)} Builder</a>
     <section>
       <h2>Start from a Complete Build</h2>
@@ -450,7 +468,7 @@ export function platformPage(platform: Platform) {
 
 /** /build/: every platform, grouped like the builder's platform menu. */
 export function platformsIndexPage() {
-  const families = [...new Set(PLATFORMS.map((p) => p.family))];
+  const families = [...new Set(PAGE_VIEWS.map((p) => p.family))];
   const body = `
   <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <span>Platforms</span></nav>
   <h1>Build Planners for Every Platform</h1>
@@ -458,14 +476,14 @@ export function platformsIndexPage() {
   ${families.map((f) => `
   <section>
     <h2>${esc(f)}s</h2>
-    <ul class="guide-cards">${PLATFORMS.filter((p) => p.family === f).map((p) => `
+    <ul class="guide-cards">${PAGE_VIEWS.filter((p) => p.family === f).map((p) => `
       <li><a href="/build/${platformSlug(p)}/"><b>${esc(p.name)}</b><span>${esc(p.blurb)}</span></a></li>`).join('')}
     </ul>
   </section>`).join('')}
   <p><a class="cta" href="/#build">Open the Builder</a></p>`;
   return layout({
     title: 'Firearm Build Planners: AR, Glock, Sig and More | Drop-In Builds',
-    description: `Plan a build for any of ${PLATFORMS.length} platforms: ${PLATFORMS.map((p) => p.name).join(', ')}. Parts checked for fit, prices compared across retailers.`,
+    description: `Plan a build for any of ${PAGE_VIEWS.length} platforms: ${PAGE_VIEWS.map((p) => p.name).join(', ')}. Parts checked for fit, prices compared across retailers.`,
     path: '/build/',
     body,
     current: 'build',
@@ -522,7 +540,7 @@ export function feedbackPage() {
 
 export function sitemap(builtAt: string) {
   const day = builtAt.slice(0, 10);
-  const urls = ['/', '/build/', ...PLATFORMS.map((p) => `/build/${platformSlug(p)}/`), '/faq/', ...GUIDES.map((g) => `/faq/${g.slug}/`)];
+  const urls = ['/', '/build/', ...PAGE_VIEWS.map((p) => `/build/${platformSlug(p)}/`), '/faq/', ...GUIDES.map((g) => `/faq/${g.slug}/`)];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map((u) => `  <url><loc>${SITE}${u}</loc><lastmod>${day}</lastmod></url>`).join('\n')}
@@ -567,6 +585,7 @@ h2{font:700 24px/1.2 var(--f-head);margin:36px 0 8px}
 h3{font:700 19px/1.2 var(--f-head);margin:20px 0 8px}
 h4{font-size:16px;margin:0 0 6px}
 .lede{font-size:18px;color:var(--muted);margin:0 0 16px}
+.includes{font-weight:700;color:var(--blue);margin:-6px 0 16px}
 .muted{color:var(--muted);font-size:15px}
 section{margin:0}
 .answers{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--cta);border-radius:10px;padding:4px 20px 20px;box-shadow:var(--shadow)}

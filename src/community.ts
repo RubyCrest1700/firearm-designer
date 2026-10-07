@@ -1,4 +1,5 @@
 import { COMMUNITY_API } from './config';
+import { canonicalPlatform } from './data';
 
 /**
  * Community builds client. Talks to the Cloudflare Worker in worker/ when COMMUNITY_API is set.
@@ -79,20 +80,23 @@ function updatePreview(id: string, fn: (r: PreviewRow) => void) {
 
 /* ------------------------------------------------------------------- calls */
 
+/** Builds shared before the Glock 17, 19 and 26 became one builder carry the old platform id. */
+const current = (b: CommunityBuild): CommunityBuild => ({ ...b, platform: canonicalPlatform(b.platform) });
+
 export async function listBuilds(platform: string | null, sort: CommunitySort): Promise<CommunityBuild[]> {
   if (communityLive) {
     const q = new URLSearchParams({ sort, ...(platform ? { platform } : {}) });
-    return (await api<{ builds: CommunityBuild[] }>(`/api/builds?${q}`)).builds;
+    return (await api<{ builds: CommunityBuild[] }>(`/api/builds?${q}`)).builds.map(current);
   }
-  return previewRows().filter((r) => !platform || r.platform === platform).map(strip).sort(ORDER[sort]);
+  return previewRows().map(strip).map(current).filter((r) => !platform || r.platform === platform).sort(ORDER[sort]);
 }
 
 /** The week's best: votes plus half-weight buy clicks in the last 7 days. */
 export async function featuredBuilds(): Promise<CommunityBuild[]> {
-  if (communityLive) return (await api<{ builds: CommunityBuild[] }>('/api/featured')).builds;
+  if (communityLive) return (await api<{ builds: CommunityBuild[] }>('/api/featured')).builds.map(current);
   const since = Date.now() - 7 * 86_400_000;
   const score = (r: PreviewRow) => r.voteLog.filter((t) => t > since).length + 0.5 * r.clickLog.filter((t) => t > since).length;
-  return previewRows().filter((r) => score(r) > 0).sort((a, b) => score(b) - score(a)).slice(0, 3).map(strip);
+  return previewRows().filter((r) => score(r) > 0).sort((a, b) => score(b) - score(a)).slice(0, 3).map(strip).map(current);
 }
 
 export async function shareBuild(platform: string, name: string, note: string, parts: string[]): Promise<CommunityBuild> {

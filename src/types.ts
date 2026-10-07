@@ -66,4 +66,19 @@ export interface Platform {
   parts: Part[];
   rules: (b: Build, place?: Placement) => Issue[];
   presets: Record<Tier, string[]>;
+  /**
+   * Named starting points inside one builder, such as the Glock 17, 19 and 26 in the Glock 17 / 19 / 26 builder. Each
+   * gets its own starter builds and search page, and its id still opens old links and saved builds.
+   */
+  models?: PlatformModel[];
+}
+
+export interface PlatformModel {
+  /** The id the model had as its own platform; old links and saved builds use it. */
+  id: string;
+  name: string;
+  blurb: string;
+  presets: Record<Tier, string[]>;
+  /** The parts its own page lists (the builder still offers every part). */
+  parts?: (p: Part) => boolean;
 }

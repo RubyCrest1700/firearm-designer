@@ -10,7 +10,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { Resvg } from '@resvg/resvg-js';
 import { Blueprint, type RegionState } from '../src/Blueprint';
 import { COMMUNITY_API } from '../src/config';
-import { PLATFORMS } from '../src/data/index';
+import { PLATFORMS, canonicalPlatform } from '../src/data/index';
 import { bestOffer, partIds, presetSelection, type Selection } from '../src/engine';
 import { buildOf, selectionFromParts, totalOf } from '../src/store';
 import type { Platform } from '../src/types';
@@ -134,7 +134,7 @@ for (const p of PLATFORMS) png(platformCard(p), `${OUT}/${p.id}.png`);
 
 const shared = await communityBuilds();
 for (const b of shared) {
-  const platform = PLATFORMS.find((p) => p.id === b.platform);
+  const platform = PLATFORMS.find((p) => p.id === canonicalPlatform(b.platform));
   if (platform && /^[a-z0-9]{10}$/.test(b.id)) png(buildCard(b.name, platform, selectionFromParts(platform.id, b.parts)), `${OUT}/c/${b.id}.png`);
 }
 

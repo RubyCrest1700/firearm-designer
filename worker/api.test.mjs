@@ -36,6 +36,9 @@ test('shares a build and lists it', async () => {
   const l = await call(e, 'GET', '/api/builds?platform=glock19');
   assert.deepEqual(l.body.builds.map((b) => b.name), ['Carry G19']);
   assert.deepEqual(l.body.builds[0].parts, ['g19-frame-g5', 'g-fcg-apex5', 'g19-slide-mos']);
+  // Old Glock 17/19/26 ids land in the one Glock 17 / 19 / 26 builder.
+  assert.equal(l.body.builds[0].platform, 'glock9');
+  assert.deepEqual((await call(e, 'GET', '/api/builds?platform=glock9')).body.builds.map((b) => b.name), ['Carry G19']);
   assert.equal((await call(e, 'GET', '/api/builds?platform=ar15')).body.builds.length, 0);
 });
 
@@ -127,7 +130,7 @@ test('limits how many builds one visitor can share per day', async () => {
 
 const INDEX = {
   platforms: {
-    glock19: { name: 'Glock 19', parts: { 'g19-frame-g5': ['Glock Gen 5 frame', 200], 'g-fcg-apex5': ['Apex trigger', 150.4], 'g19-slide-mos': ['Glock MOS slide', 300] } },
+    glock9: { name: 'Glock 17 / 19 / 26', parts: { 'g19-frame-g5': ['Glock Gen 5 frame', 200], 'g-fcg-apex5': ['Apex trigger', 150.4], 'g19-slide-mos': ['Glock MOS slide', 300] } },
   },
 };
 const page = async (e, path, index = INDEX) => {
@@ -146,14 +149,15 @@ const page = async (e, path, index = INDEX) => {
 const meta = (text, prop) => text.match(new RegExp(`<meta (?:property|name)="${prop}" content="([^"]*)"`))?.[1];
 
 test('a share link for any build names its platform and best-price total', async () => {
+  // Links made before the Glock 17, 19 and 26 became one builder still open, under the new name.
   const r = await page(env(), '/b/glock19~g19-frame-g5.g-fcg-apex5.g19-slide-mos.at-light-r45');
   assert.equal(r.status, 200);
   assert.match(r.type, /text\/html/);
-  assert.equal(meta(r.text, 'og:title'), 'Glock 19 build · $650');
+  assert.equal(meta(r.text, 'og:title'), 'Glock 17 / 19 / 26 build · $650');
   assert.match(meta(r.text, 'og:description'), /3 parts · \$650 at the best prices/);
-  assert.equal(meta(r.text, 'og:image'), 'https://dropinbuilds.com/og/glock19.png');
+  assert.equal(meta(r.text, 'og:image'), 'https://dropinbuilds.com/og/glock9.png');
   assert.equal(meta(r.text, 'twitter:card'), 'summary_large_image');
-  assert.match(r.text, /url=https:\/\/dropinbuilds\.com\/\?b=glock19~g19-frame-g5\.g-fcg-apex5\.g19-slide-mos\.at-light-r45/);
+  assert.match(r.text, /url=https:\/\/dropinbuilds\.com\/\?b=glock9~g19-frame-g5\.g-fcg-apex5\.g19-slide-mos\.at-light-r45/);
 });
 
 test('a community share link uses the build name and note, escaped', async () => {
@@ -162,15 +166,15 @@ test('a community share link uses the build name and note, escaped', async () =>
   const r = await page(e, `/c/${s.body.build.id}`);
   assert.equal(r.status, 200);
   assert.equal(meta(r.text, 'og:title'), 'Carry &#34;G19&#34; &#38; more');
-  assert.match(meta(r.text, 'og:description'), /^Daily carry Glock 19 · 3 parts · \$650/);
+  assert.match(meta(r.text, 'og:description'), /^Daily carry Glock 17 \/ 19 \/ 26 · 3 parts · \$650/);
   // No picture of its own yet, so the platform picture stands in.
-  assert.equal(meta(r.text, 'og:image'), 'https://dropinbuilds.com/og/glock19.png');
+  assert.equal(meta(r.text, 'og:image'), 'https://dropinbuilds.com/og/glock9.png');
 });
 
 test('share links still work when the price index is unreachable', async () => {
   const r = await page(env(), '/b/glock19~g19-frame-g5', null);
   assert.equal(r.status, 200);
-  assert.equal(meta(r.text, 'og:title'), 'Glock 19 build');
+  assert.equal(meta(r.text, 'og:title'), 'Glock 17 / 19 / 26 build');
 });
 
 test('bad share links get the site card and a 404', async () => {
@@ -185,7 +189,7 @@ test('bad share links get the site card and a 404', async () => {
 import { runAlerts } from './src/alerts.js';
 
 const ALERT_INDEX = (apex = 150, slide = 300) => ({
-  platforms: { glock19: { name: 'Glock 19', parts: { 'g19-frame-g5': ['Glock Gen 5 frame', 200], 'g-fcg-apex5': ['Apex trigger', apex], 'g19-slide-mos': ['Glock MOS slide', slide] } } },
+  platforms: { glock9: { name: 'Glock 17 / 19 / 26', parts: { 'g19-frame-g5': ['Glock Gen 5 frame', 200], 'g-fcg-apex5': ['Apex trigger', apex], 'g19-slide-mos': ['Glock MOS slide', slide] } } },
 });
 const alertEnv = () => {
   const outbox = [];
@@ -259,7 +263,7 @@ test('emails confirmed signups when prices move, once, then stays quiet', async 
   assert.equal(mail.subject, 'Prices changed on "Carry G19"');
   assert.match(mail.html, /Apex trigger[\s\S]*\$150\.00[\s\S]*↓ \$120\.00/);
   assert.match(mail.html, /MOS slide[\s\S]*↑ \$340\.00/);
-  assert.match(mail.text, /dropinbuilds\.com\/\?b=glock19~/);
+  assert.match(mail.text, /dropinbuilds\.com\/\?b=glock9~/);
   // Same prices the next day: no email. Moves under $20 or 10%: no email.
   await withIndex(ALERT_INDEX(120, 340), () => runAlerts(e));
   await withIndex(ALERT_INDEX(110, 355), () => runAlerts(e));
