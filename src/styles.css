@@ -567,6 +567,8 @@ tr:first-child td { border-top: 0; }
 .site-footer .brand-name.small { color: var(--on-navy); }
 .footer-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 20px 48px; }
 .footer-row p + p { margin-top: 6px; }
+.site-footer .foot-link { color: var(--on-navy-muted); }
+.site-footer .foot-link:hover { color: var(--on-navy); }
 .foot-title { color: var(--on-navy); font-weight: 700; text-transform: uppercase; font-size: 12px; letter-spacing: .1em; margin-bottom: 8px; }
 
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 60; background: var(--navy); color: #fff;

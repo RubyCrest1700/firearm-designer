@@ -1,5 +1,6 @@
 import { handle } from './api.js';
 import { runAlerts } from './alerts.js';
+import { runFeedback } from './feedback.js';
 
 /** Basic browser protections on every response: no content sniffing, no framing, no full URLs in referrers. */
 export async function withSecurityHeaders(res) {
@@ -13,6 +14,9 @@ export async function withSecurityHeaders(res) {
 
 export default {
   fetch: async (request, env) => withSecurityHeaders(await handle(request, env)),
-  // Daily, after the nightly price refresh has rebuilt the site: email price alerts.
-  scheduled: (event, env, ctx) => ctx.waitUntil(runAlerts(env).then((r) => console.log('Price alerts', JSON.stringify(r)))),
+  // Daily, after the nightly price refresh has rebuilt the site: email price alerts, then the feedback digest.
+  scheduled: (event, env, ctx) => ctx.waitUntil(Promise.allSettled([
+    runAlerts(env).then((r) => console.log('Price alerts', JSON.stringify(r))),
+    runFeedback(env).then((r) => console.log('Feedback', JSON.stringify(r))),
+  ])),
 };

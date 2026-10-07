@@ -2,7 +2,8 @@
 # Runs only from main, so nothing goes live until a pull request is merged.
 # Needs two repository secrets: CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.
 # On its first run it creates the D1 database and a private salt for hashing visitor IPs.
-# Optional secrets RESEND_API_KEY and MAILING_ADDRESS turn on price alert emails.
+# Optional secrets RESEND_API_KEY and MAILING_ADDRESS turn on price alert emails; RESEND_API_KEY and
+# FEEDBACK_EMAIL turn on the daily email of visitor feedback.
 name: Deploy community API
 
 on:
@@ -71,6 +72,17 @@ jobs:
             printf '%s' "$MAILING_ADDRESS" | $WRANGLER secret put MAILING_ADDRESS
           else
             echo "::notice::RESEND_API_KEY and MAILING_ADDRESS aren't both set, so price alert emails stay off."
+          fi
+      # The daily feedback email goes to this address. Feedback is saved either way (see worker/src/feedback.js).
+      - name: Set the feedback email address
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          FEEDBACK_EMAIL: ${{ secrets.FEEDBACK_EMAIL }}
+        run: |
+          if [ -n "$FEEDBACK_EMAIL" ]; then
+            printf '%s' "$FEEDBACK_EMAIL" | $WRANGLER secret put FEEDBACK_EMAIL
+          else
+            echo "::notice::FEEDBACK_EMAIL isn't set, so feedback is saved but not emailed."
           fi
       # Share links with picture cards live on share.dropinbuilds.com. This attaches that address to the
       # Worker when the API token is allowed to; otherwise it says so, and it can be added by hand in the
