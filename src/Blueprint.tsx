@@ -696,6 +696,11 @@ const MODELS: Record<string, PistolModel> = {
   glock17: G(7.32, 8.03, 4.49, 0.98, 2.83),
   glock19: G(6.85, 7.36, 4.02, 0.98, 2.8),
   glock26: G(6.26, 6.5, 3.43, 0.98, 2.83),
+  // G34 Gen5: 8.74" long, 8.15" slide, 5.31" barrel. G47: 7.95", 7.32" slide, 4.49". G45 (and G19X): 7.44",
+  // 6.85" slide, 4.02", on a full-size grip 5.47" tall (us.glock.com). The G45 frame's dust cover is G19 length.
+  glock34: G(8.15, 8.74, 5.31, 0.98, 2.83),
+  glock47: G(7.32, 7.95, 4.49, 0.98, 2.83),
+  glock45: G(6.85, 7.44, 4.02, 0.98, 2.83),
   // G20/G21 Gen4: 8.07" long, 7.60" slide, 4.61" barrel, 5.51" tall, 2.85" trigger distance (us.glock.com).
   // The large-frame slide is taller.
   glock20: G(7.6, 8.07, 4.61, 1.06, 2.85),
@@ -715,7 +720,7 @@ const MODELS: Record<string, PistolModel> = {
 };
 
 /** Published height with a flush magazine, by grip size / magazine size. */
-const GLOCK_H: Record<string, number> = { glock17: 5.47, glock19: 5.04, glock26: 4.17, glock20: 5.51 };
+const GLOCK_H: Record<string, number> = { glock17: 5.47, glock19: 5.04, glock26: 4.17, glock45: 5.47, glock20: 5.51 };
 const GLOCK_MAG_H: Record<number, number> = { 4: 5.47, 3: 5.47, 2: 5.04, 1: 4.17 };
 const P320_H: Record<string, number> = { full: 5.5, carry: 5.5, compact: 5.3, subcompact: 4.7 };
 const P320_DUST: Record<string, string> = { full: 'full', carry: 'compact', compact: 'compact', subcompact: 'subcompact' };
@@ -785,7 +790,7 @@ function pistolSpec(platform: Platform, b: Build): PistolSpec {
       const grooved = !fr || (/gen3|gen4/.test(String(fr.attrs.gen)) && !matches(fr, /No finger grooves/));
       // Extended bodies: Glock's 24-round runs about 1.5" below a G17 grip, the PMAG 21 about 1"; the PMAG 12 adds a 0.4" pinky extension to the G26 length.
       const over = matches(b.mag, /24-Round/) ? 1.5 : matches(b.mag, /PMAG 21/) ? 1.0 : matches(b.mag, /PMAG 12/) ? 0.4 : 0;
-      // The Glock 17 / 19 / 26 builder: the frame sets the grip and dust cover, the slide its own length (G19 when neither is chosen).
+      // The double-stack 9mm Glock builder: the frame sets the grip and dust cover, the slide its own length (G19 when neither is chosen).
       const fk = 'glock' + String(a(fr, 'model') ?? a(b.slide, 'len') ?? 'G19').slice(1);
       const sk = 'glock' + String(a(b.slide, 'len') ?? a(fr, 'model') ?? 'G19').slice(1);
       const key = platform.id === 'glock9' ? fk : platform.id;

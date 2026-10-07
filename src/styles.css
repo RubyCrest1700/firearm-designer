@@ -181,6 +181,10 @@ a.nav-link { text-decoration: none; }
 .kicker { font: 600 12px/1.3 var(--f-sans); letter-spacing: .1em; text-transform: uppercase; color: var(--cta); margin-bottom: 6px; }
 h1 { font: 700 clamp(28px, 4.2vw, 40px)/1.08 var(--f-head); letter-spacing: -.005em; }
 .lede { color: var(--muted); margin-top: 8px; font-size: 16px; }
+/* Model picker for a builder with models (the double-stack 9mm Glocks). Shown on phones too, unlike the lede. */
+.model-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; }
+.model-row .chip { min-width: 52px; }
+.model-made { font-size: 13.5px; font-weight: 600; color: var(--muted); }
 .hint { color: var(--muted); font-size: 13.5px; margin: 10px 2px 22px; }
 
 /* ---------------------------------------------------------------- blueprint */

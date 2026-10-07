@@ -26,7 +26,7 @@ import { alertsAvailable, checkAlertSignup, loadAlertSignup, signUpForAlerts, st
 import { MOVABLE, SIDE_LABEL, mountsFor, railLength, type Resolved } from './data/addons';
 import { GUIDES } from './guides/content';
 import { titleCase } from './text';
-import type { Build, Issue, Part, Placement, Platform, Severity, Side, Slot, Tier } from './types';
+import type { Build, Issue, Part, Placement, Platform, PlatformModel, Severity, Side, Slot, Tier } from './types';
 
 const STORE_KEY = 'firearm-designer:v2';
 const SEV_LABEL: Record<Severity, string> = { error: 'Conflict', warn: 'Check', info: 'Note' };
@@ -484,6 +484,12 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
   const weight = buildWeight(platform, build);
   const weightTitle = `Unloaded, as built (not counting the case or holster). ${weight.estimated ? `${weight.estimated} of ${weight.counted} part weights are estimates.` : 'All part weights are listed figures.'}`;
   const openSlotObj = platform.slots.find((s) => s.id === openSlot);
+  // A builder with models (the double-stack 9mm Glocks): the model the chosen parts make, and the model the
+  // starter builds and part lists follow (the one made, else the last one picked, else the default).
+  const [modelPick, setModelPick] = useState<Record<string, string>>({});
+  const made = platform.modelOf?.(build);
+  const model = platform.models?.find((m) => m.id === (made?.id ?? modelPick[platform.id])) ?? platform.models?.find((m) => m.presets === platform.presets);
+  const starter = model ? { ...platform, presets: model.presets } : platform;
 
   /** Puts a part in its slot; `own` marks it as one the builder already has. */
   const choose = (slot: string, partId: string, own = false) => {
@@ -516,6 +522,18 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
             <PlatformMenu current={platform} onPick={(id) => { setPlatformId(id); setOpenSlot(null); }} />
           </div>
           <p className="lede">{platform.blurb}</p>
+          {platform.models && (
+            <div className="model-row" role="group" aria-label="Model">
+              <span className="tb-label">Model</span>
+              {platform.models.map((m) => (
+                <button key={m.id} className={'chip' + (made?.id === m.id ? ' on' : '')} aria-pressed={made?.id === m.id} title={`${m.name}: ${m.blurb}`}
+                  onClick={() => { setModelPick({ ...modelPick, [platform.id]: m.id }); setSelection(presetSelection({ ...platform, presets: m.presets }, 'value')); setOpenSlot(null); }}>
+                  {m.short}
+                </button>
+              ))}
+              {made && !made.id && <span className="model-made">{made.name}</span>}
+            </div>
+          )}
         </div>
 
         <div className="workbench">
@@ -523,8 +541,8 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
             <div className="bp-toolbar" role="toolbar" aria-label="Build actions">
               <span className="tb-label">{chosen === 0 ? 'Start From' : 'Start Over From'}</span>
               {(['budget', 'value', 'premium'] as Tier[]).map((t) => (
-                <button key={t} className="chip" onClick={() => { setSelection(presetSelection(platform, t)); setOpenSlot(null); }}>
-                  {TIER_LABEL[t]} <span className="chip-amt">{money(totalOf(platform, toBuild(platform, presetSelection(platform, t))))}</span>
+                <button key={t} className="chip" onClick={() => { setSelection(presetSelection(starter, t)); setOpenSlot(null); }}>
+                  {TIER_LABEL[t]}{model ? ` ${model.short}` : ''} <span className="chip-amt">{money(totalOf(platform, toBuild(platform, presetSelection(starter, t))))}</span>
                 </button>
               ))}
               <button className="chip" onClick={onBrowseFeatured}>Community Builds</button>
@@ -547,7 +565,7 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
                   onMove={(slot, at) => setMount(slot, mounts[slot]?.side ?? MOVABLE[slot].side, at)} />
               </div>
               <figcaption className="title-block">
-                <div><span>Platform</span><b>{platform.name}</b></div>
+                <div>{platform.models ? <><span>Model</span><b>{made?.name ?? '—'}</b></> : <><span>Platform</span><b>{platform.name}</b></>}</div>
                 <div><span>Spec</span><b>{spec}</b></div>
                 <div><span>Parts</span><b>{chosen} of {platform.slots.length}</b></div>
                 <div><span>Status</span><b className={'tb-' + status.cls}>{status.text}</b></div>
@@ -575,6 +593,7 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
           platform={platform}
           slot={openSlotObj}
           number={platform.slots.indexOf(openSlotObj) + 1}
+          model={model}
           build={build}
           place={place}
           selectedId={build[openSlotObj.id]?.id}
@@ -880,12 +899,13 @@ function Dock({ total, status, toBuy }: { total: number; status: { cls: string; 
 
 type SortKey = 'fit' | 'price' | 'picks';
 
-function Picker({ platform, slot, number, build, place, selectedId, ownsSelected, onChoose, onToggleOwn, onOwnOther, onRemove, onClose, onBuyClick }: {
-  platform: Platform; slot: Slot; number: number; build: Build; place: Placement; selectedId?: string; ownsSelected: boolean;
+function Picker({ platform, slot, number, model, build, place, selectedId, ownsSelected, onChoose, onToggleOwn, onOwnOther, onRemove, onClose, onBuyClick }: {
+  platform: Platform; slot: Slot; number: number; model?: PlatformModel; build: Build; place: Placement; selectedId?: string; ownsSelected: boolean;
   onChoose: (id: string, own: boolean) => void; onToggleOwn: () => void; onOwnOther: () => void; onRemove?: () => void; onClose: () => void; onBuyClick: () => void;
 }) {
   const [sort, setSort] = useState<SortKey>('fit');
   const [hideConflicts, setHideConflicts] = useState(false);
+  const [allModels, setAllModels] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
   const closeFn = useRef(onClose);
   closeFn.current = onClose;
@@ -900,7 +920,10 @@ function Picker({ platform, slot, number, build, place, selectedId, ownsSelected
     return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
   }, []);
 
-  const all = platform.parts.filter((p) => p.slot === slot.id).map((p) => {
+  // In a builder with models, the list starts with the current model's parts (frames, slides, barrels...).
+  const inSlot = platform.parts.filter((p) => p.slot === slot.id);
+  const forModel = model?.parts ? inSlot.filter((p) => model.parts!(p) || p.id === selectedId) : inSlot;
+  const all = (allModels ? inSlot : forModel).map((p) => {
     const iss = candidateIssues(platform, build, p, place);
     return { part: p, issues: iss, sev: worst(iss) ?? ('ok' as const), price: bestOffer(p)?.price ?? Infinity };
   });
@@ -926,6 +949,12 @@ function Picker({ platform, slot, number, build, place, selectedId, ownsSelected
           <button ref={closeRef} className="icon-btn" onClick={onClose} aria-label="Close">×</button>
         </header>
         <div className="drawer-tools">
+          {model && forModel.length < inSlot.length && (
+            <div className="segctl" role="radiogroup" aria-label="Show parts for">
+              <button role="radio" aria-checked={!allModels} className={allModels ? '' : 'on'} onClick={() => setAllModels(false)}>{model.short} Parts ({forModel.length})</button>
+              <button role="radio" aria-checked={allModels} className={allModels ? 'on' : ''} onClick={() => setAllModels(true)}>All Models ({inSlot.length})</button>
+            </div>
+          )}
           <div className="segctl" role="radiogroup" aria-label="Sort by">
             {([['fit', 'Best Fit'], ['price', 'Lowest Price'], ['picks', 'Our Picks']] as [SortKey, string][]).map(([k, label]) => (
               <button key={k} role="radio" aria-checked={sort === k} className={sort === k ? 'on' : ''} onClick={() => setSort(k)}>{label}</button>

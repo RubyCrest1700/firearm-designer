@@ -14,7 +14,7 @@ import type { Platform } from '../types';
 export const PLATFORMS: Platform[] = [ar15, ar10, ar9, glock9, glockSlim, glockLarge, p320, p365, mp, hellcat];
 
 /**
- * Old platform ids that now open inside another builder: the Glock 17, 19 and 26 are models of the Glock 17 / 19 / 26 builder.
+ * Old platform ids that now open inside another builder: the Glock 17, 19 and 26 are models of the double-stack 9mm Glock builder.
  * Shared links, saved builds and community builds made before the merge still carry the old ids.
  */
 export const PLATFORM_ALIASES: Record<string, string> = Object.fromEntries(PLATFORMS.flatMap((p) => (p.models ?? []).map((m) => [m.id, p.id])));
