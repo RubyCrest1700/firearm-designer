@@ -1,6 +1,6 @@
 // Verifies every preset build is complete and free of compatibility errors.
 import { awarenessFor } from '../src/awareness';
-import { PLATFORMS } from '../src/data/index';
+import { PLATFORMS, canonicalPlatform } from '../src/data/index';
 import { issuesFor, ownedOf, placementOf, presetSelection, selectionTokens, toBuild, toBuyIds } from '../src/engine';
 import { selectionFromParts } from '../src/store';
 import { buildWeight, formatWeight } from '../src/weight';
@@ -13,14 +13,16 @@ for (const p of PLATFORMS) {
     ids.add(part.id);
     if (!p.slots.some((s) => s.id === part.slot)) { console.log(`${p.id}: ${part.id} has unknown slot`); bad++; }
   }
-  for (const tier of ['budget', 'value', 'premium'] as const) {
-    for (const id of p.presets[tier]) if (!ids.has(id)) { console.log(`${p.id}/${tier}: unknown part ${id}`); bad++; }
-    const sel = presetSelection(p, tier);
-    const missing = p.slots.filter((s) => s.required && !sel[s.id]).map((s) => s.id);
-    const issues = issuesFor(p, toBuild(p, sel));
-    console.log(`${p.name} ${tier}: missing=[${missing}] ${issues.map((i) => `${i.severity}: ${i.message}`).join(' | ') || 'clean'}`);
-    if (missing.length || issues.some((i) => i.severity === 'error')) bad++;
-  }
+  // A builder with models (the Glock 9mm) has starter builds for each model as well as its own.
+  for (const m of [{ name: p.name, presets: p.presets }, ...(p.models ?? [])])
+    for (const tier of ['budget', 'value', 'premium'] as const) {
+      for (const id of m.presets[tier]) if (!ids.has(id)) { console.log(`${p.id}/${m.name}/${tier}: unknown part ${id}`); bad++; }
+      const sel = presetSelection({ ...p, presets: m.presets }, tier);
+      const missing = p.slots.filter((s) => s.required && !sel[s.id]).map((s) => s.id);
+      const issues = issuesFor(p, toBuild(p, sel));
+      if (m.name !== p.name || !p.models) console.log(`${m.name} ${tier}: missing=[${missing}] ${issues.map((i) => `${i.severity}: ${i.message}`).join(' | ') || 'clean'}`);
+      if (missing.length || issues.some((i) => i.severity === 'error')) bad++;
+    }
 }
 
 // Interface audit: for every pair of parts that meet at a measured interface, the rules must
@@ -35,14 +37,11 @@ const IFACES: Iface[] = [
   ['ar9', 'lower', 'mag', 'mag', 'family'],
   ['ar10', 'barrel', 'journal', 'gasblock', 'journal'],
   ['ar10', 'barrel', 'gas', 'gastube', 'length'],
-  ['glock17', 'barrel', 'thread', 'muzzle', 'thread'],
-  ['glock19', 'barrel', 'thread', 'muzzle', 'thread'],
-  ['glock26', 'barrel', 'thread', 'muzzle', 'thread'],
-  ['glock19', 'slide', 'family', 'barrel', 'family'],
-  ['glock19', 'slide', 'family', 'spk', 'family'],
-  ['glock17', 'slide', 'rsa', 'rsa', 'rsa'],
-  ['glock19', 'slide', 'rsa', 'rsa', 'rsa'],
-  ['glock26', 'slide', 'rsa', 'rsa', 'rsa'],
+  ['glock9', 'barrel', 'thread', 'muzzle', 'thread'],
+  ['glock9', 'slide', 'family', 'barrel', 'family'],
+  ['glock9', 'slide', 'len', 'barrel', 'len'],
+  ['glock9', 'slide', 'family', 'spk', 'family'],
+  ['glock9', 'slide', 'rsa', 'rsa', 'rsa'],
   ['glock43x', 'slide', 'len', 'barrel', 'len'],
   ['glock43x', 'slide', 'len', 'rsa', 'len'],
   ['p320', 'slide', 'length', 'barrel', 'length'],
@@ -159,9 +158,10 @@ for (const p of PLATFORMS.filter((x) => x.family === 'Rifle'))
     ['ar15', 'budget', { case: 'r-case-sav36' }, 'case', 'ok'],
     ['ar10', 'value', { case: 'r-case-sav36' }, 'case', 'warn'],
     ['ar10', 'value', { case: 'r-case-v730' }, 'case', 'ok'],
-    ['glock19', 'value', { holster: 'g19-hol-g19-tlr7a' }, 'holster', 'error'],
-    ['glock19', 'value', { holster: 'g19-hol-g19-tlr7a', light: 'p-light-tlr7a' }, 'holster', 'info'],
-    ['glock19', 'value', { holster: 'g19-hol-g19', light: 'p-light-tlr7a' }, 'holster', 'error'],
+    ['glock9', 'value', { holster: 'g19-hol-g19-tlr7a' }, 'holster', 'error'],
+    ['glock9', 'value', { holster: 'g19-hol-g19-tlr7a', light: 'p-light-tlr7a' }, 'holster', 'info'],
+    ['glock9', 'value', { holster: 'g19-hol-g19', light: 'p-light-tlr7a' }, 'holster', 'error'],
+    ['glock9', 'value', { holster: 'g17-hol-g17' }, 'holster', 'warn'],
     ['glock43x', 'budget', { light: 'p-light-tlr7sub-g' }, 'light', 'error'],
     ['glock43x', 'premium', { light: 'p-light-tlr7sub-g' }, 'light', 'ok'],
     ['p365', 'budget', { holster: 'p365-hol-xl' }, 'holster', 'warn'],
@@ -200,7 +200,7 @@ for (const p of PLATFORMS) {
 }
 // Owned marks survive a share link, leave the total, and never name a part id.
 {
-  const p = PLATFORMS.find((x) => x.id === 'glock19')!;
+  const p = PLATFORMS.find((x) => x.id === 'glock9')!;
   const base = presetSelection(p, 'value');
   const sel: Record<string, string> = { ...base, '+frame': 'own', '+sights': 'other' };
   delete sel.sights;
@@ -211,6 +211,38 @@ for (const p of PLATFORMS) {
   // A stray mark that doesn't match its slot is dropped.
   const stray = selectionFromParts(p.id, ['own-optic', `has-frame`, base.frame]);
   if (stray['+optic'] || stray['+frame']) { console.log('stray owned marks kept', stray); bad++; }
+}
+// The Glock 9mm builder: frame size against slide length, and old Glock 17, 19 and 26 links.
+{
+  const p = PLATFORMS.find((x) => x.id === 'glock9')!;
+  const base = presetSelection(p, 'premium'); // G19 Gen5
+  const sev = (over: Record<string, string>, a: string, b: string) => {
+    const hits = issuesFor(p, toBuild(p, { ...base, ...over })).filter((i) => i.slots.includes(a) && i.slots.includes(b));
+    return hits.some((i) => i.severity === 'error') ? 'error' : hits.some((i) => i.severity === 'warn') ? 'warn' : hits.length ? 'info' : 'ok';
+  };
+  const g17 = { slide: 'g17-slide-mos', barrel: 'g17-bbl-oem5', rsa: 'g17-rsa-g45' };
+  const g19 = { slide: 'g19-slide-mos', barrel: 'g19-bbl-oem5', rsa: 'g19-rsa-g45' };
+  const g26 = { slide: 'g26-slide-mos', barrel: 'g26-bbl-oem5', rsa: 'g26-rsa-g45' };
+  const cases: [Record<string, string>, string, string, string][] = [
+    [{ frame: 'g19-frame-g5', ...g17 }, 'frame', 'slide', 'info'],
+    [{ frame: 'g17-frame-g5', ...g19 }, 'frame', 'slide', 'warn'],
+    [{ frame: 'g26-frame-g5', ...g19 }, 'frame', 'slide', 'warn'],
+    [{ frame: 'g19-frame-g5', ...g26 }, 'frame', 'slide', 'error'],
+    [{ frame: 'g17-frame-g5', ...g17 }, 'frame', 'slide', 'ok'],
+    [{ frame: 'g19-frame-g5', ...g17, barrel: 'g19-bbl-oem5' }, 'slide', 'barrel', 'error'],
+    [{ frame: 'g19-frame-g5', ...g17, rsa: 'g19-rsa-g45' }, 'slide', 'rsa', 'error'],
+    [{ frame: 'g26-frame-g4', slide: 'g26-slide-g4', barrel: 'g26-bbl-oem34', rsa: 'g26-rsa-g45', fcg: 'g-fcg-oem34', spk: 'g-spk-oem34' }, 'frame', 'slide', 'ok'],
+    [{ frame: 'g17-frame-g3', slide: 'g17-slide-g4', barrel: 'g17-bbl-oem34', rsa: 'g17-rsa-g4', fcg: 'g-fcg-oem34', spk: 'g-spk-oem34' }, 'frame', 'slide', 'error'],
+  ];
+  for (const [over, a, b, want] of cases) {
+    const got = sev(over, a, b);
+    if (got !== want) { console.log(`glock9: ${JSON.stringify(over)} ${a}/${b}: expected ${want}, got ${got}`); bad++; }
+  }
+  for (const old of ['glock17', 'glock19', 'glock26']) {
+    const n = old.slice(5);
+    const sel = selectionFromParts(old, [`g${n}-frame-g5`, `g${n}-slide-mos`, 'g-mag-oem17']);
+    if (canonicalPlatform(old) !== 'glock9' || sel.frame !== `g${n}-frame-g5` || sel.slide !== `g${n}-slide-mos` || sel.mag !== 'g-mag-oem17') { console.log(`old ${old} link did not open in the Glock 9mm builder`, sel); bad++; }
+  }
 }
 console.log(`Interface audit: ${combos} part combinations checked across ${IFACES.length} measured interfaces.`);
 process.exit(bad ? 1 : 0);

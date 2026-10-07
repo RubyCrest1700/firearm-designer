@@ -227,7 +227,7 @@ export const GUIDES: Guide[] = [
     ],
     charts: [
       { slot: 'mag', heading: 'Magazine and pistol', intro: 'Every 9mm Glock magazine we list, checked in the Glock 17, 19 and 26.',
-        models: [{ label: 'Glock 17', platform: 'glock17' }, { label: 'Glock 19', platform: 'glock19' }, { label: 'Glock 26', platform: 'glock26' }] },
+        models: [{ label: 'Glock 17', platform: 'glock17', with: ['g17-frame-g3'] }, { label: 'Glock 19', platform: 'glock19', with: ['g19-frame-g3'] }, { label: 'Glock 26', platform: 'glock26', with: ['g26-frame-g3'] }] },
     ],
     picks: ['mag'],
     sources: [

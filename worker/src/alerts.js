@@ -7,7 +7,7 @@
 //   MAILING_ADDRESS  postal address printed in every email, as US law (CAN-SPAM) requires
 //   ALERTS_FROM      optional sender, default "Drop-In Builds <alerts@dropinbuilds.com>"
 
-import { PLATFORM_IDS } from './api.js';
+import { canonical, isPlatform } from './api.js';
 import { SITE } from './share.js';
 
 export const API_BASE = 'https://share.dropinbuilds.com';
@@ -45,8 +45,8 @@ export function cleanBuilds(list) {
   const out = [];
   for (const b of list) {
     const parts = Array.isArray(b?.parts) ? [...new Set(b.parts)] : null;
-    if (!PLATFORM_IDS.includes(b?.platform) || !parts || parts.length > MAX_PARTS || !parts.every((p) => typeof p === 'string' && PART_ID.test(p))) return null;
-    out.push({ name: clean(b.name, 60) || 'Saved build', platform: b.platform, parts });
+    if (!isPlatform(b?.platform) || !parts || parts.length > MAX_PARTS || !parts.every((p) => typeof p === 'string' && PART_ID.test(p))) return null;
+    out.push({ name: clean(b.name, 60) || 'Saved build', platform: canonical(b.platform), parts });
   }
   return out;
 }
@@ -62,6 +62,13 @@ export async function loadIndex(fresh = false) {
     return null;
   }
 }
+
+/** Stored builds and prices from before the Glock 17, 19 and 26 became one builder carry the old platform ids. */
+const currentBuilds = (builds) => builds.map((b) => ({ ...b, platform: canonical(b.platform) }));
+const currentSeen = (seen) => Object.fromEntries(Object.entries(seen).map(([k, v]) => {
+  const i = k.indexOf('/');
+  return [`${canonical(k.slice(0, i))}${k.slice(i)}`, v];
+}));
 
 /** Today's best price for every part in the builds, keyed `<platform>/<part>`. */
 function pricesFor(index, builds) {
@@ -203,7 +210,7 @@ export async function alertsRoute(request, env, { path, url, json, who, now }) {
     const body = await request.json().catch(() => null);
     const builds = cleanBuilds(body?.builds);
     if (!builds) return json({ error: 'That builds list is not valid.' }, 400);
-    const old = JSON.parse(row.seen);
+    const old = currentSeen(JSON.parse(row.seen));
     const seen = { ...pricesFor(await loadIndex(), builds) };
     for (const k of Object.keys(seen)) if (old[k] !== undefined) seen[k] = old[k];
     await db.prepare('UPDATE alerts SET builds = ?, seen = ? WHERE token = ?').bind(JSON.stringify(builds), JSON.stringify(seen), one[1]).run();
@@ -261,8 +268,8 @@ export async function runAlerts(env, now = Date.now()) {
     const moved = [];
     const updates = [];
     for (const row of rows) {
-      const builds = JSON.parse(row.builds);
-      const seen = JSON.parse(row.seen);
+      const builds = currentBuilds(JSON.parse(row.builds));
+      const seen = currentSeen(JSON.parse(row.seen));
       const m = changesFor(index, builds, seen);
       const next = { ...pricesFor(index, builds) };
       // Keep the last reported price for parts that only drifted, so small moves add up to a real one.

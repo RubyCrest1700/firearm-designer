@@ -6,13 +6,13 @@
 //   GET /b/<platform>~<parts>    any build, in the same form as the site's ?b= links
 // The pictures and the price index are drawn when the site is built (scripts/og-cards.tsx).
 
-import { PLATFORM_IDS } from './api.js';
+import { canonical, isPlatform } from './api.js';
 
 export const SITE = 'https://dropinbuilds.com';
 const PART_ID = /^[a-z0-9][a-z0-9-]{0,47}$/;
 const MAX_PARTS = 40;
 /** Used when the price index can't be reached. */
-const PLATFORM_NAMES = { ar15: 'AR-15', ar10: 'AR-10', ar9: 'AR-9', akm: 'AKM', ak74: 'AK-74', glock17: 'Glock 17', glock19: 'Glock 19', glock26: 'Glock 26', glock43x: 'Glock 43X / 48', glock20: 'Glock 20 / 21', p320: 'Sig P320', p365: 'Sig P365', mp2: 'S&W M&P 2.0', hellcat: 'Springfield Hellcat' };
+const PLATFORM_NAMES = { ar15: 'AR-15', ar10: 'AR-10', ar9: 'AR-9', akm: 'AKM', ak74: 'AK-74', glock9: 'Glock 9mm', glock43x: 'Glock 43X / 48', glock20: 'Glock 20 / 21', p320: 'Sig P320', p365: 'Sig P365', mp2: 'S&W M&P 2.0', hellcat: 'Springfield Hellcat' };
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const money = (n) => `$${Math.round(n).toLocaleString('en-US')}`;
@@ -40,8 +40,8 @@ async function exists(url) {
 export function parseCode(code) {
   const [platform, ids = ''] = code.split('~');
   const parts = ids.split('.').filter(Boolean);
-  if (!PLATFORM_IDS.includes(platform) || parts.length > MAX_PARTS || !parts.every((p) => PART_ID.test(p))) return null;
-  return { platform, parts };
+  if (!isPlatform(platform) || parts.length > MAX_PARTS || !parts.every((p) => PART_ID.test(p))) return null;
+  return { platform: canonical(platform), parts };
 }
 
 /** Title and description for a build, from the price index when it's reachable. */
@@ -111,7 +111,8 @@ export async function sharePage(request, env) {
   if (community) {
     const row = await env.DB.prepare('SELECT platform, name, note, parts FROM builds WHERE id = ? AND hidden = 0').bind(community[1]).first();
     if (!row) return html(page({ title: 'Build not found', description: 'This shared build was removed.', image: `${SITE}/og/site.png`, url: url.href, target: SITE }), 404);
-    ({ platform, name, note } = row);
+    ({ name, note } = row);
+    platform = canonical(row.platform);
     parts = JSON.parse(row.parts);
     const own = `${SITE}/og/c/${community[1]}.png`;
     image = (await exists(own)) ? own : `${SITE}/og/${platform}.png`;

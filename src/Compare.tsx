@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { PLATFORMS } from './data';
+import { PLATFORMS, canonicalPlatform } from './data';
 import type { RegionState } from './Blueprint';
 import { Blueprint } from './drawings';
 import { bestOffer, money, ownedOf, partIds, type Selection } from './engine';
@@ -18,7 +18,10 @@ export function loadCompare(): (CompareItem | null)[] {
   try {
     const raw = sessionStorage.getItem(KEY);
     const list = raw ? (JSON.parse(raw) as (CompareItem | null)[]) : [];
-    const ok = (x: CompareItem | null) => (x && PLATFORMS.some((p) => p.id === x.platform) ? x : null);
+    const ok = (x: CompareItem | null) => {
+      const it = x && { ...x, platform: canonicalPlatform(x.platform) };
+      return it && PLATFORMS.some((p) => p.id === it.platform) ? it : null;
+    };
     return [ok(list[0] ?? null), ok(list[1] ?? null)];
   } catch {
     return [null, null];
@@ -37,7 +40,8 @@ export function parseBuildLink(text: string): { platform: string; selection: Sel
   const b = url.pathname.match(/\/b\/([^/]+)\/?$/);
   const raw = url.searchParams.get('b') ?? (b ? decodeURIComponent(b[1]) : null);
   if (!raw) return null;
-  const [pid, ids = ''] = raw.split('~');
+  const [old, ids = ''] = raw.split('~');
+  const pid = canonicalPlatform(old);
   return PLATFORMS.some((p) => p.id === pid) ? { platform: pid, selection: selectionFromParts(pid, ids.split('.')) } : null;
 }
 
@@ -253,7 +257,7 @@ function Chooser({ label, saved, current, otherPlatform, onPick }: {
       const list = community ?? await listBuilds(null, 'new').catch(() => []);
       const hit = list.find((x) => x.id === got.communityId);
       if (!hit) { setError("We couldn't find that community build. It may have been removed."); return; }
-      onPick({ kind: 'Community', name: hit.name, platform: hit.platform, selection: selectionFromParts(hit.platform, hit.parts) });
+      onPick({ kind: 'Community', name: hit.name, platform: canonicalPlatform(hit.platform), selection: selectionFromParts(hit.platform, hit.parts) });
       return;
     }
     const p = PLATFORMS.find((x) => x.id === got.platform)!;

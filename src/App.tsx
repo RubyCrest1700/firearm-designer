@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { PLATFORMS, PRICES_UPDATED_AT } from './data';
+import { PLATFORMS, PRICES_UPDATED_AT, canonicalPlatform } from './data';
 import { RETAILERS, buyUrl } from './data/retailers';
 import {
   bestOffer, candidateIssues, encodeMount, issuesFor, money, ownedOf, ownsAny, partIds, placementOf, presetSelection, priceRange,
@@ -43,7 +43,12 @@ function loadPersisted(): Persisted | null {
   try {
     localStorage.removeItem(STORE_KEY); // older versions kept the draft forever
     const raw = sessionStorage.getItem(STORE_KEY);
-    return raw ? (JSON.parse(raw) as Persisted) : null;
+    const p = raw ? (JSON.parse(raw) as Persisted) : null;
+    if (!p) return null;
+    // Drafts from before the Glock 17, 19 and 26 became one builder keep their old platform ids.
+    const selections: Record<string, Selection> = {};
+    for (const [k, v] of Object.entries(p.selections ?? {})) selections[canonicalPlatform(k)] ??= v;
+    return { platform: canonicalPlatform(p.platform), selections };
   } catch {
     return null;
   }

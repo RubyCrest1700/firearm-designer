@@ -1,5 +1,5 @@
 import { SHARE_BASE } from './config';
-import { PLATFORMS } from './data';
+import { PLATFORMS, canonicalPlatform } from './data';
 import { MOUNT_CODE, bestOffer, ownedOf, placementOf, presetSelection, selectionTokens, toBuild, type Selection } from './engine';
 import { worthShowing } from './data/history';
 import type { Build, Part, Platform, Tier } from './types';
@@ -21,7 +21,7 @@ const SAVED_KEY = 'firearm-designer:saved:v1';
 export function loadSavedBuilds(): SavedBuild[] {
   try {
     const raw = localStorage.getItem(SAVED_KEY);
-    const list = raw ? (JSON.parse(raw) as SavedBuild[]) : [];
+    const list = (raw ? (JSON.parse(raw) as SavedBuild[]) : []).map((s) => ({ ...s, platform: canonicalPlatform(s.platform) }));
     // Builds saved before price tracking start from today's prices.
     return list.filter((s) => PLATFORMS.some((p) => p.id === s.platform)).map((s) => ({ ...s, prices: priceSnapshot(s.platform, s.selection, s.prices) }));
   } catch {
@@ -102,7 +102,8 @@ export function readSharedBuild(): { platform: string; selection: Selection } | 
   try {
     const raw = new URLSearchParams(location.search).get('b');
     if (!raw) return null;
-    const [pid, ids = ''] = raw.split('~');
+    const [old, ids = ''] = raw.split('~');
+    const pid = canonicalPlatform(old);
     return PLATFORMS.some((p) => p.id === pid) ? { platform: pid, selection: selectionFromParts(pid, ids.split('.')) } : null;
   } catch {
     return null;
@@ -111,7 +112,7 @@ export function readSharedBuild(): { platform: string; selection: Selection } | 
 
 /** Turns part ids and placement tokens back into a selection, skipping ids the catalog no longer has. */
 export function selectionFromParts(platformId: string, ids: string[]): Selection {
-  const platform = PLATFORMS.find((p) => p.id === platformId);
+  const platform = PLATFORMS.find((p) => p.id === canonicalPlatform(platformId));
   const selection: Selection = {};
   for (const id of ids) {
     const at = id.match(/^at-([a-z]+)-(\w+)$/);
@@ -156,15 +157,18 @@ const TIER_SUMMARY: Record<Tier, (p: Platform) => string> = {
   premium: (p) => `Top-tier parts throughout. A ${p.name} set up for duty use or competition.`,
 };
 
+/** A builder with models (the Glock 9mm) gets starter builds for each model, under the model's name and old ids. */
 export const FEATURED: FeaturedBuild[] = PLATFORMS.flatMap((p) =>
-  (['budget', 'value', 'premium'] as Tier[]).map((tier) => ({
-    id: `${p.id}-${tier}`,
-    platform: p,
-    tier,
-    name: `${TIER_LABEL[tier]} ${p.name}`,
-    summary: TIER_SUMMARY[tier](p),
-    selection: presetSelection(p, tier),
-  })),
+  (p.models ?? [{ id: p.id, name: p.name, blurb: p.blurb, presets: p.presets }]).flatMap((m) =>
+    (['budget', 'value', 'premium'] as Tier[]).map((tier) => ({
+      id: `${m.id}-${tier}`,
+      platform: p,
+      tier,
+      name: `${TIER_LABEL[tier]} ${m.name}`,
+      summary: TIER_SUMMARY[tier]({ ...p, name: m.name }),
+      selection: presetSelection({ ...p, presets: m.presets }, tier),
+    })),
+  ),
 );
 
 /* ----------------------------------------------------------------- build facts */
