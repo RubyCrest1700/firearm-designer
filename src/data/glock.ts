@@ -318,7 +318,6 @@ const MODEL_PRESETS: Record<Model, Record<Tier, string[]>> = {
 const models: PlatformModel[] = MODELS_9.map((M) => ({
   id: `glock${M.slice(1)}`,
   name: NAME[M],
-  short: M,
   blurb: MODEL_DESC[M],
   presets: MODEL_PRESETS[M],
   // Its own size's frames, slides, barrels, springs and holsters, plus the parts every size shares.
@@ -327,10 +326,10 @@ const models: PlatformModel[] = MODELS_9.map((M) => ({
 
 export const glock9: Platform = {
   id: 'glock9',
-  name: 'Glock 9mm',
+  name: 'Glock 17 / 19 / 26',
   family: 'Pistol',
   maker: 'Glock',
-  blurb: 'Full-size, compact and subcompact double-stack 9mm Glocks in one builder. Pick a frame size and a slide length.',
+  blurb: 'Full-size, compact and subcompact 9mm Glocks. Mix any frame with any slide that fits.',
   slots,
   parts: [...MODELS_9.flatMap(modelParts), ...shared, ...pistolLights.filter((l) => (l.attrs.rails as string[]).includes('glock')),
     ...MODELS_9.flatMap((M) => holsters(`g${M.slice(1)}`, [[`g${M.slice(1)}`, NAME[M]]], ['tlr7a', 'x300'])), ...pistolCases],

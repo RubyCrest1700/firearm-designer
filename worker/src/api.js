@@ -10,7 +10,7 @@ import { alertsRoute } from './alerts.js';
 export const PLATFORM_IDS = ['ar15', 'ar10', 'ar9', 'glock9', 'glock43x', 'glock20', 'p320', 'p365', 'mp2', 'hellcat'];
 /**
  * Old platform ids that now open in another builder (src/data PLATFORM_ALIASES): the Glock 17, 19 and 26
- * became models of the Glock 9mm. Builds and links made before then still carry them.
+ * became models of the Glock 17 / 19 / 26 builder. Builds and links made before then still carry them.
  */
 export const PLATFORM_ALIASES = { glock17: 'glock9', glock19: 'glock9', glock26: 'glock9' };
 export const canonical = (platform) => PLATFORM_ALIASES[platform] ?? platform;

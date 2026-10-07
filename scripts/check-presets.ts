@@ -13,7 +13,7 @@ for (const p of PLATFORMS) {
     ids.add(part.id);
     if (!p.slots.some((s) => s.id === part.slot)) { console.log(`${p.id}: ${part.id} has unknown slot`); bad++; }
   }
-  // A builder with models (the Glock 9mm) has starter builds for each model as well as its own.
+  // A builder with models (the Glock 17 / 19 / 26) has starter builds for each model as well as its own.
   for (const m of [{ name: p.name, presets: p.presets }, ...(p.models ?? [])])
     for (const tier of ['budget', 'value', 'premium'] as const) {
       for (const id of m.presets[tier]) if (!ids.has(id)) { console.log(`${p.id}/${m.name}/${tier}: unknown part ${id}`); bad++; }
@@ -210,7 +210,7 @@ for (const p of PLATFORMS) {
   const stray = selectionFromParts(p.id, ['own-optic', `has-frame`, base.frame]);
   if (stray['+optic'] || stray['+frame']) { console.log('stray owned marks kept', stray); bad++; }
 }
-// The Glock 9mm builder: frame size against slide length, and old Glock 17, 19 and 26 links.
+// The Glock 17 / 19 / 26 builder: frame size against slide length, and old Glock 17, 19 and 26 links.
 {
   const p = PLATFORMS.find((x) => x.id === 'glock9')!;
   const base = presetSelection(p, 'premium'); // G19 Gen5
@@ -239,7 +239,7 @@ for (const p of PLATFORMS) {
   for (const old of ['glock17', 'glock19', 'glock26']) {
     const n = old.slice(5);
     const sel = selectionFromParts(old, [`g${n}-frame-g5`, `g${n}-slide-mos`, 'g-mag-oem17']);
-    if (canonicalPlatform(old) !== 'glock9' || sel.frame !== `g${n}-frame-g5` || sel.slide !== `g${n}-slide-mos` || sel.mag !== 'g-mag-oem17') { console.log(`old ${old} link did not open in the Glock 9mm builder`, sel); bad++; }
+    if (canonicalPlatform(old) !== 'glock9' || sel.frame !== `g${n}-frame-g5` || sel.slide !== `g${n}-slide-mos` || sel.mag !== 'g-mag-oem17') { console.log(`old ${old} link did not open in the Glock 17 / 19 / 26 builder`, sel); bad++; }
   }
 }
 console.log(`Interface audit: ${combos} part combinations checked across ${IFACES.length} measured interfaces.`);

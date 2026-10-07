@@ -785,7 +785,7 @@ function pistolSpec(platform: Platform, b: Build): PistolSpec {
       const grooved = !fr || (/gen3|gen4/.test(String(fr.attrs.gen)) && !matches(fr, /No finger grooves/));
       // Extended bodies: Glock's 24-round runs about 1.5" below a G17 grip, the PMAG 21 about 1"; the PMAG 12 adds a 0.4" pinky extension to the G26 length.
       const over = matches(b.mag, /24-Round/) ? 1.5 : matches(b.mag, /PMAG 21/) ? 1.0 : matches(b.mag, /PMAG 12/) ? 0.4 : 0;
-      // The Glock 9mm builder: the frame sets the grip and dust cover, the slide its own length (G19 when neither is chosen).
+      // The Glock 17 / 19 / 26 builder: the frame sets the grip and dust cover, the slide its own length (G19 when neither is chosen).
       const fk = 'glock' + String(a(fr, 'model') ?? a(b.slide, 'len') ?? 'G19').slice(1);
       const sk = 'glock' + String(a(b.slide, 'len') ?? a(fr, 'model') ?? 'G19').slice(1);
       const key = platform.id === 'glock9' ? fk : platform.id;

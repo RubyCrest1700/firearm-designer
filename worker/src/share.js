@@ -12,7 +12,7 @@ export const SITE = 'https://dropinbuilds.com';
 const PART_ID = /^[a-z0-9][a-z0-9-]{0,47}$/;
 const MAX_PARTS = 40;
 /** Used when the price index can't be reached. */
-const PLATFORM_NAMES = { ar15: 'AR-15', ar10: 'AR-10', ar9: 'AR-9', glock9: 'Glock 9mm', glock43x: 'Glock 43X / 48', glock20: 'Glock 20 / 21', p320: 'Sig P320', p365: 'Sig P365', mp2: 'S&W M&P 2.0', hellcat: 'Springfield Hellcat' };
+const PLATFORM_NAMES = { ar15: 'AR-15', ar10: 'AR-10', ar9: 'AR-9', glock9: 'Glock 17 / 19 / 26', glock43x: 'Glock 43X / 48', glock20: 'Glock 20 / 21', p320: 'Sig P320', p365: 'Sig P365', mp2: 'S&W M&P 2.0', hellcat: 'Springfield Hellcat' };
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const money = (n) => `$${Math.round(n).toLocaleString('en-US')}`;

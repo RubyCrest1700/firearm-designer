@@ -14,15 +14,11 @@ import type { Platform } from '../types';
 export const PLATFORMS: Platform[] = [ar15, ar10, ar9, glock9, glockSlim, glockLarge, p320, p365, mp, hellcat];
 
 /**
- * Old platform ids that now open inside another builder: the Glock 17, 19 and 26 are models of the Glock 9mm.
+ * Old platform ids that now open inside another builder: the Glock 17, 19 and 26 are models of the Glock 17 / 19 / 26 builder.
  * Shared links, saved builds and community builds made before the merge still carry the old ids.
  */
 export const PLATFORM_ALIASES: Record<string, string> = Object.fromEntries(PLATFORMS.flatMap((p) => (p.models ?? []).map((m) => [m.id, p.id])));
 export const canonicalPlatform = (id: string) => PLATFORM_ALIASES[id] ?? id;
-
-export const andList = (xs: string[]) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
-/** "Includes the G17, G19 and G26" for a builder with models, so it's clear which guns it covers; empty otherwise. */
-export const includesText = (p: Platform) => (p.models?.length ? `Includes the ${andList(p.models.map((m) => m.short))}` : '');
 
 /** When the nightly job last ran, or null if every price is still sample data. */
 export const PRICES_UPDATED_AT: string | null = (prices as unknown as { updatedAt: string | null }).updatedAt;

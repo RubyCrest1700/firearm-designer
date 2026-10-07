@@ -163,8 +163,6 @@ a.nav-link { text-decoration: none; }
 .pmenu-item.active { background: var(--navy); color: #fff; }
 .pmenu-item.active .pmenu-blurb { color: rgba(255,255,255,.75); }
 .pmenu-blurb { font-size: 12.5px; color: var(--muted); line-height: 1.35; }
-.pmenu-includes { font-size: 12.5px; font-weight: 700; color: var(--blue); }
-.pmenu-item.active .pmenu-includes { color: #fff; }
 /* Phones: the panel is a full-width sheet with rifles above pistols, so nothing runs off the screen. */
 @media (max-width: 719px) {
   .pmenu { position: static; }
@@ -183,8 +181,6 @@ a.nav-link { text-decoration: none; }
 .kicker { font: 600 12px/1.3 var(--f-sans); letter-spacing: .1em; text-transform: uppercase; color: var(--cta); margin-bottom: 6px; }
 h1 { font: 700 clamp(28px, 4.2vw, 40px)/1.08 var(--f-head); letter-spacing: -.005em; }
 .lede { color: var(--muted); margin-top: 8px; font-size: 16px; }
-/* Which guns a builder with models covers (the Glock 9mm). Shown on phones too, unlike the lede. */
-.includes { margin-top: 8px; font-weight: 700; color: var(--blue); }
 .hint { color: var(--muted); font-size: 13.5px; margin: 10px 2px 22px; }
 
 /* ---------------------------------------------------------------- blueprint */
@@ -623,7 +619,6 @@ tr:first-child td { border-top: 0; }
 .tile-maker { font: 600 11px/1 var(--f-sans); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
 .tile-name { font: 700 21px/1.15 var(--f-head); }
 .tile-blurb { font-size: 13.5px; color: var(--muted); line-height: 1.4; }
-.tile-includes { font-size: 13.5px; font-weight: 700; color: var(--blue); }
 .tile-from { font-size: 13px; color: var(--muted); margin-top: 6px; }
 .tile-from b { color: var(--ink); }
 .steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; counter-reset: step; }
