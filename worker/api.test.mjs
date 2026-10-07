@@ -315,6 +315,37 @@ test('unsubscribing removes every signup for the address, including one-click', 
   assert.equal((await call(e, 'GET', `/api/alerts/${c}`)).status, 404);
 });
 
+test('saves feedback and emails one daily digest', async () => {
+  const { runFeedback } = await import('./src/feedback.js');
+  const e = env();
+  const sent = [];
+  Object.assign(e, { RESEND_API_KEY: 'k', FEEDBACK_EMAIL: 'owner@example.com', sendEmail: async (m) => sent.push(m) });
+  assert.equal((await call(e, 'POST', '/api/feedback', { message: 'Please add the CZ P-10.\n\nThanks!', email: 'Fan@Example.com', page: '/faq/' })).status, 201);
+  assert.equal((await call(e, 'POST', '/api/feedback', { message: 'Love <b>it</b>', page: '/#build' }, '2.2.2.2')).status, 201);
+  assert.deepEqual(await runFeedback(e), { sent: 1, messages: 2 });
+  assert.equal(sent.length, 1);
+  assert.deepEqual(sent[0].to, ['owner@example.com']);
+  assert.match(sent[0].subject, /2 new feedback messages/);
+  assert.match(sent[0].text, /Please add the CZ P-10\.\n\nThanks!/);
+  assert.match(sent[0].html, /mailto:fan@example\.com/);
+  assert.doesNotMatch(sent[0].html, /<b>it/);
+  assert.deepEqual(await runFeedback(e), { sent: 0, waiting: 0 });
+});
+
+test('feedback is checked and capped', async () => {
+  const { runFeedback } = await import('./src/feedback.js');
+  const e = env();
+  assert.equal((await call(e, 'POST', '/api/feedback', { message: 'hi' })).status, 400);
+  assert.equal((await call(e, 'POST', '/api/feedback', { message: 'Looks good', email: 'not an email' })).status, 400);
+  // Bots that fill the hidden field get a normal answer, and nothing is saved.
+  assert.equal((await call(e, 'POST', '/api/feedback', { message: 'Buy cheap pills', website: 'spam.example' })).status, 201);
+  for (let i = 0; i < 5; i++) assert.equal((await call(e, 'POST', '/api/feedback', { message: `Note number ${i}` })).status, 201);
+  assert.equal((await call(e, 'POST', '/api/feedback', { message: 'One too many' })).status, 429);
+  assert.equal((await call(e, 'POST', '/api/feedback', { message: 'From another network' }, '3.3.3.3')).status, 201);
+  // Without FEEDBACK_EMAIL it's saved but not sent.
+  assert.deepEqual(await runFeedback(e), { sent: 0, skipped: 'not set up' });
+});
+
 test('builds for a shelved platform stay stored but are not listed or opened', async () => {
   const e = env();
   const s = await share(e);

@@ -5,6 +5,7 @@
 
 import { sharePage } from './share.js';
 import { alertsRoute } from './alerts.js';
+import { feedbackRoute } from './feedback.js';
 
 /** Keep in sync with the platform ids in src/data. */
 export const PLATFORM_IDS = ['ar15', 'ar10', 'ar9', 'glock9', 'glock43x', 'glock20', 'p320', 'p365', 'mp2', 'hellcat'];
@@ -204,6 +205,10 @@ export async function handle(request, env, now = Date.now()) {
 
     const alerts = await alertsRoute(request, env, { path, url, now, json: (d, s) => json(d, s, origin), who: () => visitorHash(request, salt) });
     if (alerts) return alerts;
+
+    // POST /api/feedback { message, email, page }
+    const feedback = await feedbackRoute(request, env, { path, now, json: (d, s) => json(d, s, origin), who: () => visitorHash(request, salt) });
+    if (feedback) return feedback;
 
     return json({ error: 'Not found' }, 404, origin);
   } catch (err) {

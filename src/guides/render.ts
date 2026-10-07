@@ -9,7 +9,7 @@ import { bestOffer, money, presetSelection, worst } from '../engine';
 import type { Part, Platform, Severity, Tier } from '../types';
 import { GUIDES, type AcrossChart, type FitChart, type Guide, type PairChart } from './content';
 import { titleCase } from '../text';
-import { CONTENT_SECURITY_POLICY } from '../config';
+import { COMMUNITY_API, CONTENT_SECURITY_POLICY } from '../config';
 
 export const SITE = 'https://dropinbuilds.com';
 const ANALYTICS_TOKEN = '00e0977ba6ee49a7b9a386502da1ef3f';
@@ -225,6 +225,7 @@ ${o.jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).re
   <p>Plan a build part by part, check that everything fits, and see where each part costs least. We don't sell anything.</p>
   <p>Fit charts come from the same rules the builder uses. Prices marked Sample aren't tracked yet; always confirm the price and fit with the retailer and the maker. Parts that are the serialized firearm ship to a licensed dealer, and laws vary by state.</p>
   <p>Some retailer links may earn us a small commission at no extra cost to you. It never changes which parts we show or how we check fit.</p>
+  <p><a class="foot-link" href="/feedback/">Send Feedback</a></p>
 </div></footer>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "${ANALYTICS_TOKEN}"}'></script>
 </body>
@@ -504,6 +505,39 @@ export function notFoundPage() {
   });
 }
 
+/**
+ * Send Feedback page, linked from every footer. public/feedback.js sends the form to the Worker
+ * (worker/src/feedback.js) along with the page the visitor came from. Kept out of search and the sitemap.
+ */
+export function feedbackPage() {
+  return layout({
+    title: 'Send Feedback | Drop-In Builds',
+    description: 'Tell us what to add, fix or change on Drop-In Builds.',
+    path: '/feedback/',
+    notFound: true,
+    jsonLd: [],
+    body: `<h1>Send Feedback</h1>
+  <p class="lede">Something wrong, missing or confusing? A part or platform you want added? We read every message.</p>
+  <form id="feedback" class="feedback-form" data-api="${esc(COMMUNITY_API)}" novalidate>
+    <label for="fb-message">Your Feedback</label>
+    <textarea id="fb-message" name="message" rows="6" maxlength="2000" required placeholder="What should we add, fix or change?"></textarea>
+    <label for="fb-email">Email <span class="muted">(Optional)</span></label>
+    <input id="fb-email" name="email" type="email" maxlength="254" autocomplete="email" placeholder="Only if you'd like a reply" />
+    <div class="hp" aria-hidden="true"><label for="fb-website">Website</label><input id="fb-website" name="website" tabindex="-1" autocomplete="off" /></div>
+    <input type="hidden" name="page" />
+    <p class="form-error" role="alert" hidden></p>
+    <button class="cta" type="submit">Send Feedback</button>
+    <p class="muted small-print">We only use your email to answer you. Please don't include personal details you wouldn't want stored.</p>
+  </form>
+  <div id="feedback-sent" class="answers" hidden>
+    <h2 tabindex="-1">Thanks for the Feedback</h2>
+    <p>Your message is on its way. If you left an email, we'll reply when we can.</p>
+    <p><a class="back-link" href="/">Back to the Site</a></p>
+  </div>
+  <script defer src="/feedback.js"></script>`,
+  });
+}
+
 export function sitemap(builtAt: string) {
   const day = builtAt.slice(0, 10);
   const urls = ['/', '/build/', ...PAGE_VIEWS.map((p) => `/build/${platformSlug(p)}/`), '/faq/', ...GUIDES.map((g) => `/faq/${g.slug}/`)];
@@ -614,6 +648,20 @@ section{margin:0}
 @media (max-width:560px){.parts td{white-space:normal;width:38%}.parts td .muted{display:block}}
 .guide-list.cols{columns:2 200px}
 .site-footer{border-top:1px solid var(--line);padding:24px 0 40px;color:var(--muted);font-size:14px}
+.site-footer .foot-link{color:var(--muted)}
+.feedback-form{display:grid;gap:6px;max-width:560px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;box-shadow:var(--shadow)}
+.feedback-form label{font-weight:700;font-size:15px;margin-top:8px}
+.feedback-form label:first-child{margin-top:0}
+.feedback-form textarea,.feedback-form input{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.feedback-form textarea{resize:vertical;min-height:130px}
+.feedback-form textarea:focus,.feedback-form input:focus{outline:2px solid var(--blue);outline-offset:1px}
+.feedback-form .cta{border:0;font:inherit;font-weight:700;cursor:pointer;justify-self:start;margin-top:10px}
+.feedback-form .cta:disabled{opacity:.6;cursor:wait}
+.feedback-form[hidden]{display:none}
+.feedback-form .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.form-error{color:var(--err);margin:4px 0 0;font-size:15px}
+.small-print{margin:4px 0 0;font-size:13px}
+@media (max-width:560px){.feedback-form .cta{justify-self:stretch;text-align:center}}
 `;
 
 /** The FAQ moved from /guides/ to /faq/. GitHub Pages can't send real redirects, so each old address gets a

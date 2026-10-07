@@ -1,7 +1,7 @@
-// Writes the static FAQ guide pages (plus forwarding pages at their old /guides/ addresses), sitemap.xml and robots.txt into dist/ after the Vite build.
+// Writes the static FAQ guide pages, the Send Feedback page (plus forwarding pages at their old /guides/ addresses), sitemap.xml and robots.txt into dist/ after the Vite build.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { GUIDES } from '../src/guides/content';
-import { PAGE_VIEWS, guidePage, indexPage, notFoundPage, platformPage, platformSlug, platformsIndexPage, redirectPage, robots, sitemap } from '../src/guides/render';
+import { PAGE_VIEWS, feedbackPage, guidePage, indexPage, notFoundPage, platformPage, platformSlug, platformsIndexPage, redirectPage, robots, sitemap } from '../src/guides/render';
 
 const builtAt = new Date().toISOString();
 const write = (path: string, text: string) => {
@@ -17,6 +17,7 @@ write('dist/guides/index.html', redirectPage('/faq/'));
 for (const p of PAGE_VIEWS) write(`dist/build/${platformSlug(p)}/index.html`, platformPage(p));
 write('dist/build/index.html', platformsIndexPage());
 write('dist/404.html', notFoundPage());
+write('dist/feedback/index.html', feedbackPage());
 write('dist/sitemap.xml', sitemap(builtAt));
 write('dist/robots.txt', robots());
-console.log(`Wrote ${GUIDES.length} guide pages, ${PAGE_VIEWS.length} platform pages, 404.html, sitemap.xml and robots.txt`);
+console.log(`Wrote ${GUIDES.length} guide pages, ${PAGE_VIEWS.length} platform pages, 404.html, the feedback page, sitemap.xml and robots.txt`);
