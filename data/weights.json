@@ -1191,6 +1191,21 @@
       "basis": "estimate",
       "src": null
     },
+    "g-plate-acro": {
+      "oz": 0.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-plate-k": {
+      "oz": 0.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "g-plate-rmr": {
+      "oz": 0.9,
+      "basis": "estimate",
+      "src": null
+    },
     "g-sight-ameriglo": {
       "oz": 0.4,
       "basis": "estimate",
