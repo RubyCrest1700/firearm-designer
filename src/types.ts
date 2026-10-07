@@ -30,6 +30,8 @@ export interface Part {
   mpn?: string;
   /** Serialized part: legally the firearm, ships to an FFL */
   serialized?: boolean;
+  /** A complete factory pistol in a parts slot (a Glock V): the other slots it already fills with its own factory parts. */
+  fills?: string[];
   /** Weight as sold, from data/weights.json. `published` is false when it's our typical-figure estimate. */
   weight?: { oz: number; published: boolean; src?: string };
 }

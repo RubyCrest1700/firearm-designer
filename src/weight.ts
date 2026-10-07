@@ -24,8 +24,8 @@ export function buildWeight(platform: Platform, b: Build, bare = false): BuildWe
     if (bare && (s.group === 'Add-ons' || s.id === 'optic' || s.id === 'mag')) continue;
     if (!p.weight) { out.missing++; continue; }
     // Upgrades to a complete base pistol or rifle replace a factory part whose weight is already in the base gun's.
-    const base = b.pistol ?? b.rifle;
-    const factory = s.id !== 'pistol' && s.id !== 'rifle' ? base?.attrs[`w_${s.id}`] : undefined;
+    const base = b.pistol ?? b.rifle ?? Object.values(b).find((x) => x?.fills);
+    const factory = base && p !== base ? base.attrs[`w_${s.id}`] : undefined;
     out.oz += p.weight.oz - (typeof factory === 'number' ? factory : 0);
     out.counted++;
     if (!p.weight.published) out.estimated++;

@@ -28,10 +28,10 @@ const NAMED: Named[] = ['G17', 'G19', 'G19X', 'G26', 'G34', 'G45', 'G47'];
 const MODEL_DESC: Record<Named, string> = {
   G17: 'Full-size 9mm, 4.49" barrel. The duty and competition standard.',
   G19: 'Compact 9mm, 4.02" barrel. The most popular carry Glock.',
-  G19X: 'G19-length slide on the full-size G45 frame, in coyote with a lanyard loop. Gen5 only.',
+  G19X: 'G19-length slide on the full-size G45 frame, in coyote with a lanyard loop. Gen5 and V only.',
   G26: 'Subcompact 9mm, 3.43" barrel. Takes G19 and G17 mags too.',
   G34: 'Long-slide 9mm, 5.31" barrel, on the G17 frame. The competition Glock.',
-  G45: 'G19-length slide on a full-size grip. Gen5 only.',
+  G45: 'G19-length slide on a full-size grip. Gen5 and V only.',
   G47: 'G17-length slide on the G45 frame. Takes the G19 recoil spring. Gen5 only.',
 };
 
@@ -64,7 +64,7 @@ const rsaLabel = (r: unknown) => {
 };
 
 const slots = [
-  { id: 'frame', name: 'Frame', group: 'Lower', required: true, hint: 'The serialized part. Its generation decides the rest of the build.' },
+  { id: 'frame', name: 'Frame', group: 'Lower', required: true, hint: 'The serialized part. Its generation decides the rest. V Series models come as complete pistols.' },
   { id: 'fcg', name: 'Trigger & frame parts', group: 'Lower', required: true, hint: 'Trigger, housing, connector, locking block, pins. Same across G17/19/26.' },
   { id: 'slide', name: 'Slide', group: 'Upper', required: true, hint: 'A Gen3 slide fits Gen3 and Gen4 frames. Gen5 only fits Gen5. A longer slide can go on a shorter frame.' },
   { id: 'spk', name: 'Slide parts kit', group: 'Upper', required: true, hint: 'Firing pin, extractor, safety plunger, backplate.' },
@@ -191,6 +191,29 @@ const g45Parts: Part[] = [
   ]),
 ];
 
+/**
+ * Glock V Series (late 2025), which replaced most Gen5 models. Glock doesn't sell V frames or slides on their own,
+ * and V slides, firing pins and slide cover plates don't interchange with Gen5, so a V build starts from the
+ * complete pistol and keeps its factory slide and internals. Magazines, holsters and lights carry over. Glock
+ * hasn't published which other parts fit. There's no G34 V or G47 V.
+ * Sources: https://www.guns.com/news/glock-v-series,
+ * https://www.ammoland.com/2025/11/glock-v-model-what-handgun-shooters-need-to-know/,
+ * https://blog.ndzperformance.com/glock-v-series-explained-what-shooters-need-to-know-in-2025/
+ */
+const V_FILLS = ['fcg', 'slide', 'spk', 'barrel', 'rsa', 'sights'];
+const vParts: Part[] = parts('frame', [
+  { id: 'g17-v', brand: 'Glock', name: 'G17 V Pistol', specs: ['V Series', 'Complete pistol', '17+1', 'No optic cut'], attrs: { gen: 'v', model: 'G17', len: 'G17', cut: 'none', complete: true, w_sights: 0.2 },
+    serialized: true, fills: V_FILLS, offers: [['PSA', 549.99], ['KYG', 566.99]] },
+  { id: 'g19-v', brand: 'Glock', name: 'G19 V Pistol', specs: ['V Series', 'Complete pistol', '15+1', 'No optic cut'], attrs: { gen: 'v', model: 'G19', len: 'G19', cut: 'none', complete: true, w_sights: 0.2 },
+    serialized: true, fills: V_FILLS, offers: [['PSA', 549.99], ['KYG', 566.99]], pick: pick('value', 'The newest G19, ready to shoot. Add mags, a holster and a light.') },
+  { id: 'g26-v', brand: 'Glock', name: 'G26 V Pistol', specs: ['V Series', 'Complete pistol', '10+1', 'No optic cut'], attrs: { gen: 'v', model: 'G26', len: 'G26', cut: 'none', complete: true, w_sights: 0.2 },
+    serialized: true, fills: V_FILLS, offers: [['PSA', 549.99], ['KYG', 566.99]] },
+  { id: 'g45-v', brand: 'Glock', name: 'G45 V Pistol', specs: ['V Series', 'Complete pistol', '17+1', 'No optic cut'], attrs: { gen: 'v', model: 'G45', len: 'G19', cut: 'none', complete: true, w_sights: 0.2 },
+    serialized: true, fills: V_FILLS, offers: [['PSA', 564.99], ['KYG', 579.99]] },
+  { id: 'g19x-v', brand: 'Glock', name: 'G19X V Pistol', specs: ['V Series', 'Complete pistol', '17+1', 'Coyote'], attrs: { gen: 'v', model: 'G45', label: 'G19X', len: 'G19', cut: 'none', complete: true, w_sights: 0.2 },
+    serialized: true, fills: V_FILLS, offers: [['PSA', 584.99], ['KYG', 599.99]] },
+]);
+
 const shared: Part[] = [
   ...parts('fcg', [
     { id: 'g-fcg-oem34', brand: 'Glock', name: 'OEM Lower Parts Kit, Gen3/4', specs: ['Gen3/4', 'Stock trigger', '~5.5 lb'], attrs: { family: 'Gen3/4' },
@@ -308,10 +331,20 @@ function rules(b: Build): Issue[] {
   const frameName = String(frame?.attrs.label ?? FM);
   const thread = threadIssue(barrel, muzzle);
   if (thread) out.push(thread);
+  // A complete V Series pistol keeps its own slide and internals: they don't interchange with Gen3/4/5.
+  const V = frame?.attrs.complete ? `${frameName} V` : undefined;
+  if (V) {
+    if (slide) out.push({ severity: 'error', slots: ['frame', 'slide'], message: `V Series and Gen3/4/5 slides don't interchange. The ${V} keeps its factory slide.` });
+    if (spk) out.push({ severity: 'error', slots: ['frame', 'spk'], message: `V Series firing pins and cover plates don't fit older Glocks, or theirs a V. The ${V} keeps its factory slide parts.` });
+    if (fcg) out.push({ severity: 'warn', slots: ['frame', 'fcg'], message: `Glock hasn't said whether this fits the ${V}. Its trigger parts were redesigned.` });
+    if (barrel) out.push({ severity: 'warn', slots: ['frame', 'barrel'], message: `Glock hasn't said which barrels fit the ${V}.` });
+    if (rsa) out.push({ severity: 'warn', slots: ['frame', 'rsa'], message: `The ${V} has its own recoil spring. Glock hasn't said whether older ones fit.` });
+    if (optic && !slide) out.push({ severity: 'error', slots: ['frame', 'optic'], message: `The ${V} has no optic cut. Skip the optic for this pistol.` });
+  }
   const frameFam = frame ? family(frame.attrs.gen) : undefined;
-  if (frame && fcg && fcg.attrs.family !== frameFam)
+  if (frame && !V && fcg && fcg.attrs.family !== frameFam)
     out.push({ severity: 'error', slots: ['frame', 'fcg'], message: `A ${frameFam} frame needs ${frameFam} trigger and frame parts.` });
-  if (frame && slide && FM && SM) {
+  if (frame && !V && slide && FM && SM) {
     if (!slideFits(SM, frame.attrs.gen, slide.attrs.gen))
       out.push({ severity: 'error', slots: ['frame', 'slide'], message: `A ${GEN[slide.attrs.gen as string]} slide doesn't fit a ${GEN[frame.attrs.gen as string]} ${frameName} frame.` });
     else {
@@ -417,7 +450,7 @@ const PAGE_PARTS: Record<Named, string[]> = {
   G34: ['g17-frame', 'g34-', 'g17-rsa', 'g34-hol'],
   G45: ['g45-', 'g19-slide', 'g19-bbl', 'g19-rsa', 'g19-hol'],
   G19X: ['g19x-', 'g19-slide', 'g19-bbl', 'g19-rsa', 'g19-hol'],
-  G47: ['g45-', 'g47-', 'g17-bbl', 'g19-rsa', 'g17-hol'],
+  G47: ['g45-frame', 'g47-', 'g17-bbl', 'g19-rsa', 'g17-hol'],
 };
 
 const modelId = (M: Named) => `glock${M.slice(1).toLowerCase()}`;
@@ -437,6 +470,7 @@ function modelOf(b: Build): { id?: string; name: string } | undefined {
   const FM = b.frame?.attrs.model as Frame | undefined;
   const label = (b.frame?.attrs.label ?? FM) as string | undefined;
   const SM = b.slide?.attrs.len as Slide | undefined;
+  if (b.frame?.attrs.complete && !SM) return { id: modelId(label as Named), name: `${label} V` };
   if (!FM || !SM) return FM ? { name: `${label} frame` } : SM ? { name: `${SM} slide` } : undefined;
   const named: Named | undefined = FM === SM ? FM
     : FM === 'G17' && SM === 'G34' ? 'G34'
@@ -454,7 +488,7 @@ export const glock9: Platform = {
   maker: 'Glock',
   blurb: 'Every double-stack 9mm Glock. Mix any frame with any slide that fits.',
   slots,
-  parts: [...MODELS_9.flatMap(modelParts), ...g34Parts, ...g45Parts, ...shared, ...pistolLights.filter((l) => (l.attrs.rails as string[]).includes('glock')),
+  parts: [...MODELS_9.flatMap(modelParts), ...g34Parts, ...g45Parts, ...vParts, ...shared, ...pistolLights.filter((l) => (l.attrs.rails as string[]).includes('glock')),
     ...(['G17', 'G19', 'G26', 'G34'] as const).map((M) => holsters(`g${M.slice(1)}`, [[`g${M.slice(1)}`, NAME[M]]], ['tlr7a', 'x300'])).flat(), ...pistolCases],
   rules,
   presets: MODEL_PRESETS.G19,

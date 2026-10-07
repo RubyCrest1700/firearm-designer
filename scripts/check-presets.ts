@@ -2,6 +2,7 @@
 import { awarenessFor } from '../src/awareness';
 import { PLATFORMS, canonicalPlatform } from '../src/data/index';
 import { issuesFor, ownedOf, placementOf, presetSelection, selectionTokens, toBuild, toBuyIds } from '../src/engine';
+import { factoryParts } from '../src/status';
 import { selectionFromParts } from '../src/store';
 import { buildWeight, formatWeight } from '../src/weight';
 
@@ -18,8 +19,10 @@ for (const p of PLATFORMS) {
     for (const tier of ['budget', 'value', 'premium'] as const) {
       for (const id of m.presets[tier]) if (!ids.has(id)) { console.log(`${p.id}/${m.name}/${tier}: unknown part ${id}`); bad++; }
       const sel = presetSelection({ ...p, presets: m.presets }, tier);
-      const missing = p.slots.filter((s) => s.required && !sel[s.id]).map((s) => s.id);
-      const issues = issuesFor(p, toBuild(p, sel));
+      const built = toBuild(p, sel);
+      const factory = factoryParts(built);
+      const missing = p.slots.filter((s) => s.required && !sel[s.id] && !factory.has(s.id)).map((s) => s.id);
+      const issues = issuesFor(p, built);
       if (m.name !== p.name || !p.models) console.log(`${m.name} ${tier}: missing=[${missing}] ${issues.map((i) => `${i.severity}: ${i.message}`).join(' | ') || 'clean'}`);
       if (missing.length || issues.some((i) => i.severity === 'error')) bad++;
     }

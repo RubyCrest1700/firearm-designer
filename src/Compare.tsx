@@ -5,7 +5,7 @@ import { Blueprint } from './drawings';
 import { bestOffer, money, ownedOf, partIds, type Selection } from './engine';
 import { FEATURED, buildOf, selectionFromParts, totalOf, type SavedBuild } from './store';
 import { listBuilds, type CommunityBuild } from './community';
-import { buildStatus, statesFor } from './status';
+import { buildStatus, factoryParts, statesFor } from './status';
 import { buildWeight, formatWeight } from './weight';
 import type { Issue, Part, Slot } from './types';
 
@@ -199,6 +199,8 @@ function PartCell({ f, slot }: { f: Facts; slot: Slot }) {
   const part: Part | undefined = f.build[slot.id];
   if (!f.platform.slots.some((s) => s.id === slot.id)) return <span className="cmp-cell dim">Not on a {f.platform.name}</span>;
   if (f.owned.other.has(slot.id)) return <span className="cmp-cell"><span className="dim">Your own part, not in our list</span><span className="cmp-price owned-note">You Own It</span></span>;
+  const factory = !part ? factoryParts(f.build).get(slot.id) : undefined;
+  if (factory) return <span className="cmp-cell"><span className="dim">Factory, comes on the {factory.name.replace(/ Pistol.*/, '')}</span><span className="cmp-price">Included</span></span>;
   if (!part) return <span className="cmp-cell dim">{slot.required ? 'Not chosen yet' : 'None'}</span>;
   const best = bestOffer(part);
   const fit = FIT_TEXT[f.states[slot.id]];

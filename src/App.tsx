@@ -9,7 +9,7 @@ import { findParts, isLink, type Found } from './find';
 import { ComparePage, loadCompare, storeCompare, type CompareItem } from './Compare';
 import type { RegionState } from './Blueprint';
 import { Blueprint, useDrawings } from './drawings';
-import { buildStatus, statesFor } from './status';
+import { buildStatus, factoryParts, statesFor } from './status';
 import {
   FEATURED, TIER_LABEL, buildOf, droppedBuilds, loadSavedBuilds, priceChanges, priceSnapshot, newId, readSharedBuild, selectionFromParts, shareUrl, checkShareLinks, storeSavedBuilds, totalOf,
   type FeaturedBuild, type SavedBuild,
@@ -479,7 +479,8 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
   const status = buildStatus(platform, build, issues, owned.other);
   const total = totalOf(platform, build, owned.owned);
   const ownsSome = owned.owned.size + owned.other.size > 0;
-  const chosen = platform.slots.filter((s) => build[s.id] || owned.other.has(s.id)).length;
+  const factory = factoryParts(build);
+  const chosen = platform.slots.filter((s) => build[s.id] || owned.other.has(s.id) || factory.has(s.id)).length;
   const rifle = platform.family === 'Rifle';
   const weight = buildWeight(platform, build);
   const weightTitle = `Unloaded, as built (not counting the case or holster). ${weight.estimated ? `${weight.estimated} of ${weight.counted} part weights are estimates.` : 'All part weights are listed figures.'}`;
@@ -635,6 +636,7 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
   mounts: Record<string, Resolved>; onMount: (slot: string, side: Side, at: number) => void;
   owned: Owned; onToggleOwn: (s: string) => void;
 }) {
+  const factoryOf = factoryParts(build);
   return (
     <section className="card parts" aria-label="Parts list">
       <div className="parts-head" aria-hidden="true">
@@ -649,6 +651,7 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
               const offer = part && bestOffer(part);
               const own = owned.owned.has(slot.id);
               const other = owned.other.has(slot.id);
+              const factory = !part ? factoryOf.get(slot.id) : undefined;
               const rowIssues = issues.filter((i) => i.severity === 'info' ? i.slots[0] === slot.id : i.slots.includes(slot.id));
               return (
                 <li key={slot.id} className={'part-row ' + (other ? 'other' : states[slot.id]) + (own ? ' owned' : '') + (hover === slot.id ? ' hover' : '')}
@@ -660,6 +663,8 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
                       <span className="part-name"><span className="brand-dim">{part.brand}</span> {part.name}{part.serialized && <span className="ffl" title="Serialized: ships to an FFL">FFL</span>}</span>
                     ) : other ? (
                       <span className="part-name">Your own {slot.name.toLowerCase()} <span className="brand-dim">(not in our list, so its fit isn't checked)</span></span>
+                    ) : factory ? (
+                      <span className="part-name">Factory {slot.name.toLowerCase()} <span className="brand-dim">(comes on the {factory.name.replace(/ Pistol.*/, '')})</span></span>
                     ) : (
                       <span className="part-name choose">{slot.required ? `Choose a ${slot.name.toLowerCase()}` : 'Add one'} →</span>
                     )}
@@ -668,7 +673,8 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
                   <span className="part-price">
                     {other ? <span className="src owned-note">You Own It</span>
                       : own && offer ? <><s className="amt dim">{money(offer.price)}</s><span className="src owned-note">You Own It</span></>
-                      : offer ? <><span className="amt">{money(offer.price)}</span><span className="src">{RETAILERS[offer.retailer].name}</span>{part && <ChangeChip part={part} />}</> : <span className="amt dim">—</span>}
+                      : offer ? <><span className="amt">{money(offer.price)}</span><span className="src">{RETAILERS[offer.retailer].name}</span>{part && <ChangeChip part={part} />}</>
+                      : factory ? <span className="src">Included</span> : <span className="amt dim">—</span>}
                     {part && (
                       <button className={'own-btn' + (own ? ' on' : '')} aria-pressed={own} onClick={() => onToggleOwn(slot.id)}
                         title={own ? "Count this part's price in the total again" : 'Already have this part? It stays in the fit checks but leaves the total.'}>
