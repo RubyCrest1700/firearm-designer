@@ -13,7 +13,7 @@ const slots = [
   { id: 'slide', name: 'Slide assembly', group: 'Upper', required: true, hint: 'Comes with sights and slide parts. 3.1" or 3.7".' },
   { id: 'barrel', name: 'Barrel', group: 'Upper', required: true, hint: 'Must be the length the slide is made for.' },
   { id: 'spring', name: 'Recoil spring', group: 'Upper', required: true, hint: 'Must match the slide length.' },
-  { id: 'optic', name: 'Optic', group: 'Accessories', required: false, hint: 'Optic-ready P365 slides take the RMSc / Romeo Zero footprint.' },
+  { id: 'optic', name: 'Optic', group: 'Accessories', required: false, hint: 'Optic-ready P365 slides take the RMSc and Holosun K footprints.' },
   { id: 'mag', name: 'Magazine', group: 'Accessories', required: true, hint: 'Match the mag to the grip length for a flush fit.' },
   ...pistolAddonSlots,
 ];
@@ -62,11 +62,11 @@ const allParts = [
   ...parts('optic', [
     { id: 'p365-opt-r0', brand: 'Sig Sauer', name: 'RomeoZero Elite', specs: ['RMSc footprint', 'Direct mount'], attrs: { footprint: 'rmsc' },
       offers: [['SIG', 199.99], ['OP', 189.99]], pick: pick('budget', 'Cheapest dot that mounts directly.') },
-    { id: 'p365-opt-507k', brand: 'Holosun', name: 'HS507K X2', specs: ['RMSc footprint', 'Multi-reticle'], attrs: { footprint: 'rmsc' },
+    { id: 'p365-opt-507k', brand: 'Holosun', name: 'HS507K X2', specs: ['Holosun K footprint', 'Multi-reticle'], attrs: { footprint: 'k' },
       offers: [['PA', 269.99], ['OP', 274.99]], pick: pick('value', 'The most common P365 dot. Fits with no plate.') },
-    { id: 'p365-opt-eps', brand: 'Holosun', name: 'EPS Carry', specs: ['RMSc footprint', 'Enclosed emitter'], attrs: { footprint: 'rmsc' },
+    { id: 'p365-opt-eps', brand: 'Holosun', name: 'EPS Carry', specs: ['Holosun K footprint', 'Enclosed emitter'], attrs: { footprint: 'k' },
       offers: [['PA', 349.99], ['OP', 359.99]], pick: pick('premium', 'Enclosed emitter keeps lint and rain off the lens.') },
-    { id: 'p365-opt-407k', brand: 'Holosun', name: 'HS407K X2', specs: ['RMSc footprint', '6 MOA dot'], attrs: { footprint: 'rmsc' },
+    { id: 'p365-opt-407k', brand: 'Holosun', name: 'HS407K X2', specs: ['Holosun K footprint', '6 MOA dot'], attrs: { footprint: 'k' },
       offers: [['PA', 229.99], ['OP', 234.99]] },
     { id: 'p365-opt-rmsc', brand: 'Shield', name: 'RMSc 4 MOA', specs: ['RMSc footprint', 'Very low profile'], attrs: { footprint: 'rmsc' },
       offers: [['BRN', 299.99], ['OP', 289.99]] },
@@ -92,7 +92,9 @@ function rules(b: Build): Issue[] {
     out.push({ severity: 'error', slots: ['slide', 'spring'], message: `This slide takes the ${SPRING_LABEL[slide.attrs.springLen as string]} recoil spring assembly.` });
   if (barrel?.attrs.threaded && slide?.attrs.comp)
     out.push({ severity: 'error', slots: ['slide', 'barrel'], message: 'The Spectre Comp slide has a built-in compensator. A threaded barrel won\'t clear it.' });
-  if (slide && optic && slide.attrs.cut !== optic.attrs.footprint)
+  if (slide?.attrs.cut === 'rmsc' && optic?.attrs.footprint === 'k')
+    out.push({ severity: 'info', slots: ['slide', 'optic'], message: 'Holosun K optics mount directly. Some P365 slides need M3 screws instead of the M4s in the box.' });
+  else if (slide && optic && slide.attrs.cut !== optic.attrs.footprint)
     out.push({ severity: 'warn', slots: ['slide', 'optic'], message: `The slide is cut for ${String(slide.attrs.cut).toUpperCase()} and this optic uses the ${String(optic.attrs.footprint).toUpperCase()} footprint. You need an adapter plate.` });
   if (grip && slide && grip.attrs.len === 'xl' && slide.attrs.len === 'std')
     out.push({ severity: 'info', slots: ['grip', 'slide'], message: 'XL grip with the short slide is the P365X layout: full grip, shorter slide.' });
