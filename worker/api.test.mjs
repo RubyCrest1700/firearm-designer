@@ -341,3 +341,13 @@ test('feedback is checked and capped', async () => {
   // Without FEEDBACK_EMAIL it's saved but not sent.
   assert.deepEqual(await runFeedback(e), { sent: 0, skipped: 'not set up' });
 });
+
+test('builds for a shelved platform stay stored but are not listed or opened', async () => {
+  const e = env();
+  const s = await share(e);
+  await e.DB.prepare('UPDATE builds SET platform = ? WHERE id = ?').bind('ak74', s.body.build.id).run();
+  assert.equal((await call(e, 'GET', '/api/builds')).body.builds.length, 0);
+  assert.equal((await call(e, 'GET', '/api/builds?platform=ak74')).body.builds.length, 0);
+  assert.equal((await call(e, 'GET', `/api/builds/${s.body.build.id}`)).status, 404);
+  assert.equal((await e.DB.prepare('SELECT COUNT(*) AS n FROM builds').first()).n, 1);
+});
