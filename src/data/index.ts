@@ -6,13 +6,12 @@ import { glockLarge } from './glocklarge';
 import { mp } from './mp';
 import { hellcat } from './hellcat';
 import { ar9 } from './ar9';
-import { ak74, akm } from './ak';
 import { p320 } from './p320';
 import { p365 } from './p365';
 import prices from '../../data/prices.json';
 import type { Platform } from '../types';
 
-export const PLATFORMS: Platform[] = [ar15, ar10, ar9, akm, ak74, glock9, glockSlim, glockLarge, p320, p365, mp, hellcat];
+export const PLATFORMS: Platform[] = [ar15, ar10, ar9, glock9, glockSlim, glockLarge, p320, p365, mp, hellcat];
 
 /**
  * Old platform ids that now open inside another builder: the Glock 17, 19 and 26 are models of the Glock 9mm.

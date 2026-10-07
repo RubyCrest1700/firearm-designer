@@ -31,7 +31,10 @@ export function loadSavedBuilds(): SavedBuild[] {
 
 export function storeSavedBuilds(list: SavedBuild[]) {
   try {
-    localStorage.setItem(SAVED_KEY, JSON.stringify(list));
+    // Builds for a shelved platform aren't shown, but they stay stored so they come back if the platform does.
+    const raw = localStorage.getItem(SAVED_KEY);
+    const shelved = (raw ? (JSON.parse(raw) as SavedBuild[]) : []).filter((s) => !PLATFORMS.some((p) => p.id === s.platform));
+    localStorage.setItem(SAVED_KEY, JSON.stringify([...list, ...shelved]));
   } catch {
     /* storage unavailable: saved builds last for this visit only */
   }

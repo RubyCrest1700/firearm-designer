@@ -256,7 +256,7 @@ function Chooser({ label, saved, current, otherPlatform, onPick }: {
     if ('communityId' in got) {
       const list = community ?? await listBuilds(null, 'new').catch(() => []);
       const hit = list.find((x) => x.id === got.communityId);
-      if (!hit) { setError("We couldn't find that community build. It may have been removed."); return; }
+      if (!hit || !PLATFORMS.some((p) => p.id === canonicalPlatform(hit.platform))) { setError("We couldn't find that community build. It may have been removed."); return; }
       onPick({ kind: 'Community', name: hit.name, platform: canonicalPlatform(hit.platform), selection: selectionFromParts(hit.platform, hit.parts) });
       return;
     }
