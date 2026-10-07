@@ -65,7 +65,7 @@ export default function App() {
   const persisted = useMemo(loadPersisted, []);
   const shared = useMemo(readSharedBuild, []);
   const [route, setRoute] = useState<Route>(() => (shared ? 'build' : routeFromHash()));
-  const [platformId, setPlatformId] = useState(shared?.platform ?? persisted?.platform ?? PLATFORMS[0].id);
+  const [platformId, setPlatformId] = useState(shared?.platform ?? (PLATFORMS.some((p) => p.id === persisted?.platform) ? persisted!.platform : PLATFORMS[0].id));
   const [selections, setSelections] = useState<Record<string, Selection>>(() => ({
     ...persisted?.selections,
     ...(shared ? { [shared.platform]: shared.selection } : {}),

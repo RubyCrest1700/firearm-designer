@@ -6,13 +6,13 @@
 //   GET /b/<platform>~<parts>    any build, in the same form as the site's ?b= links
 // The pictures and the price index are drawn when the site is built (scripts/og-cards.tsx).
 
-import { PLATFORM_IDS } from './api.js';
+import { LIVE_PLATFORMS, PLATFORM_IDS } from './api.js';
 
 export const SITE = 'https://dropinbuilds.com';
 const PART_ID = /^[a-z0-9][a-z0-9-]{0,47}$/;
 const MAX_PARTS = 40;
 /** Used when the price index can't be reached. */
-const PLATFORM_NAMES = { ar15: 'AR-15', ar10: 'AR-10', ar9: 'AR-9', akm: 'AKM', ak74: 'AK-74', glock17: 'Glock 17', glock19: 'Glock 19', glock26: 'Glock 26', glock43x: 'Glock 43X / 48', glock20: 'Glock 20 / 21', p320: 'Sig P320', p365: 'Sig P365', mp2: 'S&W M&P 2.0', hellcat: 'Springfield Hellcat' };
+const PLATFORM_NAMES = { ar15: 'AR-15', ar10: 'AR-10', ar9: 'AR-9', akm: 'AKM', glock17: 'Glock 17', glock19: 'Glock 19', glock26: 'Glock 26', glock43x: 'Glock 43X / 48', glock20: 'Glock 20 / 21', p320: 'Sig P320', p365: 'Sig P365', mp2: 'S&W M&P 2.0', hellcat: 'Springfield Hellcat' };
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const money = (n) => `$${Math.round(n).toLocaleString('en-US')}`;
@@ -109,7 +109,7 @@ export async function sharePage(request, env) {
 
   let platform, parts, name = '', note = '', image;
   if (community) {
-    const row = await env.DB.prepare('SELECT platform, name, note, parts FROM builds WHERE id = ? AND hidden = 0').bind(community[1]).first();
+    const row = await env.DB.prepare(`SELECT platform, name, note, parts FROM builds WHERE id = ? AND hidden = 0 AND platform IN (${LIVE_PLATFORMS})`).bind(community[1]).first();
     if (!row) return html(page({ title: 'Build not found', description: 'This shared build was removed.', image: `${SITE}/og/site.png`, url: url.href, target: SITE }), 404);
     ({ platform, name, note } = row);
     parts = JSON.parse(row.parts);
