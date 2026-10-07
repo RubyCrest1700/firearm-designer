@@ -279,6 +279,7 @@ export default function App() {
           <div>
             <p className="brand-name small">Drop-In <b>Builds</b></p>
             <p>Plan a build part by part, check that everything fits, and see where each part costs least. We don't sell anything.</p>
+            <p><a className="foot-link" href={`/feedback/?from=${encodeURIComponent(location.pathname + location.hash)}`}>Send Feedback</a></p>
           </div>
           <div>
             <p className="foot-title">Good to Know</p>

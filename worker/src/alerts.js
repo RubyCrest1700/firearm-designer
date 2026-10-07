@@ -19,10 +19,11 @@ const MAX_BUILDS = 50;
 const MAX_PARTS = 40;
 const MAX_SIGNUPS_PER_DAY = 5;
 /**
- * Resend's free plan sends 100 a day: up to 80 alert emails plus 20 confirmations. The overall signup cap
- * keeps anyone signing up lots of addresses from different networks from using up the alert emails.
+ * Resend's free plan sends 100 a day: up to 79 alert emails, 20 confirmations and the one feedback digest
+ * (feedback.js). The overall signup cap keeps anyone signing up lots of addresses from different networks
+ * from using up the alert emails.
  */
-const MAX_ALERT_EMAILS_PER_RUN = 80;
+const MAX_ALERT_EMAILS_PER_RUN = 79;
 const MAX_SIGNUPS_PER_DAY_TOTAL = 20;
 
 export const alertsEnabled = (env) => !!(env.RESEND_API_KEY && env.MAILING_ADDRESS);
