@@ -3,18 +3,36 @@ import { parts, pick, threadIssue } from './helpers';
 import { holsters, pistolAddonRules, pistolAddonSlots, pistolCases, pistolLights } from './addons';
 
 /**
- * Double-stack 9mm Glocks: one builder for the G17, G19 and G26, because a Glock is a frame size plus a slide
- * length and people mix them. Trigger parts, slide parts, sights and optics are shared; frames, slides, barrels
- * and recoil springs come in each model's size. The barrel and recoil spring go with the slide, not the frame.
+ * Double-stack 9mm Glocks: one builder, because a Glock is a frame plus a slide and people mix them. Four
+ * frames (G17, G19, G26 and the Gen5 G45, which has the full grip with a G19-length dust cover and G19 locking
+ * block) and five slides (G34, G17, G47, G19, G26). The G34 is a G17 frame with a long slide; the G45 and G19X
+ * put a G19 slide on the G45 frame and the G47 a G17-length slide that takes the G19 recoil spring. Trigger
+ * parts, slide parts, sights and optics are shared. The barrel and recoil spring go with the slide.
+ * Sources: https://www.americanrifleman.org/content/review-glock-47-mos, us.glock.com technical data.
  */
 type Model = 'G17' | 'G19' | 'G26';
+/** Frames: the three classic sizes plus the G45 frame (also the G19X's and G47's). */
+type Frame = Model | 'G45';
+/** Slide lengths. The G47's is G17 length but takes the G19 recoil spring; the G45 and G19X use G19 slides. */
+type Slide = Model | 'G34' | 'G47';
+/** The models people search for, each a frame and a slide. */
+type Named = Model | 'G34' | 'G45' | 'G19X' | 'G47';
 
-const SIZE: Record<Model, number> = { G17: 3, G19: 2, G26: 1 };
+/** Grip size, which magazines fill flush. */
+const SIZE: Record<Frame, number> = { G17: 3, G19: 2, G26: 1, G45: 3 };
+/** Dust cover length rank of a frame, and the matching slide length rank. */
+const COVER: Record<Frame, number> = { G17: 3, G19: 2, G26: 1, G45: 2 };
+const LENGTH: Record<Slide, number> = { G34: 4, G17: 3, G47: 3, G19: 2, G26: 1 };
 const MODELS_9: Model[] = ['G17', 'G19', 'G26'];
-const MODEL_DESC: Record<Model, string> = {
+const NAMED: Named[] = ['G17', 'G19', 'G19X', 'G26', 'G34', 'G45', 'G47'];
+const MODEL_DESC: Record<Named, string> = {
   G17: 'Full-size 9mm, 4.49" barrel. The duty and competition standard.',
   G19: 'Compact 9mm, 4.02" barrel. The most popular carry Glock.',
+  G19X: 'G19-length slide on the full-size G45 frame, in coyote with a lanyard loop. Gen5 only.',
   G26: 'Subcompact 9mm, 3.43" barrel. Takes G19 and G17 mags too.',
+  G34: 'Long-slide 9mm, 5.31" barrel, on the G17 frame. The competition Glock.',
+  G45: 'G19-length slide on a full-size grip. Gen5 only.',
+  G47: 'G17-length slide on the G45 frame. Takes the G19 recoil spring. Gen5 only.',
 };
 
 /** Gen3 and Gen4 barrels, trigger parts and slide parts interchange; Gen5 is its own family. */
@@ -26,7 +44,7 @@ const GEN: Record<string, string> = { gen3: 'Gen3', gen4: 'Gen4', gen5: 'Gen5' }
  * Gen3 G17/G19 frame without cutting it; the G26 is the exception. Gen5 only goes with Gen5.
  * Source: https://3crtactical.com/blog/are-glock-gen-3-and-gen-4-slides-compatible/
  */
-function slideFits(slideModel: Model, frameGen: unknown, slideGen: unknown): boolean {
+function slideFits(slideModel: Slide, frameGen: unknown, slideGen: unknown): boolean {
   if (frameGen === 'gen5' || slideGen === 'gen5') return frameGen === slideGen;
   if (frameGen === 'gen4') return true;
   return slideGen === 'gen3' || slideModel === 'G26';
@@ -76,37 +94,37 @@ function modelParts(M: Model): Part[] {
         offers: [['GS', 179.99 + d], ['BRN', 184.99 + d]], pick: pick('premium', 'Newest design, ambidextrous slide stop, flared magwell.') },
     ]),
     ...parts('slide', [
-      { id: `g${n}-slide-g3`, brand: 'Glock', name: t('{M} Gen3 Slide (OEM, stripped)'), specs: ['Gen3', 'No optic cut'], attrs: { len: M, family: 'Gen3/4', gen: 'gen3', rsa: rsaFor(M, 'gen3'), cut: 'none' },
+      { id: `g${n}-slide-g3`, brand: 'Glock', name: t('{M} Gen3 Slide (OEM, stripped)'), specs: ['Gen3', 'No optic cut'], attrs: { len: M, bbl: M, family: 'Gen3/4', gen: 'gen3', rsa: rsaFor(M, 'gen3'), cut: 'none' },
         offers: [['GS', 169.99 + d]], pick: pick('budget', 'Plain factory slide, no optic cut.') },
-      { id: `g${n}-slide-brn`, brand: 'Brownells', name: t('{M} Slide, RMR Cut, Iron Sight Window'), specs: ['Gen3 pattern', 'RMR footprint', 'Front serrations'], attrs: { len: M, family: 'Gen3/4', gen: 'gen3', rsa: rsaFor(M, 'gen3'), cut: 'rmr' },
+      { id: `g${n}-slide-brn`, brand: 'Brownells', name: t('{M} Slide, RMR Cut, Iron Sight Window'), specs: ['Gen3 pattern', 'RMR footprint', 'Front serrations'], attrs: { len: M, bbl: M, family: 'Gen3/4', gen: 'gen3', rsa: rsaFor(M, 'gen3'), cut: 'rmr' },
         offers: [['BRN', 179.99 + d]], pick: pick('value', 'Optic-ready slide for close to the price of a stock one.') },
-      { id: `g${n}-slide-zev`, brand: 'ZEV', name: t('Z{m} Octane Slide, RMR Cut'), specs: ['Gen3 pattern', 'RMR footprint', 'Lightening cuts'], attrs: { len: M, family: 'Gen3/4', gen: 'gen3', rsa: rsaFor(M, 'gen3'), cut: 'rmr' },
+      { id: `g${n}-slide-zev`, brand: 'ZEV', name: t('Z{m} Octane Slide, RMR Cut'), specs: ['Gen3 pattern', 'RMR footprint', 'Lightening cuts'], attrs: { len: M, bbl: M, family: 'Gen3/4', gen: 'gen3', rsa: rsaFor(M, 'gen3'), cut: 'rmr' },
         offers: [['BRN', 389.99 + d], ['GS', 379.99 + d]] },
-      { id: `g${n}-slide-mos`, brand: 'Glock', name: t('{M} Gen5 MOS Slide (OEM, stripped)'), specs: ['Gen5', 'MOS plate system'], attrs: { len: M, family: 'Gen5', gen: 'gen5', rsa: rsaFor(M, 'gen5'), cut: 'mos' },
+      { id: `g${n}-slide-mos`, brand: 'Glock', name: t('{M} Gen5 MOS Slide (OEM, stripped)'), specs: ['Gen5', 'MOS plate system'], attrs: { len: M, bbl: M, family: 'Gen5', gen: 'gen5', rsa: rsaFor(M, 'gen5'), cut: 'mos' },
         offers: [['GS', 249.99 + d], ['BRN', 259.99 + d]], pick: pick('premium', 'Factory optic plates fit most pistol dots.') },
-      { id: `g${n}-slide-g4`, brand: 'Glock', name: t('{M} Gen4 Slide (OEM, stripped)'), specs: ['Gen4', 'No optic cut', 'Dual-spring recoil'], attrs: { len: M, family: 'Gen3/4', gen: 'gen4', rsa: rsaFor(M, 'gen4'), cut: 'none' },
+      { id: `g${n}-slide-g4`, brand: 'Glock', name: t('{M} Gen4 Slide (OEM, stripped)'), specs: ['Gen4', 'No optic cut', 'Dual-spring recoil'], attrs: { len: M, bbl: M, family: 'Gen3/4', gen: 'gen4', rsa: rsaFor(M, 'gen4'), cut: 'none' },
         offers: [['GS', 174.99 + d]] },
-      { id: `g${n}-slide-g5`, brand: 'Glock', name: t('{M} Gen5 Slide (OEM, stripped)'), specs: ['Gen5', 'No optic cut', 'Front serrations'], attrs: { len: M, family: 'Gen5', gen: 'gen5', rsa: rsaFor(M, 'gen5'), cut: 'none' },
+      { id: `g${n}-slide-g5`, brand: 'Glock', name: t('{M} Gen5 Slide (OEM, stripped)'), specs: ['Gen5', 'No optic cut', 'Front serrations'], attrs: { len: M, bbl: M, family: 'Gen5', gen: 'gen5', rsa: rsaFor(M, 'gen5'), cut: 'none' },
         offers: [['GS', 219.99 + d]] },
-      ...(M !== 'G26' ? [{ id: `g${n}-slide-ggp`, brand: 'Grey Ghost Precision', name: t('{M} Combat Slide, RMR Cut'), specs: ['Gen3 pattern', 'RMR footprint', 'Front and rear serrations'], attrs: { len: M, family: 'Gen3/4', gen: 'gen3', rsa: rsaFor(M, 'gen3'), cut: 'rmr' },
+      ...(M !== 'G26' ? [{ id: `g${n}-slide-ggp`, brand: 'Grey Ghost Precision', name: t('{M} Combat Slide, RMR Cut'), specs: ['Gen3 pattern', 'RMR footprint', 'Front and rear serrations'], attrs: { len: M, bbl: M, family: 'Gen3/4', gen: 'gen3', rsa: rsaFor(M, 'gen3'), cut: 'rmr' },
         offers: [['BRN', 329.99 + d], ['GS', 324.99 + d]] as [string, number][] }] : []),
     ]),
     ...parts('barrel', [
-      { id: `g${n}-bbl-oem34`, brand: 'Glock', name: t('{M} Barrel, Gen3/4 (OEM)'), specs: ['Gen3/4', 'Polygonal rifling'], attrs: { len: M, family: 'Gen3/4', threaded: false },
+      { id: `g${n}-bbl-oem34`, brand: 'Glock', name: t('{M} Barrel, Gen3/4 (OEM)'), specs: ['Gen3/4', 'Polygonal rifling'], attrs: { len: M, bbl: M, family: 'Gen3/4', threaded: false },
         offers: [['GS', 119.99]], pick: pick('budget', 'Factory barrel. Fits a Gen3/4 slide with no fitting.') },
-      { id: `g${n}-bbl-lw`, brand: 'Lone Wolf', name: t('AlphaWolf {M} Barrel, Threaded 1/2x28'), specs: ['Gen3/4', 'Threaded 1/2x28', 'Conventional rifling'], attrs: { len: M, family: 'Gen3/4', threaded: true, thread: '1/2x28' },
+      { id: `g${n}-bbl-lw`, brand: 'Lone Wolf', name: t('AlphaWolf {M} Barrel, Threaded 1/2x28'), specs: ['Gen3/4', 'Threaded 1/2x28', 'Conventional rifling'], attrs: { len: M, bbl: M, family: 'Gen3/4', threaded: true, thread: '1/2x28' },
         offers: [['BRN', 124.99 + d], ['MID', 129.99 + d]] },
-      { id: `g${n}-bbl-lwm`, brand: 'Lone Wolf', name: t('AlphaWolf {M} Barrel, Threaded M13.5x1 LH'), specs: ['Gen3/4', 'Threaded M13.5x1 LH', 'Metric, left-hand'], attrs: { len: M, family: 'Gen3/4', threaded: true, thread: 'M13.5x1 LH' },
+      { id: `g${n}-bbl-lwm`, brand: 'Lone Wolf', name: t('AlphaWolf {M} Barrel, Threaded M13.5x1 LH'), specs: ['Gen3/4', 'Threaded M13.5x1 LH', 'Metric, left-hand'], attrs: { len: M, bbl: M, family: 'Gen3/4', threaded: true, thread: 'M13.5x1 LH' },
         offers: [['BRN', 129.99 + d]] },
-      { id: `g${n}-bbl-faxon`, brand: 'Faxon', name: t('{M} Duty Series Barrel'), specs: ['Gen3/4', 'Match grade', 'Nitride'], attrs: { len: M, family: 'Gen3/4', threaded: false },
+      { id: `g${n}-bbl-faxon`, brand: 'Faxon', name: t('{M} Duty Series Barrel'), specs: ['Gen3/4', 'Match grade', 'Nitride'], attrs: { len: M, bbl: M, family: 'Gen3/4', threaded: false },
         offers: [['BRN', 169.99 + d], ['OP', 164.99 + d]], pick: pick('value', 'Match-grade accuracy for less than most aftermarket barrels.') },
       ...(M !== 'G26' ? [
-        { id: `g${n}-bbl-faxont`, brand: 'Faxon', name: t('{M} Duty Series Barrel, Threaded 1/2x28'), specs: ['Gen3/4', 'Threaded 1/2x28', 'Match grade'], attrs: { len: M, family: 'Gen3/4', threaded: true, thread: '1/2x28' },
+        { id: `g${n}-bbl-faxont`, brand: 'Faxon', name: t('{M} Duty Series Barrel, Threaded 1/2x28'), specs: ['Gen3/4', 'Threaded 1/2x28', 'Match grade'], attrs: { len: M, bbl: M, family: 'Gen3/4', threaded: true, thread: '1/2x28' },
           offers: [['BRN', 189.99 + d], ['OP', 184.99 + d]] as [string, number][] },
-        { id: `g${n}-bbl-ba`, brand: 'Ballistic Advantage', name: t('Premium Series {M} Barrel, Threaded 1/2x28'), specs: ['Gen3/4', 'Threaded 1/2x28', 'Stainless'], attrs: { len: M, family: 'Gen3/4', threaded: true, thread: '1/2x28' },
+        { id: `g${n}-bbl-ba`, brand: 'Ballistic Advantage', name: t('Premium Series {M} Barrel, Threaded 1/2x28'), specs: ['Gen3/4', 'Threaded 1/2x28', 'Stainless'], attrs: { len: M, bbl: M, family: 'Gen3/4', threaded: true, thread: '1/2x28' },
           offers: [['PA', 179.99 + d], ['BRN', 184.99 + d]] as [string, number][] },
       ] : []),
-      { id: `g${n}-bbl-oem5`, brand: 'Glock', name: t('{M} Gen5 Marksman Barrel (OEM)'), specs: ['Gen5', 'Marksman rifling'], attrs: { len: M, family: 'Gen5', threaded: false },
+      { id: `g${n}-bbl-oem5`, brand: 'Glock', name: t('{M} Gen5 Marksman Barrel (OEM)'), specs: ['Gen5', 'Marksman rifling'], attrs: { len: M, bbl: M, family: 'Gen5', threaded: false },
         offers: [['GS', 149.99], ['BRN', 154.99]], pick: pick('premium', 'Better accuracy than older factory barrels.') },
     ]),
     ...parts('rsa', M === 'G26' ? [
@@ -126,6 +144,52 @@ function modelParts(M: Model): Part[] {
   ];
   return list;
 }
+
+/**
+ * The G34 slide and barrel. The G34 is a G17 frame with a long slide, and takes the G17's recoil spring in
+ * every generation (Glock lists one spring for the G17 and G34: Gen3 "G17/22/31/34/35", Gen4 marked 0-2-5,
+ * Gen5 marked 1-3).
+ */
+const g34Parts: Part[] = [
+  ...parts('slide', [
+    { id: 'g34-slide-g3', brand: 'Glock', name: 'G34 Gen3 Slide (OEM, stripped)', specs: ['Gen3', 'No optic cut', 'Lightening cut'], attrs: { len: 'G34', bbl: 'G34', family: 'Gen3/4', gen: 'gen3', rsa: rsaFor('G17', 'gen3'), cut: 'none' },
+      offers: [['GS', 199.99]], pick: pick('budget', 'The long factory slide, no optic cut.') },
+    { id: 'g34-slide-brn', brand: 'Brownells', name: 'G34 Slide, RMR Cut, Iron Sight Window', specs: ['Gen3 pattern', 'RMR footprint', 'Front serrations'], attrs: { len: 'G34', bbl: 'G34', family: 'Gen3/4', gen: 'gen3', rsa: rsaFor('G17', 'gen3'), cut: 'rmr' },
+      offers: [['BRN', 199.99]], pick: pick('value', 'Optic-ready long slide for close to the price of a stock one.') },
+    { id: 'g34-slide-mos4', brand: 'Glock', name: 'G34 Gen4 MOS Slide (OEM, stripped)', specs: ['Gen4', 'MOS plate system', 'Dual-spring recoil'], attrs: { len: 'G34', bbl: 'G34', family: 'Gen3/4', gen: 'gen4', rsa: rsaFor('G17', 'gen4'), cut: 'mos' },
+      offers: [['GS', 259.99]] },
+    { id: 'g34-slide-mos', brand: 'Glock', name: 'G34 Gen5 MOS Slide (OEM, stripped)', specs: ['Gen5', 'MOS plate system'], attrs: { len: 'G34', bbl: 'G34', family: 'Gen5', gen: 'gen5', rsa: rsaFor('G17', 'gen5'), cut: 'mos' },
+      offers: [['GS', 279.99], ['BRN', 289.99]], pick: pick('premium', 'Factory optic plates on the long slide.') },
+  ]),
+  ...parts('barrel', [
+    { id: 'g34-bbl-oem34', brand: 'Glock', name: 'G34 Barrel, Gen3/4 (OEM)', specs: ['Gen3/4', '5.31"', 'Polygonal rifling'], attrs: { len: 'G34', family: 'Gen3/4', threaded: false },
+      offers: [['GS', 129.99]], pick: pick('budget', 'Factory long barrel.') },
+    { id: 'g34-bbl-lw', brand: 'Lone Wolf', name: 'AlphaWolf G34 Barrel, Threaded 1/2x28', specs: ['Gen3/4', 'Threaded 1/2x28', 'Conventional rifling'], attrs: { len: 'G34', family: 'Gen3/4', threaded: true, thread: '1/2x28' },
+      offers: [['BRN', 139.99], ['MID', 144.99]] },
+    { id: 'g34-bbl-faxon', brand: 'Faxon', name: 'G34 Duty Series Barrel', specs: ['Gen3/4', 'Match grade', 'Nitride'], attrs: { len: 'G34', family: 'Gen3/4', threaded: false },
+      offers: [['BRN', 179.99], ['OP', 174.99]], pick: pick('value', 'Match-grade accuracy in the long length.') },
+    { id: 'g34-bbl-oem5', brand: 'Glock', name: 'G34 Gen5 Marksman Barrel (OEM)', specs: ['Gen5', '5.31"', 'Marksman rifling'], attrs: { len: 'G34', family: 'Gen5', threaded: false },
+      offers: [['GS', 159.99]], pick: pick('premium', 'The factory Gen5 long barrel.') },
+  ]),
+];
+
+/**
+ * The Gen5 G45 frame (the G45's, G19X's and G47's): full-size grip, G19-length dust cover, G19 locking block.
+ * It takes G19 slides and the G47 slide. The G47 slide is G17 length, takes a G17 barrel and the G19 recoil
+ * spring (Glock lists one spring for the G19 Gen5, G19X and G45).
+ */
+const g45Parts: Part[] = [
+  ...parts('frame', [
+    { id: 'g45-frame-g5', brand: 'Glock', name: 'G45 / G47 Gen5 Frame (OEM, stripped)', specs: ['Gen5', 'Full-size grip', 'G19-length dust cover'], attrs: { gen: 'gen5', model: 'G45' }, serialized: true,
+      offers: [['GS', 184.99]], pick: pick('premium', 'The full-size grip with the shorter G19 dust cover.') },
+    { id: 'g19x-frame-g5', brand: 'Glock', name: 'G19X Frame (OEM, stripped, coyote)', specs: ['Gen5', 'Full-size grip', 'Lanyard loop', 'Coyote'], attrs: { gen: 'gen5', model: 'G45', label: 'G19X' }, serialized: true,
+      offers: [['GS', 189.99]] },
+  ]),
+  ...parts('slide', [
+    { id: 'g47-slide-mos', brand: 'Glock', name: 'G47 Gen5 MOS Slide (OEM, stripped)', specs: ['Gen5', 'MOS plate system', 'G17 length, G19 recoil spring'], attrs: { len: 'G47', bbl: 'G17', family: 'Gen5', gen: 'gen5', rsa: rsaFor('G19', 'gen5'), cut: 'mos' },
+      offers: [['GS', 259.99]], pick: pick('premium', 'The G47 slide: G17 length on the G45 frame.') },
+  ]),
+];
 
 const shared: Part[] = [
   ...parts('fcg', [
@@ -210,7 +274,9 @@ const shared: Part[] = [
   ]),
 ];
 
-const NAME: Record<Model, string> = { G17: 'Glock 17', G19: 'Glock 19', G26: 'Glock 26' };
+const NAME: Record<Named, string> = { G17: 'Glock 17', G19: 'Glock 19', G19X: 'Glock 19X', G26: 'Glock 26', G34: 'Glock 34', G45: 'Glock 45', G47: 'Glock 47' };
+/** Holsters are molded for the slide: the G47's is G17 length, the G45 frame's slides are G19 length. */
+const HOLSTER: Record<Frame | Slide, string> = { G17: 'g17', G19: 'g19', G26: 'g26', G34: 'g34', G47: 'g17', G45: 'g19' };
 
 /**
  * Slide length against frame size, for slides that fit the frame's generation. A longer slide on a shorter
@@ -218,23 +284,28 @@ const NAME: Record<Model, string> = { G17: 'Glock 17', G19: 'Glock 19', G26: 'Gl
  * short for the longer frames' rails. Sources: https://arms-eng.com/glock-frame-slide-compatibility/,
  * https://3crtactical.com/blog/glock-slide-compatibility-guide/
  */
-function lengthIssue(FM: Model, SM: Model): Issue | null {
-  if (FM === SM) return null;
+function lengthIssue(FM: Frame, SM: Slide, frameName: string): Issue | null {
   const slots = ['frame', 'slide'];
-  if (SM === 'G26')
-    return { severity: 'error', slots, message: `A G26 slide is too short for a ${FM} frame. The frame's longer rails block it.` };
-  if (FM === 'G26')
+  if (SM === 'G26' && FM !== 'G26')
+    return { severity: 'error', slots, message: `A G26 slide is too short for a ${frameName} frame. The frame's longer rails block it.` };
+  if (FM === 'G26' && SM !== 'G26')
     return { severity: 'warn', slots, message: `A ${SM} slide goes on a G26 frame, but it leaves the recoil spring showing in front of the short dust cover. It isn't a combination Glock makes.` };
-  if (SM === 'G17')
-    return { severity: 'info', slots, message: 'A G17 slide on a G19 frame is a popular build: the compact grip with a longer sight radius. Use a G17 barrel and recoil spring.' };
-  return { severity: 'warn', slots, message: 'A G19 slide goes on a G17 frame, but the frame\'s dust cover sticks out about half an inch past the slide. Many people run it; Glock doesn\'t make it.' };
+  if (SM === 'G47' && FM === 'G19')
+    return { severity: 'info', slots, message: 'A G47 slide on a Gen5 G19 frame is the setup Glock sold as the G49: the compact grip with a G17-length slide.' };
+  // Factory pairings: the G34 is a G17 frame with the long slide, the G47 a G45 frame with the G47 slide.
+  if ((SM === 'G34' && FM === 'G17') || (SM === 'G47' && FM === 'G45')) return null;
+  if (LENGTH[SM] === COVER[FM]) return null;
+  if (LENGTH[SM] > COVER[FM])
+    return { severity: 'info', slots, message: `A ${SM} slide on a ${frameName} frame is a popular build: a longer sight radius on the shorter frame. Use a barrel and recoil spring made for the slide.` };
+  return { severity: 'warn', slots, message: `A ${SM} slide goes on a ${frameName} frame, but the frame's dust cover sticks out past the slide. Many people run it; Glock doesn't make it.` };
 }
 
 function rules(b: Build): Issue[] {
   const out: Issue[] = [];
   const { frame, fcg, slide, spk, barrel, rsa, sights, optic, muzzle, mag } = b;
-  const FM = frame?.attrs.model as Model | undefined;
-  const SM = slide?.attrs.len as Model | undefined;
+  const FM = frame?.attrs.model as Frame | undefined;
+  const SM = slide?.attrs.len as Slide | undefined;
+  const frameName = String(frame?.attrs.label ?? FM);
   const thread = threadIssue(barrel, muzzle);
   if (thread) out.push(thread);
   const frameFam = frame ? family(frame.attrs.gen) : undefined;
@@ -242,9 +313,9 @@ function rules(b: Build): Issue[] {
     out.push({ severity: 'error', slots: ['frame', 'fcg'], message: `A ${frameFam} frame needs ${frameFam} trigger and frame parts.` });
   if (frame && slide && FM && SM) {
     if (!slideFits(SM, frame.attrs.gen, slide.attrs.gen))
-      out.push({ severity: 'error', slots: ['frame', 'slide'], message: `A ${GEN[slide.attrs.gen as string]} slide doesn't fit a ${GEN[frame.attrs.gen as string]} ${FM} frame.` });
+      out.push({ severity: 'error', slots: ['frame', 'slide'], message: `A ${GEN[slide.attrs.gen as string]} slide doesn't fit a ${GEN[frame.attrs.gen as string]} ${frameName} frame.` });
     else {
-      const len = lengthIssue(FM, SM);
+      const len = lengthIssue(FM, SM, frameName);
       if (len) out.push(len);
       if (len?.severity !== 'error' && SM !== 'G26' && frame.attrs.gen === 'gen4' && slide.attrs.gen === 'gen3')
         out.push({ severity: 'info', slots: ['frame', 'slide'], message: 'A Gen3 slide fits a Gen4 frame. It leaves a small gap at the front of the dust cover and uses the Gen3 single-spring recoil assembly.' });
@@ -254,8 +325,10 @@ function rules(b: Build): Issue[] {
     out.push({ severity: 'error', slots: ['slide', 'spk'], message: `A ${slide.attrs.family} slide needs a ${slide.attrs.family} slide parts kit.` });
   if (slide && barrel && barrel.attrs.family !== slide.attrs.family)
     out.push({ severity: 'error', slots: ['slide', 'barrel'], message: `${barrel.attrs.family} barrels don't fit a ${slide.attrs.family} slide.` });
-  else if (slide && barrel && barrel.attrs.len !== SM)
-    out.push({ severity: 'error', slots: ['slide', 'barrel'], message: `This is a ${barrel.attrs.len} barrel and the slide is a ${SM}. The barrel goes with the slide, so it has to be the slide's length.` });
+  else if (slide && barrel && barrel.attrs.len !== slide.attrs.bbl)
+    out.push({ severity: 'error', slots: ['slide', 'barrel'], message: SM === slide.attrs.bbl
+      ? `This is a ${barrel.attrs.len} barrel and the slide is a ${SM}. The barrel goes with the slide, so it has to be the slide's length.`
+      : `This is a ${barrel.attrs.len} barrel. The ${SM} slide takes a ${slide.attrs.bbl} barrel.` });
   if (slide && rsa && rsa.attrs.rsa !== slide.attrs.rsa)
     out.push({ severity: 'error', slots: ['slide', 'rsa'], message: `This slide takes the ${rsaLabel(slide.attrs.rsa)} recoil assembly; this one is ${rsaLabel(rsa.attrs.rsa)}.` });
   if (slide && optic) {
@@ -281,13 +354,13 @@ function rules(b: Build): Issue[] {
   if (mag && FM) {
     const ms = mag.attrs.size as number;
     if (ms < SIZE[FM])
-      out.push({ severity: 'warn', slots: ['mag'], message: `This magazine is shorter than the ${FM} grip. It locks in, but sits up inside the magwell and is hard to strip out.` });
+      out.push({ severity: 'warn', slots: ['mag'], message: `This magazine is shorter than the ${frameName} grip. It locks in, but sits up inside the magwell and is hard to strip out.` });
     else if (ms > SIZE[FM])
-      out.push({ severity: 'info', slots: ['mag'], message: `This magazine sticks out below the ${FM} grip. It works and adds capacity; a sleeve can fill the gap.` });
+      out.push({ severity: 'info', slots: ['mag'], message: `This magazine sticks out below the ${frameName} grip. It works and adds capacity; a sleeve can fill the gap.` });
   }
-  // Every Gen3-5 G17/19/26 frame has the Glock accessory rail. A holster is molded for the slide's length.
+  // Every frame here has the Glock accessory rail. A holster is molded for the slide's length.
   const fit = SM ?? FM;
-  out.push(...pistolAddonRules(b, 'glock', 'frame', fit?.toLowerCase(), fit ? NAME[fit] : ''));
+  out.push(...pistolAddonRules(b, 'glock', 'frame', fit && HOLSTER[fit], fit ? NAME[(SM ?? frame?.attrs.label ?? FM) as Named] : ''));
   return out;
 }
 
@@ -297,7 +370,7 @@ const P = (n: string, ids: string[]) => ids.map((id) => id.replace('#', n));
  * The models are starting points: each has its own starter builds and search page, and old Glock 17, 19
  * and 26 links and saved builds open here.
  */
-const MODEL_PRESETS: Record<Model, Record<Tier, string[]>> = {
+const MODEL_PRESETS: Record<Named, Record<Tier, string[]>> = {
   G17: {
     budget: P('17', ['g#-frame-g3', 'g-fcg-oem34', 'g#-slide-g3', 'g-spk-lw', 'g#-bbl-oem34', 'g#-rsa-g3', 'g-sight-oem', 'g-mag-pmag17']),
     value: P('17', ['g#-frame-lw', 'g-fcg-zev', 'g#-slide-brn', 'g-spk-oem34', 'g#-bbl-faxon', 'g#-rsa-ismi', 'g-sight-ameriglo', 'g-opt-507c', 'g-mag-oem17']),
@@ -313,27 +386,78 @@ const MODEL_PRESETS: Record<Model, Record<Tier, string[]>> = {
     value: P('26', ['g#-frame-g4', 'g-fcg-zev', 'g#-slide-brn', 'g-spk-oem34', 'g#-bbl-faxon', 'g#-rsa-g45', 'g-sight-ameriglo', 'g-opt-507c', 'g-mag-pmag12']),
     premium: P('26', ['g#-frame-g5', 'g-fcg-apex5', 'g#-slide-mos', 'g-spk-oem5', 'g#-bbl-oem5', 'g#-rsa-g45', 'g-sight-dawson', 'g-opt-rmr', 'g-mag-oem10']),
   },
+  // The G34 is a G17 frame with a long slide and the G17's recoil spring.
+  G34: {
+    budget: ['g17-frame-g3', 'g-fcg-oem34', 'g34-slide-g3', 'g-spk-lw', 'g34-bbl-oem34', 'g17-rsa-g3', 'g-sight-oem', 'g-mag-pmag17'],
+    value: ['g17-frame-lw', 'g-fcg-zev', 'g34-slide-brn', 'g-spk-oem34', 'g34-bbl-faxon', 'g17-rsa-ismi', 'g-sight-ameriglo', 'g-opt-507c', 'g-mag-oem17'],
+    premium: ['g17-frame-g5', 'g-fcg-apex5', 'g34-slide-mos', 'g-spk-oem5', 'g34-bbl-oem5', 'g17-rsa-g45', 'g-sight-dawson', 'g-opt-rmr', 'g-mag-oem17'],
+  },
+  // The G45 frame is Gen5 only, so its builds differ in trigger, sights, optic and magazine.
+  G45: {
+    budget: ['g45-frame-g5', 'g-fcg-oem5', 'g19-slide-g5', 'g-spk-oem5', 'g19-bbl-oem5', 'g19-rsa-g45', 'g-sight-oem', 'g-mag-pmag17'],
+    value: ['g45-frame-g5', 'g-fcg-oem5', 'g19-slide-mos', 'g-spk-oem5', 'g19-bbl-oem5', 'g19-rsa-g45', 'g-sight-ameriglo', 'g-opt-507c', 'g-mag-oem17'],
+    premium: ['g45-frame-g5', 'g-fcg-apex5', 'g19-slide-mos', 'g-spk-oem5', 'g19-bbl-oem5', 'g19-rsa-g45', 'g-sight-dawson', 'g-opt-rmr', 'g-mag-oem17'],
+  },
+  G19X: {
+    budget: ['g19x-frame-g5', 'g-fcg-oem5', 'g19-slide-g5', 'g-spk-oem5', 'g19-bbl-oem5', 'g19-rsa-g45', 'g-sight-oem', 'g-mag-pmag17'],
+    value: ['g19x-frame-g5', 'g-fcg-oem5', 'g19-slide-mos', 'g-spk-oem5', 'g19-bbl-oem5', 'g19-rsa-g45', 'g-sight-ameriglo', 'g-opt-507c', 'g-mag-oem17'],
+    premium: ['g19x-frame-g5', 'g-fcg-apex5', 'g19-slide-mos', 'g-spk-oem5', 'g19-bbl-oem5', 'g19-rsa-g45', 'g-sight-dawson', 'g-opt-rmr', 'g-mag-oem17'],
+  },
+  // The G47: G17-length slide and G17 barrel, G19 recoil spring.
+  G47: {
+    budget: ['g45-frame-g5', 'g-fcg-oem5', 'g47-slide-mos', 'g-spk-oem5', 'g17-bbl-oem5', 'g19-rsa-g45', 'g-sight-oem', 'g-mag-pmag17'],
+    value: ['g45-frame-g5', 'g-fcg-oem5', 'g47-slide-mos', 'g-spk-oem5', 'g17-bbl-oem5', 'g19-rsa-g45', 'g-sight-ameriglo', 'g-opt-507c', 'g-mag-oem17'],
+    premium: ['g45-frame-g5', 'g-fcg-apex5', 'g47-slide-mos', 'g-spk-oem5', 'g17-bbl-oem5', 'g19-rsa-g45', 'g-sight-dawson', 'g-opt-rmr', 'g-mag-oem17'],
+  },
 };
 
-const models: PlatformModel[] = MODELS_9.map((M) => ({
-  id: `glock${M.slice(1)}`,
+/** The parts a model's own page lists (the builder offers them all): its frame, slide, barrel, spring and holster. */
+const PAGE_PARTS: Record<Named, string[]> = {
+  G17: ['g17-'], G19: ['g19-'], G26: ['g26-'],
+  G34: ['g17-frame', 'g34-', 'g17-rsa', 'g34-hol'],
+  G45: ['g45-', 'g19-slide', 'g19-bbl', 'g19-rsa', 'g19-hol'],
+  G19X: ['g19x-', 'g19-slide', 'g19-bbl', 'g19-rsa', 'g19-hol'],
+  G47: ['g45-', 'g47-', 'g17-bbl', 'g19-rsa', 'g17-hol'],
+};
+
+const modelId = (M: Named) => `glock${M.slice(1).toLowerCase()}`;
+
+const models: PlatformModel[] = NAMED.map((M) => ({
+  id: modelId(M),
   name: NAME[M],
+  short: M,
   blurb: MODEL_DESC[M],
   presets: MODEL_PRESETS[M],
-  // Its own size's frames, slides, barrels, springs and holsters, plus the parts every size shares.
-  parts: (p: Part) => !/^g\d+-/.test(p.id) || p.id.startsWith(`g${M.slice(1)}-`),
+  // Its own frames, slides, barrels, springs and holsters, plus the parts every model shares.
+  parts: (p: Part) => !/^g\d+x?-/.test(p.id) || PAGE_PARTS[M].some((pre) => p.id.startsWith(pre)),
 }));
+
+/** The model a frame and slide make: a Glock model, the G49 (G47 slide on a G19 frame), or a named crossover. */
+function modelOf(b: Build): { id?: string; name: string } | undefined {
+  const FM = b.frame?.attrs.model as Frame | undefined;
+  const label = (b.frame?.attrs.label ?? FM) as string | undefined;
+  const SM = b.slide?.attrs.len as Slide | undefined;
+  if (!FM || !SM) return FM ? { name: `${label} frame` } : SM ? { name: `${SM} slide` } : undefined;
+  const named: Named | undefined = FM === SM ? FM
+    : FM === 'G17' && SM === 'G34' ? 'G34'
+    : FM === 'G45' && SM === 'G19' ? (label === 'G19X' ? 'G19X' : 'G45')
+    : FM === 'G45' && SM === 'G47' && label !== 'G19X' ? 'G47' : undefined;
+  if (named) return { id: modelId(named), name: NAME[named] };
+  if (FM === 'G19' && SM === 'G47') return { name: 'G47 slide on a G19 frame (the G49)' };
+  return { name: `${SM} slide on a ${label} frame` };
+}
 
 export const glock9: Platform = {
   id: 'glock9',
-  name: 'Glock 17 / 19 / 26',
+  name: 'Glock 17 / 19 / 19X / 26 / 34 / 45 / 47',
   family: 'Pistol',
   maker: 'Glock',
-  blurb: 'Full-size, compact and subcompact 9mm Glocks. Mix any frame with any slide that fits.',
+  blurb: 'Every double-stack 9mm Glock. Mix any frame with any slide that fits.',
   slots,
-  parts: [...MODELS_9.flatMap(modelParts), ...shared, ...pistolLights.filter((l) => (l.attrs.rails as string[]).includes('glock')),
-    ...MODELS_9.flatMap((M) => holsters(`g${M.slice(1)}`, [[`g${M.slice(1)}`, NAME[M]]], ['tlr7a', 'x300'])), ...pistolCases],
+  parts: [...MODELS_9.flatMap(modelParts), ...g34Parts, ...g45Parts, ...shared, ...pistolLights.filter((l) => (l.attrs.rails as string[]).includes('glock')),
+    ...(['G17', 'G19', 'G26', 'G34'] as const).map((M) => holsters(`g${M.slice(1)}`, [[`g${M.slice(1)}`, NAME[M]]], ['tlr7a', 'x300'])).flat(), ...pistolCases],
   rules,
   presets: MODEL_PRESETS.G19,
   models,
+  modelOf,
 };

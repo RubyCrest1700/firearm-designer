@@ -292,7 +292,7 @@ const GENERAL_FAQ: { section: string; items: { q: string; a: string }[] }[] = [
   { section: 'About Drop-In Builds', items: [
     { q: 'Is Drop-In Builds a store?', a: "No. We don't sell anything. You plan the build here, and every buy link goes to the retailer or maker, where you check out as usual." },
     { q: 'Do I need an account?', a: 'No. There is nothing to sign up for. Builds you save are kept in your browser, and Copy Link gives you a link that opens the same build on any other device.' },
-    { q: 'Which platforms can I build?', a: 'The AR-15, AR-10 and AR-9, the Glock 17, 19 and 26, the Glock 43X and 48, the Glock 20 and 21, the Sig P320, the Sig P365, the S&W M&P 2.0 and the Springfield Hellcat. More platforms are on the way.' },
+    { q: 'Which platforms can I build?', a: 'The AR-15, AR-10 and AR-9, the Glock 17, 19, 19X, 26, 34, 45 and 47, the Glock 43X and 48, the Glock 20 and 21, the Sig P320, the Sig P365, the S&W M&P 2.0 and the Springfield Hellcat. More platforms are on the way.' },
     { q: 'Do you make money from the links?', a: 'Some retailer links may earn us a small commission at no extra cost to you. It never changes which parts we show or how we check fit.' },
   ] },
   { section: 'Using the Builder', items: [
@@ -360,12 +360,12 @@ export function indexPage(builtAt: string) {
  * added later get a page automatically, with an address made from their name.
  */
 const PLATFORM_SLUGS: Record<string, string> = {
-  ar15: 'ar-15', ar10: 'ar-10', glock9: 'glock-17-19-26', glock17: 'glock-17', glock19: 'glock-19', glock26: 'glock-26', glock43x: 'glock-43x-48',
+  ar15: 'ar-15', ar10: 'ar-10', glock9: 'glock-17-19-19x-26-34-45-47', glock17: 'glock-17', glock19: 'glock-19', glock26: 'glock-26', glock43x: 'glock-43x-48',
   glock20: 'glock-20-21', p320: 'sig-p320', p365: 'sig-p365', mp2: 'smith-wesson-mp-2-0', hellcat: 'springfield-hellcat',
 };
 /**
  * The pages: one per builder, plus one per model inside a builder that has models, so the Glock 17, 19 and 26
- * keep their own pages (with their own starter builds and parts) inside the Glock 17 / 19 / 26 builder.
+ * keep their own pages (with their own starter builds and parts) inside the double-stack 9mm Glock builder.
  */
 export interface PageView extends Platform { pageId: string }
 export const PAGE_VIEWS: PageView[] = PLATFORMS.flatMap((p) => [

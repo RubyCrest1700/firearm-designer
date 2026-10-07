@@ -1486,6 +1486,11 @@
       "basis": "estimate",
       "src": null
     },
+    "g19x-frame-g5": {
+      "oz": 3.6,
+      "basis": "estimate",
+      "src": null
+    },
     "g26-bbl-faxon": {
       "oz": 2.9,
       "basis": "estimate",
@@ -1573,6 +1578,71 @@
     },
     "g26-slide-zev": {
       "oz": 8.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "g34-bbl-faxon": {
+      "oz": 4.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "g34-bbl-lw": {
+      "oz": 5.1,
+      "basis": "estimate",
+      "src": null
+    },
+    "g34-bbl-oem34": {
+      "oz": 4.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "g34-bbl-oem5": {
+      "oz": 4.7,
+      "basis": "estimate",
+      "src": null
+    },
+    "g34-hol-g34": {
+      "oz": 4.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "g34-hol-g34-tlr7a": {
+      "oz": 5.9,
+      "basis": "estimate",
+      "src": null
+    },
+    "g34-hol-g34-x300": {
+      "oz": 6.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "g34-slide-brn": {
+      "oz": 11.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "g34-slide-g3": {
+      "oz": 11.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "g34-slide-mos": {
+      "oz": 13.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "g34-slide-mos4": {
+      "oz": 12.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "g45-frame-g5": {
+      "oz": 3.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "g47-slide-mos": {
+      "oz": 13.3,
       "basis": "estimate",
       "src": null
     },

@@ -160,7 +160,7 @@ const TIER_SUMMARY: Record<Tier, (p: Platform) => string> = {
   premium: (p) => `Top-tier parts throughout. A ${p.name} set up for duty use or competition.`,
 };
 
-/** A builder with models (the Glock 17 / 19 / 26) gets starter builds for each model, under the model's name and old ids. */
+/** A builder with models (the double-stack 9mm Glocks) gets starter builds for each model, under the model's name and old ids. */
 export const FEATURED: FeaturedBuild[] = PLATFORMS.flatMap((p) =>
   (p.models ?? [{ id: p.id, name: p.name, blurb: p.blurb, presets: p.presets }]).flatMap((m) =>
     (['budget', 'value', 'premium'] as Tier[]).map((tier) => ({

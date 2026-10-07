@@ -13,7 +13,7 @@ for (const p of PLATFORMS) {
     ids.add(part.id);
     if (!p.slots.some((s) => s.id === part.slot)) { console.log(`${p.id}: ${part.id} has unknown slot`); bad++; }
   }
-  // A builder with models (the Glock 17 / 19 / 26) has starter builds for each model as well as its own.
+  // A builder with models (the double-stack 9mm Glocks) has starter builds for each model as well as its own.
   for (const m of [{ name: p.name, presets: p.presets }, ...(p.models ?? [])])
     for (const tier of ['budget', 'value', 'premium'] as const) {
       for (const id of m.presets[tier]) if (!ids.has(id)) { console.log(`${p.id}/${m.name}/${tier}: unknown part ${id}`); bad++; }
@@ -39,7 +39,7 @@ const IFACES: Iface[] = [
   ['ar10', 'barrel', 'gas', 'gastube', 'length'],
   ['glock9', 'barrel', 'thread', 'muzzle', 'thread'],
   ['glock9', 'slide', 'family', 'barrel', 'family'],
-  ['glock9', 'slide', 'len', 'barrel', 'len'],
+  ['glock9', 'slide', 'bbl', 'barrel', 'len'],
   ['glock9', 'slide', 'family', 'spk', 'family'],
   ['glock9', 'slide', 'rsa', 'rsa', 'rsa'],
   ['glock43x', 'slide', 'len', 'barrel', 'len'],
@@ -210,7 +210,7 @@ for (const p of PLATFORMS) {
   const stray = selectionFromParts(p.id, ['own-optic', `has-frame`, base.frame]);
   if (stray['+optic'] || stray['+frame']) { console.log('stray owned marks kept', stray); bad++; }
 }
-// The Glock 17 / 19 / 26 builder: frame size against slide length, and old Glock 17, 19 and 26 links.
+// The double-stack 9mm Glock builder: frame size against slide length, and old Glock 17, 19 and 26 links.
 {
   const p = PLATFORMS.find((x) => x.id === 'glock9')!;
   const base = presetSelection(p, 'premium'); // G19 Gen5
@@ -221,6 +221,8 @@ for (const p of PLATFORMS) {
   const g17 = { slide: 'g17-slide-mos', barrel: 'g17-bbl-oem5', rsa: 'g17-rsa-g45' };
   const g19 = { slide: 'g19-slide-mos', barrel: 'g19-bbl-oem5', rsa: 'g19-rsa-g45' };
   const g26 = { slide: 'g26-slide-mos', barrel: 'g26-bbl-oem5', rsa: 'g26-rsa-g45' };
+  const g34 = { slide: 'g34-slide-mos', barrel: 'g34-bbl-oem5', rsa: 'g17-rsa-g45' };
+  const g47 = { slide: 'g47-slide-mos', barrel: 'g17-bbl-oem5', rsa: 'g19-rsa-g45' };
   const cases: [Record<string, string>, string, string, string][] = [
     [{ frame: 'g19-frame-g5', ...g17 }, 'frame', 'slide', 'info'],
     [{ frame: 'g17-frame-g5', ...g19 }, 'frame', 'slide', 'warn'],
@@ -231,6 +233,21 @@ for (const p of PLATFORMS) {
     [{ frame: 'g19-frame-g5', ...g17, rsa: 'g19-rsa-g45' }, 'slide', 'rsa', 'error'],
     [{ frame: 'g26-frame-g4', slide: 'g26-slide-g4', barrel: 'g26-bbl-oem34', rsa: 'g26-rsa-g45', fcg: 'g-fcg-oem34', spk: 'g-spk-oem34' }, 'frame', 'slide', 'ok'],
     [{ frame: 'g17-frame-g3', slide: 'g17-slide-g4', barrel: 'g17-bbl-oem34', rsa: 'g17-rsa-g4', fcg: 'g-fcg-oem34', spk: 'g-spk-oem34' }, 'frame', 'slide', 'error'],
+    // The G34, G45, G19X and G47, and the crossovers between them.
+    [{ frame: 'g17-frame-g5', ...g34 }, 'frame', 'slide', 'ok'],
+    [{ frame: 'g19-frame-g5', ...g34 }, 'frame', 'slide', 'info'],
+    [{ frame: 'g17-frame-g5', ...g34, rsa: 'g19-rsa-g45' }, 'slide', 'rsa', 'error'],
+    [{ frame: 'g17-frame-g5', ...g34, barrel: 'g17-bbl-oem5' }, 'slide', 'barrel', 'error'],
+    [{ frame: 'g45-frame-g5', ...g19 }, 'frame', 'slide', 'ok'],
+    [{ frame: 'g19x-frame-g5', ...g19 }, 'frame', 'slide', 'ok'],
+    [{ frame: 'g45-frame-g5', ...g47 }, 'frame', 'slide', 'ok'],
+    [{ frame: 'g19-frame-g5', ...g47 }, 'frame', 'slide', 'info'],
+    [{ frame: 'g17-frame-g5', ...g47 }, 'frame', 'slide', 'ok'],
+    [{ frame: 'g45-frame-g5', ...g17 }, 'frame', 'slide', 'info'],
+    [{ frame: 'g45-frame-g5', ...g26 }, 'frame', 'slide', 'error'],
+    [{ frame: 'g45-frame-g5', ...g47, barrel: 'g19-bbl-oem5' }, 'slide', 'barrel', 'error'],
+    [{ frame: 'g45-frame-g5', ...g47, rsa: 'g17-rsa-g45' }, 'slide', 'rsa', 'error'],
+    [{ frame: 'g45-frame-g5', slide: 'g19-slide-g4', barrel: 'g19-bbl-oem34', rsa: 'g19-rsa-g4', fcg: 'g-fcg-oem34', spk: 'g-spk-oem34' }, 'frame', 'slide', 'error'],
   ];
   for (const [over, a, b, want] of cases) {
     const got = sev(over, a, b);
@@ -239,7 +256,7 @@ for (const p of PLATFORMS) {
   for (const old of ['glock17', 'glock19', 'glock26']) {
     const n = old.slice(5);
     const sel = selectionFromParts(old, [`g${n}-frame-g5`, `g${n}-slide-mos`, 'g-mag-oem17']);
-    if (canonicalPlatform(old) !== 'glock9' || sel.frame !== `g${n}-frame-g5` || sel.slide !== `g${n}-slide-mos` || sel.mag !== 'g-mag-oem17') { console.log(`old ${old} link did not open in the Glock 17 / 19 / 26 builder`, sel); bad++; }
+    if (canonicalPlatform(old) !== 'glock9' || sel.frame !== `g${n}-frame-g5` || sel.slide !== `g${n}-slide-mos` || sel.mag !== 'g-mag-oem17') { console.log(`old ${old} link did not open in the double-stack 9mm Glock builder`, sel); bad++; }
   }
 }
 console.log(`Interface audit: ${combos} part combinations checked across ${IFACES.length} measured interfaces.`);

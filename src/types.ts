@@ -67,16 +67,20 @@ export interface Platform {
   rules: (b: Build, place?: Placement) => Issue[];
   presets: Record<Tier, string[]>;
   /**
-   * Named starting points inside one builder, such as the Glock 17, 19 and 26 in the Glock 17 / 19 / 26 builder. Each
+   * Named starting points inside one builder, such as the Glock 17, 19 and 26 in the double-stack 9mm Glock builder. Each
    * gets its own starter builds and search page, and its id still opens old links and saved builds.
    */
   models?: PlatformModel[];
+  /** For a builder with models: which model the chosen parts make (its id), or how they mix ("G17 slide on a G19 frame"). */
+  modelOf?: (b: Build) => { id?: string; name: string } | undefined;
 }
 
 export interface PlatformModel {
   /** The id the model had as its own platform; old links and saved builds use it. */
   id: string;
   name: string;
+  /** Short name for the model picker, such as "G19". */
+  short: string;
   blurb: string;
   presets: Record<Tier, string[]>;
   /** The parts its own page lists (the builder still offers every part). */
