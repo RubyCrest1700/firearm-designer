@@ -13,3 +13,4 @@ To bring them back: move the two source files back, add `m1911` and `m2011` to `
 in `worker/src/api.js` and `PLATFORM_NAMES` in `worker/src/share.js`, restore the interface rows in
 `scripts/check-presets.ts`, and mention them again in `index.html` and `scripts/og-cards.tsx`.
 Reference images from the drawing work are in the project's `drawing-refinement` folder.
+The `stadium` helper the drawing uses moved to `archive/ak/blueprint-ak.tsx` when the AKs were shelved; copy it back too.

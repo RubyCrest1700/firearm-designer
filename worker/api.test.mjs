@@ -310,3 +310,13 @@ test('unsubscribing removes every signup for the address, including one-click', 
   assert.equal((await visit(e, 'POST', `/alerts/stop?t=${c}`)).status, 204);
   assert.equal((await call(e, 'GET', `/api/alerts/${c}`)).status, 404);
 });
+
+test('builds for a shelved platform stay stored but are not listed or opened', async () => {
+  const e = env();
+  const s = await share(e);
+  await e.DB.prepare('UPDATE builds SET platform = ? WHERE id = ?').bind('ak74', s.body.build.id).run();
+  assert.equal((await call(e, 'GET', '/api/builds')).body.builds.length, 0);
+  assert.equal((await call(e, 'GET', '/api/builds?platform=ak74')).body.builds.length, 0);
+  assert.equal((await call(e, 'GET', `/api/builds/${s.body.build.id}`)).status, 404);
+  assert.equal((await e.DB.prepare('SELECT COUNT(*) AS n FROM builds').first()).n, 1);
+});

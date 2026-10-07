@@ -7,7 +7,9 @@ import { sharePage } from './share.js';
 import { alertsRoute } from './alerts.js';
 
 /** Keep in sync with the platform ids in src/data. */
-export const PLATFORM_IDS = ['ar15', 'ar10', 'ar9', 'akm', 'ak74', 'glock17', 'glock19', 'glock26', 'glock43x', 'glock20', 'p320', 'p365', 'mp2', 'hellcat'];
+export const PLATFORM_IDS = ['ar15', 'ar10', 'ar9', 'glock17', 'glock19', 'glock26', 'glock43x', 'glock20', 'p320', 'p365', 'mp2', 'hellcat'];
+/** SQL list of the live platforms. Builds for a shelved platform stay in the database but aren't listed or opened. */
+export const LIVE_PLATFORMS = PLATFORM_IDS.map((p) => `'${p}'`).join(', ');
 
 const ALLOWED_ORIGINS = ['https://rubycrest1700.github.io', 'https://dropinbuilds.com', 'https://www.dropinbuilds.com', 'http://localhost:5173', 'http://localhost:4173'];
 const DAY = 86_400_000;
@@ -115,7 +117,7 @@ export async function handle(request, env, now = Date.now()) {
       const platform = url.searchParams.get('platform');
       const sort = SORTS[url.searchParams.get('sort') ?? 'top'] ?? SORTS.top;
       const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 24, 1), 60);
-      const where = platform && PLATFORM_IDS.includes(platform) ? 'WHERE hidden = 0 AND platform = ?' : 'WHERE hidden = 0';
+      const where = platform && PLATFORM_IDS.includes(platform) ? 'WHERE hidden = 0 AND platform = ?' : `WHERE hidden = 0 AND platform IN (${LIVE_PLATFORMS})`;
       const stmt = db.prepare(`SELECT * FROM builds ${where} ORDER BY ${sort} LIMIT ${limit}`);
       const { results } = await (where.includes('?') ? stmt.bind(platform) : stmt).all();
       return json({ builds: results.map(toBuild) }, 200, origin);
@@ -128,7 +130,7 @@ export async function handle(request, env, now = Date.now()) {
         `SELECT b.*,
            (SELECT COUNT(*) FROM votes v WHERE v.build_id = b.id AND v.created_at > ?1)
            + 0.5 * (SELECT COUNT(*) FROM clicks c WHERE c.build_id = b.id AND c.day > ?2) AS score
-         FROM builds b WHERE b.hidden = 0 ORDER BY score DESC, b.votes DESC LIMIT 3`,
+         FROM builds b WHERE b.hidden = 0 AND b.platform IN (${LIVE_PLATFORMS}) ORDER BY score DESC, b.votes DESC LIMIT 3`,
       ).bind(since, Math.floor(since / DAY)).all();
       return json({ builds: results.filter((r) => r.score > 0).map(toBuild) }, 200, origin);
     }
@@ -136,7 +138,7 @@ export async function handle(request, env, now = Date.now()) {
     // GET /api/builds/:id
     const one = path.match(/^\/api\/builds\/([a-z0-9]+)$/);
     if (request.method === 'GET' && one) {
-      const row = await db.prepare('SELECT * FROM builds WHERE id = ? AND hidden = 0').bind(one[1]).first();
+      const row = await db.prepare(`SELECT * FROM builds WHERE id = ? AND hidden = 0 AND platform IN (${LIVE_PLATFORMS})`).bind(one[1]).first();
       return row ? json({ build: toBuild(row) }, 200, origin) : json({ error: 'Not found' }, 404, origin);
     }
 
