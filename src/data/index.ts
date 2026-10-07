@@ -20,5 +20,9 @@ export const PLATFORMS: Platform[] = [ar15, ar10, ar9, glock9, glockSlim, glockL
 export const PLATFORM_ALIASES: Record<string, string> = Object.fromEntries(PLATFORMS.flatMap((p) => (p.models ?? []).map((m) => [m.id, p.id])));
 export const canonicalPlatform = (id: string) => PLATFORM_ALIASES[id] ?? id;
 
+export const andList = (xs: string[]) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+/** "Includes the G17, G19 and G26" for a builder with models, so it's clear which guns it covers; empty otherwise. */
+export const includesText = (p: Platform) => (p.models?.length ? `Includes the ${andList(p.models.map((m) => m.short))}` : '');
+
 /** When the nightly job last ran, or null if every price is still sample data. */
 export const PRICES_UPDATED_AT: string | null = (prices as unknown as { updatedAt: string | null }).updatedAt;

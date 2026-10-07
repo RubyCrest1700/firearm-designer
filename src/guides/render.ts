@@ -3,7 +3,7 @@
  * parts, and prices come from the same catalog (sample prices overlaid with the nightly live ones),
  * so a guide never says something the builder disagrees with.
  */
-import { PLATFORMS, PRICES_UPDATED_AT } from '../data';
+import { PLATFORMS, PRICES_UPDATED_AT, andList, includesText } from '../data';
 import { RETAILERS, buyUrl } from '../data/retailers';
 import { bestOffer, money, presetSelection, worst } from '../engine';
 import type { Part, Platform, Severity, Tier } from '../types';
@@ -412,6 +412,15 @@ function slotTableHtml(platform: Platform) {
     .join('');
 }
 
+/** Which guns a builder with models covers, or for a model's page, which builder it lives in. */
+function includesHtml(platform: PageView) {
+  if (!platform.models?.length) return '';
+  if (platform.pageId === platform.id) return `\n    <p class="includes">${esc(includesText(platform))}. Mix any frame with any slide that fits.</p>`;
+  const builder = PLATFORMS.find((p) => p.id === platform.id)!;
+  const rest = platform.models.filter((m) => m.id !== platform.pageId).map((m) => m.short);
+  return `\n    <p class="includes">The ${esc(platform.name)} is built in our ${esc(builder.name)} builder, which also covers the ${esc(andList(rest))}.</p>`;
+}
+
 export function platformPage(platform: PageView) {
   const slug = platformSlug(platform);
   const path = `/build/${slug}/`;
@@ -424,7 +433,7 @@ export function platformPage(platform: PageView) {
   <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="/build/">Platforms</a> › <span>${esc(platform.name)}</span></nav>
   <article>
     <h1>${esc(platform.name)} Build Planner: Parts, Fit and Prices</h1>
-    <p class="lede">${esc(platform.blurb)} ${platform.parts.length} parts from ${brands} brands, each checked for fit against the rest of your build, with prices compared across retailers.</p>
+    <p class="lede">${esc(platform.blurb)} ${platform.parts.length} parts from ${brands} brands, each checked for fit against the rest of your build, with prices compared across retailers.</p>${includesHtml(platform)}
     <a class="cta" href="${builderUrl(platform.id)}">Open the ${esc(platform.name)} Builder</a>
     <section>
       <h2>Start from a Complete Build</h2>
@@ -544,6 +553,7 @@ h2{font:700 24px/1.2 var(--f-head);margin:36px 0 8px}
 h3{font:700 19px/1.2 var(--f-head);margin:20px 0 8px}
 h4{font-size:16px;margin:0 0 6px}
 .lede{font-size:18px;color:var(--muted);margin:0 0 16px}
+.includes{font-weight:700;color:var(--blue);margin:-6px 0 16px}
 .muted{color:var(--muted);font-size:15px}
 section{margin:0}
 .answers{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--cta);border-radius:10px;padding:4px 20px 20px;box-shadow:var(--shadow)}

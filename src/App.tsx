@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { PLATFORMS, PRICES_UPDATED_AT, canonicalPlatform } from './data';
+import { PLATFORMS, PRICES_UPDATED_AT, canonicalPlatform, includesText } from './data';
 import { RETAILERS, buyUrl } from './data/retailers';
 import {
   bestOffer, candidateIssues, encodeMount, issuesFor, money, ownedOf, ownsAny, partIds, placementOf, presetSelection, priceRange,
@@ -331,6 +331,7 @@ function PlatformMenu({ current, onPick }: { current: Platform; onPick: (id: str
                       <button key={p.id} role="menuitem" className={'pmenu-item' + (p.id === current.id ? ' active' : '')}
                         onClick={() => { onPick(p.id); setOpen(false); }}>
                         <span>{p.name}</span>
+                        {p.models && <span className="pmenu-includes">{includesText(p)}</span>}
                         <span className="pmenu-blurb">{p.blurb}</span>
                       </button>
                     ))}
@@ -408,6 +409,7 @@ function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string) => void;
                       <span className="tile-body">
                         <span className="tile-maker">{p.maker}</span>
                         <span className="tile-name">{p.name}</span>
+                        {p.models && <span className="tile-includes">{includesText(p)}</span>}
                         <span className="tile-blurb">{p.blurb}</span>
                         <span className="tile-from">Starter builds from <b>{money(from)}</b></span>
                       </span>
@@ -514,6 +516,7 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
             <h1>Build Your {platform.name}</h1>
             <PlatformMenu current={platform} onPick={(id) => { setPlatformId(id); setOpenSlot(null); }} />
           </div>
+          {platform.models && <p className="includes">{includesText(platform)}. Mix any frame with any slide that fits.</p>}
           <p className="lede">{platform.blurb}</p>
         </div>
 

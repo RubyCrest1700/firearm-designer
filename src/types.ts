@@ -77,6 +77,8 @@ export interface PlatformModel {
   /** The id the model had as its own platform; old links and saved builds use it. */
   id: string;
   name: string;
+  /** Short name for lists, such as "G19". */
+  short: string;
   blurb: string;
   presets: Record<Tier, string[]>;
   /** The parts its own page lists (the builder still offers every part). */

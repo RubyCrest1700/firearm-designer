@@ -288,7 +288,7 @@ function Chooser({ label, saved, current, otherPlatform, onPick }: {
         <>
           <label className="sr" htmlFor={`cmp-platform-${label}`}>Platform</label>
           <select id={`cmp-platform-${label}`} className="cmp-select" value={platform} onChange={(e) => setPlatform(e.target.value)}>
-            {PLATFORMS.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            {PLATFORMS.map((p) => <option key={p.id} value={p.id}>{p.name}{p.models ? ` (${p.models.map((m) => m.short).join(', ')})` : ''}</option>)}
           </select>
           <ul className="cmp-options">
             {FEATURED.filter((fb) => fb.platform.id === platform).map((fb) => option(fb.id, fb.name, totalText(fb.platform.id, fb.selection),
