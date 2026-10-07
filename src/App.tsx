@@ -20,7 +20,7 @@ import {
 } from './community';
 import { awarenessFor, type Aware } from './awareness';
 import { buildWeight, formatWeight } from './weight';
-import { daysAgo, hasHistory, partSeries, recentChange, totalSeries } from './data/history';
+import { biggestDrops, daysAgo, hasHistory, partSeries, recentChange, totalSeries } from './data/history';
 import { PriceChart } from './PriceChart';
 import { alertsAvailable, checkAlertSignup, loadAlertSignup, signUpForAlerts, stopAlerts, storeAlertSignup, syncAlertBuilds, type AlertSignup } from './alerts';
 import { MOVABLE, SIDE_LABEL, mountsFor, railLength, type Resolved } from './data/addons';
@@ -81,6 +81,9 @@ export default function App() {
   /** The community build open in the builder, so retailer clicks count toward it. Cleared on any edit. */
   const [communityOpen, setCommunityOpen] = useState<CommunityBuild | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  /** The part a home page price drop opens in the builder: its slot's picker starts open on it. Used once. */
+  const [startPart, setStartPart] = useState<Part | null>(null);
+  useEffect(() => { if (route === 'build') setStartPart(null); }, [route]);
   /** The two builds on the Compare page, kept for this tab like the build in progress. */
   const [compare, setCompare] = useState<(CompareItem | null)[]>(loadCompare);
   useEffect(() => { storeCompare(compare); }, [compare]);
@@ -216,7 +219,7 @@ export default function App() {
       <main className="site-main">
         {route === 'home' && (
           <HomePage
-            onPick={(id) => { setPlatformId(id); setOpenSavedId(null); setCommunityOpen(null); go('build'); }}
+            onPick={(id, part) => { setPlatformId(id); setOpenSavedId(null); setCommunityOpen(null); setStartPart(part ?? null); go('build'); }}
             onStart={() => go('build')}
             onBrowse={() => go('community')}
           />
@@ -224,6 +227,7 @@ export default function App() {
         {route === 'build' && (
           <BuilderPage
             platformId={platformId}
+            startPart={startPart}
             setPlatformId={(id) => { setPlatformId(id); setOpenSavedId(null); setCommunityOpen(null); }}
             selection={selections[platformId] ?? {}}
             setSelection={(sel) => { setSelections((s) => ({ ...s, [platformId]: sel })); setCommunityOpen(null); }}
@@ -367,8 +371,9 @@ function Mark() {
 
 const FAQ_PICKS = ['glock-19-slide-compatibility', 'glock-red-dot-footprints', 'sig-p365-slide-grip-compatibility', 'ar-15-barrel-compatibility'];
 
-function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string) => void; onStart: () => void; onBrowse: () => void }) {
+function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string, part?: Part) => void; onStart: () => void; onBrowse: () => void }) {
   const partCount = PLATFORMS.reduce((n, p) => n + p.parts.length, 0);
+  const drops = biggestDrops(PLATFORMS.flatMap((p) => p.parts));
   const hero = buildOf('ar15', presetSelection(PLATFORMS.find((p) => p.id === 'ar15')!, 'value'));
   const faqs = FAQ_PICKS.map((slug) => GUIDES.find((g) => g.slug === slug)).filter((g): g is (typeof GUIDES)[number] => !!g);
   return (
@@ -421,6 +426,29 @@ function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string) => void;
           <p className="platform-pages">Parts lists and prices by platform: <a href="./build/">See All Platforms</a></p>
         </section>
 
+        {drops.length > 0 && (
+          <section className="home-section">
+            <h2 className="home-h2">Price Drops This Week</h2>
+            <ul className="drops">
+              {drops.map(({ part, was, now, by }) => {
+                const platform = PLATFORMS.find((p) => p.parts.includes(part))!;
+                return (
+                  <li key={part.id}>
+                    <button className="drop-card card" onClick={() => onPick(platform.id, part)}>
+                      <span className="drop-name"><span className="brand-dim">{part.brand}</span> {part.name}</span>
+                      <span className="drop-meta">{platform.name} · {RETAILERS[bestOffer(part)!.retailer].name}</span>
+                      <span className="drop-price">
+                        <s>{money(was)}</s> <b>{money(now)}</b>
+                        <span className="change-chip down">↓ {money(by)} ({Math.round((by / was) * 100)}%)</span>
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+
         <section className="home-section">
           <h2 className="home-h2">How It Works</h2>
           <ol className="steps">
@@ -451,13 +479,13 @@ function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string) => void;
 
 /* ================================================================== builder */
 
-function BuilderPage({ platformId, setPlatformId, selection, setSelection, openSaved, communityOpen, onSave, onShare, onCopyLink, onBuyClick, onBrowseFeatured, onCompare }: {
-  platformId: string; setPlatformId: (id: string) => void; selection: Selection; setSelection: (s: Selection) => void;
+function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelection, openSaved, communityOpen, onSave, onShare, onCopyLink, onBuyClick, onBrowseFeatured, onCompare }: {
+  platformId: string; startPart: Part | null; setPlatformId: (id: string) => void; selection: Selection; setSelection: (s: Selection) => void;
   openSaved: SavedBuild | null; communityOpen: CommunityBuild | null; onSave: (name: string, asNew: boolean) => void;
   onShare: (name: string, note: string) => Promise<void>; onCopyLink: () => void; onBuyClick: () => void; onBrowseFeatured: () => void;
   onCompare: () => void;
 }) {
-  const [openSlot, setOpenSlot] = useState<string | null>(null);
+  const [openSlot, setOpenSlot] = useState<string | null>(startPart?.slot ?? null);
   const [finding, setFinding] = useState(false);
   const [hover, setHover] = useState<string | null>(null);
   const [zoom, setZoom] = useState(false);
@@ -592,6 +620,7 @@ function BuilderPage({ platformId, setPlatformId, selection, setSelection, openS
           key={platform.id + openSlotObj.id}
           platform={platform}
           slot={openSlotObj}
+          focusId={startPart?.slot === openSlotObj.id ? startPart.id : undefined}
           number={platform.slots.indexOf(openSlotObj) + 1}
           model={model}
           build={build}
@@ -899,13 +928,15 @@ function Dock({ total, status, toBuy }: { total: number; status: { cls: string; 
 
 type SortKey = 'fit' | 'price' | 'picks';
 
-function Picker({ platform, slot, number, model, build, place, selectedId, ownsSelected, onChoose, onToggleOwn, onOwnOther, onRemove, onClose, onBuyClick }: {
-  platform: Platform; slot: Slot; number: number; model?: PlatformModel; build: Build; place: Placement; selectedId?: string; ownsSelected: boolean;
+function Picker({ platform, slot, focusId: focusProp, number, model, build, place, selectedId, ownsSelected, onChoose, onToggleOwn, onOwnOther, onRemove, onClose, onBuyClick }: {
+  platform: Platform; slot: Slot; focusId?: string; number: number; model?: PlatformModel; build: Build; place: Placement; selectedId?: string; ownsSelected: boolean;
   onChoose: (id: string, own: boolean) => void; onToggleOwn: () => void; onOwnOther: () => void; onRemove?: () => void; onClose: () => void; onBuyClick: () => void;
 }) {
   const [sort, setSort] = useState<SortKey>('fit');
   const [hideConflicts, setHideConflicts] = useState(false);
-  const [allModels, setAllModels] = useState(false);
+  // A part opened from a home page price drop is listed first, with its prices open, even if it's for another model.
+  const [focusId] = useState(focusProp);
+  const [allModels, setAllModels] = useState(!!focusId && !!model?.parts && !model.parts(platform.parts.find((p) => p.id === focusId)!));
   const closeRef = useRef<HTMLButtonElement>(null);
   const closeFn = useRef(onClose);
   closeFn.current = onClose;
@@ -931,6 +962,7 @@ function Picker({ platform, slot, number, model, build, place, selectedId, ownsS
   const candidates = all
     .filter((c) => !hideConflicts || c.sev !== 'error')
     .sort((a, b) => {
+      if (focusId && (a.part.id === focusId) !== (b.part.id === focusId)) return a.part.id === focusId ? -1 : 1;
       if (sort === 'price') return a.price - b.price;
       if (sort === 'picks') return Number(!!b.part.pick) - Number(!!a.part.pick) || a.price - b.price;
       return rank[a.sev] - rank[b.sev] || a.price - b.price;
@@ -969,7 +1001,7 @@ function Picker({ platform, slot, number, model, build, place, selectedId, ownsS
         </div>
         <ul className="cands">
           {candidates.map((c) => (
-            <Candidate key={c.part.id} part={c.part} issues={c.issues} sev={c.sev} selected={c.part.id === selectedId} owned={c.part.id === selectedId && ownsSelected}
+            <Candidate key={c.part.id} part={c.part} open={c.part.id === focusId} issues={c.issues} sev={c.sev} selected={c.part.id === selectedId} owned={c.part.id === selectedId && ownsSelected}
               onChoose={(own) => (c.part.id === selectedId ? onToggleOwn() : onChoose(c.part.id, own))} onBuyClick={onBuyClick} />
           ))}
           {candidates.length === 0 && <li className="cand-empty">Every option conflicts with your current build. Turn off the filter to see why.</li>}
@@ -985,10 +1017,10 @@ function Picker({ platform, slot, number, model, build, place, selectedId, ownsS
   );
 }
 
-function Candidate({ part, issues, sev, selected, owned, onChoose, onBuyClick }: {
-  part: Part; issues: Issue[]; sev: Severity | 'ok'; selected: boolean; owned: boolean; onChoose: (own: boolean) => void; onBuyClick: () => void;
+function Candidate({ part, open, issues, sev, selected, owned, onChoose, onBuyClick }: {
+  part: Part; open?: boolean; issues: Issue[]; sev: Severity | 'ok'; selected: boolean; owned: boolean; onChoose: (own: boolean) => void; onBuyClick: () => void;
 }) {
-  const [showPrices, setShowPrices] = useState(false);
+  const [showPrices, setShowPrices] = useState(!!open);
   const best = bestOffer(part);
   const [lo, hi] = priceRange(part);
   const fit: RegionState = sev === 'ok' || sev === 'info' ? 'ok' : sev;

@@ -58,3 +58,24 @@ export function recentChange(part: Part, days = 30): Change | undefined {
 
 /** Whether a part has any price history yet (sample-priced parts never do). */
 export const hasHistory = (part: Part) => (SERIES[part.id]?.length ?? 0) > 0;
+
+/** A drop big enough for the home page: $5, and 5% of the price. */
+const bigDrop = (was: number, now: number) => was - now >= Math.max(5, was * 0.05);
+
+/**
+ * Parts whose live best price fell the most over the last `days`, biggest dollar drop first. A part listed for
+ * several platforms (same id, or same brand and name) counts once.
+ */
+export function biggestDrops(parts: Part[], days = 7, max = 6): (Change & { part: Part })[] {
+  const seen = new Set<string>();
+  const drops: (Change & { part: Part })[] = [];
+  for (const part of parts) {
+    const name = `${part.brand} ${part.name}`;
+    if (seen.has(part.id) || seen.has(name) || !hasHistory(part) || !bestOffer(part)?.checkedAt) continue;
+    seen.add(part.id).add(name);
+    const was = priceOn(part, daysAgo(days));
+    const now = bestOffer(part)!.price;
+    if (bigDrop(was, now)) drops.push({ part, was, now, by: was - now });
+  }
+  return drops.sort((a, b) => b.by - a.by).slice(0, max);
+}
