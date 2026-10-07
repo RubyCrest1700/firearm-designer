@@ -83,12 +83,23 @@ function updatePreview(id: string, fn: (r: PreviewRow) => void) {
 /** Builds shared before the Glock 17, 19 and 26 became one builder carry the old platform id. */
 const current = (b: CommunityBuild): CommunityBuild => ({ ...b, platform: canonicalPlatform(b.platform) });
 
+/** `platform` is one platform id or several joined with commas (a family filter). */
 export async function listBuilds(platform: string | null, sort: CommunitySort): Promise<CommunityBuild[]> {
   if (communityLive) {
     const q = new URLSearchParams({ sort, ...(platform ? { platform } : {}) });
     return (await api<{ builds: CommunityBuild[] }>(`/api/builds?${q}`)).builds.map(current);
   }
-  return previewRows().map(strip).map(current).filter((r) => !platform || r.platform === platform).sort(ORDER[sort]);
+  return previewRows().map(strip).map(current).filter((r) => !platform || platform.split(',').includes(r.platform)).sort(ORDER[sort]);
+}
+
+/** One build by id, or undefined if it was removed or is for a shelved platform. */
+export async function getBuild(id: string): Promise<CommunityBuild | undefined> {
+  if (communityLive) {
+    const got = await api<{ build: CommunityBuild }>(`/api/builds/${id}`).catch(() => null);
+    return got ? current(got.build) : undefined;
+  }
+  const row = previewRows().find((r) => r.id === id);
+  return row ? current(strip(row)) : undefined;
 }
 
 /** The week's best: votes plus half-weight buy clicks in the last 7 days. */

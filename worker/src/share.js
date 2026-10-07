@@ -110,7 +110,7 @@ export async function sharePage(request, env) {
   let platform, parts, name = '', note = '', image;
   if (community) {
     const row = await env.DB.prepare(`SELECT platform, name, note, parts FROM builds WHERE id = ? AND hidden = 0 AND platform IN (${LIVE_PLATFORMS})`).bind(community[1]).first();
-    if (!row) return html(page({ title: 'Build not found', description: 'This shared build was removed.', image: `${SITE}/og/site.png`, url: url.href, target: SITE }), 404);
+    if (!row) return html(page({ title: 'Build Not Found', description: 'This shared build was removed.', image: `${SITE}/og/site.png`, url: url.href, target: SITE }), 404);
     ({ name, note } = row);
     platform = canonical(row.platform);
     parts = JSON.parse(row.parts);
