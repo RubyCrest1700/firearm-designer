@@ -2,7 +2,8 @@
 // cited in warnings and FAQ pages. Run by .github/workflows/check-links.yml after `npm run build`.
 // Same manners as the price job: robots.txt respected, one request per host every few seconds.
 // Fails only on links that are really gone (404/410, or the address no longer exists). Retailers that block
-// bots (403/429) can't be checked from here and are listed separately.
+// bots (403/429), and store search pages that answer the checker with a 404, can't be checked from here and are
+// listed separately.
 //
 //   node scripts/check-links.mjs
 
@@ -15,6 +16,10 @@ const HOST_DELAY_MS = 3000;
 /** Our own services and third-party assets aren't outbound links. */
 const SKIP = /^https:\/\/(dropinbuilds\.com|share\.dropinbuilds\.com|[^/]*\.workers\.dev|fonts\.(googleapis|gstatic)\.com|static\.cloudflareinsights\.com|schema\.org|www\.w3\.org|github\.com\/RubyCrest1700)/;
 const URL_RE = /https:\/\/[^\s'"`<>)\\]+/g;
+
+/** Store search pages (src/data/retailers.ts) always exist; a 404 there means the store turned the checker away. */
+const SEARCH_PREFIXES = [...readFileSync('src/data/retailers.ts', 'utf8').matchAll(/search: '(https:[^']+)'/g)].map((m) => m[1]);
+const isSearch = (url) => SEARCH_PREFIXES.some((p) => url.startsWith(p));
 
 const files = (dir) => readdirSync(dir).flatMap((f) => (statSync(join(dir, f)).isDirectory() ? files(join(dir, f)) : [join(dir, f)]));
 const decode = (s) => s.replace(/&amp;/g, '&');
@@ -67,7 +72,7 @@ await Promise.all([...byHost.values()].map(async (urls) => {
       const res = await politeFetch(url);
       res.body?.cancel();
       const landed = new URL(res.url);
-      if (res.status === 404 || res.status === 410) result.broken.push([url, `HTTP ${res.status}`]);
+      if ((res.status === 404 || res.status === 410) && !isSearch(url)) result.broken.push([url, `HTTP ${res.status}`]);
       else if (!res.ok) result.blocked.push([url, `HTTP ${res.status}`]);
       else if (landed.pathname === '/' && new URL(url).pathname !== '/') result.home.push([url, `lands on ${landed.origin}/`]);
       else result.ok.push(url);
