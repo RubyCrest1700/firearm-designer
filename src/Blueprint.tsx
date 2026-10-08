@@ -103,6 +103,12 @@ const LOWER9_DETAIL: number[][] = [
   [3.401, 1.228, 3.4, 1.244, 3.394, 1.26, 3.385, 1.274, 3.374, 1.286, 3.359, 1.295, 3.344, 1.3, 3.327, 1.302, 3.311, 1.3, 3.295, 1.295, 3.281, 1.286, 3.269, 1.274, 3.261, 1.26, 3.255, 1.244, 3.253, 1.228, 3.255, 1.212, 3.261, 1.196, 3.269, 1.182, 3.281, 1.17, 3.295, 1.161, 3.311, 1.156, 3.327, 1.154, 3.344, 1.156, 3.359, 1.161, 3.374, 1.17, 3.385, 1.182, 3.394, 1.196, 3.4, 1.212, 3.401, 1.228],
   [6.865, 0.857, 6.862, 0.884, 6.853, 0.908, 6.839, 0.93, 6.821, 0.949, 6.798, 0.963, 6.774, 0.972, 6.748, 0.974, 6.722, 0.972, 6.697, 0.963, 6.675, 0.949, 6.656, 0.93, 6.642, 0.908, 6.634, 0.884, 6.631, 0.857, 6.634, 0.831, 6.642, 0.807, 6.656, 0.785, 6.675, 0.766, 6.697, 0.752, 6.722, 0.743, 6.748, 0.741, 6.774, 0.743, 6.798, 0.752, 6.821, 0.766, 6.839, 0.785, 6.853, 0.807, 6.862, 0.831, 6.865, 0.857],
 ];
+/** Glock-magazine 9mm lowers traced from their makers' flat side photos, scaled by the 6.12" between the takedown
+ *  and pivot pins: outline, then the trigger guard opening. FM's FM-9 uses FM's photo of its newer Mike-9, the same profile. */
+const LOWER9_PHOTOS: [RegExp, number[], number[]][] = [
+  [/C-9/, [-0.52, -0.38, -0.58, -0.14, -0.58, 0.10, -0.48, 0.86, -0.48, 1.09, -0.38, 1.35, -0.31, 1.41, -0.02, 1.43, 0.18, 1.53, 0.36, 1.73, 0.44, 1.93, 0.61, 1.95, 0.62, 2.21, 1.59, 2.77, 1.74, 2.78, 1.76, 3.13, 2.55, 3.34, 2.68, 3.34, 3.75, 3.15, 3.98, 3.19, 6.26, 2.77, 6.30, 2.71, 6.31, 2.63, 6.13, 2.45, 6.11, 2.29, 6.15, 2.15, 6.17, 1.84, 6.24, 1.68, 6.26, 1.35, 6.31, 1.25, 6.48, 1.13, 6.74, 1.09, 6.82, 1.03, 6.85, 0.97, 6.85, 0.87, 6.79, 0.77, 6.48, 0.68, 0.64, 0.65, 0.50, 0.62, 0.42, 0.49, 0.32, -0.13, 0.22, -0.38, 0.14, -0.47, 0.09, -0.50, -0.37, -0.50, -0.46, -0.47], [2.02, 2.08, 2.10, 1.99, 2.27, 1.95, 3.51, 1.97, 3.59, 2.02, 3.65, 2.11, 3.67, 2.85, 3.62, 2.91, 3.52, 2.95, 2.65, 3.11, 2.53, 3.10, 2.13, 2.95, 2.03, 2.87, 1.98, 2.74, 1.98, 2.25]],
+  [/FM-9/, [-0.43, -0.37, -0.46, 0.15, -0.40, 1.14, -0.36, 1.32, -0.06, 1.36, 0.14, 1.45, 0.32, 1.61, 0.40, 1.73, 0.45, 1.86, 0.49, 1.88, 0.85, 1.90, 0.87, 2.31, 1.63, 2.77, 1.77, 2.77, 1.78, 3.07, 1.83, 3.10, 2.81, 3.24, 3.31, 3.23, 4.46, 2.98, 5.90, 2.60, 6.29, 2.48, 6.34, 2.44, 6.53, 1.36, 6.63, 1.23, 6.89, 1.06, 6.96, 0.94, 6.94, 0.81, 6.83, 0.71, 6.61, 0.67, 6.39, 0.67, 6.26, 0.67, 4.76, 0.67, 4.18, 0.67, 3.93, 0.66, 3.72, 0.66, 0.92, 0.66, 0.74, 0.65, 0.63, 0.62, 0.50, 0.53, 0.38, 0.41, 0.30, 0.27, 0.24, 0.05, 0.20, -0.39, 0.14, -0.58, -0.35, -0.57, -0.39, -0.51], [1.98, 2.07, 2.06, 1.97, 2.20, 1.91, 3.38, 1.91, 3.41, 1.94, 3.70, 1.94, 3.82, 2.03, 3.87, 2.15, 3.88, 2.65, 3.86, 2.80, 3.78, 2.91, 3.30, 3.01, 2.73, 3.01, 2.61, 2.97, 2.23, 2.94, 2.10, 2.86, 2.13, 2.90, 2.05, 2.91, 1.98, 2.83, 1.96, 2.73, 1.95, 2.16]],
+];
 type ArStockKey = 'stockA2' | 'stockPrs' | 'stockMoeRifle' | 'stockUbr' | 'stockMoeSl' | 'stockCtr';
 const same: Map2 = (x, y) => [x, y];
 /** Outline and detail paths of a traced AR piece. */
@@ -184,6 +190,22 @@ function rifleOptic(opt: Part | undefined): { od: string; odet: string; ot: [num
       + ` ${OC(ex + 6.62, cy + 0.43, 0.55)} ${OC(ex + 6.62, cy + 0.43, 0.34)} ${p([10.45, -0.62, 10.45, 0.61], false)}`
       + ` ${ring(4.2, 4.8)} ${ring(8.0, 8.6)} ${p([4.2, 1.35, 8.6, 1.35], false)}`;
     ot = [ex + 6.6, cy - 1.31];
+  } else if (matches(opt, /Venom 5-25/i)) {
+    // Vortex Venom 5-25x56, traced from a flat side photo and scaled to its published 14.4" length (trace inches from
+    // the eyepiece, down from the tube axis): the eyepiece, the ribbed power ring, the saddle with the tall exposed
+    // elevation turret and the side parallax knob, the front tube, the long taper and the 56 mm bell, on high rings.
+    const k = 14.4 / 15.63, x0 = -1.2, cy = -2.95;
+    const X = (v: number) => x0 + v * k, Y = (v: number) => cy + v * k;
+    const p = (pts: number[], close = true) => pts.reduce((s, v, i) => i % 2 ? s : `${s}${i ? ' L' : 'M'}${f(X(v))},${f(Y(pts[i + 1]))}`, '') + (close ? ' Z' : '');
+    od = p([0, -0.16, 0.01, 0.26, 0.11, 0.72, 0.19, 0.81, 0.41, 0.87, 2.01, 0.9, 2.39, 0.83, 2.48, 0.91, 2.98, 0.91, 3.46, 0.84, 3.62, 0.67, 6.13, 0.68, 6.26, 0.82, 6.4, 0.86, 6.47, 0.96, 6.62, 1, 6.73, 0.97, 6.8, 0.89, 7.35, 0.89, 7.67, 0.86, 7.78, 0.8, 7.9, 0.67, 10.57, 0.67, 13.09, 1.25, 15.32, 1.22, 15.42, 1.13, 15.51, 0.95, 15.59, 0.66, 15.63, 0.26, 15.63, -0.26, 15.56, -0.76, 15.44, -1.1, 15.32, -1.24, 15.27, -1.26, 13.08, -1.27, 10.52, -0.66, 7.89, -0.67, 7.75, -0.82, 7.78, -1.58, 7.71, -1.62, 7.7, -1.66, 7.42, -1.67, 7.26, -1.74, 7.04, -1.75, 6.77, -1.74, 6.58, -1.65, 6.32, -1.66, 6.31, -1.62, 6.24, -1.59, 6.23, -1.29, 6.26, -1.25, 6.27, -0.82, 6.13, -0.67, 3.63, -0.67, 3.45, -0.84, 2.89, -0.91, 2.5, -0.91, 2.4, -0.84, 2.02, -0.91, 0.4, -0.89, 0.19, -0.83, 0.12, -0.75, 0.04, -0.49]);
+    const ring = (a: number, b: number) => `M${f(X(a))},${f(Y(0.67))} L${f(X(a))},-1.1 L${f(X(b))},-1.1 L${f(X(b))},${f(Y(0.67))}`;
+    odet = `${p([0.41, -0.89, 0.41, 0.87], false)} ${p([2.01, -0.91, 2.01, 0.9], false)} ${p([3.62, -0.67, 3.62, 0.67], false)}`
+      + ` ${repeat(X(0.12), X(0.4), 0.05, (x) => `M${f(x)},${f(Y(-0.86))} L${f(x)},${f(Y(-0.6))} M${f(x)},${f(Y(0.6))} L${f(x)},${f(Y(0.86))}`)}`
+      + ` ${repeat(X(2.55), X(3.4), 0.07, (x) => `M${f(x)},${f(Y(-0.9))} L${f(x)},${f(Y(0.9))}`)}`
+      + ` ${p([6.27, -0.82, 7.75, -0.82], false)} ${p([6.24, -1.29, 7.78, -1.29], false)} ${repeat(X(6.36), X(7.66), 0.07, (x) => `M${f(x)},${f(Y(-1.6))} L${f(x)},${f(Y(-1.32))}`)}`
+      + ` ${OC(X(7.07), Y(0), 0.74 * k)} ${OC(X(7.07), Y(0), 0.57 * k)} ${OC(X(7.07), Y(0), 0.3 * k)} ${p([7.9, -0.67, 7.9, 0.67], false)} ${p([10.55, -0.66, 10.55, 0.67], false)}`
+      + ` ${p([13.09, -1.27, 13.09, 1.25], false)} ${p([15.3, -1.24, 15.3, 1.22], false)} ${ring(4.3, 5.0)} ${ring(8.9, 9.6)} ${p([4.3, 1.9, 9.6, 1.9], false)}`;
+    ot = [X(7.0), Y(-1.75)];
   } else if (matches(opt, /\d+-\d+x/i)) {
     const big56 = matches(opt, /x5\d/);
     const cy = big56 ? -2.95 : -2.6;
@@ -204,17 +226,20 @@ function rifleOptic(opt: Part | undefined): { od: string; odet: string; ot: [num
       + ` ${O2(e1 + 0.8, cy - tubeR - 0.12, 0.05)} ${O2(o0 - 0.7, cy - tubeR - 0.12, 0.05)} M${f(o0 + 0.9)},${f(cy - ob + 0.18)} L${f(x1 - 0.12)},${f(cy - ob + 0.18)} M${f(x1 - 0.12)},${f(cy - ob)} L${f(x1 - 0.12)},${f(cy + ob)}`;
     ot = [e1 + 2.3, cy - 1.25];
   } else if (matches(opt, /reflex|510/i)) {
-    // Open reflex (HS510C): QD base on the rail, low emitter housing at the rear, and the window inside a
-    // protective hood at the front with the solar panel on top.
-    od = 'M2.8,-1.1 L2.8,-1.62 L2.95,-1.62 L2.95,-1.88 Q2.95,-2.0 3.07,-2.0 L3.62,-2.0 L3.86,-3.06 Q3.92,-3.28 4.14,-3.28 L5.62,-3.28 Q5.86,-3.28 5.9,-3.04 L6.0,-1.62 L6.0,-1.1 Z'
-      + ' M4.04,-1.78 L4.16,-2.94 Q4.18,-3.04 4.28,-3.04 L5.52,-3.04 Q5.62,-3.04 5.63,-2.94 L5.7,-1.78 Z';
-    odet = 'M2.8,-1.36 L6.0,-1.36 M2.95,-1.62 L6.0,-1.62 M3.9,-3.18 L5.84,-3.18 M4.2,-3.12 L5.56,-3.12'
-      + ` ${repeat(4.3, 5.4, 0.22, (x) => `M${x},-3.18 L${x},-3.12`)}`
-      + ' M5.7,-1.78 L5.6,-3.0 M5.62,-1.78 L5.53,-2.98'
-      + ` ${O2(3.32, -1.8, 0.1)} M3.26,-1.8 L3.38,-1.8 ${O2(3.86, -2.3, 0.07)}`
-      + ' M4.3,-1.5 L4.3,-1.7 L4.62,-1.7 L4.62,-1.5 Z M4.72,-1.5 L4.72,-1.7 L5.04,-1.7 L5.04,-1.5 Z'
-      + ` M3.0,-1.1 L3.0,-1.3 L3.6,-1.3 L3.6,-1.1 ${O2(3.3, -1.22, 0.06)} M5.2,-1.24 L5.86,-1.24`;
-    ot = [4.9, -3.28];
+    // Holosun HS510C, traced from a flat side photo at its published 3.27" length (inches from the rear, down from the
+    // rail top): the low emitter housing with its battery cap, the hood sweeping up to the tall front window frame,
+    // the side plate with its screws and the QD lever hanging beside the rail.
+    const p = (pts: number[], close = true) => pts.reduce((s, v, i) => i % 2 ? s : `${s}${i ? ' L' : 'M'}${f(2.8 + v)},${f(-1.1 + pts[i + 1])}`, '') + (close ? ' Z' : '');
+    od = p([3.0, -1.74, 2.97, -1.76, 2.01, -1.77, 1.97, -1.55, 1.91, -1.36, 1.84, -1.21, 1.75, -1.05, 1.65, -0.93, 1.54, -0.82, 1.44, -0.74, 1.25, -0.64,
+      0.89, -0.64, 0.82, -0.72, 0.1, -0.73, 0.02, -0.72, 0.0, -0.7, 0.0, -0.4, 0.07, -0.11, 0.07, 0.01, 0.25, 0.04, 0.43, 0.08, 0.49, 0.13, 0.41, 0.16,
+      0.4, 0.41, 0.42, 0.43, 0.68, 0.43, 0.78, 0.48, 2.88, 0.48, 2.94, 0.41, 3.09, 0.19, 3.23, 0.03, 3.27, -0.09, 3.27, -0.7, 3.08, -1.55, 3.05, -1.65]);
+    odet = `${p([0.07, -0.11, 3.27, -0.11], false)} ${p([0.07, 0, 3.25, 0], false)} ${p([1.03, -0.11, 1.17, -0.58, 1.44, -0.74], false)}`
+      + ` ${OC(2.8 + 0.47, -1.1 - 0.35, 0.14)} ${p([0.4, -0.35, 0.54, -0.35], false)}`
+      + ` M${f(4.4)},${f(-1.57)} L${f(5.64)},${f(-1.57)} Q${f(5.74)},${f(-1.57)} ${f(5.74)},${f(-1.47)} Q${f(5.74)},${f(-1.37)} ${f(5.64)},${f(-1.37)} L${f(4.4)},${f(-1.37)} Q${f(4.3)},${f(-1.37)} ${f(4.3)},${f(-1.47)} Q${f(4.3)},${f(-1.57)} ${f(4.4)},${f(-1.57)} Z`
+      + ` ${p([1.95, -0.48, 1.97, -0.53, 2.44, -0.53, 2.46, -0.48], false)}`
+      + ` ${[[1.32, -0.29], [1.63, -0.29], [2.79, -0.33], [3.12, -0.26]].map(([x, y]) => OC(2.8 + x, -1.1 + y, 0.07)).join(' ')}`
+      + ` ${p([0.41, 0.15, 2.45, 0.15, 2.45, 0.4, 0.41, 0.4])} ${repeat(2.8 + 0.55, 2.8 + 1.25, 0.06, (x) => `M${x},${f(-1.1 + 0.17)} L${x},${f(-1.1 + 0.38)}`)} ${OC(2.8 + 1.86, -1.1 + 0.29, 0.1)}`;
+    ot = [4.9, -2.87];
   } else if (matches(opt, /ROMEO5X/i)) {
     // Sig ROMEO5X, traced from a flat side photo at its published 2.5" length (inches from the window centre): a boxy
     // body with a raked top facet, lens rings at both ends, the battery cap mid-side, slanted grip cuts, the brightness
@@ -230,9 +255,41 @@ function rifleOptic(opt: Part | undefined): { od: string; odet: string; ot: [num
       + ` ${repeat(-0.75, 0.55, 0.2, (x) => p([x, 0.48, x + 0.12, 0.66], false))}`
       + ` ${repeat(1.0, 1.26, 0.065, (x) => p([x, 0.66, x, 1.21], false))}`;
     ot = [cx, ay - 0.76];
-  } else if (matches(opt, /EXPS|holographic/i) || matches(opt, /PRO Patrol|Micro T-2/i)) {
+  } else if (matches(opt, /PRO Patrol/i)) {
+    // Aimpoint PRO, traced from a flat side photo at its published 5.1" length with both flip caps open (inches from
+    // the rear cap, down from the rail top): the rear cap, the main body with its turret, a plain tube with a short
+    // accessory rail, the objective bell, and the QRP2 mount with its row of holes and the big clamp knob.
+    const X0 = 2.0;
+    const p = (pts: number[], close = true) => pts.reduce((s, v, i) => i % 2 ? s : `${s}${i ? ' L' : 'M'}${f(X0 + v)},${f(-1.1 + pts[i + 1])}`, '') + (close ? ' Z' : '');
+    od = p([5.04, -2.13, 4.9, -2.41, 4.75, -2.64, 4.66, -2.68, 4.53, -2.68, 4.48, -2.65, 4.33, -2.44, 4.2, -2.36, 4.11, -2.25, 3.74, -2.24, 3.5, -2.1,
+      3.45, -2.19, 2.54, -2.19, 2.52, -2.51, 2.47, -2.56, 2.26, -2.55, 1.89, -2.55, 1.66, -2.59, 1.53, -2.59, 1.29, -2.54, 0.59, -2.53, 0.43, -2.52,
+      0.33, -2.46, 0.14, -2.16, 0.06, -2.1, 0.01, -1.94, 0, -1.72, 0, -1.3, 0.04, -1.03, 0.14, -0.91, 0.17, -0.76, 0.21, -0.67, 0.33, -0.67, 0.37, -0.88,
+      0.64, -0.87, 0.92, -0.83, 0.86, -0.73, 0.85, -0.09, 0.9, -0.02, 0.9, 0.12, 1.59, 0.12, 1.6, 0.21, 1.77, 0.21, 1.84, 0.35, 1.96, 0.47, 2.11, 0.53,
+      2.27, 0.53, 2.36, 0.5, 2.49, 0.42, 2.62, 0.22, 2.75, 0.22, 2.76, 0.11, 3.43, 0.11, 3.42, -0.03, 3.48, -0.05, 3.48, -0.38, 3.49, -0.98, 3.75, -0.84,
+      4.12, -0.84, 4.23, -0.74, 4.72, -0.75, 4.78, -0.5, 4.94, -0.51, 5.0, -0.66, 5.0, -0.86, 5.06, -1.06, 5.1, -1.37, 5.09, -1.78]);
+    odet = `${p([0.59, -2.19, 0.59, -0.86], false)} ${p([0.89, -2.3, 0.89, -0.81], false)} ${p([2.34, -2.3, 2.34, -0.81], false)} ${p([3.47, -2.17, 3.47, -0.92], false)}`
+      + ` ${p([4.17, -2.39, 4.17, -0.72], false)} ${repeat(X0 + 1.3, X0 + 1.92, 0.07, (x) => `M${x},${f(-1.1 - 2.53)} L${x},${f(-1.1 - 2.39)}`)}`
+      + ` ${p([2.39, -1.78, 3.56, -1.78, 3.56, -1.42, 2.39, -1.42])} ${p([0.87, -0.75, 3.47, -0.75], false)} ${p([0.87, 0, 3.43, 0], false)}`
+      + ` ${repeat(X0 + 1.42, X0 + 2.95, 0.213, (x) => OC(x, -1.1 - 0.47, 0.067))} ${OC(X0 + 2.21, -1.1 + 0.09, 0.43)} ${OC(X0 + 2.21, -1.1 + 0.09, 0.33)}`;
+    ot = [X0 + 1.6, -1.1 - 2.59];
+  } else if (matches(opt, /EXPS/i)) {
+    // EOTech EXPS3, traced from a flat side photo at its published 3.8" length (inches from the rear, down from the
+    // rail top): the window hood at the rear, the body stepping down to the transverse battery cap at the front, the
+    // night-vision and up/down buttons, two side screws, the QD mount with its lever, and the thin lanyard on the cap.
+    const X0 = 3.0;
+    const p = (pts: number[], close = true) => pts.reduce((s, v, i) => i % 2 ? s : `${s}${i ? ' L' : 'M'}${f(X0 + v)},${f(-1.1 + pts[i + 1])}`, '') + (close ? ' Z' : '');
+    od = p([3.77, -1.18, 3.67, -1.34, 3.53, -1.48, 3.36, -1.59, 3.17, -1.61, 3.06, -1.63, 2.48, -1.65, 2.36, -1.78, 2.31, -1.9,
+      2.28, -2.0, 2.16, -2.69, 2.13, -2.79, 0.56, -2.78, 0.5, -2.68, 0.54, -2.47, 0.55, -2.29, 0.49, -2.04, 0.39, -1.85, 0.18, -1.64, 0.11, -1.52,
+      0.03, -1.02, 0.03, -0.43, 0, -0.29, 0.03, -0.12, 0.15, -0.12, 0.16, 0.09, 2.07, 0.11, 2.32, 0.15, 2.73, 0.12, 2.86, 0.08, 2.86, -0.42, 2.84, -0.58,
+      2.97, -0.5, 3.13, -0.44, 3.34, -0.44, 3.54, -0.52, 3.68, -0.65, 3.76, -0.79, 3.8, -0.98]);
+    const rr = (x0: number, y0: number, x1: number, y1: number, r: number) => p([x0 + r, y0, x1 - r, y0, x1, y0 + r, x1, y1 - r, x1 - r, y1, x0 + r, y1, x0, y1 - r, x0, y0 + r]);
+    odet = `${p([0.52, -1.74, 2.23, -1.82], false)} ${OC(X0 + 0.46, -1.1 - 1.33, 0.18)} ${OC(X0 + 0.46, -1.1 - 1.33, 0.12)} ${rr(0.2, -0.84, 0.61, -0.55, 0.05)} ${rr(0.67, -0.84, 1.08, -0.55, 0.05)}`
+      + ` ${OC(X0 + 1.45, -1.1 - 0.55, 0.09)} ${OC(X0 + 2.43, -1.1 - 0.55, 0.09)} ${p([0.14, -0.23, 1.41, -0.37, 2.72, -0.39], false)} ${p([0.16, -0.12, 2.86, -0.12], false)}`
+      + ` ${p([3.0, -1.6, 3.0, -0.47], false)} ${p([2.5, -1.68, 2.6, -1.84, 2.75, -1.89, 2.92, -1.84, 3.04, -1.66], false)} ${p([1.77, -0.27, 2.23, -0.27, 2.23, -0.06, 1.77, -0.06])}`;
+    ot = [X0 + 1.3, -1.1 - 2.79];
+  } else if (matches(opt, /holographic/i) || matches(opt, /Micro T-2/i)) {
     // Traced from the makers' design-patent side views (see scripts/pistol-profiles/optics.py). The micro dot drawing
-    // stands in for the full-size Aimpoint PRO, scaled to its length; risers lift each to its published sight height.
+    // stands in for any other dot; risers lift each to its published sight height.
     const holo = matches(opt, /EXPS|holographic/i);
     const pr = OPTIC_PROFILES[holo ? 'holo' : 'micro'];
     const want = Number(opt?.attrs.height ?? 0);
@@ -421,6 +478,32 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
     const drop = [1, 2, 3, 4, 5, 6, 7, 8, 32, 39, 40, 41, 42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56];
     lower = arPaths({ outline: [[...o.slice(0, 27 * 2), ...guard, ...o.slice(64 * 2)], opening], detail: AR_PROFILES.lower.detail.filter((_, k) => !drop.includes(k)) });
   } else lower = arPaths(glock9 ? AR_PROFILES.lower9 : AR_PROFILES.lower);
+  const photo9 = glock9 ? LOWER9_PHOTOS.find(([re]) => matches(b.lower, re)) : undefined;
+  if (photo9) lower = arPaths({ outline: [photo9[1], photo9[2]], detail: [] });
+  if (flared && matches(b.lower, /M5 Stripped/)) {
+    // Aero M5, traced from Aero's flat side photo: a squarer guard opening and a shallower guard and magwell than the
+    // M4E1 (in this frame's units, before the AR-10 stretch).
+    const o = AR_PROFILES.lower.outline[0];
+    const guard = [2.02, 2.17, 2.02, 2.45, 2.03, 2.76, 3.09, 2.91, 3.82, 2.78, 3.94, 2.78, 4.0, 2.81, 6.67, 2.32, 6.74, 2.3, 6.79, 2.23, 6.78, 2.14,
+      6.69, 1.95, 6.58, 1.31, 6.57, 1.2];
+    const opening = [2.22, 2.02, 2.27, 1.9, 2.33, 1.82, 2.41, 1.75, 2.53, 1.7, 3.5, 1.69, 3.66, 1.78, 3.78, 1.93, 3.81, 1.98, 3.8, 2.28, 3.76, 2.37,
+      3.69, 2.47, 3.6, 2.56, 3.49, 2.61, 3.09, 2.69, 2.58, 2.61, 2.42, 2.56, 2.29, 2.42, 2.25, 2.31, 2.22, 2.18];
+    const drop = [1, 2, 3, 4, 5, 6, 7, 8, 32, 39, 40, 41, 42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56];
+    lower = arPaths({ outline: [[...o.slice(0, 27 * 2), ...guard, ...o.slice(66 * 2)], opening], detail: AR_PROFILES.lower.detail.filter((_, k) => !drop.includes(k)) });
+  }
+  if (flared && matches(b.lower, /SP223|SP10/)) {
+    // Seekins SP223, traced from Seekins' flat side photo (scaled by its 6.25" pin spacing): a deep bowed guard with
+    // four lightening holes along its belly, and a long flared magwell with a recessed side panel.
+    const o = AR_PROFILES.lower.outline[0];
+    const guard = [1.79, 2.65, 1.81, 3.0, 2.05, 2.98, 2.29, 3.0, 2.58, 3.11, 2.81, 3.28, 3.09, 3.35, 3.31, 3.35, 3.59, 3.27, 4.13, 2.94, 4.46, 2.77, 4.78, 2.69,
+      5.05, 2.69, 5.41, 2.76, 6.31, 3.1, 6.72, 3.1, 6.78, 3.07, 6.78, 2.98, 6.72, 2.88, 6.7, 2.6, 6.64, 2.2, 6.62, 1.8, 6.61, 1.44];
+    const opening = [2.03, 2.13, 2.1, 2.0, 2.19, 1.91, 2.26, 1.86, 2.43, 1.79, 3.51, 1.79, 3.71, 1.88, 3.83, 2.03, 3.9, 2.26, 3.89, 2.47, 3.85, 2.61, 3.78, 2.75,
+      3.64, 2.9, 3.53, 2.98, 3.27, 3.07, 2.99, 3.06, 2.26, 2.75, 2.15, 2.68, 2.04, 2.54, 2.01, 2.43, 2.0, 2.26];
+    const panel = [4.39, 0.84, 6.42, 0.82, 6.5, 0.92, 6.55, 2.7, 6.45, 2.8, 5.9, 2.8, 5.3, 2.55, 4.75, 2.4, 4.4, 2.42, 4.3, 2.3, 4.3, 0.95];
+    const drop = [1, 2, 3, 4, 5, 6, 7, 8, 16, 19, 32, 39, 40, 41, 42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56];
+    const sp = arPaths({ outline: [[...o.slice(0, 27 * 2), ...guard, ...o.slice(65 * 2)], opening], detail: [...AR_PROFILES.lower.detail.filter((_, k) => !drop.includes(k)), panel] });
+    lower = { o: sp.o, d: `${sp.d} ${[[2.89, 3.2], [3.17, 3.25], [3.45, 3.21], [3.7, 3.08]].map(([x, y]) => OC(x, y, 0.065)).join(' ')}` };
+  }
   P.push({ slot: 'lower', z: 4, row: 'bottom', target: px(5.6 * kx, 2.4 * ky),
     el: <><path d={R(lower.o)} fillRule={glock9 || flared ? 'evenodd' : undefined} /><path className="detail" d={R(glock9 ? LOWER9_DETAIL.map((l) => polyPath(l, same, false)).join(' ') : lower.d)} /></> });
 
@@ -428,9 +511,23 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
   P.push({ slot: 'lpk', z: 6, row: 'bottom', target: px(1.43 * kx, 1.29 * ky),
     el: <path d={O(1.43, 1.29, 0.2) + R(' M1.43,1.29 L1.75,1.12 M1.36,1.29 L1.5,1.29')} /> });
   // Trigger: the curved shoe traced with the lower, or a flat blade for the flat-shoe triggers.
+  // Aftermarket shoes are traced from flat side photos of each trigger group, scaled so the shoe hangs as far below
+  // the guard opening's top as the mil-spec shoe: Geissele's SSA-E and LaRue's MBT-2S narrow curves, the ALG ACT,
+  // Rise's straight RA-535 with its slot, Angstadt's PCC shoe, and CMC's flat blades with the brace behind them.
+  const AR_TRIGGERS: [RegExp, number[], number[]?][] = [
+    [/SSA-E/, [2.31, 1.87, 2.276, 1.973, 2.27, 2.06, 2.235, 2.251, 2.254, 2.506, 2.272, 2.611, 2.304, 2.712, 2.351, 2.801, 2.541, 2.808, 2.541, 2.786, 2.466, 2.744, 2.456, 2.714, 2.443, 2.602, 2.443, 2.452, 2.462, 2.283, 2.492, 2.153, 2.53, 2.06, 2.545, 1.981, 2.59, 1.87]],
+    [/MBT-2S/, [2.316, 1.87, 2.398, 2.016, 2.398, 2.058, 2.352, 2.18, 2.335, 2.274, 2.33, 2.451, 2.361, 2.627, 2.412, 2.76, 2.429, 2.791, 2.448, 2.807, 2.483, 2.801, 2.5, 2.77, 2.462, 2.634, 2.453, 2.563, 2.455, 2.446, 2.5, 2.284, 2.582, 2.17, 2.63, 2.02, 2.67, 1.87]],
+    [/ACT Trigger/, [2.314, 1.87, 2.324, 1.945, 2.339, 1.968, 2.339, 2.024, 2.301, 2.126, 2.282, 2.223, 2.277, 2.338, 2.29, 2.436, 2.316, 2.526, 2.359, 2.62, 2.425, 2.718, 2.51, 2.808, 2.532, 2.808, 2.547, 2.795, 2.549, 2.759, 2.47, 2.624, 2.433, 2.483, 2.442, 2.331, 2.463, 2.259, 2.502, 2.178, 2.57, 2.1, 2.65, 2, 2.73, 1.87]],
+    [/RA-535/, [2.36, 1.87, 2.353, 1.928, 2.28, 2.142, 2.28, 2.544, 2.514, 2.808, 2.527, 2.808, 2.534, 2.768, 2.503, 2.549, 2.501, 2.323, 2.523, 2.089, 2.532, 2.084, 2.534, 2.049, 2.545, 2.038, 2.547, 1.87], [2.38, 2.15, 2.42, 2.17, 2.42, 2.45, 2.38, 2.47, 2.35, 2.45, 2.35, 2.18, 2.38, 2.15]],
+    [/AR9 PCC Trigger/, [2.551, 1.87, 2.488, 2.057, 2.437, 2.164, 2.404, 2.311, 2.404, 2.41, 2.426, 2.502, 2.558, 2.751, 2.543, 2.803, 2.492, 2.806, 2.459, 2.781, 2.353, 2.615, 2.275, 2.428, 2.253, 2.311, 2.25, 2.134, 2.268, 2.021, 2.32, 1.87]],
+    [/9mm PCC Single-Stage Trigger, Flat/, [2.25, 1.87, 2.548, 2.778, 2.58, 2.803, 2.795, 2.803, 2.801, 2.781, 2.783, 2.742, 2.664, 2.702, 2.632, 2.663, 2.603, 1.963, 2.609, 1.87], [2.304, 1.87, 2.306, 1.924, 2.413, 2.247, 2.422, 2.256, 2.478, 2.256, 2.49, 2.238, 2.48, 1.913, 2.467, 1.87]],
+    [/Single Stage Drop-In, Flat/, [2.25, 1.87, 2.444, 2.61, 2.459, 2.787, 2.476, 2.797, 2.615, 2.808, 2.758, 2.802, 2.764, 2.783, 2.752, 2.77, 2.648, 2.766, 2.629, 2.686, 2.615, 1.959, 2.642, 1.87], [2.34, 1.87, 2.47, 2.43, 2.52, 2.45, 2.54, 2.4, 2.54, 1.87]],
+  ];
   const trig = arPaths(AR_PROFILES.trigger);
+  const trigPhoto = AR_TRIGGERS.find(([re]) => matches(b.trigger, re));
   P.push({ slot: 'trigger', z: 6, row: 'bottom', target: px(2.5 * kx, 2.3 * ky),
-    el: <path d={R(matches(b.trigger, /Flat/) ? 'M2.28,1.89 L2.76,1.89 L2.76,1.94 L2.6,2.05 L2.66,2.75 Q2.66,2.82 2.58,2.82 L2.5,2.82 L2.42,2.05 L2.28,1.94 Z' : trig.o)} /> });
+    el: trigPhoto ? <><path d={R(polyPath(trigPhoto[1], same, true))} />{trigPhoto[2] && <path className="detail" d={R(polyPath(trigPhoto[2], same, false))} />}</>
+      : <path d={R(matches(b.trigger, /Flat/) ? 'M2.28,1.89 L2.76,1.89 L2.76,1.94 L2.6,2.05 L2.66,2.75 Q2.66,2.82 2.58,2.82 L2.5,2.82 L2.42,2.05 L2.28,1.94 Z' : trig.o)} /> });
 
   // Pistol grip, each one in the catalog drawn to its own profile. The MOE keeps the A2's rake with a smooth front
   // strap (no finger ridge) and Magpul's long side panel; the MOE+ is the same grip overmoulded all round; the MOE-K2+
@@ -692,14 +789,36 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
   // Each device to its own shape. Lantac Dragon: a squared can, solid at the rear, with three side windows shrinking
   // toward its coned nose. Precision Armament M4-72: a fat brake cut by three deep raked slots into swept fins. VG6 Gamma: two side
   // chambers behind three flash-hider slots. SureFire WarComp: the SOCOM's three tines ahead of a grid of round
-  // ports. 3-prong hiders: traced from US D577,410 FIG. 1; other brakes from US D285,238 FIG. 1. 9mm cans are smooth
-  // tubes, bell-mouthed (KAK) or coned (PSA's linear comp); Odin's Atlas 9 is a squared two-port comp.
+  // ports. 3-prong hiders: traced from US D577,410 FIG. 1; other brakes from US D285,238 FIG. 1. Devices traced from
+  // photos (SureFire 3-prong, A2 .30, the 9mm cans and the Atlas 9) are in MZ_PHOTOS below.
   const mk = matches(mz, /Dragon/) ? 'dragon' : matches(mz, /M4-72/) ? 'm472' : matches(mz, /Gamma/) ? 'gamma' : matches(mz, /WarComp/) ? 'warcomp'
     : matches(mz, /prong/i) ? 'prong' : matches(mz, /Flash Can|Linear/) ? 'can' : matches(mz, /Atlas 9/) ? 'comp9' : matches(mz, /brake/i) ? 'brake' : matches(mz, /comp/i) ? 'comp' : 'a2';
   const tube = (len: number, r: number, nose = '') => `M${f(BX)},-0.4 L${f(BX + 0.28)},-0.4 L${f(BX + 0.28)},${f(-r)} ${nose || `L${f(BX + len)},${f(-r)} L${f(BX + len)},${f(r)}`} L${f(BX + 0.28)},${f(r)} L${f(BX + 0.28)},0.4 L${f(BX)},0.4 Z`;
   const window = (x0: number, x1: number, y0: number, y1: number) => `M${f(x0)},${f(y0)} L${f(x1)},${f(y0)} L${f(x1)},${f(y1)} L${f(x0)},${f(y1)} Z`;
   const vents = (xs: number[], r: number) => xs.map((d) => `M${f(BX + d)},${f(-r)} L${f(BX + d)},${f(-r + 0.12)} M${f(BX + d + 0.14)},${f(-r)} L${f(BX + d + 0.14)},${f(-r + 0.12)}`).join(' ');
-  if (mk === 'prong' || mk === 'warcomp' || mk === 'brake') {
+  // Muzzle devices traced from flat side photos (inches from the rear face, up/down from the bore), scaled by the
+  // published length or outside diameter: SureFire's SOCOM 3-prong mounts (5.56 and 7.62) with the suppressor
+  // shoulder and ring groove behind the tines, the .30 cal A2, KAK's slim flash can, Odin's Atlas 9 and PSA's AK-V.
+  const MZ_PHOTOS: [RegExp, number, number[], (X: (x: number) => number, Y: (y: number) => number) => string][] = [
+    [/SOCOM 3-Prong.*5\.56/, 1, [0.01, -0.25, 0.00, -0.11, 0.00, 0.07, 0.02, 0.25, 0.03, 0.28, 0.14, 0.28, 0.16, 0.37, 0.17, 0.39, 0.19, 0.39, 0.33, 0.39, 0.37, 0.36, 0.66, 0.36, 0.67, 0.34, 0.70, 0.34, 0.72, 0.36, 0.74, 0.34, 0.77, 0.34, 0.78, 0.35, 2.10, 0.32, 2.15, 0.29, 2.18, 0.26, 2.20, 0.11, 2.18, 0.10, 1.15, 0.12, 0.90, 0.11, 0.90, 0.09, 0.94, 0.06, 2.03, 0.04, 2.15, 0.03, 2.19, 0.00, 2.20, -0.03, 2.19, -0.25, 2.16, -0.31, 2.11, -0.33, 1.38, -0.35, 0.91, -0.35, 0.81, -0.37, 0.77, -0.37, 0.76, -0.35, 0.74, -0.35, 0.72, -0.37, 0.71, -0.37, 0.69, -0.35, 0.67, -0.35, 0.64, -0.37, 0.31, -0.37, 0.24, -0.40, 0.17, -0.40, 0.15, -0.37, 0.14, -0.28, 0.03, -0.28], (X, Y) => [0.15, 0.35, 0.78].map((x) => `M${f(X(x))},${f(Y(-0.36))} L${f(X(x))},${f(Y(0.36))}`).join(' ') + ` M${f(X(0.9))},${f(Y(-0.12))} L${f(X(2.19))},${f(Y(-0.12))}`],
+    [/SOCOM 3-Prong.*7\.62/, 1, [0.02, -0.30, 0.00, -0.21, 0.00, -0.03, 0.01, 0.18, 0.03, 0.32, 0.05, 0.34, 0.21, 0.34, 0.23, 0.42, 0.25, 0.44, 0.43, 0.44, 0.47, 0.41, 0.79, 0.40, 0.81, 0.38, 0.84, 0.38, 0.85, 0.40, 0.87, 0.40, 0.88, 0.38, 0.91, 0.38, 0.92, 0.40, 0.98, 0.39, 1.47, 0.38, 1.79, 0.36, 1.95, 0.35, 2.48, 0.33, 2.55, 0.31, 2.57, 0.28, 2.59, 0.24, 2.60, 0.17, 2.60, 0.13, 2.59, 0.12, 1.09, 0.14, 1.06, 0.14, 1.06, 0.09, 1.11, 0.08, 1.48, 0.07, 1.97, 0.05, 2.48, 0.03, 2.54, 0.02, 2.59, -0.01, 2.60, -0.03, 2.59, -0.28, 2.58, -0.31, 2.56, -0.34, 2.50, -0.39, 1.93, -0.39, 1.91, -0.40, 1.10, -0.40, 1.03, -0.42, 0.91, -0.42, 0.90, -0.40, 0.87, -0.40, 0.86, -0.42, 0.83, -0.42, 0.82, -0.40, 0.79, -0.40, 0.78, -0.42, 0.38, -0.41, 0.32, -0.44, 0.23, -0.44, 0.22, -0.42, 0.20, -0.34, 0.04, -0.33, 0.02, -0.32], (X, Y) => [0.22, 0.45, 0.98].map((x) => `M${f(X(x))},${f(Y(-0.4))} L${f(X(x))},${f(Y(0.38))}`).join(' ') + ` M${f(X(1.06))},${f(Y(-0.14))} L${f(X(2.59))},${f(Y(-0.14))}`],
+    [/A2 Flash Hider \.30|A2 Flash Hider \.308/, 0.9 / 1.078, [2.21, -0.49, 2.16, -0.54, 1.66, -0.51, 0.99, -0.51, 0.85, -0.53, 0.79, -0.51, 0.74, -0.43, 0.69, -0.43, 0.64, -0.52, 0.48, -0.51, 0.42, -0.42, 0.31, -0.46, 0.04, -0.45, 0.00, -0.18, 0.00, 0.15, 0.04, 0.45, 0.09, 0.47, 0.37, 0.47, 0.38, 0.45, 0.43, 0.44, 0.50, 0.53, 0.65, 0.53, 0.70, 0.44, 0.77, 0.45, 0.80, 0.52, 0.83, 0.53, 1.38, 0.50, 2.17, 0.52, 2.23, 0.46, 2.24, 0.27, 2.24, -0.17], (X, Y) => [0.34, 0.49, 0.7, 0.78].map((x) => `M${f(X(x))},${f(Y(-0.46))} L${f(X(x))},${f(Y(0.46))}`).join(' ')
+      + [[-0.32, 0.82], [0.02, 0.95], [0.34, 0.82]].map(([y, x0]) => ` M${f(X(x0))},${f(Y(y - 0.055))} L${f(X(1.93))},${f(Y(y - 0.055))} Q${f(X(1.99))},${f(Y(y))} ${f(X(1.93))},${f(Y(y + 0.055))} L${f(X(x0))},${f(Y(y + 0.055))} L${f(X(x0 - 0.05))},${f(Y(y))} Z`).join('')],
+    [/Slimline Flash Can/, 1.0 / 1.077, [0.02, -0.32, 0.01, -0.24, 0.00, 0.17, 0.01, 0.28, 0.03, 0.36, 0.07, 0.40, 0.46, 0.41, 0.48, 0.42, 0.50, 0.51, 0.54, 0.54, 2.68, 0.53, 2.70, 0.51, 2.71, 0.51, 2.73, 0.53, 2.77, 0.53, 2.79, 0.51, 2.80, 0.51, 2.82, 0.53, 2.90, 0.53, 2.94, 0.50, 2.97, 0.45, 2.99, 0.31, 3.00, 0.07, 2.96, 0.06, 2.83, 0.06, 2.83, -0.06, 2.91, -0.06, 2.92, -0.13, 2.99, -0.14, 2.98, -0.33, 2.96, -0.46, 2.94, -0.50, 2.89, -0.54, 2.82, -0.54, 2.80, -0.51, 2.79, -0.51, 2.77, -0.54, 2.73, -0.54, 2.71, -0.51, 2.70, -0.51, 2.68, -0.54, 0.54, -0.54, 0.51, -0.51, 0.48, -0.42, 0.46, -0.41, 0.08, -0.40, 0.03, -0.36], (X, Y) => `M${f(X(0.5))},${f(Y(-0.5))} L${f(X(0.5))},${f(Y(0.5))} M${f(X(2.7))},${f(Y(-0.51))} L${f(X(2.7))},${f(Y(0.51))} M${f(X(2.8))},${f(Y(-0.51))} L${f(X(2.8))},${f(Y(0.51))}`],
+    [/Atlas 9/, 1, [0.02, -0.31, 0.00, -0.11, 0.00, 0.10, 0.02, 0.30, 0.04, 0.35, 0.16, 0.38, 0.22, 0.39, 0.52, 0.39, 0.55, 0.42, 0.76, 0.42, 0.79, 0.43, 0.83, 0.43, 0.86, 0.42, 1.60, 0.42, 1.68, 0.42, 1.90, 0.42, 2.20, 0.41, 2.22, 0.39, 2.22, 0.32, 2.24, 0.30, 2.24, 0.20, 2.25, 0.10, 2.25, -0.13, 2.22, -0.17, 2.23, -0.20, 2.23, -0.27, 2.21, -0.32, 2.23, -0.39, 2.20, -0.41, 1.94, -0.41, 1.90, -0.42, 0.94, -0.42, 0.89, -0.42, 0.85, -0.42, 0.81, -0.42, 0.56, -0.42, 0.52, -0.40, 0.49, -0.39, 0.23, -0.39, 0.17, -0.38, 0.05, -0.34], (X, Y) => [0.06, 0.53, 1.85, 1.89].map((x) => `M${f(X(x))},${f(Y(-0.4))} L${f(X(x))},${f(Y(0.4))}`).join(' ')
+      + ` M${f(X(1.92))},${f(Y(-0.18))} L${f(X(2.22))},${f(Y(-0.18))} M${f(X(1.92))},${f(Y(0.12))} L${f(X(2.22))},${f(Y(0.12))} ${OC(X(0.82), Y(-0.01), 0.025)}`
+      // Six raked ports, three a side, leaning toward the bore.
+      + [0.76, 1.18, 1.62].flatMap((x) => [-1, 1].map((sg) => ` M${f(X(x))},${f(Y(sg * 0.38))} L${f(X(x + 0.15))},${f(Y(sg * 0.38))} L${f(X(x + 0.13))},${f(Y(sg * 0.17))} L${f(X(x - 0.06))},${f(Y(sg * 0.17))} L${f(X(x - 0.08))},${f(Y(sg * 0.27))} Z`)).join('')],
+    [/AK-V/, 1, [2.07, -0.43, 2.04, -0.48, 0.57, -0.45, 0.53, -0.38, 0.04, -0.37, 0.01, -0.30, 0.00, -0.17, 0.00, 0.18, 0.03, 0.36, 0.53, 0.37, 0.57, 0.44, 1.53, 0.44, 1.60, 0.47, 2.04, 0.46, 2.07, 0.43, 2.09, 0.27], (X, Y) => `M${f(X(0.55))},${f(Y(-0.4))} L${f(X(0.55))},${f(Y(0.4))} M${f(X(1.56))},${f(Y(-0.45))} L${f(X(1.56))},${f(Y(0.45))} M${f(X(0.04))},${f(Y(-0.18))} L${f(X(0.53))},${f(Y(-0.18))}`],
+  ];
+  const mzPhoto = MZ_PHOTOS.find(([re]) => matches(mz, re));
+  if (mzPhoto) {
+    const [, k, pts, det] = mzPhoto;
+    const X = (x: number) => BX + x * k, Y = (y: number) => y * k;
+    md = pts.reduce((s, v, i) => i % 2 ? s : `${s}${i ? ' L' : 'M'}${f(X(v))},${f(Y(pts[i + 1]))}`, '') + ' Z';
+    mlen = Math.max(...pts.filter((_, i) => i % 2 === 0)) * k;
+    mdet = det(X, Y);
+  } else if (mk === 'prong' || mk === 'warcomp' || mk === 'brake') {
     const key = mk === 'brake' ? 'muzzleBrake' as const : 'muzzleProng' as const;
     const h = AR_PROFILES.marks[key + 'H'];
     const t = arPaths(AR_PROFILES[key], (x, y) => [BX + x, y - h / 2]);
