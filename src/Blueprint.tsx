@@ -125,6 +125,9 @@ function inside(pts: number[], x: number, y: number) {
   return c;
 }
 
+/** Grip texture pitch on every platform: one dot every 0.1" on staggered rows, only where the real gun is textured. */
+const TEX = 0.1;
+
 /** Dots on a staggered grid inside a polygon (flat x,y list), kept a tenth of an inch off its edge: grip textures. */
 function dotsIn(poly: number[], pitch: number, map: Map2 = same, margin = 0.1): string {
   const xs = poly.filter((_, i) => !(i % 2)), ys = poly.filter((_, i) => i % 2);
@@ -546,7 +549,7 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
   if (gk === 'a2') {
     const grip = arPaths(AR_PROFILES.grip);
     const panel = AR_PROFILES.grip.detail.reduce((a, d) => (d.length > a.length ? d : a), [] as number[]);
-    gripO = grip.o; gripDet = grip.d; gripTex = dotsIn(panel, 0.14);
+    gripO = grip.o; gripDet = grip.d; gripTex = dotsIn(panel, TEX);
   } else if (gk === 'moe' || gk === 'moeplus') {
     // Traced from Magpul's photos of each grip, set by its top face: the curled beavertail, the tab up into the
     // trigger guard, grooves down both straps and the flared base. The MOE has a raised textured side panel; the
@@ -561,8 +564,8 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
     if (gk === 'moe') {
       const panel = [0.21, 2.71, 1.16, 2.98, 0.45, 4.93, -0.86, 4.46];
       gripDet += ' ' + polyPath(panel, same, true);
-      gripTex = dotsIn(panel, 0.14);
-    } else gripTex = dotsIn([0.14, 2.5, 1.5, 2.5, 1.54, 3.0, 0.62, 4.95, -0.95, 4.5], 0.13);
+      gripTex = dotsIn(panel, TEX);
+    } else gripTex = dotsIn([0.14, 2.5, 1.5, 2.5, 1.54, 3.0, 0.62, 4.95, -0.95, 4.5], TEX);
     gripAt = [-0.1, 4.0];
   } else if (gk === 'k2') {
     // Traced from Magpul's side photo of the MOE-K2+, set by its top face: the hump of its extended backstrap, a
@@ -578,7 +581,7 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
     gripO = 'M-0.03,1.39 L-0.11,1.47 L-0.13,1.60 L0.08,1.77 L0.18,1.95 L0.24,2.33 L0.23,2.66 L0.13,3.00 L-0.19,3.63 L-0.53,4.53 L-0.62,4.83 L-0.61,5.09 L-0.52,5.22 L-0.24,5.34 L0.44,5.52 L0.77,5.58 L0.87,5.57 L0.99,5.49 L1.03,5.39 L1.02,5.30 L0.93,5.16 L1.50,3.28 L1.56,3.20 L1.99,3.09 L2.03,3.02 L1.73,2.97 L1.72,2.15 L1.64,2.02 L1.47,1.94 L0.61,1.96 L0.52,1.76 L0.39,1.60 L0.20,1.46 L0.05,1.39 Z';
     const panel = [0.83, 2.55, 1.36, 2.66, 1.33, 3.31, 0.76, 5.2, -0.44, 4.86, -0.27, 4.16, 0.26, 3.1];
     gripDet = `M-0.5,5.2 L0.95,5.48 M0.3,5.36 Q0.45,5.25 0.62,5.4 ${polyPath(panel, same, true)}`;
-    gripTex = dotsIn(panel, 0.14);
+    gripTex = dotsIn(panel, TEX);
     gripAt = [0.4, 4.0];
   } else {
     // Hogue OverMolded, traced from Hogue's side photo and set by its top face like the K2+ and BCM: the A2's rake,
@@ -586,7 +589,7 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
     gripO = 'M1.68,2.01 L1.51,1.93 L0.65,1.92 L0.48,1.95 L0.38,2.02 L0.34,2.35 L0.22,2.62 L-0.13,3.07 L-0.71,3.77 L-1.38,4.78 L-1.49,5.07 L-1.41,5.21 L-1.23,5.30 L-0.92,5.38 L0.08,5.56 L0.49,5.57 L0.63,5.50 L0.58,5.13 Q0.66,4.8 0.98,4.66 Q1.02,4.5 0.93,4.36 Q1.02,4.04 1.35,3.86 Q1.36,3.62 1.24,3.40 Q1.42,3.27 1.63,3.23 L1.68,3.18 L1.84,3.19 L1.94,3.05 L1.77,2.93 L1.75,2.14 Z';
     const panel = [1.17, 3.01, 0.39, 2.97, 0.09, 3.31, -0.3, 3.69, -0.83, 4.08, -1.09, 4.59, -1.16, 4.85, -0.81, 5.12, -0.25, 5.06, -0.05, 4.87, 0.21, 4.35, 0.54, 4.03, 0.87, 3.71, 1.12, 3.45];
     gripDet = `${polyPath(panel, same, true)} ${OC(0.99, 2.46, 0.25)} ${OC(0.99, 2.46, 0.17)} M-1.3,5.18 L0.5,5.47`;
-    gripTex = dotsIn(panel, 0.11);
+    gripTex = dotsIn(panel, TEX);
     gripAt = [-0.3, 4.0];
   }
   P.push({ slot: 'grip', z: 5, row: 'bottom', target: px(gripAt[0] * kx, gripAt[1] * ky),
@@ -629,7 +632,7 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
       // the dot texture block and the floor plate's stepped seam.
       ? <><path d={T(`M7.43,${flared ? 2.72 : 2.85} L7.44,3.24 L7.51,4.4 L7.56,4.57 L7.61,5.08 L7.67,5.49 L7.75,6.16 L7.82,6.39 L7.81,6.61 L7.7,6.7 L7.09,6.82 L4.96,7.18 L4.8,7.16 L4.71,7.1 L4.67,6.94 L4.67,6.77 L4.71,6.64 L4.58,5.96 L4.45,4.92 L4.47,4.77 L4.42,4.6 L4.4,4.06 L4.36,4.01 L4.35,${flared ? 3.24 : 3.38} Z`)} />
         <path className="detail" d={T('M7.42,3.22 L4.4,3.82 M5.54,3.98 L6.81,3.89 L6.81,4.72 L5.54,4.72 Z M4.48,4.0 L5.26,3.96 L5.26,4.72 L4.5,4.72 M7.02,3.86 L7.42,3.8 M7.02,3.86 L7.02,4.72 L7.48,4.72 M5.5,4.89 L6.92,4.89 L6.92,5.76 L5.5,5.76 Z M4.5,5.07 L5.4,5.07 L5.4,5.83 L4.58,5.83 M7.12,4.92 L7.58,4.92 M7.12,4.92 L7.12,5.74 L7.66,5.74 M7.78,6.38 L7.1,6.47 L4.71,6.79 M7.0,6.36 L7.0,6.48')} />
-        <path className="detail stipple" d={T(dotsIn([4.91, 5.93, 6.74, 5.93, 6.74, 6.5, 4.91, 6.5], 0.12, same, 0.04))} /></>
+        <path className="detail stipple" d={T(dotsIn([4.91, 5.93, 6.74, 5.93, 6.74, 6.5, 4.91, 6.5], TEX, same, 0.04))} /></>
       : big
       ? <><path d={T('M3.98,3.0 L6.55,3.0 C6.65,4.8 6.85,6.4 7.05,7.75 L7.1,7.98 L4.6,8.12 L4.55,7.9 C4.3,6.3 4.1,4.7 3.98,3.0 Z', kx, 1)} /><path className="detail" d={T(b.mag?.brand === 'Armalite' ? 'M4.7,3.3 L5.4,7.9 M4.52,7.55 L7.05,7.4' : 'M4.2,4.4 L6.65,4.32 M4.35,5.8 L6.85,5.7 M4.5,7.2 L7.0,7.1 M4.45,3.3 L4.95,7.6 M6.15,3.3 L6.75,7.6', kx, 1)} /></>
       : <><path d={T(pmag.o)} /><path className="detail" d={T(pmag.d)} /></> });
@@ -1809,14 +1812,21 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     const mappedS = modOl ?? outlines[0].flatMap((_, i, a) => (i % 2 ? [] : frameMap(a[i], a[i + 1])));
     // The fire control unit's hidden outline starts inside the back strap at both its top and bottom edges.
     fcuX0 = Math.max(...[mk.sh + 0.06, h0y - 0.04].map((y) => (crossings(mappedS, y)[0] ?? -Infinity) + 0.08));
-    const inset = v.texture === 'axg' ? 0.26 : v.texture === 'patent' ? 0.3 : 0.18;
-    const ys: number[] = [];
-    // Factory modules are textured from just under the trigger guard to near the floor plate.
+    // Where each factory frame is textured, read off RSR's flat photos: the Hellcat nearly all over the grip from the
+    // top of the guard down, the M&P from the guard's bottom over the palm swell, the P365 from low on the guard;
+    // Sig's factory P320 module only in its lower panel.
     const pat = v.texture === 'patent';
-    const yTop = grip(0, h1y + (pat ? 0.18 : 0.55))[1], yBot = Math.min(heel[1], toe[1]) - (pat ? 0.3 : 0.42);
+    const cover = !pat ? { top: h1y + 0.55, inset: v.texture === 'axg' ? 0.26 : 0.18, bot: 0.42 }
+      : key === 'hellcat' ? { top: h0y + 0.08, inset: 0.1, bot: 0.16 } : key === 'mp' ? { top: h1y - 0.08, inset: 0.12, bot: 0.22 }
+      : key === 'p365' ? { top: h1y - 0.2, inset: 0.14, bot: 0.28 } : { top: h1y + 0.18, inset: 0.3, bot: 0.3 };
+    const inset = cover.inset;
+    const ys: number[] = [];
+    const yTop = grip(0, cover.top)[1], yBot = Math.min(heel[1], toe[1]) - cover.bot;
     for (let y = yTop; y < yBot; y += 0.08) ys.push(y);
     ys.push(yBot);
-    const edge = ys.map((y) => { const xs = crossings(mappedS, y); return [xs[0] + inset, xs[xs.length - 1] - inset]; });
+    // Beside the guard the texture stops short of the guard's rear wall.
+    const guardRear = (y: number) => (y < h1y + 0.1 ? frameMap(h0x, y)[0] - 0.14 : Infinity);
+    const edge = ys.map((y) => { const xs = crossings(mappedS, y); return [xs[0] + inset, Math.min(xs[xs.length - 1] - inset, guardRear(y))]; });
     const panel = [...ys.flatMap((y, i) => [edge[i][0], y]), ...[...ys].reverse().flatMap((y, i) => [edge[ys.length - 1 - i][1], y])];
     if (modPh?.panel) panel.splice(0, panel.length, ...roundCorners(modPh.panel, 0.08));
     if (v.texture === 'axg') panel.splice(0, panel.length, ...roundCorners(AXG_PANEL, 0.08));
@@ -1825,21 +1835,12 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     if (modPh && !modPh.kind) {
       // The X-Series grip as the photos show it: a fine-stippled main panel around the Sig roundel, strips down both straps.
       const [lx, ly, lr] = MODULE_LOGO;
-      // Sig's texture is a fine random stipple: dots on a 0.065" grid, each nudged by a fixed pseudo-random amount.
-      const jit = (x: number, y: number) => { const h = Math.sin(x * 127.1 + y * 311.7) * 43758.5; return (h - Math.floor(h) - 0.5) * 0.035; };
-      const dots = (poly: number[]) => {
-        const xs = poly.filter((_, i) => !(i % 2)), ys = poly.filter((_, i) => i % 2);
-        let d = '';
-        for (let y = Math.min(...ys); y <= Math.max(...ys); y += 0.065) for (let x = Math.min(...xs); x <= Math.max(...xs); x += 0.065) {
-          const jx = x + jit(x, y), jy = y + jit(y, x);
-          if (!inside(poly, jx - 0.04, jy) || !inside(poly, jx + 0.04, jy) || !inside(poly, jx, jy - 0.04) || !inside(poly, jx, jy + 0.04) || Math.hypot(jx - lx, jy - ly) < lr + 0.04) continue;
-          d += `M${f(jx)},${f(jy)} L${f(jx + 0.012)},${f(jy)} `;
-        }
-        return d;
-      };
+      // The shared dots, kept clear of the roundel.
+      const offLogo: Map2 = (x, y) => (Math.hypot(x - lx, y - ly) < lr + 0.04 ? [NaN, NaN] : [x, y]);
+      const dots = (poly: number[]) => dotsIn(poly, TEX, offLogo, 0.04).replace(/M\S*NaN\S* L\S*NaN\S* /g, '');
       stipple = [MODULE_PANEL, ...MODULE_STRIPS].map(dots).join('');
       frameDetail += ' ' + [MODULE_PANEL, ...MODULE_STRIPS].map((q) => polyPath(roundCorners(q, 0.06), same, true)).join(' ') + ' ' + OC(lx, ly, lr)
-    } else if (v.texture === 'x' || v.texture === 'patent') stipple = dotsIn(panel, 0.1, same, 0.06) + (modPh?.strips ?? []).map((q) => dotsIn(q, 0.06, same, 0.02)).join('');
+    } else if (v.texture === 'x' || v.texture === 'patent') stipple = dotsIn(panel, TEX, same, 0.06) + (modPh?.strips ?? []).map((q) => dotsIn(q, TEX, same, 0.02)).join('');
     else if (v.texture === 'wilson') {
       // Wilson's texture: rows of slanted pyramids (ridges rising forward at 35 degrees, 0.072" apart, cut by near-vertical
       // grooves 0.1" apart, measured off the photo), and on the photo-traced module grooves fanning down and back from above
@@ -1858,7 +1859,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
           else if (!on && run) { stipple += `M${f(run[0])},${f(run[1])} L${f(x - ux * 0.01)},${f(y - uy * 0.01)} `; run = null; }
         }
       }
-      stipple += (modPh?.strips ?? []).map((q) => dotsIn(q, 0.06, same, 0.02)).join('');
+      stipple += (modPh?.strips ?? []).map((q) => dotsIn(q, TEX, same, 0.02)).join('');
       if (modPh?.fan) {
         const [fx0, fy0] = modPh.fan;
         for (const a of [111, 120, 130, 141, 153, 166, 180]) {
@@ -1876,7 +1877,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
       // serrations down the back strap and front strap (all from the photo).
       const offScrew = (x: number, y: number) => AXG_SCREWS.every(([sx, sy, sr]) => Math.hypot(x - sx, y - sy) > sr + 0.04);
       stipple = AXG_SCREWS.map(([sx, sy, sr]) => OC(sx, sy, sr) + ` M${f(sx - sr * 0.7)},${f(sy + sr * 0.7)} L${f(sx + sr * 0.7)},${f(sy - sr * 0.7)}`).join(' ')
-        + ' ' + dotsIn(AXG_FIELD, 0.07, (x, y) => (offScrew(x, y) ? [x, y] : [NaN, NaN]), 0.03).replace(/M\S*NaN\S* L\S*NaN\S* /g, '')
+        + ' ' + dotsIn(AXG_FIELD, TEX, (x, y) => (offScrew(x, y) ? [x, y] : [NaN, NaN]), 0.03).replace(/M\S*NaN\S* L\S*NaN\S* /g, '')
         + ' ' + AXG_SERRATIONS.map((l) => polyPath(l, same, false)).join(' ');
       frameDetail += ' ' + polyPath(roundCorners(AXG_FIELD, 0.06), same, true);
     }
@@ -1938,10 +1939,10 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     ys.push(tex1);
     const edge = ys.map((y) => { const xs = crossings(mapped, y); return [xs[0] + 0.17, xs[xs.length - 1] - 0.17]; });
     const panel = `M${ys.map((y, i) => `${f(edge[i][0])},${f(y)}`).join(' L')} L${[...ys].reverse().map((y, i) => `${f(edge[ys.length - 1 - i][1])},${f(y)}`).join(' L')} Z`;
-    for (let y = tex0 + 0.12; y < tex1 - 0.06; y += 0.13) {
+    for (let y = tex0 + 0.12; y < tex1 - 0.06; y += TEX) {
       const xs = crossings(mapped, y);
-      const off = Math.round((y - tex0) / 0.13) % 2 ? 0.065 : 0;
-      for (let x = xs[0] + 0.27 + off; x < xs[xs.length - 1] - 0.27; x += 0.13) stipple += `M${f(x)},${f(y)} L${f(x + 0.012)},${f(y)} `;
+      const off = Math.round((y - tex0) / TEX) % 2 ? TEX / 2 : 0;
+      for (let x = xs[0] + 0.27 + off; x < xs[xs.length - 1] - 0.27; x += TEX) stipple += `M${f(x)},${f(y)} L${f(x + 0.012)},${f(y)} `;
     }
     frameDetail = `${rail} ${check} ${controls} ${catchD} ${frameLine} ${panel} ${seam}`;
     // Slide: the top bevel and lower edge lines, rear (and optional front) serrations, extractor and muzzle face.
@@ -2093,7 +2094,7 @@ function profilePieces(P: Piece[], g: ProfileGeo, o: {
     // Sig's P365 15-round magazine wears a textured polymer sleeve over its extension (Shooting Illustrated's photo).
     if (o.mag === 'sleeve') {
       const pan = [+lx(hx + 0.12, 0.08), hy + 0.08, +lx(tx - 0.08, 0.08), ty + 0.08, +lx(tx - 0.08, e - 0.02), ty + e - 0.02, +lx(hx + 0.12, e - 0.02), hy + e - 0.02];
-      extLines += polyPath(roundCorners(pan, 0.04), same, true) + ' ' + dotsIn(pan, 0.07, same, 0.04);
+      extLines += polyPath(roundCorners(pan, 0.04), same, true) + ' ' + dotsIn(pan, TEX, same, 0.04);
     } else if (o.mag === 'ets') for (let t = 0.22; t < e - 0.05; t += 0.2) extLines += `M${f(hx + 0.3)},${f(hy + t - 0.07)} L${f(tx - 0.55)},${f(ty + t - 0.07)} Q${f(tx - 0.35)},${f(ty + t - 0.06)} ${f(tx - 0.25)},${f(ty + t)} Q${f(tx - 0.35)},${f(ty + t + 0.06)} ${f(tx - 0.55)},${f(ty + t + 0.07)} L${f(hx + 0.3)},${f(hy + t + 0.07)} Z `;
     else for (let t = 0.25; t < e - 0.1; t += 0.32) extLines += OC(hx + 0.17, hy + t, 0.03) + ' ';
   }
