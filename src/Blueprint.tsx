@@ -370,13 +370,16 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
   let lower: { o: string; d: string };
   if (flared) {
     const o = AR_PROFILES.lower.outline[0];
-    // Measured from a flat side photo of Aero's M4E1 lower: the guard's belly bottoms out 3.17" below the bore and the
-    // flared magwell lip sits 0.15" ahead of the mil-spec face.
+    // Measured from a flat side photo of Aero's M4E1 lower: the guard's belly bottoms out 3.17" below the bore, its
+    // opening runs 2.06-3.87" back to front, and the flared magwell lip sits 0.15" ahead of the mil-spec face.
     const guard = [1.76, 2.2, 1.73, 2.66, 1.73, 2.98, 1.76, 2.99, 2.3, 3.1, 2.82, 3.17, 3.63, 3.02, 4.1, 2.97, 6.62, 2.51, 6.62, 2.43, 6.52, 2.15, 6.52, 1.45];
-    lower = arPaths({ outline: [[...o.slice(0, 27 * 2), ...guard, ...o.slice(64 * 2)]], detail: AR_PROFILES.lower.detail.filter((_, k) => ![4, 5, 6, 7, 8, 32].includes(k)) });
+    // The guard is a loop: its opening is a hole, and the mil-spec guard's ears and pins at the magwell are dropped.
+    const opening = [2.06, 2.07, 2.1, 1.94, 2.22, 1.83, 2.32, 1.79, 3.64, 1.79, 3.74, 1.85, 3.83, 1.96, 3.87, 2.09, 3.86, 2.62, 3.81, 2.74, 3.69, 2.84, 2.96, 2.98, 2.77, 3.01, 2.27, 2.9, 2.17, 2.85, 2.09, 2.74, 2.06, 2.62];
+    const drop = [1, 2, 3, 4, 5, 6, 7, 8, 32, 39, 40, 41, 42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56];
+    lower = arPaths({ outline: [[...o.slice(0, 27 * 2), ...guard, ...o.slice(64 * 2)], opening], detail: AR_PROFILES.lower.detail.filter((_, k) => !drop.includes(k)) });
   } else lower = arPaths(glock9 ? AR_PROFILES.lower9 : AR_PROFILES.lower);
   P.push({ slot: 'lower', z: 4, row: 'bottom', target: px(5.6 * kx, 2.4 * ky),
-    el: <><path d={R(lower.o)} fillRule={glock9 ? 'evenodd' : undefined} /><path className="detail" d={R(glock9 ? LOWER9_DETAIL.map((l) => polyPath(l, same, false)).join(' ') : lower.d)} /></> });
+    el: <><path d={R(lower.o)} fillRule={glock9 || flared ? 'evenodd' : undefined} /><path className="detail" d={R(glock9 ? LOWER9_DETAIL.map((l) => polyPath(l, same, false)).join(' ') : lower.d)} /></> });
 
   // Lower parts kit: the selector's right-side stub over its detent (the lower drawing shows the hole).
   P.push({ slot: 'lpk', z: 6, row: 'bottom', target: px(1.43 * kx, 1.29 * ky),
