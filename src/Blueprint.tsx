@@ -3,7 +3,7 @@ import { mountsFor } from './data/addons';
 import { AR_PROFILES, type ArPiece } from './data/arProfiles';
 import { OPTIC_PROFILES } from './data/opticProfiles';
 import { GLOCK_PHOTOS, type GlockPhoto } from './data/glockPhotos';
-import { SIG_MODULE_PHOTOS, MODULE_PANEL, MODULE_STRIPS, MODULE_LOGO, MODULE_CATCH, AXG_PANEL, AXG_SCREWS } from './data/sigModulePhotos';
+import { SIG_MODULE_PHOTOS, MODULE_PANEL, MODULE_STRIPS, MODULE_LOGO, MODULE_CATCH, AXG_PANEL, AXG_FIELD, AXG_SCREWS, AXG_SERRATIONS } from './data/sigModulePhotos';
 import { PROFILES } from './data/pistolProfiles';
 import type { Build, Part, Placement, Platform } from './types';
 
@@ -1269,16 +1269,25 @@ const PROFILE_REF: Record<ProfileKey, { oal: number; h: number; rake: number; po
   hellcat: { oal: 6.0, h: 4.36, rake: 0.25, portH: 0.5, tilt: 0.05 },
 };
 
+/** A path from "x,dy" points measured down from the top of the guard opening (y0). */
+function rel(pts: string, y0: number, closed: boolean) {
+  return pts.split(' ').map((p, i) => { const [x, y] = p.split(',').map(Number); return `${i ? 'L' : 'M'}${x},${n3(y0 + y)}`; }).join(' ') + (closed ? ' Z' : '');
+}
+
 /** Trigger shoes, traced from the broken-line triggers in the same patent drawings (y0 is the top of the guard opening).
  *  The P320's curved shoe bows back and its tip curls forward; the P365's runs forward to a tip near the guard;
  *  the Glock's blade has the safety lever down its face. */
-const TRIGGERS: Record<ProfileKey, { face: number; curved: (y0: number) => string; flat: (y0: number) => string; line: { curved: string; flat: string }; hook?: string }> = {
+const TRIGGERS: Record<ProfileKey, { face: number; curved: (y0: number) => string; flat: (y0: number) => string; line: { curved: string | ((y0: number) => string); flat: string | ((y0: number) => string) }; hook?: string }> = {
+  // The P320's triggers traced from flat photos (the curved shoe from Sig's Subcompact view, the flat skeleton shoe from the
+  // AXG): both hang from the front of the guard's top and sweep forward to a tip near the guard's bottom.
   p320: {
-    face: 2.86,
-    curved: (y0) => `M2.66,${y0} Q2.5,2.05 2.6,2.32 Q2.66,2.44 2.84,2.43 Q2.89,2.42 2.87,2.38 Q2.76,2.32 2.76,2.14 Q2.76,1.94 2.86,${y0} Z`,
-    // The X-Series flat trigger as the X-Full photo shows it: a straight blade raked forward to a small tip.
-    flat: (y0) => `M2.25,${y0} L2.74,${y0} Q2.7,1.95 2.71,2.24 Q2.74,2.5 2.85,2.62 Q2.87,2.69 2.81,2.69 Q2.62,2.5 2.56,2.24 Q2.42,1.95 2.25,${y0} Z`,
-    line: { curved: 'M2.8,1.86 Q2.71,2.08 2.74,2.3', flat: 'M2.56,1.86 Q2.63,2.3 2.8,2.6' },
+    face: 2.95,
+    curved: (y0) => rel('2.514,0 2.518,0.012 2.61,0.096 2.655,0.164 2.804,0.574 2.868,0.672 2.929,0.733 3.033,0.803 3.143,0.838 3.186,0.844 3.297,0.838 3.38,0.801 3.388,0.782 3.37,0.746 3.29,0.711 3.186,0.641 3.082,0.537 3.025,0.452 2.972,0.317 2.953,0.231 2.947,0.108 2.97,0', y0, true),
+    flat: (y0) => rel('2.477,0 2.484,0.046 2.56,0.124 2.932,0.774 2.98,0.828 3.112,0.935 3.14,0.949 3.159,0.942 3.18,0.914 3.18,0.871 3.137,0.821 3.118,0.782 2.953,0.179 2.951,0.14 2.959,0.089 3.009,0', y0, true),
+    line: {
+      curved: (y0) => rel('2.92,0.02 2.9,0.34 2.98,0.54 3.1,0.68', y0, false),
+      flat: (y0) => rel('2.958,0.05 2.99,0.31 3.09,0.76', y0, false) + ' ' + rel('2.739,0.089 2.766,0.081 2.805,0.088 2.832,0.105 2.856,0.136 2.957,0.502 2.949,0.518 2.918,0.519 2.892,0.498 2.709,0.179 2.7,0.151 2.702,0.124', y0, true),
+    },
   },
   p365: {
     face: 2.8,
@@ -1710,9 +1719,10 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
       return [x + dx, y + dy];
     });
   }
-  // A module traced from photos (the X-Series ones and the Subcompact) replaces the patent's outline; its dust cover stops where the slide's nose comes down.
+  // A module traced from photos (the X-Series ones, the Subcompact and the AXG) replaces the patent's outline; its dust cover stops where the slide's nose comes down.
   const modPh = !glock && v.module ? SIG_MODULE_PHOTOS[v.module] : undefined;
-  const modOl = modPh ? clipFront(modPh.frame, fx(mk.dust)) : undefined;
+  // The AXG's alloy frame runs out nearly to the muzzle on its photo, so only the slide's front clips it.
+  const modOl = modPh ? clipFront(modPh.frame, modPh.kind === 'axg' ? SL - 0.04 : fx(mk.dust)) : undefined;
   if (modPh && modOl) {
     hole = polyPath(modPh.hole, same, true);
     const yb = Math.max(...modOl.filter((_, i) => i % 2));
@@ -1722,10 +1732,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   }
   // A grip module with its own texture replaces the patent's molded panels below the guard.
   // A photo-traced module keeps only the patent's lines above the trigger guard (the controls); its grip is its own.
-  // The AXG's G10 panel covers the grip right up to the slide, so it keeps only the controls and the patent's mag catch.
-  const patentCatch = (ol: number[]) => ol.every((c, i) => (i % 2 ? c > 2.39 && c < 2.8 : c > 1.5 && c < 1.95));
   const keepDetail = (ol: number[]) => glock || (modPh ? Math.max(...ol.filter((_, i) => i % 2)) < h0y + 0.2
-    : v.texture === 'axg' ? (Math.max(...ol.filter((_, i) => i % 2)) < 1.3 || Math.max(...ol.filter((_, i) => i % 2)) < h0y + 0.2 && Math.max(...ol.filter((_, i) => !(i % 2))) > 2.3) || patentCatch(ol)
     : v.texture === 'patent' || Math.min(...ol.filter((_, i) => i % 2)) < h1y - 0.1);
   let frameDetail = pr.frame.detail.filter(keepDetail).map((ol) => polyPath(scF(ol), frameMap, false)).join(' ');
   let slideDetail = pr.slide.detail.map((ol) => polyPath(scS(ol), slideMap, false)).join(' ');
@@ -1747,7 +1754,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     if (v.texture === 'axg') panel.splice(0, panel.length, ...roundCorners(AXG_PANEL, 0.08));
     const outline = polyPath(panel, same, true);
     // The factory modules keep their molded panel lines from the patent; the texture inside is the shared 0.1" dots.
-    if (modPh && !modPh.std) {
+    if (modPh && !modPh.kind) {
       // The X-Series grip as the photos show it: a fine-stippled main panel around the Sig roundel, strips down both straps.
       const [lx, ly, lr] = MODULE_LOGO;
       // Sig's texture is a fine random stipple: dots on a 0.065" grid, each nudged by a fixed pseudo-random amount.
@@ -1764,17 +1771,26 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
       };
       stipple = [MODULE_PANEL, ...MODULE_STRIPS].map(dots).join('');
       frameDetail += ' ' + [MODULE_PANEL, ...MODULE_STRIPS].map((q) => polyPath(roundCorners(q, 0.06), same, true)).join(' ') + ' ' + OC(lx, ly, lr)
-    } else if (v.texture === 'x' || v.texture === 'patent') stipple = dotsIn(panel, 0.1, same, 0.06);
+    } else if (v.texture === 'x' || v.texture === 'patent') stipple = dotsIn(panel, 0.1, same, 0.06) + (modPh?.strips ?? []).map((q) => dotsIn(q, 0.06, same, 0.02)).join('');
     else if (v.texture === 'wilson') stipple = hatchIn(panel, 50, 0.13, same, 0.05) + hatchIn(panel, -50, 0.13, same, 0.05);
     else {
-      // AXG: a G10 panel held by two screws on the alloy frame (from the photo), and checkering down the front strap.
-      let check = '';
-      for (let i = 0; i < ys.length; i += 2) check += `M${f(edge[i][1] + inset - 0.14)},${f(ys[i])} L${f(edge[i][1] + inset - 0.04)},${f(ys[i])} `;
-      stipple = AXG_SCREWS.map(([sx, sy, sr]) => OC(sx, sy, sr) + ` M${f(sx - sr * 0.7)},${f(sy + sr * 0.7)} L${f(sx + sr * 0.7)},${f(sy - sr * 0.7)}`).join(' ') + ' ' + check;
+      // AXG: a G10 panel held by two screws on the alloy frame, a checkered field inside its raised rim, and
+      // serrations down the back strap and front strap (all from the photo).
+      const offScrew = (x: number, y: number) => AXG_SCREWS.every(([sx, sy, sr]) => Math.hypot(x - sx, y - sy) > sr + 0.04);
+      stipple = AXG_SCREWS.map(([sx, sy, sr]) => OC(sx, sy, sr) + ` M${f(sx - sr * 0.7)},${f(sy + sr * 0.7)} L${f(sx + sr * 0.7)},${f(sy - sr * 0.7)}`).join(' ')
+        + ' ' + dotsIn(AXG_FIELD, 0.07, (x, y) => (offScrew(x, y) ? [x, y] : [NaN, NaN]), 0.03).replace(/M\S*NaN\S* L\S*NaN\S* /g, '')
+        + ' ' + AXG_SERRATIONS.map((l) => polyPath(l, same, false)).join(' ');
+      frameDetail += ' ' + polyPath(roundCorners(AXG_FIELD, 0.06), same, true);
     }
-    if ((v.texture !== 'patent' && !modPh) || modPh?.std) frameDetail += ' ' + outline;
-    // A photo-traced module's mag catch: the patent drawing's button, placed where that module's photo shows it.
-    if (modPh) {
+    if ((v.texture !== 'patent' && !modPh) || modPh?.kind) frameDetail += ' ' + outline;
+    if (modPh) frameDetail += [...(modPh.strips ?? []).map((q) => polyPath(roundCorners(q, 0.03), same, true)), ...(modPh.lines ?? []).map((l) => polyPath(l, same, false))].map((d) => ' ' + d).join('');
+    // A photo-traced module's mag catch: its own button as the photo shows it, or the patent drawing's button placed
+    // where that module's photo shows it.
+    if (modPh?.catchPoly) frameDetail += ' ' + polyPath(roundCorners(modPh.catchPoly.outline, 0.04), same, true) + ' ' + modPh.catchPoly.ridges.map((l) => polyPath(l, same, false)).join(' ');
+    else if (modPh?.catchRound) {
+      const [cx, cy, cr] = modPh.catchRound, knurl = [...Array(16)].flatMap((_, i) => [cx + cr * Math.cos((i * Math.PI) / 8), cy + cr * Math.sin((i * Math.PI) / 8)]);
+      frameDetail += ' ' + OC(cx, cy, cr) + ' ' + OC(cx, cy, cr + 0.05) + ' ' + hatchIn(knurl, 60, 0.05, same, 0.02) + ' ' + hatchIn(knurl, -60, 0.05, same, 0.02);
+    } else if (modPh) {
       const [cdx, cdy] = modPh.catchShift ?? [0, 0];
       frameDetail += ' ' + MODULE_CATCH.map((l) => polyPath(l.map((v, i) => v + (i % 2 ? cdy : cdx)), same, false)).join(' ');
     }
@@ -1869,13 +1885,14 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     frameDetail += ` ${OC(fx(2.4), mk.railBottom + 0.32, 0.17)} ${OC(fx(2.4), mk.railBottom + 0.32, 0.06)} M${f(fx(2.0))},${f(mk.railBottom + 0.1)} L${f(fx(1.75))},${f(mk.railBottom + 0.1)} Q${f(fx(1.6))},${f(mk.railBottom + 0.12)} ${f(fx(1.6))},${f(mk.railBottom + 0.24)} L${f(fx(1.62))},${f(mk.railBottom + 0.3)} L${f(fx(1.95))},${f(mk.railBottom + 0.28)}`;
   }
   const yGB = Math.max(heel[1], toe[1]);
-  // The P320's trigger reaches to within 0.08" of the guard's bottom on the photos; the patent draws it shorter, so stretch it down.
+  // The P320's photo-traced triggers keep their size unless a module's guard is too short for them; then they shorten to clear it by 0.08".
   const reachP320 = (d: string) => {
-    if (key !== 'p320' || o.flat) return d;
-    const k = (h1y - 0.08 - h0y) / (2.43 - h0y);
+    if (key !== 'p320') return d;
+    const k = Math.min(1, (h1y - 0.08 - h0y) / (o.flat ? 0.949 : 0.844));
     let i = 0;
     return d.replace(/-?\d*\.?\d+/g, (n) => (i++ % 2 ? n3(h0y + (+n - h0y) * k) : n));
   };
+  const trigLine = o.flat ? TRIGGERS[key].line.flat : TRIGGERS[key].line.curved;
   // A slide longer than the frame (G34 on a G17 frame, G47 or G19X on a G45 frame): ahead of the dust cover the
   // slide's nose comes down around the recoil spring, about 0.4" below the slide flats on the photos.
   const fF = glock && spec.photo ? Math.max(...mapped.filter((_, i) => !(i % 2))) : SL;
@@ -1886,7 +1903,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     port0, port1, portH: R.portH,
     xt: photoTrig ? 3.5 : TRIGGERS[key].face, trigTop: photoTrig?.top ?? h0y,
     trigD: photoTrig?.d ?? reachP320(scD((o.flat ? TRIGGERS[key].flat : TRIGGERS[key].curved)(h0y - dy) + (v.hook && TRIGGERS[key].hook ? ' ' + TRIGGERS[key].hook : ''))),
-    trigLine: photoTrig?.line ?? reachP320(scD(o.flat ? TRIGGERS[key].line.flat : TRIGGERS[key].line.curved)),
+    trigLine: photoTrig?.line ?? reachP320(scD(typeof trigLine === 'string' ? trigLine : trigLine(h0y - dy))),
     gF, dust, railY: mk.railBottom,
     heel, toe, yGB, yMB: photoTrig ? photoTrig.yMB + ext : yGB + ext + BASE, ext, plateD: photoTrig?.plate,
     frameD: (glock ? polyPath(mapped, (x, y) => [x, y], true) : modOl ? polyPath(modOl, same, true) : outlines.map((ol) => polyPath(ol, frameMap, true)).join(' ')) + ' ' + hole,
@@ -2082,7 +2099,7 @@ function pistol(platform: Platform, build: Build): Scene {
     bigCatch: gen === 'gen4' || gen === 'gen5' || matches(fr, /Timberwolf|TWF/), seam: gen === 'gen4' || gen === 'gen5' || matches(fr, /Timberwolf/),
     sf: !!fr?.attrs.sf, flare5: gen === 'gen5', timberwolf: matches(fr, /Timberwolf/), rail: !!fr?.attrs.rail,
     beaver: wilson || axg, undercut: wilson || axg, flare: wilson,
-    module: matches(gr, /X-Series Full/) ? 'xfull' : matches(gr, /X-Series Carry/) ? 'xcarry' : gr?.id === 'p-grip-sub' ? 'sub' : undefined,
+    module: matches(gr, /X-Series Full/) ? 'xfull' : matches(gr, /X-Series Carry/) ? 'xcarry' : gr?.id === 'p-grip-sub' ? 'sub' : axg ? 'axg' : undefined,
     texture: wilson ? 'wilson' : axg ? 'axg' : xs ? 'x' : 'patent',
     slide: b.slide?.brand === 'Brownells' ? 'brownells' : matches(b.slide, /Combat Slide/) ? 'ggp' : matches(b.slide, /Octane/) ? 'zev' : matches(b.slide, /ZPS/) ? 'zaffiri'
       : b.slide?.brand === 'Apex Tactical' ? 'apex' : matches(b.slide, /Axiom/) ? 'tp' : matches(b.slide, /Gen5/) ? 'gen5' : 'oem',
