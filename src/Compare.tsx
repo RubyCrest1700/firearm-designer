@@ -4,7 +4,7 @@ import type { RegionState } from './Blueprint';
 import { Blueprint } from './drawings';
 import { bestOffer, money, ownedOf, partIds, type Selection } from './engine';
 import { FEATURED, buildOf, selectionFromParts, totalOf, type SavedBuild } from './store';
-import { listBuilds, type CommunityBuild } from './community';
+import { getBuild, listBuilds, type CommunityBuild } from './community';
 import { buildStatus, statesFor } from './status';
 import { buildWeight, formatWeight } from './weight';
 import type { Issue, Part, Slot } from './types';
@@ -254,8 +254,7 @@ function Chooser({ label, saved, current, otherPlatform, onPick }: {
     const got = parseBuildLink(link);
     if (!got) { setError("That doesn't look like a Drop-In Builds link. Use Copy Link on a build, then paste it here."); return; }
     if ('communityId' in got) {
-      const list = community ?? await listBuilds(null, 'new').catch(() => []);
-      const hit = list.find((x) => x.id === got.communityId);
+      const hit = community?.find((x) => x.id === got.communityId) ?? await getBuild(got.communityId);
       if (!hit || !PLATFORMS.some((p) => p.id === canonicalPlatform(hit.platform))) { setError("We couldn't find that community build. It may have been removed."); return; }
       onPick({ kind: 'Community', name: hit.name, platform: canonicalPlatform(hit.platform), selection: selectionFromParts(hit.platform, hit.parts) });
       return;
@@ -281,7 +280,7 @@ function Chooser({ label, saved, current, otherPlatform, onPick }: {
       {src === 'current' && current && (
         <ul className="cmp-options">
           {option('current', current.name ?? 'The build in the builder', totalText(current.platform, current.selection),
-            { kind: 'Current Build', name: current.name ?? `Your ${PLATFORMS.find((p) => p.id === current.platform)?.name} build`, platform: current.platform, selection: { ...current.selection } })}
+            { kind: 'Current Build', name: current.name ?? (({ platform: p, build }) => `Your ${p.modelOf?.(build)?.name ?? p.name} build`)(buildOf(current.platform, current.selection)), platform: current.platform, selection: { ...current.selection } })}
         </ul>
       )}
       {src === 'starter' && (

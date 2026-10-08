@@ -372,7 +372,8 @@ function Mark() {
 const FAQ_PICKS = ['glock-19-slide-compatibility', 'glock-red-dot-footprints', 'sig-p365-slide-grip-compatibility', 'ar-15-barrel-compatibility'];
 
 function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string, part?: Part) => void; onStart: () => void; onBrowse: () => void }) {
-  const partCount = PLATFORMS.reduce((n, p) => n + p.parts.length, 0);
+  // Shared add-ons (lights, cases) are listed under several platforms; count each once.
+  const partCount = new Set(PLATFORMS.flatMap((p) => p.parts.map((x) => x.id))).size;
   const drops = biggestDrops(PLATFORMS.flatMap((p) => p.parts));
   const hero = buildOf('ar15', presetSelection(PLATFORMS.find((p) => p.id === 'ar15')!, 'value'));
   const faqs = FAQ_PICKS.map((slug) => GUIDES.find((g) => g.slug === slug)).filter((g): g is (typeof GUIDES)[number] => !!g);
@@ -789,9 +790,11 @@ function Summary({ platform, build, issues, aware, states, status, total, owned,
   const carts = singleRetailerCarts(chosen).slice(0, 4);
   const [dollars, cents] = money(total).split('.');
 
-  const startSave = () => { setName(openSaved?.name ?? `My ${platform.name} build`); setSaving(true); };
+  // Name new builds after the model when the builder covers several ("My Glock 19 build").
+  const defaultName = `My ${platform.modelOf?.(build)?.name ?? platform.name} build`;
+  const startSave = () => { setName(openSaved?.name ?? defaultName); setSaving(true); };
   const submit = (asNew: boolean) => { if (name.trim()) { onSave(name.trim(), asNew); setSaving(false); } };
-  const startShare = () => { setName(openSaved?.name ?? `My ${platform.name} build`); setNote(''); setShareError(null); setSharing(true); setSaving(false); };
+  const startShare = () => { setName(openSaved?.name ?? defaultName); setNote(''); setShareError(null); setSharing(true); setSaving(false); };
   const submitShare = async () => {
     if (name.trim().length < 3) { setShareError('Give the build a name of at least 3 characters.'); return; }
     setBusy(true);
@@ -824,7 +827,7 @@ function Summary({ platform, build, issues, aware, states, status, total, owned,
           <form className="save-form" onSubmit={(e) => { e.preventDefault(); void submitShare(); }}>
             <label htmlFor="share-name">Build Name</label>
             <input id="share-name" value={name} onChange={(e) => setName(e.target.value)} autoFocus maxLength={60} />
-            <label htmlFor="share-note">What's It For? <span className="dim">(optional)</span></label>
+            <label htmlFor="share-note">What's It For? <span className="dim">(Optional)</span></label>
             <textarea id="share-note" value={note} onChange={(e) => setNote(e.target.value)} maxLength={280} rows={3} placeholder="Daily carry, competition, home defense…" />
             <p className="form-note">Shared builds are public on the Community page. Just the name, note and parts list are shared.</p>
             {shareError && <p className="form-error" role="alert">{shareError}</p>}
@@ -995,7 +998,7 @@ function Picker({ platform, slot, focusId: focusProp, number, model, build, plac
           {conflicts > 0 && (
             <label className="toggle" htmlFor={`hide-${slot.id}`}>
               <input id={`hide-${slot.id}`} type="checkbox" checked={hideConflicts} onChange={(e) => setHideConflicts(e.target.checked)} />
-              <span>Hide {conflicts} that conflict</span>
+              <span>Hide {conflicts} That Conflict</span>
             </label>
           )}
         </div>
@@ -1251,7 +1254,8 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onCompare, o
   useEffect(() => {
     let live = true;
     setError(null);
-    listBuilds(isPlatform ? filter : null, sort)
+    const family = PLATFORMS.filter((p) => p.family === filter).map((p) => p.id).join(',');
+    listBuilds(isPlatform ? filter : family || null, sort)
       .then((list) => { if (live) setBuilds(list.filter((b) => matches(b.platform))); })
       .catch((e: Error) => { if (live) { setBuilds([]); setError(e.message); } });
     return () => { live = false; };

@@ -139,7 +139,7 @@ function chartHtml(platform: Platform, c: FitChart) {
 
 /* ---------------------------------------------------------------- prices, picks */
 
-const TIER_LABEL: Record<Tier, string> = { budget: 'Budget Pick', value: 'Best Value', premium: 'Premium Pick' };
+const TIER_LABEL: Record<Tier, string> = { budget: 'Budget Pick', value: 'Best Value Pick', premium: 'Premium Pick' };
 const TIERS: Tier[] = ['budget', 'value', 'premium'];
 
 function priceHtml(part: Part) {
@@ -483,7 +483,7 @@ export function platformsIndexPage() {
   <p><a class="cta" href="/#build">Open the Builder</a></p>`;
   return layout({
     title: 'Firearm Build Planners: AR, Glock, Sig and More | Drop-In Builds',
-    description: `Plan a build for any of ${PAGE_VIEWS.length} platforms: ${PAGE_VIEWS.map((p) => p.name).join(', ')}. Parts checked for fit, prices compared across retailers.`,
+    description: 'Plan an AR-15, AR-10, AR-9, Glock, Sig, M&P or Hellcat build part by part. Parts checked for fit, prices compared across retailers.',
     path: '/build/',
     body,
     current: 'build',
