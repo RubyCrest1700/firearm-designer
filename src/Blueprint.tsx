@@ -1595,7 +1595,13 @@ function glockPhotoFrame(ph: GlockPhoto, o: { dust: number; yRail: number; rail:
     const strapEdge = ph.seam.length ? sm : rear;
     if (!Number.isNaN(strapEdge) && y < ph.texBottom - 0.15) for (let x = back + 0.07 + off; x < strapEdge - 0.06; x += 0.1) stipple += `M${f(x)},${f(y)} L${f(x + 0.014)},${f(y)} `;
   }
-  const frameDetail = `${rail} ${controls} ${o.seam ? P(ph.seam) : ''} ${P(ph.panelRear)} ${ph.logo ? rr(ph.logo, 0.06) : ''}`;
+  // The thumb rest: above the texture the frame dips in, and RSR's flat photos show its lower lip as one curve sweeping
+  // down from behind the slide stop's level to run level just above the mag catch (measured from the catch's corner).
+  const rest = [-1.3, -0.62, -1.11, -0.42, -0.91, -0.25, -0.71, -0.17, -0.44, -0.165, -0.17, -0.2];
+  let lip = `M${f(c0 + rest[0])},${f(c1 + rest[1])}`;
+  for (let k = 2; k + 3 < rest.length; k += 2) lip += ` Q${f(c0 + rest[k])},${f(c1 + rest[k + 1])} ${f(c0 + (rest[k] + rest[k + 2]) / 2)},${f(c1 + (rest[k + 1] + rest[k + 3]) / 2)}`;
+  lip += ` L${f(c0 + rest[rest.length - 2])},${f(c1 + rest[rest.length - 1])}`;
+  const frameDetail = `${rail} ${controls} ${o.seam ? P(ph.seam) : ''} ${P(ph.panelRear)} ${ph.logo ? rr(ph.logo, 0.06) : ''} ${lip}`;
   return { mapped: pts, heel, toe, tang, hole: P(glockOpening(ph.hole), true), frameDetail, stipple };
 }
 
@@ -1844,11 +1850,14 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   // A module with its photo's front face draws its own dust cover and rail, so the patent's lines there are dropped.
   const patentRail = (ol: number[]) => !!modPh?.front && ((key === 'p365' && ol.every((c, i) => (i % 2 ? c > mk.sh + 0.03 : c > 3.6))) || ol.every((c, i) => (i % 2 ? c > 1.3 : true)) && Math.max(...ol.filter((_, i) => !(i % 2))) > 4.0 || ol.every((c, i) => (i % 2 ? c > 0.95 : c > 5.5)));
   // The Hellcat drawing's long molded slot under the slide isn't on the gun (RSR's photo shows a short slide stop tab there).
+  // Behind the upper textured patch RSR's photo shows a smooth surface with one pin; the drawing's broken contour strokes
+  // there are dropped and the patch's rear edge is drawn as one line below.
+  const hellcatRear = (ol: number[]) => key === 'hellcat' && ol.every((c, i) => (i % 2 ? c > 1.15 && c < 2.2 : c > 0.72 && c < 1.15));
   const hellcatSlot = (ol: number[]) => key === 'hellcat' && ol.every((c, i) => (i % 2 ? c > 0.99 && c < 1.3 : c > 0.85 && c < 2.85)) && Math.max(...ol.filter((_, i) => !(i % 2))) - Math.min(...ol.filter((_, i) => !(i % 2))) > 1.4;
   // The M&P drawing's mag release and its palm swell and front field lines are redrawn from the photo below.
   const mpCatch = (ol: number[]) => key === 'mp' && (ol.every((c, i) => (i % 2 ? c > 2.3 && c < 2.7 : c > 1.8 && c < 2.15))
     || (v.texture === 'patent' && ol.length > 120 && Math.max(...ol.filter((_, i) => !(i % 2))) > 1.0));
-  const keepDetail = (ol: number[]) => !patentLever(ol) && !patentRail(ol) && !hellcatSlot(ol) && !mpCatch(ol) && (glock || (modPh ? Math.max(...ol.filter((_, i) => i % 2)) < h0y + 0.2 && Math.min(...ol.filter((_, i) => !(i % 2))) > -0.12
+  const keepDetail = (ol: number[]) => !patentLever(ol) && !patentRail(ol) && !hellcatSlot(ol) && !hellcatRear(ol) && !mpCatch(ol) && (glock || (modPh ? Math.max(...ol.filter((_, i) => i % 2)) < h0y + 0.2 && Math.min(...ol.filter((_, i) => !(i % 2))) > -0.12
     : v.texture === 'patent' || Math.min(...ol.filter((_, i) => i % 2)) < h1y - 0.1));
   let frameDetail = pr.frame.detail.filter(keepDetail).map((ol) => polyPath(scF(ol), frameMap, false)).join(' ');
   let slideDetail = pr.slide.detail.map((ol) => polyPath(scS(ol), slideMap, false)).join(' ');
@@ -1950,7 +1959,11 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
       // release; above it a textured patch under the slide (stopping short of the back strap), below it the grip texture.
       const m = (x: number, y: number) => frameMap(x, y);
       const [u0, u1, l0, l1] = [m(0.98, 1.78), m(2.6, 1.86), m(0.5, 1.84), m(2.2, 2.5)];
-      const upper = clipHalf(clipHalf(panel, ...u0, ...u1), ...m(0.98, 1.0), ...m(0.98, 2.2));
+      // The upper patch as the photo shows it: from just ahead of the pin to over the guard, its lower edge level and its
+      // front edge sloping up to the guard.
+      const upper = roundCorners([m(1.08, 1.38), m(2.79, 1.4), m(2.33, 1.93), m(1.04, 1.89)].flat(), 0.06);
+      frameDetail += ` M${f(upper[0])},${f(upper[1])} ` + [m(1.055, 1.5), m(1.04, 1.7), m(1.035, 1.88)].map(([x, y]) => `L${f(x)},${f(y)}`).join(' ')
+        + ` ${OC(...m(0.85, 1.57), 0.045)}`;
       const lower = clipHalf(panel, ...l1, ...l0);
       stipple = [upper, lower].map((q) => dotsIn(q, TEX, same, 0.06)).join('');
     } else if (v.texture === 'x' || v.texture === 'patent') stipple = dotsIn(panel, TEX, same, 0.06) + (modPh?.strips ?? []).map((q) => dotsIn(q, TEX, same, 0.02)).join('');
@@ -2114,10 +2127,12 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
       + ` ${OC(fx(4.0), mk.sh + 0.2, 0.07)}`;
   }
   if (key === 'mp') {
-    // The reversible mag release as RSR's flat photo shows it: a round button just behind the guard's lower rear corner,
-    // with its pointed wing reaching back toward the grip.
-    const q = (x: number, y: number) => `${f(fx(x - 0.1))},${f(y)}`;
-    frameDetail += ` M${q(1.9, 2.455)} Q${q(1.96, 2.435)} ${q(2.03, 2.435)} Q${q(2.21, 2.435)} ${q(2.21, 2.59)} Q${q(2.21, 2.745)} ${q(2.03, 2.745)} Q${q(1.92, 2.745)} ${q(1.86, 2.7)} L${q(1.72, 2.6)} Q${q(1.68, 2.57)} ${q(1.72, 2.55)} Z M${q(1.9, 2.455)} Q${q(1.83, 2.58)} ${q(1.86, 2.7)}`;
+    // The reversible mag release as RSR's flat photo shows it (overlaid at scale): an oval button with a dished center tucked into
+    // the corner between the guard's rear and the grip's front strap, level with the guard's lower half.
+    const [cx, cy, rx, ry] = [fx(1.995), 2.39, 0.215, 0.17], k = 0.5523;
+    const oval = `M${f(cx - rx)},${f(cy)} C${f(cx - rx)},${f(cy - ry * k)} ${f(cx - rx * k)},${f(cy - ry)} ${f(cx)},${f(cy - ry)} C${f(cx + rx * k)},${f(cy - ry)} ${f(cx + rx)},${f(cy - ry * k)} ${f(cx + rx)},${f(cy)} `
+      + `C${f(cx + rx)},${f(cy + ry * k)} ${f(cx + rx * k)},${f(cy + ry)} ${f(cx)},${f(cy + ry)} C${f(cx - rx * k)},${f(cy + ry)} ${f(cx - rx)},${f(cy + ry * k)} ${f(cx - rx)},${f(cy)} Z`;
+    frameDetail += ` ${oval} ${OC(cx - 0.03, cy - 0.01, 0.115)}`;
   }
   if (key === 'hellcat') {
     // Controls where RSR's flat photo shows them: the slide stop just under the slide (a rounded tab with grip ribs), a pin
