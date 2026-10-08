@@ -1315,11 +1315,13 @@ const TRIGGERS: Record<ProfileKey, { face: number; curved: (y0: number) => strin
   // curls forward to its tip. Traced from the same patent drawing.
   mp: {
     face: 2.8,
-    curved: (y0) => `M2.37,${y0} Q2.56,1.82 2.59,1.95 L2.606,2.1 L2.763,2.1 L2.763,2.06 Q2.8,1.8 3.095,${y0} Z M2.612,2.13 Q2.7,2.36 2.812,2.522 Q2.82,2.59 2.88,2.59 L2.95,2.588 Q3.05,2.58 3.046,2.522 Q2.85,2.3 2.765,2.13 Z`,
-    flat: (y0) => `M2.37,${y0} Q2.56,1.82 2.59,1.95 L2.606,2.1 L2.763,2.1 L2.763,2.06 Q2.8,1.8 3.095,${y0} Z M2.612,2.13 L2.71,2.56 Q2.72,2.6 2.77,2.6 L2.93,2.6 Q2.98,2.6 2.97,2.55 L2.8,2.13 Z`,
+    // The M2.0's hinged trigger, traced from RSR's flat M&P9 M2.0 photo: a wide upper piece hanging from the top of the
+    // guard opening with its wedge at the rear and two pins, then the curved lower blade hooking forward to its tip.
+    curved: (y0) => `M2.5,${y0} L2.482,1.79 L2.438,1.88 L2.616,1.926 L2.654,2.122 L2.873,2.122 Q2.85,2.0 2.892,1.903 Q2.94,1.82 3.006,1.788 Q3.12,1.73 3.216,${y0} Z M2.682,2.135 Q2.72,2.27 2.816,2.36 Q2.9,2.43 2.968,2.465 L3.016,2.522 Q3.04,2.53 3.063,2.516 L3.082,2.478 Q3.17,2.47 3.216,2.451 Q3.25,2.43 3.244,2.408 Q3.23,2.385 3.197,2.379 Q3.13,2.37 3.082,2.345 Q3.02,2.3 2.978,2.249 Q2.93,2.2 2.873,2.131 Z`,
+    flat: (y0) => `M2.5,${y0} L2.482,1.79 L2.438,1.88 L2.616,1.926 L2.654,2.122 L2.873,2.122 Q2.85,2.0 2.892,1.903 Q2.94,1.82 3.006,1.788 Q3.12,1.73 3.216,${y0} Z M2.682,2.135 L2.78,2.56 Q2.79,2.6 2.84,2.6 L3.0,2.6 Q3.05,2.6 3.04,2.55 L2.873,2.135 Z`,
     line: {
-      curved: 'M2.66,2.08 Q2.66,2.05 2.69,2.05 Q2.72,2.05 2.72,2.08 Q2.72,2.11 2.69,2.11 Q2.66,2.11 2.66,2.08 Z M2.7,2.2 Q2.78,2.38 2.88,2.52',
-      flat: 'M2.66,2.08 Q2.66,2.05 2.69,2.05 Q2.72,2.05 2.72,2.08 Q2.72,2.11 2.69,2.11 Q2.66,2.11 2.66,2.08 Z M2.7,2.2 L2.79,2.54',
+      curved: 'M2.809,1.769 Q2.809,1.734 2.844,1.734 Q2.879,1.734 2.879,1.769 Q2.879,1.804 2.844,1.804 Q2.809,1.804 2.809,1.769 Z M2.729,2.065 Q2.729,2.035 2.759,2.035 Q2.789,2.035 2.789,2.065 Q2.789,2.095 2.759,2.095 Q2.729,2.095 2.729,2.065 Z',
+      flat: 'M2.809,1.769 Q2.809,1.734 2.844,1.734 Q2.879,1.734 2.879,1.769 Q2.879,1.804 2.844,1.804 Q2.809,1.804 2.809,1.769 Z M2.729,2.065 Q2.729,2.035 2.759,2.035 Q2.789,2.035 2.789,2.065 Q2.789,2.095 2.759,2.095 Q2.729,2.095 2.729,2.065 Z',
     },
     hook: 'M2.88,2.6 L3.04,2.56 L2.95,2.44 Z',
   },
@@ -1581,9 +1583,12 @@ function glockPhotoFrame(ph: GlockPhoto, o: { dust: number; yRail: number; rail:
     const off = row % 2 ? 0.05 : 0;
     const back = c[0], frontX = Math.min(c[c.length - 1], strap(y));
     const rear = lineX(ph.panelRear, y), sm = lineX(ph.seam, y);
-    if (!Number.isNaN(rear)) for (let x = rear + 0.08 + off; x < frontX - 0.07; x += 0.1) {
+    // The side panel starts at the mag catch's bottom edge (RSR's photos): above it, and in front of the catch where the
+    // frame curves in under the trigger guard, the frame is smooth, so the panel's front top corner rounds off.
+    const curveIn = 0.12 * Math.max(0, Math.min(1, (c3 + 0.45 - y) / 0.4));
+    if (!Number.isNaN(rear) && y >= c3 - 0.04) for (let x = rear + 0.08 + off; x < frontX - 0.07 - curveIn; x += 0.1) {
       if (x > l0 - 0.04 && x < l2 + 0.04 && y > l1 - 0.04 && y < l3 + 0.04) continue;
-      if (x > c0 - 0.05 && x < c2 + 0.05 && y < c3 + 0.05) continue; // smooth around the mag catch
+      if (x > c0 - 0.05 && y < c3 + 0.06) continue; // smooth around and in front of the mag catch
       stipple += `M${f(x)},${f(y)} L${f(x + 0.014)},${f(y)} `;
     }
     // Back strap: behind the seam, or behind the panel edge on the slim frames (no separate back strap).
@@ -1664,6 +1669,36 @@ function clipToFace(pts: number[], face: number[]) {
   for (let i = 0; i < d.length; i += 2) {
     const x = Math.min(d[i], at(d[i + 1]));
     if (out.length < 2 || out[out.length - 2] !== x || out[out.length - 1] !== d[i + 1]) out.push(x, d[i + 1]);
+  }
+  return out;
+}
+
+/** Traced off RSR's flat M&P9 M2.0 photo (inches, guard opening's rear top corner as on the drawing): the back and front
+ *  strap edges, the palm swell's S-curve, and the middle field's edge (its top, rounded front corner, then down the front strap). */
+const MP_FIELDS: { back: number[]; front: number[]; prop: number; s: number[][]; f: number[][] } = {
+  back: [0.27, 1.85, 0.03, 2.5, -0.19, 3.14, -0.38, 3.71, -0.56, 4.29, -0.61, 4.59],
+  front: [1.99, 2.82, 1.94, 2.95, 1.79, 3.41, 1.63, 4.02, 1.54, 4.48, 1.52, 4.74], prop: 3.05,
+  s: [[0.28, 1.85], [0.53, 2.04], [0.8, 2.3], [0.99, 2.65], [1.06, 3.03], [1.03, 3.41], [0.87, 3.71], [0.61, 3.94], [0.22, 4.1], [-0.04, 4.25], [-0.27, 4.48], [-0.37, 4.71]],
+  f: [[0.85, 2.11], [0.91, 2.04], [1.6, 2.1], [1.68, 2.21], [1.66, 2.69], [1.6, 2.82], [1.54, 3.14], [1.5, 3.56], [1.47, 4.02], [1.44, 4.48]],
+};
+
+/** Traced off RSR's flat P365 photo the same way: the raised side panel around the SIG SAUER lettering, and the strap edges.
+ *  The back strap strip is textured from 1.94" down, the front strap strip from 2.93". */
+const P365_FIELDS = {
+  back: [0.33, 1.94, 0.15, 2.41, 0.05, 2.83, -0.02, 3.26, -0.03, 3.62],
+  front: [1.91, 2.29, 1.81, 2.83, 1.73, 2.96, 1.69, 3.26, 1.66, 3.62, 1.64, 3.78], prop: 2.6,
+  pad: [0.58, 1.83, 1.64, 2.03, 1.7, 2.14, 1.68, 2.41, 1.6, 2.86, 1.51, 3.23, 1.45, 3.56, 1.44, 3.75, 1.16, 3.75, 1.09, 3.55, 0.4, 3.4, 0.24, 3.44, 0.21, 3.26, 0.24, 2.96, 0.33, 2.59, 0.47, 2.2],
+};
+
+/** Keeps the part of a closed polygon on the left of the line a->b (y down, so "left" is above a line running forward). */
+function clipHalf(pts: number[], ax: number, ay: number, bx: number, by: number) {
+  const side = (x: number, y: number) => (bx - ax) * (y - ay) - (by - ay) * (x - ax);
+  const out: number[] = [], n = pts.length / 2;
+  for (let i = 0; i < n; i++) {
+    const [px, py, qx, qy] = [pts[2 * i], pts[2 * i + 1], pts[(2 * i + 2) % pts.length], pts[(2 * i + 3) % pts.length]];
+    const sp = side(px, py), sq = side(qx, qy);
+    if (sp <= 0) out.push(px, py);
+    if ((sp < 0 && sq > 0) || (sp > 0 && sq < 0)) { const t = sp / (sp - sq); out.push(px + t * (qx - px), py + t * (qy - py)); }
   }
   return out;
 }
@@ -1808,7 +1843,12 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   const patentLever = (ol: number[]) => key === 'p320' && ol.every((c, i) => (i % 2 ? c > 1.03 && c < 1.43 : c > 2.0 && c < 3.62));
   // A module with its photo's front face draws its own dust cover and rail, so the patent's lines there are dropped.
   const patentRail = (ol: number[]) => !!modPh?.front && ((key === 'p365' && ol.every((c, i) => (i % 2 ? c > mk.sh + 0.03 : c > 3.6))) || ol.every((c, i) => (i % 2 ? c > 1.3 : true)) && Math.max(...ol.filter((_, i) => !(i % 2))) > 4.0 || ol.every((c, i) => (i % 2 ? c > 0.95 : c > 5.5)));
-  const keepDetail = (ol: number[]) => !patentLever(ol) && !patentRail(ol) && (glock || (modPh ? Math.max(...ol.filter((_, i) => i % 2)) < h0y + 0.2 && Math.min(...ol.filter((_, i) => !(i % 2))) > -0.12
+  // The Hellcat drawing's long molded slot under the slide isn't on the gun (RSR's photo shows a short slide stop tab there).
+  const hellcatSlot = (ol: number[]) => key === 'hellcat' && ol.every((c, i) => (i % 2 ? c > 0.99 && c < 1.3 : c > 0.85 && c < 2.85)) && Math.max(...ol.filter((_, i) => !(i % 2))) - Math.min(...ol.filter((_, i) => !(i % 2))) > 1.4;
+  // The M&P drawing's mag release and its palm swell and front field lines are redrawn from the photo below.
+  const mpCatch = (ol: number[]) => key === 'mp' && (ol.every((c, i) => (i % 2 ? c > 2.3 && c < 2.7 : c > 1.8 && c < 2.15))
+    || (v.texture === 'patent' && ol.length > 120 && Math.max(...ol.filter((_, i) => !(i % 2))) > 1.0));
+  const keepDetail = (ol: number[]) => !patentLever(ol) && !patentRail(ol) && !hellcatSlot(ol) && !mpCatch(ol) && (glock || (modPh ? Math.max(...ol.filter((_, i) => i % 2)) < h0y + 0.2 && Math.min(...ol.filter((_, i) => !(i % 2))) > -0.12
     : v.texture === 'patent' || Math.min(...ol.filter((_, i) => i % 2)) < h1y - 0.1));
   let frameDetail = pr.frame.detail.filter(keepDetail).map((ol) => polyPath(scF(ol), frameMap, false)).join(' ');
   let slideDetail = pr.slide.detail.map((ol) => polyPath(scS(ol), slideMap, false)).join(' ');
@@ -1835,8 +1875,8 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     // Sig's factory P320 module only in its lower panel.
     const pat = v.texture === 'patent';
     const cover = !pat ? { top: h1y + 0.55, inset: v.texture === 'axg' ? 0.26 : 0.18, bot: 0.42 }
-      : key === 'hellcat' ? { top: h0y + 0.08, inset: 0.1, bot: 0.16 } : key === 'mp' ? { top: h1y - 0.08, inset: 0.12, bot: 0.22 }
-      : key === 'p365' ? { top: h1y - 0.2, inset: 0.14, bot: 0.28 } : { top: h1y + 0.18, inset: 0.3, bot: 0.3 };
+      : key === 'hellcat' ? { top: mk.sh + 0.42, inset: 0.1, bot: 0.16 } : key === 'mp' ? { top: 1.86, inset: 0.1, bot: 0.22 }
+      : key === 'p365' ? { top: 1.9, inset: 0.06, bot: 0.28 } : { top: h1y + 0.18, inset: 0.3, bot: 0.3 };
     const inset = cover.inset;
     const ys: number[] = [];
     const yTop = grip(0, cover.top)[1], yBot = Math.min(heel[1], toe[1]) - cover.bot;
@@ -1849,6 +1889,18 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     if (modPh?.panel) panel.splice(0, panel.length, ...roundCorners(modPh.panel, 0.08));
     if (v.texture === 'axg') panel.splice(0, panel.length, ...roundCorners(AXG_PANEL, 0.08));
     const outline = polyPath(panel, same, true);
+    // A point traced off a flat photo's grip, placed at the same fraction of the way across the drawing's grip (beside the
+    // guard, where the drawing's front edge is the guard's, it keeps its distance from the back strap).
+    const fieldPt = (F: { back: number[]; front: number[]; prop: number }) => ([x, y]: number[]): number[] => {
+      const at = (q: number[], yy: number) => { for (let k = 0; k + 3 < q.length; k += 2) if ((q[k + 1] - yy) * (q[k + 3] - yy) <= 0) return q[k] + ((yy - q[k + 1]) / (q[k + 3] - q[k + 1] || 1)) * (q[k + 2] - q[k]);
+        const k = yy < q[1] ? 0 : q.length - 4; return q[k] + ((yy - q[k + 1]) / (q[k + 3] - q[k + 1])) * (q[k + 2] - q[k]); };
+      const yd = grip(0, y)[1], xs = crossings(mappedS, yd), db = xs[0] ?? x, df = xs[xs.length - 1] ?? x;
+      const pb = at(F.back, y);
+      if (y < F.prop || xs.length < 2) return [x - pb + db, yd];
+      const pf = at(F.front, y);
+      return [db + ((x - pb) / (pf - pb)) * (df - db), yd];
+    };
+    const mpPt = fieldPt(MP_FIELDS);
     // The factory modules keep their molded panel lines from the patent; the texture inside is the shared 0.1" dots.
     if (modPh && !modPh.kind) {
       // The X-Series grip as the photos show it: a fine-stippled main panel around the Sig roundel, strips down both straps.
@@ -1858,6 +1910,49 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
       const dots = (poly: number[]) => dotsIn(poly, TEX, offLogo, 0.04).replace(/M\S*NaN\S* L\S*NaN\S* /g, '');
       stipple = [MODULE_PANEL, ...MODULE_STRIPS].map(dots).join('');
       frameDetail += ' ' + [MODULE_PANEL, ...MODULE_STRIPS].map((q) => polyPath(roundCorners(q, 0.06), same, true)).join(' ') + ' ' + OC(lx, ly, lr)
+    } else if (key === 'p365' && pat && !modPh) {
+      // The raised panel is textured inside the drawing's molded border (the border and a margin are left smooth, so the pad
+      // reads as standing proud), with separate strips down the back strap and the front strap below the guard.
+      const pt = fieldPt(P365_FIELDS), pad: number[] = [];
+      for (let k = 0; k < P365_FIELDS.pad.length; k += 2) pad.push(...pt([P365_FIELDS.pad[k], P365_FIELDS.pad[k + 1]]));
+      const padR = roundCorners(pad, 0.08), top = grip(0, 1.94)[1], fTop = grip(0, 2.93)[1];
+      const strips: Map2 = (x, y) => {
+        if (inside(padR, x, y) || inside(padR, x - 0.07, y) || inside(padR, x + 0.07, y) || inside(padR, x, y - 0.07)) return [NaN, NaN];
+        const xs = crossings(padR, y), mid = xs.length ? (xs[0] + xs[xs.length - 1]) / 2 : -Infinity;
+        return (x < mid ? y > top : y > fTop) ? [x, y] : [NaN, NaN];
+      };
+      stipple = dotsIn(padR, TEX, same, 0.1) + dotsIn(panel, TEX, strips, 0.02).replace(/M\S*NaN\S* L\S*NaN\S* /g, '');
+    } else if (key === 'mp' && pat) {
+      // RSR's flat M&P9 M2.0 photo: three textured fields, each stopping short of the molded lines between them. The palm
+      // swell behind the S-curve, the middle field (its top front corner rounding off above the mag release) sweeping down
+      // under the S to the logo, and the front strap below the guard. Traced lines are fitted between the drawing's straps.
+      const [S, F] = [MP_FIELDS.s.map(mpPt), MP_FIELDS.f.map(mpPt)].map((q) => q.flat());
+      const [lx0, ly0] = mpPt([-0.02, 4.4]), [lx1, ly1] = mpPt([0.7, 4.78]);
+      const sAt = (y: number) => { const xs = crossings(S, y); return xs.length ? xs[xs.length - 1] : -Infinity; };
+      const mid = [...F, ...[...Array(S.length / 2).keys()].reverse().filter((k) => S[2 * k + 1] >= F[1]).flatMap((k) => [S[2 * k], S[2 * k + 1]])];
+      const near = (q: number[], x: number, y: number) => { for (let k = 0; k + 3 < q.length; k += 2) { const [ax, ay, bx, by] = [q[k], q[k + 1], q[k + 2], q[k + 3]];
+        const t = Math.max(0, Math.min(1, ((x - ax) * (bx - ax) + (y - ay) * (by - ay)) / ((bx - ax) ** 2 + (by - ay) ** 2 || 1)));
+        if (Math.hypot(x - ax - t * (bx - ax), y - ay - t * (by - ay)) < 0.07) return true; } return false; };
+      const [cx, cy] = [fx(1.93), 2.59], frontTop = F[11] + 0.06;
+      const keep: Map2 = (x, y) => {
+        const ok = !near(S, x, y) && !near(F, x, y) && !(x > lx0 - 0.05 && x < lx1 + 0.05 && y > ly0 - 0.05 && y < ly1 + 0.05) && Math.hypot((x - cx) / 0.28, (y - cy) / 0.24) >= 1
+          && (inside(mid, x, y) ? true : x < sAt(y) ? y > S[1] + 0.04 : y > frontTop && !inside(mid, x - 0.07, y));
+        return ok ? [x, y] : [NaN, NaN];
+      };
+      stipple = dotsIn(panel, TEX, keep, 0.06).replace(/M\S*NaN\S* L\S*NaN\S* /g, '');
+      // The molded lines run smoothly through the traced points (each point a control, curves meeting halfway between).
+      const curve = (q: number[]) => { let d = `M${f(q[0])},${f(q[1])}`;
+        for (let k = 2; k + 3 < q.length; k += 2) d += ` Q${f(q[k])},${f(q[k + 1])} ${f((q[k] + q[k + 2]) / 2)},${f((q[k + 1] + q[k + 3]) / 2)}`;
+        return d + ` L${f(q[q.length - 2])},${f(q[q.length - 1])}`; };
+      frameDetail += ` ${curve(S)} ${curve(F)}`;
+    } else if (key === 'hellcat' && pat) {
+      // RSR's flat Hellcat photo: a smooth band runs from the back strap down and forward to the guard, carrying the mag
+      // release; above it a textured patch under the slide (stopping short of the back strap), below it the grip texture.
+      const m = (x: number, y: number) => frameMap(x, y);
+      const [u0, u1, l0, l1] = [m(0.98, 1.78), m(2.6, 1.86), m(0.5, 1.84), m(2.2, 2.5)];
+      const upper = clipHalf(clipHalf(panel, ...u0, ...u1), ...m(0.98, 1.0), ...m(0.98, 2.2));
+      const lower = clipHalf(panel, ...l1, ...l0);
+      stipple = [upper, lower].map((q) => dotsIn(q, TEX, same, 0.06)).join('');
     } else if (v.texture === 'x' || v.texture === 'patent') stipple = dotsIn(panel, TEX, same, 0.06) + (modPh?.strips ?? []).map((q) => dotsIn(q, TEX, same, 0.02)).join('');
     else if (v.texture === 'wilson') {
       // Wilson's texture: rows of slanted pyramids (ridges rising forward at 35 degrees, 0.072" apart, cut by near-vertical
@@ -2018,10 +2113,25 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
       + repeat(fx(3.2), fx(3.82), 0.06, (x) => ` M${x},${f(mk.sh + 0.1)} L${x},${f(mk.sh + 0.29)}`)
       + ` ${OC(fx(4.0), mk.sh + 0.2, 0.07)}`;
   }
-  if (key === 'hellcat') {
-    // Takedown lever and slide stop on the frame flat, in place of the drawing's molded contour lines.
-    frameDetail += ` ${OC(fx(2.4), mk.railBottom + 0.32, 0.17)} ${OC(fx(2.4), mk.railBottom + 0.32, 0.06)} M${f(fx(2.0))},${f(mk.railBottom + 0.1)} L${f(fx(1.75))},${f(mk.railBottom + 0.1)} Q${f(fx(1.6))},${f(mk.railBottom + 0.12)} ${f(fx(1.6))},${f(mk.railBottom + 0.24)} L${f(fx(1.62))},${f(mk.railBottom + 0.3)} L${f(fx(1.95))},${f(mk.railBottom + 0.28)}`;
+  if (key === 'mp') {
+    // The reversible mag release as RSR's flat photo shows it: a round button just behind the guard's lower rear corner,
+    // with its pointed wing reaching back toward the grip.
+    const q = (x: number, y: number) => `${f(fx(x - 0.1))},${f(y)}`;
+    frameDetail += ` M${q(1.9, 2.455)} Q${q(1.96, 2.435)} ${q(2.03, 2.435)} Q${q(2.21, 2.435)} ${q(2.21, 2.59)} Q${q(2.21, 2.745)} ${q(2.03, 2.745)} Q${q(1.92, 2.745)} ${q(1.86, 2.7)} L${q(1.72, 2.6)} Q${q(1.68, 2.57)} ${q(1.72, 2.55)} Z M${q(1.9, 2.455)} Q${q(1.83, 2.58)} ${q(1.86, 2.7)}`;
   }
+  if (key === 'hellcat') {
+    // Controls where RSR's flat photo shows them: the slide stop just under the slide (a rounded tab with grip ribs), a pin
+    // above the guard, and the oval mag release just behind the guard in the smooth band, ribbed at its rear.
+    const tab = (x0: number, y0: number, x1: number, y1: number, ribs: number) => {
+      const [a, b] = [fx(x0), fx(x1)], r = (y1 - y0) / 2.5;
+      return polyPath(roundCorners([a, y0, b, y0, b, y1, a, y1], r), same, true) + repeat(a + 0.1, a + 0.1 + (ribs - 1) * 0.05, 0.05, (x) => ` M${x},${f(y0 + 0.05)} L${x},${f(y1 - 0.05)}`);
+    };
+    const [mx, my] = frameMap(2.11, 2.11);
+    const mr = polyPath(roundCorners([mx - 0.26, my - 0.15, mx + 0.26, my - 0.15, mx + 0.26, my + 0.15, mx - 0.26, my + 0.15], 0.13), same, true)
+      + repeat(mx - 0.17, mx - 0.02, 0.05, (x) => ` M${x},${f(my - 0.11)} L${x},${f(my + 0.11)}`);
+    frameDetail += ` ${tab(1.28, mk.sh + 0.07, 1.87, mk.sh + 0.28, 5)} ${mr} ${OC(fx(2.68), 1.11, 0.045)}`;
+  }
+
   const yGB = Math.max(heel[1], toe[1]);
   // The P320's photo-traced triggers keep their size unless a module's guard is too short for them; then they shorten to clear it by 0.08".
   // On a photo-traced module the trigger hangs from that module's own guard opening, so its top meets the opening's top
