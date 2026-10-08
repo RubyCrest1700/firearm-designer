@@ -28,6 +28,8 @@ export const RETAILERS: Record<string, Retailer> = {
   RTB: { id: 'RTB', name: 'Right To Bear', search: 'https://www.righttobear.com/search.php?search_query=' },
   VED: { id: 'VED', name: 'Vedder Holsters', search: 'https://www.vedderholsters.com/search.php?search_query=' },
   WING: { id: 'WING', name: 'Wing Tactical', search: 'https://www.wingtactical.com/search.php?search_query=' },
+  NF: { id: 'NF', name: 'Night Fision', search: 'https://www.nightfision.com/?post_type=product&s=' },
+  SI: { id: 'SI', name: 'Strike Industries', search: 'https://www.strikeindustries.com/catalogsearch/result/?q=' },
 };
 
 export function offerUrl(retailerId: string, query: string): string {
