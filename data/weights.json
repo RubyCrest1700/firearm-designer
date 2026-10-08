@@ -2571,6 +2571,26 @@
       "basis": "estimate",
       "src": null
     },
+    "p-sight-nf": {
+      "oz": 0.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-sight-si": {
+      "oz": 0.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-sight-xray3": {
+      "oz": 0.4,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-sight-xray3s": {
+      "oz": 0.4,
+      "basis": "estimate",
+      "src": null
+    },
     "p-slide-45": {
       "oz": 13.6,
       "basis": "estimate",
@@ -2773,6 +2793,11 @@
     },
     "p365-opt-rmsc": {
       "oz": 0.6,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-sight-nf": {
+      "oz": 0.4,
       "basis": "estimate",
       "src": null
     },

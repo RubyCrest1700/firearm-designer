@@ -1,5 +1,5 @@
 import type { Build, Issue, Platform } from '../types';
-import { parts, pick } from './helpers';
+import { parts, pick, sightHeightIssues } from './helpers';
 import { holsters, pistolAddonRules, pistolAddonSlots, pistolCases, pistolLights } from './addons';
 
 /** Slide and dust-cover lengths, shortest to longest. */
@@ -19,6 +19,7 @@ const slots = [
   { id: 'slide', name: 'Slide assembly', group: 'Upper', required: true, hint: 'Comes with sights and slide parts installed.' },
   { id: 'barrel', name: 'Barrel', group: 'Upper', required: true, hint: 'Length and caliber must match the slide.' },
   { id: 'spring', name: 'Recoil spring', group: 'Upper', required: true, hint: 'Matched to slide length.' },
+  { id: 'sights', name: 'Sights', group: 'Upper', required: false, hint: 'Optional. Slides come with standard-height sights; suppressor height co-witnesses with a dot.' },
   { id: 'optic', name: 'Optic', group: 'Accessories', required: false, hint: 'Sig optic-ready slides use the Romeo1Pro / DeltaPoint footprint.' },
   { id: 'mag', name: 'Magazine', group: 'Accessories', required: true, hint: 'Should be at least as long as the grip.' },
   ...pistolAddonSlots,
@@ -82,6 +83,17 @@ const allParts = [
     { id: 'p-spr-f', brand: 'Sig Sauer', name: 'Recoil Spring Assembly, Full', specs: ['Full 4.7"'], attrs: { length: 'full' }, offers: [['SIG', 24.99], ['BRN', 27.99]] },
     { id: 'p-spr-s', brand: 'Sig Sauer', name: 'Recoil Spring Assembly, Subcompact', specs: ['Subcompact 3.6"'], attrs: { length: 'subcompact' }, offers: [['SIG', 24.99]] },
   ]),
+  // Sig #8 front and #8 rear dovetails, shared with the P365. Sample prices until a price source is added.
+  ...parts('sights', [
+    { id: 'p-sight-xray3', brand: 'Sig Sauer', name: 'X-RAY3 Day/Night Sights', specs: ['Standard height', 'Tritium'], attrs: { height: 'standard' },
+      offers: [['SIG', 99.99]] },
+    { id: 'p-sight-xray3s', brand: 'Sig Sauer', name: 'X-RAY3 Suppressor Height Day/Night Sights', specs: ['Suppressor height', 'Tritium'], attrs: { height: 'suppressor' },
+      offers: [['SIG', 119.99]], pick: pick('value', 'Tall enough to see through a red dot.') },
+    { id: 'p-sight-nf', brand: 'Night Fision', name: 'Suppressor Height Night Sights, Sig P320/P365', specs: ['Suppressor height', 'Tritium'], attrs: { height: 'suppressor' },
+      offers: [['PA', 139.99]], pick: pick('premium', 'Tall tritium sights that co-witness with a dot.') },
+    { id: 'p-sight-si', brand: 'Strike Industries', name: 'Strike Iron Sights, P320 Suppressor Height', specs: ['Suppressor height', 'Plain steel'], attrs: { height: 'suppressor' },
+      offers: [['RA', 64.95]], pick: pick('budget', 'Low-cost tall sights.') },
+  ]),
   ...parts('optic', [
     { id: 'p-opt-r1p', brand: 'Sig Sauer', name: 'Romeo1Pro 6 MOA', specs: ['Romeo1Pro footprint', 'Direct mount'], attrs: { footprint: 'romeo1pro' },
       offers: [['SIG', 249.99], ['OP', 239.99], ['PA', 244.99]], pick: pick('value', 'Mounts straight to Sig optic-ready slides, no plate.') },
@@ -126,6 +138,10 @@ function rules(b: Build): Issue[] {
   }
   if (slide && spring && spring.attrs.length !== slide.attrs.length)
     out.push({ severity: 'error', slots: ['slide', 'spring'], message: `A ${LEN_LABEL[slide.attrs.length as string]} slide needs the matching recoil spring.` });
+  // On the M18 and X-Series slides the rear sight is part of the optic cover plate, so it comes off with the plate.
+  if (optic && slide?.attrs.rearSight === 'off')
+    out.push({ severity: 'info', slots: ['slide', 'optic'], message: 'On this slide the rear sight is part of the optic cover plate, so it comes off when the optic goes on. Only the front sight is left.' });
+  else out.push(...sightHeightIssues(b.sights, optic, false));
   if (slide && optic) {
     if (slide.attrs.cut === 'none')
       out.push({ severity: 'error', slots: ['slide', 'optic'], message: 'This slide has no optic cut. Choose an optic-ready slide or skip the optic.' });

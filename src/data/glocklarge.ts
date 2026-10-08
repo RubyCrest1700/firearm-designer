@@ -1,5 +1,5 @@
 import type { Build, Issue, Platform } from '../types';
-import { parts, pick, threadIssue } from './helpers';
+import { parts, pick, threadIssue, sightHeightIssues } from './helpers';
 import { holsters, pistolAddonRules, pistolAddonSlots, pistolCases, pistolLights } from './addons';
 
 /**
@@ -178,8 +178,7 @@ function rules(b: Build): Issue[] {
     else if (cut !== 'mos' && cut !== fp)
       out.push({ severity: 'warn', slots: ['slide', 'optic'], message: `The slide is cut for the ${String(cut).toUpperCase()} footprint and this optic uses ${String(fp).toUpperCase()}. You need an adapter plate.` });
   }
-  if (optic && sights?.attrs.height === 'standard')
-    out.push({ severity: 'info', slots: ['optic', 'sights'], message: 'Standard-height sights sit below the dot and won\'t co-witness. Suppressor-height sights let you aim through the window if it fails.' });
+  out.push(...sightHeightIssues(sights, optic, !!barrel?.attrs.threaded && { slot: 'barrel' }));
   if (barrel?.attrs.threaded && !muzzle)
     out.push({ severity: 'info', slots: ['barrel', 'muzzle'], message: `The ${barrel.attrs.thread} threads stick out past the slide with nothing on them. Add a thread protector to keep them from getting dinged.` });
   if (b.fcg && frame && (b.fcg.attrs.gens as string[] | undefined) && !(b.fcg.attrs.gens as string[]).includes(frame.attrs.gen as string))

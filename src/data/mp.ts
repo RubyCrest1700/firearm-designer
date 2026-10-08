@@ -1,5 +1,5 @@
 import type { Build, Issue, Part, Platform } from '../types';
-import { parts, pick, threadIssue } from './helpers';
+import { parts, pick, threadIssue, sightHeightIssues } from './helpers';
 import { holsters, pistolAddonRules, pistolAddonSlots, pistolCases, pistolLights } from './addons';
 
 /**
@@ -131,8 +131,7 @@ function rules(b: Build): Issue[] {
     else
       out.push({ severity: 'warn', slots: ['optic', sSlot], message: `S&W's CORE plates don't include the ${FP[fp]} footprint. You need an aftermarket M&P plate for it.` });
   }
-  if (optic && b.sights?.attrs.height !== 'suppressor')
-    out.push({ severity: 'info', slots: ['optic', 'sights'], message: 'Standard-height sights sit below the dot. Suppressor-height sights co-witness through it.' });
+  out.push(...sightHeightIssues(b.sights, optic, barrel ? !!barrel.attrs.threaded && { slot: 'barrel' } : !!pistol?.attrs.threaded && { slot: 'pistol' }));
   if (mag && frame) {
     if (mag.attrs.size === 'c' && frame === 'fs')
       out.push({ severity: 'warn', slots: ['mag', 'pistol'], message: 'S&W lists the 15-round magazine for the Compact. In the Full Size grip it sits up inside the frame and is hard to strip out.' });

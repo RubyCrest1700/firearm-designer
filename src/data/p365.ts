@@ -1,5 +1,5 @@
 import type { Build, Issue, Platform } from '../types';
-import { parts, pick } from './helpers';
+import { parts, pick, sightHeightIssues } from './helpers';
 import { holsters, pistolAddonRules, pistolAddonSlots, pistolCases, pistolLights } from './addons';
 
 /** Grip length: standard (micro) < XL. Magazines are sized to a grip. */
@@ -13,6 +13,7 @@ const slots = [
   { id: 'slide', name: 'Slide assembly', group: 'Upper', required: true, hint: 'Comes with sights and slide parts. 3.1" or 3.7".' },
   { id: 'barrel', name: 'Barrel', group: 'Upper', required: true, hint: 'Must be the length the slide is made for.' },
   { id: 'spring', name: 'Recoil spring', group: 'Upper', required: true, hint: 'Must match the slide length.' },
+  { id: 'sights', name: 'Sights', group: 'Upper', required: false, hint: 'Optional. Slides come with standard-height sights; suppressor height co-witnesses with a dot.' },
   { id: 'optic', name: 'Optic', group: 'Accessories', required: false, hint: 'Optic-ready P365 slides take the RMSc and Holosun K footprints.' },
   { id: 'mag', name: 'Magazine', group: 'Accessories', required: true, hint: 'Match the mag to the grip length for a flush fit.' },
   ...pistolAddonSlots,
@@ -59,6 +60,11 @@ const allParts = [
     { id: 'p365-spr-std', brand: 'Sig Sauer', name: 'P365 Recoil Spring Assembly', specs: ['3.1" slide'], attrs: { len: 'std' }, offers: [['SIG', 19.99], ['BRN', 22.99]] },
     { id: 'p365-spr-xl', brand: 'Sig Sauer', name: 'P365XL Recoil Spring Assembly', specs: ['3.7" slide'], attrs: { len: 'xl' }, offers: [['SIG', 19.99], ['BRN', 22.99]] },
   ]),
+  // Sig #8 front and #8 rear dovetails, shared with the P320. Sample price until a price source is added.
+  ...parts('sights', [
+    { id: 'p365-sight-nf', brand: 'Night Fision', name: 'Suppressor Height Night Sights, Sig P320/P365', specs: ['Suppressor height', 'Tritium'], attrs: { height: 'suppressor' },
+      offers: [['PA', 139.99]], pick: pick('value', 'Tall tritium sights that co-witness with a dot.') },
+  ]),
   ...parts('optic', [
     { id: 'p365-opt-r0', brand: 'Sig Sauer', name: 'RomeoZero Elite', specs: ['RMSc footprint', 'Direct mount'], attrs: { footprint: 'rmsc' },
       offers: [['SIG', 199.99], ['OP', 189.99]], pick: pick('budget', 'Cheapest dot that mounts directly.') },
@@ -90,6 +96,7 @@ function rules(b: Build): Issue[] {
     out.push({ severity: 'error', slots: ['slide', 'barrel'], message: `This slide takes a ${BARREL_LABEL[slide.attrs.barrelLen as string]} barrel; this one is ${BARREL_LABEL[barrel.attrs.len as string]}.` });
   if (slide && spring && spring.attrs.len !== slide.attrs.springLen)
     out.push({ severity: 'error', slots: ['slide', 'spring'], message: `This slide takes the ${SPRING_LABEL[slide.attrs.springLen as string]} recoil spring assembly.` });
+  out.push(...sightHeightIssues(b.sights, optic, !!barrel?.attrs.threaded && { slot: 'barrel' }));
   if (barrel?.attrs.threaded && slide?.attrs.comp)
     out.push({ severity: 'error', slots: ['slide', 'barrel'], message: 'The Spectre Comp slide has a built-in compensator. A threaded barrel won\'t clear it.' });
   if (slide?.attrs.cut === 'rmsc' && optic?.attrs.footprint === 'k')
@@ -124,7 +131,7 @@ export const p365: Platform = {
   rules,
   presets: {
     budget: ['p365-fcu', 'p365-grip-std', 'p365-slide-std', 'p365-bbl-std', 'p365-spr-std', 'p365-mag-10'],
-    value: ['p365-fcu', 'p365-grip-xl', 'p365-slide-xl', 'p365-bbl-xl', 'p365-spr-xl', 'p365-opt-507k', 'p365-mag-12'],
-    premium: ['p365-fcu-flat', 'p365-grip-wilson', 'p365-slide-spectre', 'p365-bbl-std', 'p365-spr-xl', 'p365-opt-eps', 'p365-mag-12'],
+    value: ['p365-fcu', 'p365-grip-xl', 'p365-slide-xl', 'p365-bbl-xl', 'p365-spr-xl', 'p365-opt-507k', 'p365-sight-nf', 'p365-mag-12'],
+    premium: ['p365-fcu-flat', 'p365-grip-wilson', 'p365-slide-spectre', 'p365-bbl-std', 'p365-spr-xl', 'p365-opt-eps', 'p365-sight-nf', 'p365-mag-12'],
   },
 };

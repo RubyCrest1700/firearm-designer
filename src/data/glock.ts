@@ -1,5 +1,5 @@
 import type { Build, Issue, Part, Platform, PlatformModel, Tier } from '../types';
-import { parts, pick, threadIssue } from './helpers';
+import { parts, pick, threadIssue, sightHeightIssues } from './helpers';
 import { holsters, pistolAddonRules, pistolAddonSlots, pistolCases, pistolLights } from './addons';
 
 /**
@@ -356,10 +356,7 @@ function rules(b: Build): Issue[] {
   }
   if (plate && slide && slide.attrs.cut !== 'mos')
     out.push({ severity: 'error', slots: ['slide', 'plate'], message: 'Optic plates fit MOS slides only. This slide is cut for the optic directly.' });
-  if (optic && sights && sights.attrs.height === 'standard')
-    out.push({ severity: 'info', slots: ['optic', 'sights'], message: 'Standard-height sights sit below the dot and won\'t co-witness. Suppressor-height sights let you aim through the optic window if it fails.' });
-  if (barrel?.attrs.threaded && sights && sights.attrs.height === 'standard')
-    out.push({ severity: 'info', slots: ['barrel', 'sights'], message: 'With a threaded barrel, a suppressor will block standard-height sights. Use suppressor-height sights if you plan to run one.' });
+  out.push(...sightHeightIssues(sights, optic, !!barrel?.attrs.threaded && { slot: 'barrel' }));
   if (barrel?.attrs.threaded && !muzzle)
     out.push({ severity: 'info', slots: ['barrel', 'muzzle'], message: `The ${barrel.attrs.thread} threads stick out past the slide with nothing on them. Add a thread protector to keep them from getting dinged.` });
   if (mag && FM) {

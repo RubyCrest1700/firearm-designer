@@ -1,5 +1,5 @@
 import type { Build, Issue, Part, Platform } from '../types';
-import { parts, pick, threadIssue } from './helpers';
+import { parts, pick, threadIssue, sightHeightIssues } from './helpers';
 import { holsters, pistolAddonRules, pistolAddonSlots, pistolCases, pistolLights } from './addons';
 
 /**
@@ -138,8 +138,7 @@ function rules(b: Build): Issue[] {
     out.push(slide?.attrs.k
       ? { severity: 'info', slots: ['optic', 'slide'], message: 'This slide is cut for Holosun K optics directly; no plate needed.' }
       : { severity: 'warn', slots: ['optic', sSlot], message: 'The OSP cut is made for the Shield RMSc footprint. Holosun K optics need an adapter plate.' });
-  if (optic && b.sights?.attrs.height !== 'suppressor')
-    out.push({ severity: 'info', slots: ['optic', 'sights'], message: 'Factory and standard sights sit below the dot. Optic-height sights co-witness through it.' });
+  out.push(...sightHeightIssues(b.sights, optic, barrel ? !!barrel.attrs.threaded && { slot: 'barrel' } : !!pistol?.attrs.threaded && { slot: 'pistol' }));
   if (mag && frame && mag.attrs.size !== frame)
     out.push({ severity: 'warn', slots: ['mag', 'pistol'], message: `Springfield sells this magazine for the ${SIZE[mag.attrs.size as string]}. We couldn't confirm it fits the ${SIZE[frame]}; check with Springfield.` });
   // The 3" frame has Springfield's short proprietary rail; the Pro has a 1913 rail.
