@@ -1,5 +1,5 @@
 import type { Build, Issue, Platform } from '../types';
-import { parts, pick } from './helpers';
+import { parts, pick, sightHeightIssues } from './helpers';
 import { holsters, pistolAddonRules, pistolAddonSlots, pistolCases, pistolLights } from './addons';
 
 /**
@@ -105,8 +105,7 @@ function rules(b: Build): Issue[] {
     else if (slide.attrs.cut !== optic.attrs.footprint)
       out.push({ severity: 'error', slots: ['slide', 'optic'], message: 'Slimline MOS slides take the RMSc footprint. An RMR is too wide for this slide.' });
   }
-  if (optic && sights && sights.attrs.height === 'standard')
-    out.push({ severity: 'info', slots: ['optic', 'sights'], message: 'Standard-height sights won\'t co-witness with a dot.' });
+  out.push(...sightHeightIssues(sights, optic, false));
   if (mag?.attrs.kind === 's15')
     out.push({ severity: 'info', slots: ['mag'], message: 'Shield Arms recommends their steel magazine catch with S15 mags, especially in older frames.' });
   const len = slide?.attrs.len as string | undefined;

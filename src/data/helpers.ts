@@ -44,6 +44,22 @@ export function boreIssue(barrel?: Part, muzzle?: Part): Issue | undefined {
   return { severity: 'error', slots: ['muzzle', 'barrel'], message: `This muzzle device is made for ${bore.toFixed(3).slice(1)}" bullets but the barrel fires ${bullet.toFixed(3).slice(1)}" bullets. The bullet would strike the device.` };
 }
 
+/**
+ * Iron sights too short to aim with once a red dot or a suppressor is on, shared by every pistol. An empty sights slot
+ * means the slide's own factory sights, which are standard height. A threaded barrel only gets a note: the builder has
+ * no suppressors to pick, so it can't know one is coming.
+ */
+export function sightHeightIssues(sights: Part | undefined, optic: Part | undefined, threaded: { slot: string } | false): Issue[] {
+  if (sights?.attrs.height === 'suppressor') return [];
+  const what = sights ? 'standard-height sights' : 'factory sights';
+  const out: Issue[] = [];
+  if (optic)
+    out.push({ severity: 'warn', slots: ['optic', 'sights'], message: `The ${what} sit below the red dot, so you can't aim with them if it fails. Choose suppressor-height sights to see them through the window.` });
+  if (threaded)
+    out.push({ severity: 'info', slots: [threaded.slot, 'sights'], message: `A suppressor on this threaded barrel will block the ${what}. Choose suppressor-height sights if you plan to run one.` });
+  return out;
+}
+
 export function threadIssue(barrel?: Part, muzzle?: Part): Issue | undefined {
   if (!barrel || !muzzle) return undefined;
   const bt = barrel.attrs.thread as string | undefined;
