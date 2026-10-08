@@ -2330,7 +2330,7 @@ function pistol(platform: Platform, build: Build): Scene {
       el: <path d={T(`M0.06,${f(bc - 0.09)} L${f(port0 - 0.3)},${f(bc - 0.09)} L${f(port0 - 0.3)},${f(bc + 0.09)} L0.06,${f(bc + 0.09)} Z M0.06,${f(bc - 0.2)} L0.24,${f(bc - 0.2)} L0.24,${f(bc + 0.2)} L0.06,${f(bc + 0.2)}`)} /> });
 
   /* Sights */
-  const sh = b.sights?.attrs.height === 'suppressor' ? 0.36 : SIGHT;
+  const sh = b.sights?.attrs.height === 'suppressor' ? 0.4 : SIGHT;
   const sightSlot = has('sights') ? own('sights') : undefined;
   // Rear sight: a block with a sloped face, square notch and the dovetail in the slide; front: a post on its dovetail.
   // Tritium or fiber inserts show as small circles. Sig rear sights are longer with a sloped back.
@@ -2341,19 +2341,39 @@ function pistol(platform: Platform, build: Build): Scene {
   // Sig 0.14" to 0.56", Glock 0.16" to 0.44", M&P 0.08" to 0.49", Hellcat 0.10" to 0.60".
   const [fa, fb] = sig ? [0.56, 0.14] : geo.key === 'mp' ? [0.49, 0.08] : geo.key === 'hellcat' ? [0.6, 0.1] : [0.44, 0.16];
   const fr0 = SL - fa, fr1 = SL - fb;
-  const sightsD = (sig
-    ? `M${r0},0 L${f(r0 + 0.12)},${f(-sh)} L${f(r1 - 0.2)},${f(-sh)} L${r1},0 Z`
-    : `M${r0},0 L${f(r0 + 0.04)},${f(-sh)} L${f(r1 - 0.06)},${f(-sh)} L${r1},0 Z`)
-    + ` M${f(fr0)},0 L${f(fr0 + 0.08)},${f(-sh + 0.02)} L${f(fr1 - 0.04)},${f(-sh + 0.02)} L${f(fr1)},0 Z`;
-  // Plain polymer sights carry nothing; night sights carry their tritium vials, fiber sights a rod down the front post;
-  // the HD XR, Perfect Dot and Trooper rears have a serrated face.
+  // Side profiles, from the makers' side photos and Night Fision's dimension drawing:
+  // - Glock's polymer rear stands upright at the back and slopes down toward the muzzle; its front post ramps up from the front.
+  // - Suppressor-height sights are tall square blocks (Night Fision: 0.395" rear, 0.39" front blade), the front blade
+  //   rounded over at its front top corner; Dawson's Charger rear ramps down toward the muzzle instead.
+  // - Trijicon's HD XR rear is a tall blade at the back with a low ledge running forward; its front post tapers.
+  // - Plain steel night sights (TFX Pro, Trooper, M&P) keep the upright back and sloped front of the factory rear.
   const sp = b.sights;
-  const night = !sp || matches(sp, /Tritium|Night/i), fiber = matches(sp, /Fiber|TFX/i), serr = matches(sp, /HD XR|Perfect Dot|Trooper|Bright & Tough/);
+  const supp = sp?.attrs.height === 'suppressor';
+  const style = sig ? 'sig' : matches(sp, /HD XR/) ? 'hdxr' : matches(sp, /Charger/) ? 'charger' : supp ? 'supp' : !sp || sp.brand === 'Glock' ? 'oem' : 'steel';
+  const fh = supp ? sh + 0.03 : sh - 0.04;
+  const rearD = {
+    sig: `M${r0},0 L${f(r0 + 0.12)},${f(-sh)} L${f(r1 - 0.2)},${f(-sh)} L${r1},0 Z`,
+    oem: `M${r0},0 L${f(r0 + 0.03)},${f(-sh)} L${f(r1 - 0.18)},${f(-sh)} L${r1},0 Z`,
+    steel: `M${r0},0 L${f(r0 + 0.02)},${f(-sh)} L${f(r1 - 0.14)},${f(-sh)} L${r1},0 Z`,
+    supp: `M${f(r0 + 0.04)},0 L${f(r0 + 0.05)},${f(-sh)} L${f(r1 - 0.12)},${f(-sh)} Q${f(r1 - 0.07)},${f(-sh)} ${f(r1 - 0.07)},${f(-sh + 0.05)} L${f(r1 - 0.04)},0 Z`,
+    charger: `M${f(r0 + 0.02)},0 L${f(r0 + 0.02)},${f(-sh)} L${f(r0 + 0.2)},${f(-sh)} L${f(r1 - 0.06)},${f(-sh * 0.55)} L${r1},0 Z`,
+    hdxr: `M${r0},0 L${r0},${f(-sh)} L${f(r0 + 0.22)},${f(-sh)} L${f(r0 + 0.25)},${f(-sh * 0.5)} L${f(r1 - 0.12)},${f(-sh * 0.5)} L${r1},0 Z`,
+  }[style];
+  const frontD = style === 'oem'
+    ? `M${f(fr0)},0 L${f(fr0 + 0.02)},${f(-fh)} L${f(fr1 - 0.12)},${f(-fh)} L${f(fr1)},0 Z`
+    : style === 'supp' || style === 'charger'
+      ? `M${f(fr0 + 0.02)},0 L${f(fr0 + 0.04)},${f(-fh)} L${f(fr1 - 0.1)},${f(-fh)} Q${f(fr1 - 0.02)},${f(-fh)} ${f(fr1 - 0.02)},${f(-fh + 0.08)} L${f(fr1 - 0.02)},0 Z`
+      : `M${f(fr0)},0 L${f(fr0 + 0.08)},${f(-fh)} L${f(fr1 - 0.06)},${f(-fh)} L${f(fr1)},0 Z`;
+  const sightsD = `${rearD} ${frontD}`;
+  // Plain polymer sights carry nothing; night sights carry their tritium vials (the HD XR's in its tall back blade),
+  // fiber sights a rod down the front post. The dovetails show as the line just under the slide's top.
+  const night = !sp || matches(sp, /Tritium|Night/i), fiber = matches(sp, /Fiber|TFX/i);
+  const rv = style === 'hdxr' ? r0 + 0.11 : (r0 + r1) / 2 - (style === 'charger' ? 0.08 : 0);
   const sightDet = `M${f(r0 + 0.04)},0.1 L${f(r1 - 0.04)},0.1 M${f(r0 + 0.04)},0.1 L${f(r0 + 0.1)},0 M${f(r1 - 0.04)},0.1 L${f(r1 - 0.1)},0 `
-    + `M${f((r0 + r1) / 2 - 0.08)},${f(-sh)} L${f((r0 + r1) / 2 - 0.08)},${f(-sh + 0.09)} L${f((r0 + r1) / 2 + 0.08)},${f(-sh + 0.09)} L${f((r0 + r1) / 2 + 0.08)},${f(-sh)} `
-    + (night ? O2((r0 + r1) / 2, -sh / 2 + 0.02, 0.045) : '') + ` M${f(fr0 + 0.04)},0.08 L${f(fr1 - 0.04)},0.08 ` + (night ? O2((fr0 + fr1) / 2, -sh / 2 + 0.02, 0.045) : '')
-    + (fiber ? ` M${f(fr0 + 0.1)},${f(-sh / 2 + 0.02)} L${f(fr1 - 0.05)},${f(-sh / 2 + 0.02)} ${O2(fr0 + 0.12, -sh / 2 + 0.02, 0.03)}` : '')
-    + (serr ? repeat(r1 - 0.3, r1 - 0.1, 0.07, (x) => `M${x},${f(-sh + 0.03)} L${x},-0.03`) : '');
+    + (night && style !== 'oem' ? O2(rv, -sh * 0.62, 0.045) : '') + ` M${f(fr0 + 0.04)},0.08 L${f(fr1 - 0.04)},0.08 `
+    + (night && style !== 'oem' ? O2((fr0 + fr1) / 2, -fh * 0.62, 0.045) : '')
+    + (fiber ? ` M${f(fr0 + 0.1)},${f(-fh * 0.62)} L${f(fr1 - 0.05)},${f(-fh * 0.62)} ${O2(fr0 + 0.12, -fh * 0.62, 0.03)}` : '')
+    + (style === 'hdxr' ? ` M${f(r0 + 0.22)},${f(-sh * 0.5)} L${f(r0 + 0.02)},${f(-sh * 0.5)}` : '');
   P.push({ slot: sightSlot, z: 10, row: 'top', target: px((r0 + r1) / 2, -sh), el: <><path d={T(sightsD)} /><path className="detail" d={T(sightDet)} /></> });
 
   /* Optic */
