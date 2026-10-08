@@ -1710,7 +1710,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
       return [x + dx, y + dy];
     });
   }
-  // An X-Series module traced from photos replaces the patent's outline; its dust cover stops where the slide's nose comes down.
+  // A module traced from photos (the X-Series ones and the Subcompact) replaces the patent's outline; its dust cover stops where the slide's nose comes down.
   const modPh = !glock && v.module ? SIG_MODULE_PHOTOS[v.module] : undefined;
   const modOl = modPh ? clipFront(modPh.frame, fx(mk.dust)) : undefined;
   if (modPh && modOl) {
@@ -1740,9 +1740,10 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     ys.push(yBot);
     const edge = ys.map((y) => { const xs = crossings(mappedS, y); return [xs[0] + inset, xs[xs.length - 1] - inset]; });
     const panel = [...ys.flatMap((y, i) => [edge[i][0], y]), ...[...ys].reverse().flatMap((y, i) => [edge[ys.length - 1 - i][1], y])];
+    if (modPh?.panel) panel.splice(0, panel.length, ...roundCorners(modPh.panel, 0.08));
     const outline = polyPath(panel, same, true);
     // The factory modules keep their molded panel lines from the patent; the texture inside is the shared 0.1" dots.
-    if (modPh) {
+    if (modPh && !modPh.std) {
       // The X-Series grip as the photos show it: a fine-stippled main panel around the Sig roundel, strips down both straps.
       const [lx, ly, lr] = MODULE_LOGO;
       // Sig's texture is a fine random stipple: dots on a 0.065" grid, each nudged by a fixed pseudo-random amount.
@@ -1759,7 +1760,6 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
       };
       stipple = [MODULE_PANEL, ...MODULE_STRIPS].map(dots).join('');
       frameDetail += ' ' + [MODULE_PANEL, ...MODULE_STRIPS].map((q) => polyPath(roundCorners(q, 0.06), same, true)).join(' ') + ' ' + OC(lx, ly, lr)
-        + ' ' + MODULE_CATCH.map((l) => polyPath(l, same, false)).join(' ');
     } else if (v.texture === 'x' || v.texture === 'patent') stipple = dotsIn(panel, 0.1, same, 0.06);
     else if (v.texture === 'wilson') stipple = hatchIn(panel, 50, 0.13, same, 0.05) + hatchIn(panel, -50, 0.13, same, 0.05);
     else {
@@ -1769,7 +1769,12 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
       for (let i = 0; i < ys.length; i += 2) check += `M${f(edge[i][1] + inset - 0.14)},${f(ys[i])} L${f(edge[i][1] + inset - 0.04)},${f(ys[i])} `;
       stipple = OC(cx, ys[2], 0.07) + ' ' + OC(cx2, ys[ys.length - 3], 0.07) + ' ' + check;
     }
-    if (v.texture !== 'patent' && !modPh) frameDetail += ' ' + outline;
+    if ((v.texture !== 'patent' && !modPh) || modPh?.std) frameDetail += ' ' + outline;
+    // A photo-traced module's mag catch: the patent drawing's button, placed where that module's photo shows it.
+    if (modPh) {
+      const [cdx, cdy] = modPh.catchShift ?? [0, 0];
+      frameDetail += ' ' + MODULE_CATCH.map((l) => polyPath(l.map((v, i) => v + (i % 2 ? cdy : cdx)), same, false)).join(' ');
+    }
   }
   const gF = fx(h1x + 0.15), dust = fx(mk.dust);
   let mapped: number[] = [];
@@ -2074,7 +2079,7 @@ function pistol(platform: Platform, build: Build): Scene {
     bigCatch: gen === 'gen4' || gen === 'gen5' || matches(fr, /Timberwolf|TWF/), seam: gen === 'gen4' || gen === 'gen5' || matches(fr, /Timberwolf/),
     sf: !!fr?.attrs.sf, flare5: gen === 'gen5', timberwolf: matches(fr, /Timberwolf/), rail: !!fr?.attrs.rail,
     beaver: wilson || axg, undercut: wilson || axg, flare: wilson,
-    module: matches(gr, /X-Series Full/) ? 'xfull' : matches(gr, /X-Series Carry/) ? 'xcarry' : undefined,
+    module: matches(gr, /X-Series Full/) ? 'xfull' : matches(gr, /X-Series Carry/) ? 'xcarry' : gr?.id === 'p-grip-sub' ? 'sub' : undefined,
     texture: wilson ? 'wilson' : axg ? 'axg' : xs ? 'x' : 'patent',
     slide: b.slide?.brand === 'Brownells' ? 'brownells' : matches(b.slide, /Combat Slide/) ? 'ggp' : matches(b.slide, /Octane/) ? 'zev' : matches(b.slide, /ZPS/) ? 'zaffiri'
       : b.slide?.brand === 'Apex Tactical' ? 'apex' : matches(b.slide, /Axiom/) ? 'tp' : matches(b.slide, /Gen5/) ? 'gen5' : 'oem',
