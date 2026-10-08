@@ -2005,6 +2005,9 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   const slideNose = SL > fF + 0.1 ? ` M${f(fF)},${f(mk.sh)} L${f(SL)},${f(mk.sh)} L${f(SL)},${f(ny - 0.12)} Q${f(SL)},${f(ny)} ${f(SL - 0.12)},${f(ny)} L${f(fF)},${f(ny)} Z` : '';
   // On a photo-traced module the frame runs forward under the slide; the slide's nose is only the narrow block around
   // the recoil spring in front of the frame's face, with a rounded bottom corner, as the photos show.
+  // The floor plate's top face shows as a line across its front, just under the lip's top edge.
+  const lipEdge = (l: number[]) => { const xs = l.filter((_, i) => !(i % 2)), x0 = Math.min(...xs) + 0.04, x1 = Math.max(...xs) - 0.03, y = l[3] + 0.05;
+    return ` M${f(x0)},${f(y)} L${f(x1)},${f(y)}`; };
   const photoSlide = (faceX: number, noseY: number) => {
     const r = 0.06;
     return slideCut.map((ol) => polyPath(ol, same, true)).join(' ')
@@ -2017,7 +2020,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     trigD: photoTrig?.d ?? reachP320(scD((o.flat ? TRIGGERS[key].flat : TRIGGERS[key].curved)(t0 - dy) + (v.hook && TRIGGERS[key].hook ? ' ' + TRIGGERS[key].hook : ''))),
     trigLine: photoTrig?.line ?? reachP320(scD(typeof trigLine === 'string' ? trigLine : trigLine(t0 - dy))),
     gF, dust, railY: mk.railBottom, fcuX0,
-    heel, toe, yGB, yMB: photoTrig ? photoTrig.yMB + ext : yGB + ext + BASE, ext, plateD: photoTrig?.plate ?? (modPh?.lip ? polyPath(modPh.lip, same, true) : undefined), lipD: modPh?.lip ? polyPath(modPh.lip, same, true) : undefined,
+    heel, toe, yGB, yMB: photoTrig ? photoTrig.yMB + ext : yGB + ext + BASE, ext, plateD: photoTrig?.plate ?? (modPh?.lip ? polyPath(modPh.lip, same, true) + lipEdge(modPh.lip) : undefined), lipD: modPh?.lip ? polyPath(modPh.lip, same, true) + lipEdge(modPh.lip) : undefined,
     frameD: (glock ? polyPath(mapped, (x, y) => [x, y], true) : modOl ? polyPath(modOl, same, true) : outlines.map((ol) => polyPath(ol, frameMap, true)).join(' ')) + ' ' + hole,
     frameDetail, stipple,
     slideD: face && modPh?.nose ? photoSlide(face[0], modPh.nose[0]) : pr.slide.outline.map((ol) => polyPath(scS(ol), slideMap, true)).join(' ') + slideNose,

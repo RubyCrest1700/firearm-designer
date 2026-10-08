@@ -25,7 +25,7 @@ export const SIG_MODULE_PHOTOS: Record<'xfull' | 'xcarry' | 'sub' | 'axg' | 'wil
   plate?: [number, number, number, number];
   /** Where the grooves across its texture fan out from (the Wilson module). */
   fan?: [number, number];
-  /** A flush magazine inside a flared mag well shows only its floor plate's front lip, in the well's front notch. */
+  /** A flush magazine inside a flared mag well shows only its floor plate's front, with its hooked lip, in the well's front notch. */
   lip?: number[];
 }> = {
   xfull: {
@@ -136,7 +136,7 @@ export const SIG_MODULE_PHOTOS: Record<'xfull' | 'xcarry' | 'sub' | 'axg' | 'wil
     front: [5.65, 0.79, 5.65, 1.3, 5.62, 1.38, 5.57, 1.41],
     nose: [1.23, 6.22],
     plate: [0.33, 4.33, 1.7, 4.68],
-    lip: [1.322, 4.6, 1.348, 4.45, 1.38, 4.41, 1.42, 4.4, 1.69, 4.4, 1.73, 4.418, 1.752, 4.46, 1.727, 4.575, 1.706, 4.625, 1.666, 4.646, 1.4, 4.625, 1.34, 4.612],
+    lip: [1.33, 4.612, 1.355, 4.445, 1.38, 4.438, 1.62, 4.452, 1.66, 4.43, 1.69, 4.405, 1.715, 4.41, 1.738, 4.45, 1.73, 4.54, 1.712, 4.6, 1.68, 4.625, 1.4, 4.618],
     fan: [1.75, 2.22],
   },
 };
