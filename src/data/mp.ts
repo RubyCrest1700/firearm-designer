@@ -126,8 +126,6 @@ function rules(b: Build): Issue[] {
     const fp = optic.attrs.footprint as string;
     if (CORE[fp])
       out.push({ severity: 'info', slots: ['optic', sSlot], message: `Uses CORE ${CORE[fp]}${slide ? ', which comes with Optics Ready pistols. A bare slide may not include it' : ', included with the pistol'}.` });
-    else if (fp === 'k')
-      out.push({ severity: 'warn', slots: ['optic', sSlot], message: 'The Holosun K footprint is based on the RMSc, so it often goes on CORE plate 2, but its lugs differ slightly. Check the fit, or use a plate made for Holosun K.' });
     else if (fp === 'dpp')
       out.push({ severity: 'warn', slots: ['optic', sSlot], message: 'The DeltaPoint Pro needs S&W\'s CORE DPP plate kit, sold separately (about $49).' });
     else

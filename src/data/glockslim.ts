@@ -16,7 +16,7 @@ const slots = [
   { id: 'barrel', name: 'Barrel', group: 'Upper', required: true, hint: 'Must match the slide length.' },
   { id: 'rsa', name: 'Recoil spring assembly', group: 'Upper', required: true, hint: 'Must match the slide length.' },
   { id: 'sights', name: 'Sights', group: 'Upper', required: true, hint: 'Slimline sights; double-stack Glock rear sights also fit.' },
-  { id: 'optic', name: 'Optic', group: 'Accessories', required: false, hint: 'MOS slides take the Shield RMSc footprint directly.' },
+  { id: 'optic', name: 'Optic', group: 'Accessories', required: false, hint: 'MOS slides take the Shield RMSc footprint directly. Holosun K needs a plate.' },
   { id: 'mag', name: 'Magazine', group: 'Accessories', required: false, hint: 'All slimline 9mm mags fit both frames.' },
   ...pistolAddonSlots,
 ];
@@ -71,11 +71,11 @@ const allParts = [
       offers: [['BRN', 99.99], ['OP', 94.99]], pick: pick('value', 'Co-witness with a micro dot and glow at night.') },
   ]),
   ...parts('optic', [
-    { id: 'gs-opt-507k', brand: 'Holosun', name: 'HS507K X2', specs: ['RMSc footprint', 'Multi-reticle'], attrs: { footprint: 'rmsc' },
-      offers: [['PA', 269.99], ['OP', 274.99]], pick: pick('value', 'Fits the MOS cut directly. The common pick for slim Glocks.') },
+    { id: 'gs-opt-507k', brand: 'Holosun', name: 'HS507K X2', specs: ['Holosun K footprint', 'Multi-reticle'], attrs: { footprint: 'k' },
+      offers: [['PA', 269.99], ['OP', 274.99]] },
     { id: 'gs-opt-rmsc', brand: 'Shield', name: 'RMSc 4 MOA', specs: ['RMSc footprint', 'Very low profile'], attrs: { footprint: 'rmsc' },
-      offers: [['BRN', 299.99], ['OP', 289.99]] },
-    { id: 'gs-opt-epsc', brand: 'Holosun', name: 'EPS Carry', specs: ['RMSc footprint', 'Enclosed emitter'], attrs: { footprint: 'rmsc' },
+      offers: [['BRN', 299.99], ['OP', 289.99]], pick: pick('value', 'Fits the slim MOS cut directly, no plate.') },
+    { id: 'gs-opt-epsc', brand: 'Holosun', name: 'EPS Carry', specs: ['Holosun K footprint', 'Enclosed emitter'], attrs: { footprint: 'k' },
       offers: [['PA', 349.99], ['OP', 354.99]] },
     { id: 'gs-opt-rmr', brand: 'Trijicon', name: 'RMR Type 2, 3.25 MOA', specs: ['RMR footprint'], attrs: { footprint: 'rmr' },
       offers: [['BRN', 449.99], ['OP', 439.99]] },
@@ -99,6 +99,9 @@ function rules(b: Build): Issue[] {
   if (slide && optic) {
     if (slide.attrs.cut === 'none')
       out.push({ severity: 'error', slots: ['slide', 'optic'], message: 'This slide has no optic cut. Choose a MOS slide or skip the optic.' });
+    else if (optic.attrs.footprint === 'k')
+      // Glock's original slimline MOS cut has four RMSc recoil bosses; K optics have two pockets. Late-2025 "MOS-K" slides take K directly.
+      out.push({ severity: 'warn', slots: ['slide', 'optic'], message: 'This MOS cut is made for RMSc. Holosun K optics need an adapter plate, unless the slide is a newer MOS-K.' });
     else if (slide.attrs.cut !== optic.attrs.footprint)
       out.push({ severity: 'error', slots: ['slide', 'optic'], message: 'Slimline MOS slides take the RMSc footprint. An RMR is too wide for this slide.' });
   }
@@ -123,7 +126,7 @@ export const glockSlim: Platform = {
   rules,
   presets: {
     budget: ['gs-frame-48', 'gs-fcg-oem', 'gs-slide-48', 'gs-spk-oem', 'gs-bbl-48', 'gs-rsa-48', 'gs-sight-oem', 'gs-mag-oem10'],
-    value: ['gs-frame-43x', 'gs-fcg-apex', 'gs-slide-48mos', 'gs-spk-oem', 'gs-bbl-48', 'gs-rsa-48', 'gs-sight-ameriglo', 'gs-opt-507k', 'gs-mag-oem10'],
+    value: ['gs-frame-43x', 'gs-fcg-apex', 'gs-slide-48mos', 'gs-spk-oem', 'gs-bbl-48', 'gs-rsa-48', 'gs-sight-ameriglo', 'gs-opt-rmsc', 'gs-mag-oem10'],
     premium: ['gs-frame-43xr', 'gs-fcg-apex', 'gs-slide-48mos', 'gs-spk-oem', 'gs-bbl-48tp', 'gs-rsa-48', 'gs-sight-ameriglo', 'gs-opt-rmsc', 'gs-mag-s15'],
   },
 };

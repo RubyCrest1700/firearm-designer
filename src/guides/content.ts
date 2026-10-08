@@ -101,7 +101,7 @@ export const GUIDES: Guide[] = [
     answers: [
       'A <b>slide with no optic cut</b> can\'t take a red dot unless it is milled.',
       'An <b>RMR-cut slide</b> takes RMR-footprint optics directly, such as the Holosun 507C and 407C and the Trijicon RMR and SRO. Other footprints need an adapter plate.',
-      'A <b>Glock MOS slide</b> always uses a plate. Glock\'s own MOS plates cover RMR-footprint optics, the Aimpoint Acro needs Aimpoint\'s MOS adapter (about $60), and small RMSc-footprint optics need an aftermarket plate.',
+      'A <b>Glock MOS slide</b> always uses a plate. Glock\'s own MOS plates cover RMR-footprint optics, the Aimpoint Acro needs Aimpoint\'s MOS adapter (about $60), and small RMSc and Holosun K optics need an aftermarket plate.',
       'With a dot on the slide, <b>suppressor-height sights</b> let you aim through the optic window if the dot fails. Standard-height sights sit below it.',
     ],
     charts: [
@@ -148,7 +148,7 @@ export const GUIDES: Guide[] = [
     answers: [
       '<b>Yes.</b> The G43X and G48 share a frame, so a G48 slide fits a G43X frame and a G43X slide fits a G48 frame.',
       'The <b>barrel and recoil spring must match the slide</b>: a G48 slide needs the G48 barrel and G48 spring.',
-      'Slimline <b>MOS slides take the Shield RMSc footprint</b>. An RMR is too wide for these slides.',
+      'Slimline <b>MOS slides take the Shield RMSc footprint</b>. Holosun K optics need a plate unless the slide is a newer MOS-K. An RMR is too wide.',
       'Double-stack Glock trigger parts won\'t fit; use slimline parts.',
     ],
     charts: [
@@ -200,7 +200,7 @@ export const GUIDES: Guide[] = [
     answers: [
       'Standard and XL <b>grips and slides mix freely</b>. An XL grip with the short 3.1" slide is the P365X layout.',
       'Each slide takes <b>its own barrel and recoil spring</b>. The Spectre Comp slide is the odd one: it takes the 3.1" barrel with the XL spring, and a threaded barrel won\'t clear its built-in comp.',
-      'Optic-ready P365 slides use the <b>RMSc footprint</b>. Other footprints need an adapter plate.',
+      'Optic-ready P365 slides take <b>RMSc and Holosun K</b> optics directly. Other footprints need an adapter plate.',
       'A <b>10-round mag sits up inside the XL grip</b>; the 12 and 15-round mags extend below the standard grip.',
     ],
     charts: [
@@ -491,7 +491,7 @@ export const GUIDES: Guide[] = [
     answers: [
       'Every <b>Optics Ready M2.0 takes a dot on a CORE plate</b>. The pistol comes with plates, and the RMR, RMSc and Venom-footprint dots we list each use one of them.',
       'The <b>DeltaPoint Pro needs S&amp;W\'s DeltaPoint Pro CORE plate kit</b>, sold separately for about $49.',
-      'The <b>Aimpoint Acro</b> isn\'t covered by S&amp;W\'s plates. You need an aftermarket M&amp;P plate for it.',
+      'The <b>Aimpoint Acro and Holosun K</b> optics aren\'t covered by S&amp;W\'s plates. You need an aftermarket M&amp;P plate for them.',
       'A <b>bare upgrade slide may not include the plates</b> that come in the box with a complete pistol, so check before you order one.',
       'The CORE cut is the same on the <b>Full Size and Compact</b>, so the same plate and dot fit either slide.',
       'With a dot on the slide, <b>suppressor-height sights</b> let you aim through the window if the dot fails. Standard-height sights sit below it.',

@@ -234,7 +234,7 @@ const shared: Part[] = [
       offers: [['PA', 299.99], ['OP', 309.99]], pick: pick('value', 'Feature-rich and reliable at half the price of an RMR.') },
     { id: 'g-opt-rmr', brand: 'Trijicon', name: 'RMR Type 2, 3.25 MOA', specs: ['RMR footprint', 'Duty-grade'], attrs: { footprint: 'rmr' },
       offers: [['BRN', 449.99], ['OP', 439.99], ['MID', 459.99]], pick: pick('premium', 'The standard for duty pistol optics.') },
-    { id: 'g-opt-507k', brand: 'Holosun', name: 'HS507K X2', specs: ['RMSc footprint', 'Compact'], attrs: { footprint: 'rmsc' },
+    { id: 'g-opt-507k', brand: 'Holosun', name: 'HS507K X2', specs: ['Holosun K footprint', 'Compact'], attrs: { footprint: 'k' },
       offers: [['PA', 269.99], ['OP', 274.99]] },
     { id: 'g-opt-acro', brand: 'Aimpoint', name: 'Acro P-2', specs: ['Acro footprint', 'Enclosed emitter'], attrs: { footprint: 'acro' },
       offers: [['BRN', 519.0], ['OP', 509.99]] },
@@ -242,7 +242,7 @@ const shared: Part[] = [
       offers: [['PA', 249.99], ['OP', 254.99]] },
     { id: 'g-opt-sro', brand: 'Trijicon', name: 'SRO 2.5 MOA', specs: ['RMR footprint', 'Large window'], attrs: { footprint: 'rmr' },
       offers: [['BRN', 549.99], ['OP', 539.99]] },
-    { id: 'g-opt-epsc', brand: 'Holosun', name: 'EPS Carry', specs: ['RMSc footprint', 'Enclosed emitter'], attrs: { footprint: 'rmsc' },
+    { id: 'g-opt-epsc', brand: 'Holosun', name: 'EPS Carry', specs: ['Holosun K footprint', 'Enclosed emitter'], attrs: { footprint: 'k' },
       offers: [['PA', 349.99], ['OP', 354.99]] },
     { id: 'g-opt-mps', brand: 'Steiner', name: 'MPS Micro Pistol Sight', specs: ['Acro footprint', 'Enclosed emitter'], attrs: { footprint: 'acro' },
       offers: [['OP', 479.99], ['BRN', 489.99]] },
@@ -349,8 +349,10 @@ function rules(b: Build): Issue[] {
       out.push({ severity: 'warn', slots: ['slide', 'optic', 'plate'], message: 'MOS slides need a plate for this optic. Pick one under Optic Plate.' });
     else if (cut === 'mos' && plate && !(plate.attrs.fits as string[]).includes(String(fp)))
       out.push({ severity: 'error', slots: ['optic', 'plate'], message: 'This plate is made for a different optic footprint.' });
-    else if (cut !== 'mos' && cut !== fp)
-      out.push({ severity: 'warn', slots: ['slide', 'optic'], message: `The slide is cut for the ${String(cut).toUpperCase()} footprint, but this optic uses ${String(fp).toUpperCase()}. It won't mount directly; you need an adapter plate from ${String(cut).toUpperCase()} to ${String(fp).toUpperCase()}, which sits the dot a little higher.` });
+    else if (cut !== 'mos' && cut !== fp) {
+      const name = (f: unknown) => (f === 'k' ? 'Holosun K' : String(f).toUpperCase());
+      out.push({ severity: 'warn', slots: ['slide', 'optic'], message: `The slide is cut for the ${name(cut)} footprint, but this optic uses ${name(fp)}. It won't mount directly; you need an adapter plate from ${name(cut)} to ${name(fp)}, which sits the dot a little higher.` });
+    }
   }
   if (plate && slide && slide.attrs.cut !== 'mos')
     out.push({ severity: 'error', slots: ['slide', 'plate'], message: 'Optic plates fit MOS slides only. This slide is cut for the optic directly.' });
