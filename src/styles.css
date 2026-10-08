@@ -321,9 +321,9 @@ h1 { font: 700 clamp(28px, 4.2vw, 40px)/1.08 var(--f-head); letter-spacing: -.00
 .chip:hover { border-color: var(--ink); }
 .chip-amt { color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; margin-left: 2px; }
 @media (max-width: 719px) {
-  .bp-toolbar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -16px 10px; padding: 2px 16px;
-    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
-  .bp-toolbar .chip { padding: 8px 13px; font-size: 14px; }
+  /* Wrap instead of scrolling sideways, so every starter build shows without swiping. */
+  .bp-toolbar .tb-label { flex-basis: 100%; margin-bottom: 2px; }
+  .bp-toolbar .chip { padding: 8px 12px; font-size: 14px; }
   .chip-clear { margin-left: 0; }
 }
 .chip-clear { margin-left: auto; color: var(--err); border-color: transparent; background: none; }
