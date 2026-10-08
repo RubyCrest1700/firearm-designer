@@ -1611,8 +1611,8 @@ interface ProfileGeo {
   frameD: string; frameDetail: string; stipple: string; slideD: string; slideDetail: string; windowD: string;
   /** Cuts through the slide's outline (an aftermarket slide's optic pocket and top slots): erased, then edged. */
   slideCuts?: { erase: string; edge: string };
-  /** An aftermarket slide's optic pocket at the rear, as [front x, depth]; its rear sight sits ahead of it. */
-  pocket?: [number, number];
+  /** An aftermarket slide's optic pocket, as [rear x, front x, depth]; its rear sight sits behind it. */
+  pocket?: [number, number, number];
   /** Floor plate measured from a photo (flush OEM magazine). */
   plateD?: string;
   /** The floor plate's top face and the gap above it, for a flush magazine in a flared mag well's cut. */
@@ -1798,7 +1798,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     : v.texture === 'patent' || Math.min(...ol.filter((_, i) => i % 2)) < h1y - 0.1));
   let frameDetail = pr.frame.detail.filter(keepDetail).map((ol) => polyPath(scF(ol), frameMap, false)).join(' ');
   let slideDetail = pr.slide.detail.map((ol) => polyPath(scS(ol), slideMap, false)).join(' ');
-  let slideCuts: { erase: string; edge: string } | undefined, pocket: [number, number] | undefined;
+  let slideCuts: { erase: string; edge: string } | undefined, pocket: [number, number, number] | undefined;
   let stipple = '';
   let tang = -mk.tang;
   let fcuX0 = -Infinity;
@@ -1963,22 +1963,24 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     const face = `M${f(SL - 0.05)},${f(mk.bore - 0.2)} L${f(SL - 0.05)},${f(mk.bore + 0.2)}`;
     slideDetail = `${lines} ${rearSerr} ${fSerr} ${extractor} ${face} ${chamfer}`;
     const after = v.slide === 'ggp' ? ggpSlide(SL, SH) : v.slide === 'zev' ? zevSlide(SL, SH, port0, port1) : v.slide === 'zaffiri' ? zaffiriSlide(SL, SH, port0, port1)
-      : v.slide === 'brownells' ? brownellsSlide(SL, SH, port1) : '';
+      : v.slide === 'brownells' ? brownellsSlide(SL, SH) : '';
     // Aftermarket slides drawn from their photos: no lower edge line, only the top chamfer.
     const topLine = `M0.05,0.12 L${f(SL - 0.1)},0.12`;
     if (after) {
       slideDetail = `${topLine} ${after} ${extractor} ${face}`;
-      // RMR-cut aftermarket slides pocket the optic at the very rear (from 0.2", 0.1" deep, measured on GGP's flat render)
-      // and carry the rear sight on the block between the pocket and the port.
-      const pk1 = port0 - 0.62;
-      pocket = [pk1, 0.1];
-      slideCuts = { erase: `M0.2,-0.03 L0.2,0.1 L${f(pk1)},0.1 L${f(pk1)},-0.03 Z`, edge: `M0.2,0 L0.2,0.1 L${f(pk1)},0.1 L${f(pk1)},0` };
+      // RMR-cut aftermarket slides keep the rear sight's dovetail at the very rear (0.28" to 0.56" on GGP's flat render and
+      // top view; ZEV, Brownells and Zaffiri show the same layout), then pocket the optic, 0.1" deep, from 0.6" to 0.6"
+      // short of the port.
+      const pk0 = 0.62, pk1 = port0 - 0.62;
+      pocket = [pk0, pk1, 0.1];
+      slideCuts = { erase: `M${pk0},-0.03 L${pk0},0.1 L${f(pk1)},0.1 L${f(pk1)},-0.03 Z`, edge: `M${pk0},0 L${pk0},0.1 L${f(pk1)},0.1 L${f(pk1)},0` };
       if (v.slide === 'zaffiri') {
-        // Zaffiri's top slots cut down through the top corner, so they notch the outline.
+        // Zaffiri's top slots cut down through the top corner, so they notch the outline; each is wider than the tab
+        // left between it and the next, and its far wall shows through as an inner line.
         const xs: number[] = [];
-        for (let x = port1 + 0.25; x < SL - 1.0; x += (SL - 1.25 - port1) / 4.5) xs.push(x);
-        slideCuts.erase += xs.map((x) => ` M${f(x)},-0.03 L${f(x)},0 L${f(x + 0.12)},0.3 L${f(x + 0.26)},0.3 L${f(x + 0.14)},0 L${f(x + 0.14)},-0.03 Z`).join('');
-        slideCuts.edge += xs.map((x) => ` M${f(x)},0 L${f(x + 0.12)},0.3 L${f(x + 0.26)},0.3 L${f(x + 0.14)},0`).join('');
+        for (let x = port1 + 0.22; x < SL - 1.0; x += (SL - 1.25 - port1) / 4.5) xs.push(x);
+        slideCuts.erase += xs.map((x) => ` M${f(x)},-0.03 L${f(x)},0 L${f(x + 0.12)},0.34 L${f(x + 0.32)},0.34 L${f(x + 0.2)},0 L${f(x + 0.2)},-0.03 Z`).join('');
+        slideCuts.edge += xs.map((x) => ` M${f(x)},0 L${f(x + 0.12)},0.34 L${f(x + 0.32)},0.34 L${f(x + 0.2)},0 M${f(x + 0.06)},0.05 L${f(x + 0.13)},0.26 L${f(x + 0.28)},0.26`).join('');
       }
     }
     const ph = spec.photo ? GLOCK_PHOTOS[spec.photo] : undefined;
@@ -2181,16 +2183,18 @@ function ggpSlide(SL: number, SH: number) {
   return `${rear} ${front} ${panel} ${bevel}`;
 }
 
-/** ZEV Glock slide, drawn from ZEV's angled Z19 render (no flat photo found): wide straight rear grooves, a recessed
- *  panel under the port, four windows through a recessed panel ahead of it, and a broad chamfer along the top. */
+/** ZEV Glock slide, drawn from ZEV's angled Z19 render (no flat photo found): eight wide shallow grooves at the rear,
+ *  a recessed panel under the port, and ahead of it a sunk panel with a beveled lower edge holding four windows with
+ *  thick beveled walls, under a broad chamfer along the top. */
 function zevSlide(SL: number, SH: number, port0: number, port1: number) {
   const same: Map2 = (x, y) => [x, y];
-  const rear = repeat(0.24, 1.05, 0.16, (x) => `M${x},0.2 L${x},${f(SH - 0.1)}`);
+  const rear = repeat(0.18, 1.3, 0.15, (x) => `M${x},0.18 L${x},${f(SH - 0.1)}`);
   const under = polyPath(roundCorners([port0 - 0.75, SH * 0.5, port1 + 0.05, SH * 0.5, port1 + 0.05, SH * 0.8, port0 - 0.75, SH * 0.8], 0.06), same, true);
   const x0 = port1 + 0.3, x1 = SL - 0.7, w = (x1 - x0 - 0.12) / 4;
-  let win = polyPath(roundCorners([x0, SH * 0.4, x1, SH * 0.4, x1, SH * 0.88, x0, SH * 0.88], 0.06), same, true);
-  for (let i = 0; i < 4; i++) { const a = x0 + 0.06 + i * w + 0.05, b = a + w - 0.1; win += ' ' + throughWindow(a, SH * 0.5, b, SH * 0.78); }
-  const step = `M${f(x0 + 0.06)},${f(SH * 0.4 + 0.035)} L${f(x1 - 0.06)},${f(SH * 0.4 + 0.035)} M${f(port0 - 0.69)},${f(SH * 0.5 + 0.035)} L${f(port1)},${f(SH * 0.5 + 0.035)}`;
+  let win = polyPath(roundCorners([x0, SH * 0.36, x1, SH * 0.36, x1, SH * 0.9, x0, SH * 0.9], 0.07), same, true);
+  for (let i = 0; i < 4; i++) { const a = x0 + 0.08 + i * w + 0.04, b = a + w - 0.12; win += ' ' + bevelWindow(a, SH * 0.46, b, SH * 0.8, 0.045); }
+  // The panel's lower edge is a bevel, so it shows a second line; its top steps down from the chamfered upper slide.
+  const step = `M${f(x0 + 0.07)},${f(SH * 0.9 - 0.045)} L${f(x1 - 0.07)},${f(SH * 0.9 - 0.045)} M${f(port0 - 0.69)},${f(SH * 0.5 + 0.035)} L${f(port1)},${f(SH * 0.5 + 0.035)}`;
   return `${rear} ${under} ${win} ${step} M${f(port1)},0.28 L${f(SL - 0.12)},0.28`;
 }
 
@@ -2203,25 +2207,40 @@ function throughWindow(x0: number, y0: number, x1: number, y1: number) {
   return `${rim} ${wall}`;
 }
 
-/** Brownells RMR slide, from its angled render: straight grooves at the rear and a second set just ahead of the port. */
-function brownellsSlide(SL: number, SH: number, port1: number) {
-  const g = (x0: number) => repeat(x0, x0 + 0.84, 0.14, (x) => `M${x},0.2 L${x},${f(SH - 0.08)}`);
-  return `${g(0.25)} ${g(Math.min(port1 + 0.3, SL - 1.6))}`;
+/** A window with a beveled rim all round (ZEV, Zaffiri): the outer edge of the bevel, the opening itself inset by
+ *  the bevel's width, and the far wall's top edge seen through it, which gives the hole its depth. */
+function bevelWindow(x0: number, y0: number, x1: number, y1: number, b: number, lean = 0) {
+  const same: Map2 = (x, y) => [x, y];
+  const box = (i: number) => polyPath(roundCorners([x0 + i + lean, y0 + i, x1 - i + lean, y0 + i, x1 - i, y1 - i, x0 + i, y1 - i], 0.05), same, true);
+  const far = `M${f(x0 + b + 0.02 + lean * 0.7)},${f(y0 + b * 2.2)} L${f(x1 - b - 0.02 + lean * 0.7)},${f(y0 + b * 2.2)}`;
+  return `${box(0)} ${box(b)} ${far}`;
+}
+
+/** Brownells RMR slide, from its angled render (spacing corrected for the angle): six deep flat-bottomed grooves
+ *  just ahead of the rear sight block, and seven more spaced closer starting a quarter inch ahead of the port. */
+function brownellsSlide(SL: number, SH: number) {
+  const g = (x0: number, n: number, pitch: number) => {
+    let d = '';
+    for (let i = 0; i < n; i++) { const x = x0 + i * pitch; d += ` M${f(x)},0.17 L${f(x)},${f(SH - 0.06)} M${f(x + 0.06)},0.17 L${f(x + 0.06)},${f(SH - 0.06)}`; }
+    return d;
+  };
+  return `${g(0.35, 6, 0.19)} ${g(SL - 2.5, 7, 0.16)}`;
 }
 
 /** Zaffiri ZPS.2, from its two mildly angled renders: seven wide scalloped rear grooves stopping above the panel line, a long recessed panel from the extractor to the
- *  nose with three long windows low in it, five notches across the top ahead of the port, and the bevel down the nose. */
+ *  nose with three long M-LOK-shaped windows low in it, five slanted cuts over the top ahead of the port, and the bevel down the nose. */
 function zaffiriSlide(SL: number, SH: number, port0: number, port1: number) {
   const same: Map2 = (x, y) => [x, y];
-  // Each rear groove is a wide scallop: two walls with a rounded foot.
-  const rear = repeat(0.22, 1.05, 0.13, (x) => `M${x},0.16 L${f(x + 0.02)},${f(SH * 0.72)} Q${f(x + 0.05)},${f(SH * 0.8)} ${f(x + 0.08)},${f(SH * 0.72)} L${f(x + 0.08)},0.16`);
+  // Each rear groove is a wide scallop: a straight front wall, a sloped back face, and a rounded foot above the panel.
+  const rear = repeat(0.3, 1.35, 0.17, (x) => `M${x},0.14 L${x},${f(SH * 0.44)} Q${f(x + 0.06)},${f(SH * 0.54)} ${f(x + 0.13)},${f(SH * 0.44)} L${f(x + 0.13)},0.14`);
   const x0 = port0 - 1.0, x1 = SL - 0.55;
-  const panel = polyPath(roundCorners([x0, SH * 0.42, x1, SH * 0.42, x1, SH * 0.9, x0, SH * 0.9], 0.08), same, true);
-  const a = port1 + 0.15, w = (x1 - 0.12 - a) / 3;
+  const panel = polyPath(roundCorners([x0, SH * 0.42, x1, SH * 0.42, x1, SH * 0.92, x0, SH * 0.92], 0.08), same, true);
+  const a = port1 + 0.12, w = (x1 - 0.1 - a) / 3;
   let slots = '';
-  for (let i = 0; i < 3; i++) { const s0 = a + i * w + 0.04, s1 = s0 + w - 0.08; slots += ' ' + throughWindow(s0, SH * 0.6, s1, SH * 0.8); }
-  // The panel is sunk into the side: its upper edge shows a second, inner line where the wall steps down.
-  const step = `M${f(x0 + 0.08)},${f(SH * 0.42 + 0.035)} L${f(x1 - 0.08)},${f(SH * 0.42 + 0.035)}`;
+  for (let i = 0; i < 3; i++) { const s0 = a + i * w + 0.03, s1 = s0 + w - 0.07; slots += ' ' + bevelWindow(s0, SH * 0.54, s1, SH * 0.84, 0.04, 0.05); }
+  // The panel is sunk into the side: its upper edge shows a second, inner line where the wall steps down, and its
+  // lower edge is a bevel.
+  const step = `M${f(x0 + 0.08)},${f(SH * 0.42 + 0.035)} L${f(x1 - 0.08)},${f(SH * 0.42 + 0.035)} M${f(x0 + 0.08)},${f(SH * 0.92 - 0.035)} L${f(x1 - 0.08)},${f(SH * 0.92 - 0.035)}`;
   return `${rear} ${panel} ${step}${slots} M${f(SL - 0.4)},0.02 L${f(SL - 0.03)},0.3`;
 }
 
@@ -2420,9 +2439,9 @@ function pistol(platform: Platform, build: Build): Scene {
   // The P365's rear sight is shorter, so an optic fits between it and the ejection port as on the real slide.
   const p365 = geo.key === 'p365';
   // Glock rear sights measured on RSR's flat G17/G19 photos: 0.24" to 0.66" from the slide's rear at the base. An
-  // aftermarket RMR slide carries its rear sight on the block between the optic pocket and the port.
+  // aftermarket RMR slide keeps its rear sight there too, just behind the optic pocket.
   const pk = geo.pocket;
-  const r0 = pk ? pk[0] + 0.06 : p365 ? 0.1 : sig ? 0.14 : 0.24, r1 = pk ? geo.port0 - 0.08 : p365 ? 0.6 : sig ? 0.86 : 0.66;
+  const r0 = p365 ? 0.1 : sig ? 0.14 : 0.24, r1 = pk ? pk[0] - 0.02 : p365 ? 0.6 : sig ? 0.86 : 0.66;
   // Front sights sit near the muzzle end, measured back from the slide's front on RSR's and Wilson's flat photos:
   // Sig 0.14" to 0.56", Glock 0.16" to 0.44", M&P 0.08" to 0.49", Hellcat 0.10" to 0.60".
   const [fa, fb] = sig ? [0.56, 0.14] : geo.key === 'mp' ? [0.49, 0.08] : geo.key === 'hellcat' ? [0.6, 0.1] : [0.44, 0.16];
@@ -2446,8 +2465,8 @@ function pistol(platform: Platform, build: Build): Scene {
   const fp = (b.optic?.attrs.footprint as string) ?? (cut === 'none' ? 'rmr' : cut);
   const po = pistolOptic(b.optic, fp);
   // An optic ends just behind the ejection port, never over it (the P365's and Hellcat's short slides pull it back).
-  // In an aftermarket slide's rear pocket the optic sits down in the pocket, at its rear.
-  const ox0 = pk ? 0.24 : Math.min(0.9, geo.port0 - 0.06 - po.len), oy0 = pk ? pk[1] : 0;
+  // On an aftermarket slide the optic sits down in its pocket, at the pocket's rear.
+  const ox0 = pk ? pk[0] + 0.04 : Math.min(0.9, geo.port0 - 0.06 - po.len), oy0 = pk ? pk[2] : 0;
   P.push({ slot: 'optic', z: 11, row: 'top', target: px(ox0 + po.len / 2, oy0 - po.h),
     el: <><path fillRule="evenodd" d={T(movePath(po.od, ox0, oy0))} /><path className="detail" d={T(movePath(po.odet, ox0, oy0))} /></> });
 
