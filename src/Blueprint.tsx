@@ -1758,6 +1758,8 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     const low = modOl.filter((_, i) => i % 2 === 0).filter((_, i) => modOl[2 * i + 1] > yb - 0.04);
     heel = [Math.min(...low), yb];
     toe = [Math.max(...low), yb];
+    // A flared mag well with a sloped bottom: the floor plate sits flush inside it, along its slope.
+    if (modPh.plate) { heel = [modPh.plate[0], modPh.plate[1]]; toe = [modPh.plate[2], modPh.plate[3]]; }
   }
   // A grip module with its own texture replaces the patent's molded panels below the guard.
   // A photo-traced module keeps only the patent's lines above the trigger guard (the controls); its grip is its own.
@@ -1818,18 +1820,33 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
       frameDetail += ' ' + [MODULE_PANEL, ...MODULE_STRIPS].map((q) => polyPath(roundCorners(q, 0.06), same, true)).join(' ') + ' ' + OC(lx, ly, lr)
     } else if (v.texture === 'x' || v.texture === 'patent') stipple = dotsIn(panel, 0.1, same, 0.06) + (modPh?.strips ?? []).map((q) => dotsIn(q, 0.06, same, 0.02)).join('');
     else if (v.texture === 'wilson') {
-      // Wilson's texture: diamond checkering, and on the photo-traced module grooves fanning down and back from above
+      // Wilson's texture: rows of slanted pyramids (ridges rising forward at 35 degrees, 0.072" apart, cut by near-vertical
+      // grooves 0.1" apart, measured off the photo), and on the photo-traced module grooves fanning down and back from above
       // the mag catch, with stippled strips down both straps.
-      stipple = hatchIn(panel, 35, 0.085, same, 0.04) + hatchIn(panel, -35, 0.085, same, 0.04) + (modPh?.strips ?? []).map((q) => dotsIn(q, 0.06, same, 0.02)).join('');
+      const ok = (x: number, y: number) => inside(panel, x, y) && inside(panel, x - 0.03, y) && inside(panel, x + 0.03, y) && inside(panel, x, y - 0.03) && inside(panel, x, y + 0.03);
+      const ux = Math.cos((-35 * Math.PI) / 180), uy = Math.sin((-35 * Math.PI) / 180), gx = Math.sin((80 * Math.PI) / 180), gy = -Math.cos((80 * Math.PI) / 180);
+      const pxs = panel.filter((_, i) => !(i % 2)), pys = panel.filter((_, i) => i % 2);
+      const cx = (Math.min(...pxs) + Math.max(...pxs)) / 2, cy = (Math.min(...pys) + Math.max(...pys)) / 2, R = Math.hypot(Math.max(...pxs) - Math.min(...pxs), Math.max(...pys) - Math.min(...pys)) / 2;
+      // Each pyramid is a short slanted dash: the ridge lines broken where the grooves cross them.
+      for (let o = -R; o <= R; o += 0.072) {
+        let run: number[] | null = null;
+        for (let t = -R; t <= R + 0.01; t += 0.01) {
+          const x = cx - uy * o + ux * t, y = cy + ux * o + uy * t, u = (x * gx + y * gy) / 0.1;
+          const on = t <= R && ok(x, y) && u - Math.floor(u) > 0.18;
+          if (on && !run) run = [x, y];
+          else if (!on && run) { stipple += `M${f(run[0])},${f(run[1])} L${f(x - ux * 0.01)},${f(y - uy * 0.01)} `; run = null; }
+        }
+      }
+      stipple += (modPh?.strips ?? []).map((q) => dotsIn(q, 0.06, same, 0.02)).join('');
       if (modPh?.fan) {
         const [fx0, fy0] = modPh.fan;
-        for (const a of [102, 115, 128, 145, 165]) {
+        for (const a of [110, 121, 132, 142, 152, 163, 174, 185]) {
           const r = (a * Math.PI) / 180, pts: number[] = [];
-          for (let t = 0.6; t < 3; t += 0.02) {
+          for (let t = 0.3; t < 3; t += 0.02) {
             const x = fx0 + Math.cos(r) * t, y = fy0 + Math.sin(r) * t;
-            if (inside(panel, x, y)) pts.push(x, y); else if (pts.length) break;
+            if (ok(x, y)) pts.push(x, y); else if (pts.length) break;
           }
-          if (pts.length > 4) stipple += ' ' + polyPath(pts, same, false);
+          if (pts.length > 4) frameDetail += ' ' + polyPath(pts, same, false);
         }
       }
     }
@@ -1977,7 +1994,8 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     frameDetail, stipple,
     slideD: face && modPh?.nose ? photoSlide(face[0], modPh.nose[0]) : pr.slide.outline.map((ol) => polyPath(scS(ol), slideMap, true)).join(' ') + slideNose,
     slideDetail,
-    windowD: win ? polyPath(win, grip, true) : '',
+    // A photo-traced module closes its own grip bottom, so the factory mag window doesn't show.
+    windowD: win && !modPh ? polyPath(win, grip, true) : '',
   };
 }
 

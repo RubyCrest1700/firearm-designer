@@ -21,6 +21,8 @@ export const SIG_MODULE_PHOTOS: Record<'xfull' | 'xcarry' | 'sub' | 'axg' | 'wil
   /** The slide's nose (around the recoil spring) in front of that face: how far down it reaches and its front x on the
    *  photo. The face moves with the drawing's slide front, so the nose keeps the photo's width. */
   nose?: [number, number];
+  /** The magazine's floor plate: heel and toe (x, y each), where the module's own mag well bottom is not level. */
+  plate?: [number, number, number, number];
   /** Where the grooves across its texture fan out from (the Wilson module). */
   fan?: [number, number];
 }> = {
@@ -88,7 +90,7 @@ export const SIG_MODULE_PHOTOS: Record<'xfull' | 'xcarry' | 'sub' | 'axg' | 'wil
     ],
     front: [6.6, 0.9, 6.607, 0.994, 6.593, 1.33, 6.576, 1.42, 6.545, 1.5, 6.487, 1.798, 6.46, 1.84],
     nose: [1.49, 6.66],
-    fan: [1.2, 2.55],
+    fan: [1.69, 2.8],
   },
   // Wilson Combat P365XL module, from Primary Arms' flat bare-module photo, in the P365 drawing's inches. Scaled and
   // placed against RSR Group's flat P365XL photo, whose slide matches the drawn slide: its trigger guard is the same
@@ -98,16 +100,18 @@ export const SIG_MODULE_PHOTOS: Record<'xfull' | 'xcarry' | 'sub' | 'axg' | 'wil
     hole: [4.114, 1.582, 4.117, 1.678, 4.051, 1.939, 4.002, 2.051, 3.946, 2.113, 3.868, 2.169, 3.794, 2.2, 3.725, 2.216, 3.035, 2.275, 2.877, 2.262, 2.488, 2.157, 2.404, 2.119, 2.355, 2.082, 2.277, 1.998, 2.237, 1.927, 2.221, 1.874, 2.224, 1.805, 2.271, 1.625, 2.317, 1.513, 2.389, 1.426, 2.436, 1.392, 2.479, 1.377, 3.902, 1.377, 3.955, 1.392, 4.017, 1.429, 4.086, 1.51],
     kind: 'std',
     catchPoly: {
-      outline: [1.93, 1.94, 2.0, 1.95, 2.19, 2.06, 2.235, 2.12, 2.2, 2.165, 1.93, 2.255, 1.875, 2.24, 1.865, 2.19, 1.895, 1.98],
-      ridges: [[1.94, 1.985, 2.17, 2.11, 1.92, 2.205, 1.905, 2.18, 1.925, 1.995, 1.94, 1.985]],
+      outline: [1.845, 2.044, 1.854, 2.015, 1.872, 1.991, 1.897, 1.974, 1.926, 1.965, 1.956, 1.966, 1.985, 1.976, 2.158, 2.073, 2.185, 2.095, 2.202, 2.125, 2.207, 2.16, 2.199, 2.194, 2.179, 2.223, 2.151, 2.242, 1.948, 2.332, 1.915, 2.34, 1.881, 2.336, 1.851, 2.321, 1.829, 2.296, 1.816, 2.265, 1.815, 2.231],
+      ridges: [[1.87, 2.048, 1.877, 2.027, 1.89, 2.01, 1.908, 1.997, 1.929, 1.991, 1.951, 1.991, 1.972, 1.999, 2.146, 2.095, 2.165, 2.111, 2.177, 2.134, 2.181, 2.159, 2.175, 2.183, 2.161, 2.204, 2.14, 2.219, 1.937, 2.309, 1.913, 2.315, 1.889, 2.312, 1.867, 2.3, 1.851, 2.282, 1.842, 2.259, 1.841, 2.235, 1.87, 2.048]],
     },
-    panel: [0.6, 1.37, 2.05, 1.34, 2.07, 1.85, 1.85, 1.9, 1.7, 2.05, 1.7, 2.3, 1.78, 2.5, 1.84, 2.9, 1.7, 3.15, 1.58, 3.7, 1.48, 4.1, 0.14, 3.88, 0.14, 3.7, 0.21, 3.4, 0.294, 3.1, 0.376, 2.8, 0.456, 2.5, 0.544, 2.2, 0.59, 1.97],
+    panel: [0.6, 1.37, 2.05, 1.34, 2.06, 1.84, 1.82, 1.86, 1.68, 2.0, 1.67, 2.3, 1.74, 2.5, 1.84, 2.9, 1.7, 3.15, 1.58, 3.7, 1.48, 4.1, 0.14, 3.88, 0.14, 3.7, 0.21, 3.4, 0.294, 3.1, 0.376, 2.8, 0.456, 2.5, 0.544, 2.2, 0.59, 1.97],
     strips: [
       [0.4, 1.97, 0.334, 2.2, 0.246, 2.5, 0.166, 2.8, 0.084, 3.1, 0.0, 3.4, -0.07, 3.7, -0.075, 3.88, 0.115, 3.88, 0.12, 3.7, 0.19, 3.4, 0.274, 3.1, 0.356, 2.8, 0.436, 2.5, 0.524, 2.2, 0.57, 1.97],
       [1.82, 3.02, 1.95, 3.0, 1.87, 3.4, 1.79, 3.85, 1.72, 4.15, 1.58, 4.16, 1.65, 3.85, 1.72, 3.4],
     ],
     lines: [
-      // The WILSON COMBAT logo panel, the takedown lever notch, the rail groove under the slide and the dust cover's groove.
+      // The relief cut around the mag catch, the WILSON COMBAT logo panel, the takedown lever notch, the rail groove under
+      // the slide and the dust cover's groove.
+      [1.76, 2.4, 1.72, 2.25, 1.73, 2.08, 1.79, 1.96, 1.87, 1.91, 1.98, 1.91, 2.08, 1.95, 2.24, 2.06],
       [0.5, 1.12, 1.78, 1.12, 1.78, 1.27, 0.5, 1.27, 0.5, 1.12],
       [3.0, 0.8, 3.0, 0.98, 3.04, 1.05, 3.12, 1.08, 3.2, 1.05, 3.25, 0.98, 3.25, 0.8],
       [3.7, 0.85, 5.6, 0.85],
@@ -115,7 +119,8 @@ export const SIG_MODULE_PHOTOS: Record<'xfull' | 'xcarry' | 'sub' | 'axg' | 'wil
     ],
     front: [5.65, 0.79, 5.65, 1.3, 5.62, 1.38, 5.57, 1.41],
     nose: [1.23, 6.22],
-    fan: [1.5, 2.2],
+    plate: [0.33, 4.3, 1.27, 4.54],
+    fan: [1.75, 2.22],
   },
 };
 
