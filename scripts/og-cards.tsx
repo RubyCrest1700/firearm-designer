@@ -28,8 +28,8 @@ const BP_CSS = `
 .bp-part path { fill: rgba(234,243,255,.05); stroke: ${C.ink}; stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
 .bp-part .detail { fill: none; stroke-width: .9; opacity: .8; }
 .bp-part path.solid { fill: ${C.bp}; stroke: none; }
-.bp-part .hidden-line { fill: none; stroke-dasharray: 5 3.5; stroke-width: 1; opacity: .75; }
-.internal path { fill: none; stroke-dasharray: 5 3.5; stroke-width: 1; opacity: .75; }
+.bp-part .hidden-line { fill: none; stroke: none; opacity: 0; }
+.internal path { fill: none; stroke: none; opacity: 0; }
 .static { opacity: .4; }
 .empty path { fill: none; stroke: rgba(234,243,255,.5); stroke-dasharray: 2 3; }
 `;
