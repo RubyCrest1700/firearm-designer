@@ -164,7 +164,27 @@ function rifleOptic(opt: Part | undefined): { od: string; odet: string; ot: [num
   let od: string;
   let odet = '';
   let ot: [number, number]; // inches
-  if (matches(opt, /\d+-\d+x/i)) {
+  if (matches(opt, /\d+-\d+x24/i)) {
+    // 1-6x24 / 1-8x24 LPVOs on a 30 mm tube, traced from a flat side photo of the Vortex Strike Eagle at its published
+    // 10.5" length (inches from the eyepiece end, on the tube axis): ribbed diopter, ocular housing, ribbed magnification
+    // ring with its throw lever, a plain tube to the turret saddle (capped elevation turret on top, illumination knob on
+    // the side), and an objective no bigger than the tube. The SLx has a taller finned lever; the mount's rings hug the tube.
+    const slx = matches(opt, /SLx/);
+    const ex = -0.6, cy = -2.6;
+    const p = (pts: number[], close = true) => pts.reduce((s, v, i) => i % 2 ? s : `${s}${i ? ' L' : 'M'}${f(ex + v)},${f(cy + pts[i + 1])}`, '') + (close ? ' Z' : '');
+    const lever = slx ? [3.0, -1.03, 2.96, -1.62, 3.08, -1.7, 3.3, -1.66, 3.22, -1.02] : [3.2, -1.02, 3.19, -1.47, 3.11, -1.52, 2.95, -1.46, 2.97, -1.03];
+    od = p([0, -0.66, 0, 0.66, 0.09, 0.83, 0.31, 0.87, 2.12, 0.9, 2.51, 0.86, 2.59, 0.93, 3.22, 0.94, 3.55, 0.9, 3.79, 0.61, 5.79, 0.61,
+      5.94, 0.8, 6.29, 1.0, 6.52, 1.08, 6.7, 1.08, 6.94, 0.99, 7.2, 0.82, 7.41, 0.61, 10.45, 0.61, 10.52, 0.56, 10.52, -0.57, 10.45, -0.62,
+      7.41, -0.62, 7.21, -0.82, 7.18, -1.15, 7.04, -1.25, 6.79, -1.31, 6.32, -1.3, 6.06, -1.21, 5.97, -1.05, 5.97, -0.82, 5.78, -0.62,
+      3.78, -0.62, 3.42, -1.01, ...lever, 2.79, -1.01, 2.69, -0.93, 2.59, -0.94, 2.51, -0.87, 2.08, -0.91, 0.32, -0.89, 0.1, -0.85]);
+    const ring = (a: number, b: number) => `${p([a, 0.61, a, 1.5, b, 1.5, b, 0.61], false)}`;
+    odet = `${repeat(0.06, 0.46, 0.08, (x) => `${p([x, -0.8, x, -0.6], false)} ${p([x, 0.6, x, 0.8], false)}`)} ${p([0.31, -0.89, 0.31, 0.87], false)} ${p([2.51, -0.87, 2.51, 0.86], false)}`
+      + ` ${repeat(2.66, 3.5, slx ? 0.14 : 0.09, (x) => `${p([x, -0.94, x, -0.7], false)} ${p([x, 0.7, x, 0.94], false)}`)} ${p([3.55, -0.9, 3.55, 0.9], false)}`
+      + ` ${p([5.97, -0.82, 7.21, -0.82], false)} ${repeat(6.12, 7.1, 0.08, (x) => p([x, -1.22, x, -1.0], false))}`
+      + ` ${OC(ex + 6.62, cy + 0.43, 0.55)} ${OC(ex + 6.62, cy + 0.43, 0.34)} ${p([10.45, -0.62, 10.45, 0.61], false)}`
+      + ` ${ring(4.2, 4.8)} ${ring(8.0, 8.6)} ${p([4.2, 1.35, 8.6, 1.35], false)}`;
+    ot = [ex + 6.6, cy - 1.31];
+  } else if (matches(opt, /\d+-\d+x/i)) {
     const big56 = matches(opt, /x5\d/);
     const cy = big56 ? -2.95 : -2.6;
     const ob = big56 ? 1.18 : 0.72;
@@ -195,7 +215,22 @@ function rifleOptic(opt: Part | undefined): { od: string; odet: string; ot: [num
       + ' M4.3,-1.5 L4.3,-1.7 L4.62,-1.7 L4.62,-1.5 Z M4.72,-1.5 L4.72,-1.7 L5.04,-1.7 L5.04,-1.5 Z'
       + ` M3.0,-1.1 L3.0,-1.3 L3.6,-1.3 L3.6,-1.1 ${O2(3.3, -1.22, 0.06)} M5.2,-1.24 L5.86,-1.24`;
     ot = [4.9, -3.28];
-  } else if (matches(opt, /EXPS|holographic/i) || matches(opt, /ROMEO5|PRO Patrol|Micro T-2/i)) {
+  } else if (matches(opt, /ROMEO5X/i)) {
+    // Sig ROMEO5X, traced from a flat side photo at its published 2.5" length (inches from the window centre): a boxy
+    // body with a raked top facet, lens rings at both ends, the battery cap mid-side, slanted grip cuts, the brightness
+    // knob low at the front, and the riser block standing on the rail at the listed sight height.
+    const H = Number(opt?.attrs.height ?? 1.41), cx = 4.9, ay = -1.1 - H;
+    const p = (pts: number[], close = true) => pts.reduce((s, v, i) => i % 2 ? s : `${s}${i ? ' L' : 'M'}${f(cx + v)},${f(ay + pts[i + 1])}`, '') + (close ? ' Z' : '');
+    od = p([-1.01, -0.73, -1.06, -0.68, -1.14, -0.51, -1.23, -0.5, -1.24, 0.52, -1.15, 0.55, -1.08, 0.77, -1.08, H, 0.94, H, 0.94, 1.24,
+      1.23, 1.23, 1.3, 1.16, 1.31, 0.91, 1.26, 0.82, 1.31, 0.75, 1.24, 0.64, 1.18, 0.64, 1.23, 0.21, 1.2, -0.48, 0.89, -0.5, 0.72, -0.57,
+      0.7, -0.6, -0.32, -0.76]);
+    odet = `${p([-1.08, -0.5, -1.08, 0.55], false)} ${p([1.08, -0.5, 1.08, 0.64], false)} ${p([-1.07, -0.47, -0.31, -0.58, 0.88, -0.22, 0.94, 0.47, 0.94, 0.77], false)}`
+      + ` ${p([-1.08, 0.77, 0.94, 0.77], false)} ${p([-1.08, 1.23, 0.94, 1.23], false)} ${p([-1.08, 1.32, 0.94, 1.32], false)}`
+      + ` ${OC(cx - 0.72, ay + 0.03, 0.34)} ${OC(cx - 0.72, ay + 0.03, 0.24)} ${p([-0.84, 0.01, -0.6, 0.05], false)}`
+      + ` ${repeat(-0.75, 0.55, 0.2, (x) => p([x, 0.48, x + 0.12, 0.66], false))}`
+      + ` ${repeat(1.0, 1.26, 0.065, (x) => p([x, 0.66, x, 1.21], false))}`;
+    ot = [cx, ay - 0.76];
+  } else if (matches(opt, /EXPS|holographic/i) || matches(opt, /PRO Patrol|Micro T-2/i)) {
     // Traced from the makers' design-patent side views (see scripts/pistol-profiles/optics.py). The micro dot drawing
     // stands in for the full-size Aimpoint PRO, scaled to its length; risers lift each to its published sight height.
     const holo = matches(opt, /EXPS|holographic/i);
@@ -301,9 +336,17 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
     sdet = `M${U(0.45)},-0.9 L${U(0.45)},3.85 ${repeat(-0.45, 3.5, 0.55, (y) => `M${U(0.08)},${f(y)} L${U(0.4)},${f(y)}`)} ${OC(rear + 1.05, 0.3, 0.2)} ${OC(rear + 1.05, 0.3, 0.08)} M${U(0.9)},2.6 L${U(1.25)},2.6 L${U(1.25)},3.3 L${U(0.9)},3.3 Z M${U(0.7)},-0.72 L${U(6.6)},-0.72 ${latchPin}`;
   }
   else if (matches(stock, /SBA3/)) {
-    // SB Tactical SBA3: a slim spine along the tube ending in the tall arm cuff, its strap buckled across.
-    sd = `M${U(1.45)},-0.9 ${nose} L${U(1.6)},1.15 L${U(1.5)},1.6 Q${U(1.55)},3.5 ${U(0.9)},3.75 Q${U(0.2)},3.95 ${U(0.1)},3.0 L${U(0)},0.2 L${U(0.05)},-0.6 Q${U(0.1)},-0.95 ${U(0.5)},-0.95 Z`;
-    sdet = `M${U(0.1)},1.7 L${U(1.5)},1.7 M${U(0.1)},2.5 L${U(1.5)},2.5 M${U(0.55)},1.7 L${U(0.55)},2.5 M${U(0.95)},1.7 L${U(0.95)},2.5 ${OC(rear + 0.75, 0.55, 0.3)} M${U(1.6)},-0.72 L${U(6.6)},-0.72 ${latchPin}`;
+    // SB Tactical SBA3, traced from a flat side photo (scaled so its nose matches the 1.85" mil-spec nose): a full-length
+    // body over the tube, the latch lever panel and QD socket hanging under its front, and the arm fin dropping 5" at
+    // the rear with its strap wrapped round, buckle on top.
+    const pp = (pts: number[], close = true) => pts.reduce((a, v, i) => i % 2 ? a : `${a}${i ? ' L' : 'M'}${U(v)},${f(pts[i + 1])}`, '') + (close ? ' Z' : '');
+    sd = pp([7.0, -0.89, 2.1, -0.89, 1.8, -1.18, 0.42, -1.17, 0.39, -0.89, 0.25, -0.79, 0.24, 0.69, 0.27, 0.81, 0.36, 0.89, 0.43, 1.84,
+      0.5, 3.46, 0.52, 4.88, 0.55, 4.95, 0.68, 5.04, 1.8, 5.03, 1.89, 4.93, 1.94, 4.24, 2.24, 1.6, 2.39, 1.61, 2.72, 1.93, 3.89, 1.93,
+      4.06, 1.87, 4.17, 1.74, 4.19, 1.34, 6.0, 1.27, 6.26, 1.02, 6.3, 0.83, 6.68, 0.82, 6.74, 0.78, 6.74, 0.26, 7.06, -0.06]);
+    sdet = `${pp([0.56, -1.02, 1.79, -1.02, 1.79, 2.64, 0.56, 2.64])} ${pp([0.62, 3.14, 1.79, 3.14, 1.79, 4.98, 0.62, 4.98])} ${pp([0.6, 2.64, 0.6, 3.14], false)}`
+      + ` ${pp([0.38, -0.8, 0.38, 0.78], false)} ${pp([0.26, 0.78, 2.38, 0.78], false)} ${pp([2.9, 0.12, 6.75, 0.12], false)} ${pp([2.57, 0.42, 6.28, 0.42], false)}`
+      + ` ${pp([3.46, 0.54, 6.31, 0.74, 6.28, 1.01, 6.0, 1.28, 3.52, 1.19])} ${pp([3.13, 0.07, 3.88, 0.07, 3.88, 0.15, 3.13, 0.15])} ${pp([5.77, 0.07, 6.49, 0.07, 6.49, 0.15, 5.77, 0.15])}`
+      + ` ${OC(rear + 2.85, 1.44, 0.27)} ${OC(rear + 2.85, 1.44, 0.18)} ${OC(rear + 3.86, 0.88, 0.05)} ${OC(rear + 3.86, 1.75, 0.05)}`;
   }
   else if (matches(stock, /SBA4/)) {
     // SB Tactical SBA4: stock-shaped, a flat-bottomed cuff behind a short angled underside, the strap across the cuff.
@@ -327,11 +370,16 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
   let lower: { o: string; d: string };
   if (flared) {
     const o = AR_PROFILES.lower.outline[0];
-    const guard = [2.08, 2.05, 2.0, 2.3, 1.98, 2.75, 2.05, 3.05, 2.25, 3.28, 2.6, 3.36, 3.4, 3.36, 3.85, 3.3, 4.1, 3.18, 4.15, 3.22, 6.3, 2.8, 6.42, 2.72];
-    lower = arPaths({ outline: [[...o.slice(0, 27 * 2), ...guard, ...o.slice(59 * 2)]], detail: AR_PROFILES.lower.detail.filter((_, k) => ![4, 5, 6, 7, 8, 32].includes(k)) });
+    // Measured from a flat side photo of Aero's M4E1 lower: the guard's belly bottoms out 3.17" below the bore, its
+    // opening runs 2.06-3.87" back to front, and the flared magwell lip sits 0.15" ahead of the mil-spec face.
+    const guard = [1.76, 2.2, 1.73, 2.66, 1.73, 2.98, 1.76, 2.99, 2.3, 3.1, 2.82, 3.17, 3.63, 3.02, 4.1, 2.97, 6.62, 2.51, 6.62, 2.43, 6.52, 2.15, 6.52, 1.45];
+    // The guard is a loop: its opening is a hole, and the mil-spec guard's ears and pins at the magwell are dropped.
+    const opening = [2.06, 2.07, 2.1, 1.94, 2.22, 1.83, 2.32, 1.79, 3.64, 1.79, 3.74, 1.85, 3.83, 1.96, 3.87, 2.09, 3.86, 2.62, 3.81, 2.74, 3.69, 2.84, 2.96, 2.98, 2.77, 3.01, 2.27, 2.9, 2.17, 2.85, 2.09, 2.74, 2.06, 2.62];
+    const drop = [1, 2, 3, 4, 5, 6, 7, 8, 32, 39, 40, 41, 42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56];
+    lower = arPaths({ outline: [[...o.slice(0, 27 * 2), ...guard, ...o.slice(64 * 2)], opening], detail: AR_PROFILES.lower.detail.filter((_, k) => !drop.includes(k)) });
   } else lower = arPaths(glock9 ? AR_PROFILES.lower9 : AR_PROFILES.lower);
   P.push({ slot: 'lower', z: 4, row: 'bottom', target: px(5.6 * kx, 2.4 * ky),
-    el: <><path d={R(lower.o)} fillRule={glock9 ? 'evenodd' : undefined} /><path className="detail" d={R(glock9 ? LOWER9_DETAIL.map((l) => polyPath(l, same, false)).join(' ') : lower.d)} /></> });
+    el: <><path d={R(lower.o)} fillRule={glock9 || flared ? 'evenodd' : undefined} /><path className="detail" d={R(glock9 ? LOWER9_DETAIL.map((l) => polyPath(l, same, false)).join(' ') : lower.d)} /></> });
 
   // Lower parts kit: the selector's right-side stub over its detent (the lower drawing shows the hole).
   P.push({ slot: 'lpk', z: 6, row: 'bottom', target: px(1.43 * kx, 1.29 * ky),
@@ -343,7 +391,7 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
 
   // Pistol grip, each one in the catalog drawn to its own profile. The MOE keeps the A2's rake with a smooth front
   // strap (no finger ridge) and Magpul's long side panel; the MOE+ is the same grip overmoulded all round; the MOE-K2+
-  // and BCM's Gunfighter Mod 3 are traced from their side photos (below); Hogue's rubber grip has its finger grooves and palm swell under a cobblestone finish.
+  // and BCM's Gunfighter Mod 3 are traced from their side photos (below); Hogue's rubber grip is traced from its photo too.
   // Without a grip chosen, the A2-style grip traced from the lower's patent stands in.
   const gr = b.grip;
   const gk = matches(gr, /K2/) ? 'k2' : matches(gr, /Gunfighter/) ? 'bcm' : matches(gr, /Finger grooves|OverMolded/) ? 'hogue' : matches(gr, /MOE\+/) ? 'moeplus' : matches(gr, /MOE/) ? 'moe' : 'a2';
@@ -383,8 +431,12 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
     gripTex = dotsIn(panel, 0.14);
     gripAt = [0.4, 4.0];
   } else {
-    gripO = 'M0.28,1.92 L0.2,1.96 Q0.06,2.05 0.02,2.25 Q-1.15,3.6 -1.62,4.9 Q-1.78,5.1 -1.7,5.25 L-0.05,5.6 Q0.3,5.65 0.42,5.35 L0.5,5.07 Q0.86,4.78 0.77,4.26 Q1.21,3.89 1.11,3.37 Q1.56,3.01 1.46,2.49 Q1.62,2.15 1.70,1.96 Z';
-    gripTex = dotsIn([0.1, 2.45, 1.5, 2.45, 1.42, 2.6, 1.08, 3.36, 0.73, 4.25, 0.42, 5.04, 0.05, 5.4, -1.55, 5.06, -1.3, 4.7, -0.85, 3.95, -0.45, 3.3], 0.16);
+    // Hogue OverMolded, traced from Hogue's side photo and set by its top face like the K2+ and BCM: the A2's rake,
+    // three finger grooves down the front strap, a full rounded back strap, and the cobblestone panel and logo on the side.
+    gripO = 'M1.68,2.01 L1.51,1.93 L0.65,1.92 L0.48,1.95 L0.38,2.02 L0.34,2.35 L0.22,2.62 L-0.13,3.07 L-0.71,3.77 L-1.38,4.78 L-1.49,5.07 L-1.41,5.21 L-1.23,5.30 L-0.92,5.38 L0.08,5.56 L0.49,5.57 L0.63,5.50 L0.58,5.13 Q0.66,4.8 0.98,4.66 Q1.02,4.5 0.93,4.36 Q1.02,4.04 1.35,3.86 Q1.36,3.62 1.24,3.40 Q1.42,3.27 1.63,3.23 L1.68,3.18 L1.84,3.19 L1.94,3.05 L1.77,2.93 L1.75,2.14 Z';
+    const panel = [1.17, 3.01, 0.39, 2.97, 0.09, 3.31, -0.3, 3.69, -0.83, 4.08, -1.09, 4.59, -1.16, 4.85, -0.81, 5.12, -0.25, 5.06, -0.05, 4.87, 0.21, 4.35, 0.54, 4.03, 0.87, 3.71, 1.12, 3.45];
+    gripDet = `${polyPath(panel, same, true)} ${OC(0.99, 2.46, 0.25)} ${OC(0.99, 2.46, 0.17)} M-1.3,5.18 L0.5,5.47`;
+    gripTex = dotsIn(panel, 0.11);
     gripAt = [-0.3, 4.0];
   }
   P.push({ slot: 'grip', z: 5, row: 'bottom', target: px(gripAt[0] * kx, gripAt[1] * ky),
@@ -421,8 +473,15 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
       el: <><path d={T(pp(pts) + ' Z')} /><path className="detail" d={T(seam + ribs)} /></> });
   } else
   P.push({ slot: 'mag', z: 3, row: 'bottom', target: px(big ? 5.5 * kx : 6.2, big ? 6.2 : 6.6),
-    el: big
-      ? <><path d={T('M3.98,3.0 L6.55,3.0 C6.65,4.8 6.85,6.4 7.05,7.75 L7.1,7.98 L4.6,8.12 L4.55,7.9 C4.3,6.3 4.1,4.7 3.98,3.0 Z', kx, 1)} /><path className="detail" d={T(matches(b.mag, /Armalite/) ? 'M4.7,3.3 L5.4,7.9 M4.52,7.55 L7.05,7.4' : 'M4.2,4.4 L6.65,4.32 M4.35,5.8 L6.85,5.7 M4.5,7.2 L7.0,7.1 M4.45,3.3 L4.95,7.6 M6.15,3.3 L6.75,7.6', kx, 1)} /></>
+    el: big && b.mag?.brand === 'Magpul'
+      // Magpul PMAG 20 LR/SR Gen M3, traced from a flat side photo at the magwell's 2.9" depth (real inches, not stretched
+      // with the receiver), drawn from the magwell's lip down: straight spine, gently curved front, the raked top of the grip panel, two rows of pockets,
+      // the dot texture block and the floor plate's stepped seam.
+      ? <><path d={T(`M7.43,${flared ? 2.72 : 2.85} L7.44,3.24 L7.51,4.4 L7.56,4.57 L7.61,5.08 L7.67,5.49 L7.75,6.16 L7.82,6.39 L7.81,6.61 L7.7,6.7 L7.09,6.82 L4.96,7.18 L4.8,7.16 L4.71,7.1 L4.67,6.94 L4.67,6.77 L4.71,6.64 L4.58,5.96 L4.45,4.92 L4.47,4.77 L4.42,4.6 L4.4,4.06 L4.36,4.01 L4.35,${flared ? 3.24 : 3.38} Z`)} />
+        <path className="detail" d={T('M7.42,3.22 L4.4,3.82 M5.54,3.98 L6.81,3.89 L6.81,4.72 L5.54,4.72 Z M4.48,4.0 L5.26,3.96 L5.26,4.72 L4.5,4.72 M7.02,3.86 L7.42,3.8 M7.02,3.86 L7.02,4.72 L7.48,4.72 M5.5,4.89 L6.92,4.89 L6.92,5.76 L5.5,5.76 Z M4.5,5.07 L5.4,5.07 L5.4,5.83 L4.58,5.83 M7.12,4.92 L7.58,4.92 M7.12,4.92 L7.12,5.74 L7.66,5.74 M7.78,6.38 L7.1,6.47 L4.71,6.79 M7.0,6.36 L7.0,6.48')} />
+        <path className="detail stipple" d={T(dotsIn([4.91, 5.93, 6.74, 5.93, 6.74, 6.5, 4.91, 6.5], 0.12, same, 0.04))} /></>
+      : big
+      ? <><path d={T('M3.98,3.0 L6.55,3.0 C6.65,4.8 6.85,6.4 7.05,7.75 L7.1,7.98 L4.6,8.12 L4.55,7.9 C4.3,6.3 4.1,4.7 3.98,3.0 Z', kx, 1)} /><path className="detail" d={T(b.mag?.brand === 'Armalite' ? 'M4.7,3.3 L5.4,7.9 M4.52,7.55 L7.05,7.4' : 'M4.2,4.4 L6.65,4.32 M4.35,5.8 L6.85,5.7 M4.5,7.2 L7.0,7.1 M4.45,3.3 L4.95,7.6 M6.15,3.3 L6.75,7.6', kx, 1)} /></>
       : <><path d={T(pmag.o)} /><path className="detail" d={T(pmag.d)} /></> });
 
   // Upper receiver: the standard flat-top traced from US 8,910,406 FIG. 1A.
