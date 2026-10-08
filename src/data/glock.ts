@@ -375,6 +375,18 @@ function rules(b: Build): Issue[] {
 
 const P = (n: string, ids: string[]) => ids.map((id) => id.replace('#', n));
 
+/** Each model as it leaves the factory today: Gen5, all Glock parts, Glock sights and magazine. */
+const MODEL_BASE: Record<Named, string[]> = {
+  G17: P('17', ['g#-frame-g5', 'g-fcg-oem5', 'g#-slide-g5', 'g-spk-oem5', 'g#-bbl-oem5', 'g#-rsa-g45', 'g-sight-oem', 'g-mag-oem17']),
+  G19: P('19', ['g#-frame-g5', 'g-fcg-oem5', 'g#-slide-g5', 'g-spk-oem5', 'g#-bbl-oem5', 'g#-rsa-g45', 'g-sight-oem', 'g-mag-oem15']),
+  G26: P('26', ['g#-frame-g5', 'g-fcg-oem5', 'g#-slide-g5', 'g-spk-oem5', 'g#-bbl-oem5', 'g#-rsa-g45', 'g-sight-oem', 'g-mag-oem10']),
+  // The Gen5 G34 only comes with the MOS slide; its cover plate stays on.
+  G34: ['g17-frame-g5', 'g-fcg-oem5', 'g34-slide-mos', 'g-spk-oem5', 'g34-bbl-oem5', 'g17-rsa-g45', 'g-sight-oem', 'g-mag-oem17'],
+  G45: ['g45-frame-g5', 'g-fcg-oem5', 'g19-slide-g5', 'g-spk-oem5', 'g19-bbl-oem5', 'g19-rsa-g45', 'g-sight-oem', 'g-mag-oem17'],
+  G19X: ['g19x-frame-g5', 'g-fcg-oem5', 'g19-slide-g5', 'g-spk-oem5', 'g19-bbl-oem5', 'g19-rsa-g45', 'g-sight-oem', 'g-mag-oem17'],
+  G47: ['g45-frame-g5', 'g-fcg-oem5', 'g47-slide-mos', 'g-spk-oem5', 'g17-bbl-oem5', 'g19-rsa-g45', 'g-sight-oem', 'g-mag-oem17'],
+};
+
 /**
  * The models are starting points: each has its own starter builds and search page, and old Glock 17, 19
  * and 26 links and saved builds open here.
@@ -437,6 +449,7 @@ const models: PlatformModel[] = NAMED.map((M) => ({
   short: M,
   blurb: MODEL_DESC[M],
   presets: MODEL_PRESETS[M],
+  base: MODEL_BASE[M],
   // Its own frames, slides, barrels, springs and holsters, plus the parts every model shares.
   parts: (p: Part) => !/^g\d+x?-/.test(p.id) || PAGE_PARTS[M].some((pre) => p.id.startsWith(pre)),
 }));
@@ -467,6 +480,7 @@ export const glock9: Platform = {
     ...(['G17', 'G19', 'G26', 'G34'] as const).map((M) => holsters(`g${M.slice(1)}`, [[`g${M.slice(1)}`, NAME[M]]], ['tlr7a', 'x300'])).flat(), ...pistolCases],
   rules,
   presets: MODEL_PRESETS.G19,
+  base: MODEL_BASE.G19,
   models,
   modelOf,
 };

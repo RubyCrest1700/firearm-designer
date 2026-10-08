@@ -1,7 +1,7 @@
 // Verifies every preset build is complete and free of compatibility errors.
 import { awarenessFor } from '../src/awareness';
 import { PLATFORMS, canonicalPlatform } from '../src/data/index';
-import { issuesFor, ownedOf, placementOf, presetSelection, selectionTokens, toBuild, toBuyIds } from '../src/engine';
+import { baseSelection, issuesFor, ownedOf, placementOf, presetSelection, selectionTokens, toBuild, toBuyIds } from '../src/engine';
 import { selectionFromParts } from '../src/store';
 import { buildWeight, formatWeight } from '../src/weight';
 
@@ -14,7 +14,14 @@ for (const p of PLATFORMS) {
     if (!p.slots.some((s) => s.id === part.slot)) { console.log(`${p.id}: ${part.id} has unknown slot`); bad++; }
   }
   // A builder with models (the double-stack 9mm Glocks) has starter builds for each model as well as its own.
-  for (const m of [{ name: p.name, presets: p.presets }, ...(p.models ?? [])])
+  for (const m of [{ name: p.name, presets: p.presets, base: p.base }, ...(p.models ?? [])]) {
+    // The plain build each builder opens on: complete, conflict-free, and with no optic or other add-on.
+    for (const id of m.base ?? []) if (!ids.has(id)) { console.log(`${p.id}/${m.name}/base: unknown part ${id}`); bad++; }
+    const base = baseSelection({ ...p, presets: m.presets, base: m.base });
+    const addons = ['optic', 'light', 'laser', 'foregrip', 'magnifier', 'rail', 'qdmount', 'sling', 'case', 'holster'].filter((s) => base[s]);
+    const baseMissing = p.slots.filter((s) => s.required && !base[s.id]).map((s) => s.id);
+    const baseErr = issuesFor(p, toBuild(p, base)).filter((i) => i.severity === 'error');
+    if (addons.length || baseMissing.length || baseErr.length) { console.log(`${p.id}/${m.name}/base: add-ons=[${addons}] missing=[${baseMissing}] ${baseErr.map((i) => i.message).join(' | ')}`); bad++; }
     for (const tier of ['budget', 'value', 'premium'] as const) {
       for (const id of m.presets[tier]) if (!ids.has(id)) { console.log(`${p.id}/${m.name}/${tier}: unknown part ${id}`); bad++; }
       const sel = presetSelection({ ...p, presets: m.presets }, tier);
@@ -23,6 +30,7 @@ for (const p of PLATFORMS) {
       if (m.name !== p.name || !p.models) console.log(`${m.name} ${tier}: missing=[${missing}] ${issues.map((i) => `${i.severity}: ${i.message}`).join(' | ') || 'clean'}`);
       if (missing.length || issues.some((i) => i.severity === 'error')) bad++;
     }
+  }
 }
 
 // Interface audit: for every pair of parts that meet at a measured interface, the rules must

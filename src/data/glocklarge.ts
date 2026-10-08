@@ -200,6 +200,8 @@ export const glockLarge: Platform = {
   parts: [...allParts, ...pistolLights.filter((l) => (l.attrs.rails as string[]).includes('glock')),
     ...holsters('gl', [['g20', 'Glock 20'], ['g21', 'Glock 21']], ['tlr7a', 'x300']), ...pistolCases],
   rules,
+  // A factory Glock 20 Gen4.
+  base: ['gl-frame-g4', 'gl-fcg-oem', 'gl-slide-20g4', 'gl-spk-oem', 'gl-bbl-20oem', 'gl-rsa-g4', 'gl-sight-oem', 'gl-mag-20'],
   presets: {
     budget: ['gl-frame-lw', 'gl-fcg-oem', 'gl-slide-20g3', 'gl-spk-lw', 'gl-bbl-20lwd', 'gl-rsa-g3', 'gl-sight-oem', 'gl-mag-20ets'],
     value: ['gl-frame-sf', 'gl-fcg-ow', 'gl-slide-20brn', 'gl-spk-oem', 'gl-bbl-20lw', 'gl-rsa-ismi', 'gl-sight-bt', 'gl-opt-507c', 'gl-mag-20'],

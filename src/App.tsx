@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { PLATFORMS, PRICES_UPDATED_AT, canonicalPlatform } from './data';
 import { RETAILERS, buyUrl } from './data/retailers';
 import {
-  bestOffer, candidateIssues, encodeMount, issuesFor, money, ownedOf, ownsAny, partIds, placementOf, presetSelection, priceRange,
+  bestOffer, candidateIssues, encodeMount, issuesFor, money, ownedOf, ownsAny, partIds, placementOf, presetSelection, baseSelection, priceRange,
   selectionTokens, singleRetailerCarts, toBuild, withoutOwned, worst, type Owned, type Selection,
 } from './engine';
 import { findParts, isLink, type Found } from './find';
@@ -75,6 +75,8 @@ export default function App() {
     ...persisted?.selections,
     ...(shared ? { [shared.platform]: shared.selection } : {}),
   }));
+  /** A builder not opened before starts on its plain factory build. */
+  const selOf = (pid: string) => selections[pid] ?? baseSelection(PLATFORMS.find((p) => p.id === pid) ?? PLATFORMS[0]);
   const [saved, setSaved] = useState<SavedBuild[]>(loadSavedBuilds);
   /** The saved build open in the builder, so Save can update it instead of adding a copy. */
   const [openSavedId, setOpenSavedId] = useState<string | null>(null);
@@ -150,13 +152,13 @@ export default function App() {
     setToast(`Saved "${name}" to My Builds`);
   };
   const share = async (name: string, note: string) => {
-    const sel = selections[platformId] ?? {};
+    const sel = selOf(platformId);
     const b = await shareBuild(platformId, name, note, selectionTokens(withoutOwned(sel)));
     setCommunityOpen(b);
     setToast(`Shared "${b.name}". It's on the Community page now.`);
   };
   const saveBuild = (name: string, asNew: boolean) => {
-    const sel = selections[platformId] ?? {};
+    const sel = selOf(platformId);
     const now = new Date().toISOString();
     if (!asNew && openSavedId && saved.some((s) => s.id === openSavedId)) {
       setSaved((list) => list.map((s) => (s.id === openSavedId ? { ...s, name, selection: { ...sel }, savedAt: now, prices: priceSnapshot(platformId, sel, s.prices) } : s)));
@@ -229,16 +231,16 @@ export default function App() {
             platformId={platformId}
             startPart={startPart}
             setPlatformId={(id) => { setPlatformId(id); setOpenSavedId(null); setCommunityOpen(null); }}
-            selection={selections[platformId] ?? {}}
+            selection={selOf(platformId)}
             setSelection={(sel) => { setSelections((s) => ({ ...s, [platformId]: sel })); setCommunityOpen(null); }}
             openSaved={openSaved}
             communityOpen={communityOpen?.platform === platformId ? communityOpen : null}
             onSave={saveBuild}
             onShare={share}
-            onCopyLink={() => copyLink(platformId, selections[platformId] ?? {}, communityOpen?.platform === platformId ? communityOpen.id : undefined)}
+            onCopyLink={() => copyLink(platformId, selOf(platformId), communityOpen?.platform === platformId ? communityOpen.id : undefined)}
             onBuyClick={() => { if (communityOpen) void recordBuyClick(communityOpen.id); }}
             onBrowseFeatured={() => go('community')}
-            onCompare={() => addToCompare({ kind: 'Current Build', name: openSaved?.name ?? communityOpen?.name ?? `Your ${PLATFORMS.find((p) => p.id === platformId)?.name} build`, platform: platformId, selection: { ...(selections[platformId] ?? {}) } })}
+            onCompare={() => addToCompare({ kind: 'Current Build', name: openSaved?.name ?? communityOpen?.name ?? `Your ${PLATFORMS.find((p) => p.id === platformId)?.name} build`, platform: platformId, selection: { ...selOf(platformId) } })}
           />
         )}
         {route === 'community' && (
@@ -277,7 +279,7 @@ export default function App() {
             items={compare}
             onSet={(i, item) => setCompare((list) => list.map((x, k) => (k === i ? item : x)))}
             saved={saved}
-            current={partIds(selections[platformId] ?? {}).length || ownsAny(selections[platformId] ?? {}) ? { platform: platformId, selection: selections[platformId] ?? {}, name: openSaved?.name } : null}
+            current={partIds(selOf(platformId)).length || ownsAny(selOf(platformId)) ? { platform: platformId, selection: selOf(platformId), name: openSaved?.name } : null}
             onOpen={(item) => openInBuilder(item.platform, item.selection)}
           />
         )}
@@ -375,7 +377,7 @@ function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string, part?: P
   // Shared add-ons (lights, cases) are listed under several platforms; count each once.
   const partCount = new Set(PLATFORMS.flatMap((p) => p.parts.map((x) => x.id))).size;
   const drops = biggestDrops(PLATFORMS.flatMap((p) => p.parts));
-  const hero = buildOf('ar15', presetSelection(PLATFORMS.find((p) => p.id === 'ar15')!, 'value'));
+  const hero = buildOf('ar15', baseSelection(PLATFORMS.find((p) => p.id === 'ar15')!));
   const faqs = FAQ_PICKS.map((slug) => GUIDES.find((g) => g.slug === slug)).filter((g): g is (typeof GUIDES)[number] => !!g);
   return (
     <div className="home">
@@ -405,7 +407,7 @@ function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string, part?: P
               <p className="tile-fam">{fam}s</p>
               <div className={'tile-grid ' + fam.toLowerCase()}>
                 {PLATFORMS.filter((p) => p.family === fam).map((p) => {
-                  const starter = buildOf(p.id, presetSelection(p, 'value'));
+                  const starter = buildOf(p.id, baseSelection(p));
                   const from = totalOf(p, toBuild(p, presetSelection(p, 'budget')));
                   return (
                     <button className="tile card" key={p.id} onClick={() => onPick(p.id)}>
@@ -518,7 +520,7 @@ function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelec
   const [modelPick, setModelPick] = useState<Record<string, string>>({});
   const made = platform.modelOf?.(build);
   const model = platform.models?.find((m) => m.id === (made?.id ?? modelPick[platform.id])) ?? platform.models?.find((m) => m.presets === platform.presets);
-  const starter = model ? { ...platform, presets: model.presets } : platform;
+  const starter = model ? { ...platform, presets: model.presets, base: model.base } : platform;
 
   /** Puts a part in its slot; `own` marks it as one the builder already has. */
   const choose = (slot: string, partId: string, own = false) => {
@@ -556,7 +558,7 @@ function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelec
               <span className="tb-label">Model</span>
               {platform.models.map((m) => (
                 <button key={m.id} className={'chip' + (made?.id === m.id ? ' on' : '')} aria-pressed={made?.id === m.id} title={`${m.name}: ${m.blurb}`}
-                  onClick={() => { setModelPick({ ...modelPick, [platform.id]: m.id }); setSelection(presetSelection({ ...platform, presets: m.presets }, 'value')); setOpenSlot(null); }}>
+                  onClick={() => { setModelPick({ ...modelPick, [platform.id]: m.id }); setSelection(baseSelection({ ...platform, presets: m.presets, base: m.base })); setOpenSlot(null); }}>
                   {m.short}
                 </button>
               ))}
@@ -569,6 +571,9 @@ function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelec
           <div className="wb-center">
             <div className="bp-toolbar" role="toolbar" aria-label="Build actions">
               <span className="tb-label">{chosen === 0 ? 'Start From' : 'Start Over From'}</span>
+              <button className="chip" onClick={() => { setSelection(baseSelection(starter)); setOpenSlot(null); }}>
+                Base{model ? ` ${model.short}` : ''} <span className="chip-amt">{money(totalOf(platform, toBuild(platform, baseSelection(starter))))}</span>
+              </button>
               {(['budget', 'value', 'premium'] as Tier[]).map((t) => (
                 <button key={t} className="chip" onClick={() => { setSelection(presetSelection(starter, t)); setOpenSlot(null); }}>
                   {TIER_LABEL[t]}{model ? ` ${model.short}` : ''} <span className="chip-amt">{money(totalOf(platform, toBuild(platform, presetSelection(starter, t))))}</span>
