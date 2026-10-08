@@ -1207,7 +1207,7 @@ function pistolSpec(platform: Platform, b: Build): PistolSpec {
       if (platform.id === 'glock20') {
         const fr = b.frame;
         const grooved = !fr || !matches(fr, /No finger grooves/);
-        const photo = fr?.brand === 'Lone Wolf' ? undefined : 'g20gen4';
+        const photo = fr?.brand === 'Lone Wolf' ? 'tw20' : 'g20gen4';
         return { m: photo ? { ...m, sh: GLOCK_PHOTOS[photo].sb } : m, frame: m, gripH: 5.51, magH: b.mag?.attrs.ext ? 6.5 : 5.51, grooves: grooved ? 3 : 0, large: true, photo };
       }
       const fr = b.frame;
@@ -1219,9 +1219,9 @@ function pistolSpec(platform: Platform, b: Build): PistolSpec {
       const sk = 'glock' + String(a(b.slide, 'len') ?? a(fr, 'model') ?? 'G19').slice(1);
       const key = platform.id === 'glock9' ? fk : platform.id;
       const sm = platform.id === 'glock9' ? MODELS[sk] : m;
-      // The photo of the frame this build uses (the G34 and G47 ride on G17 and G45 frames); the Timberwolf keeps its own drawing.
+      // The photo of the frame this build uses (the G34 and G47 ride on G17 and G45 frames; Timberwolf frames have their own).
       const pk = ({ glock34: 'glock17', glock47: 'glock45' } as Record<string, string>)[key] ?? key;
-      const photo = fr?.brand === 'Lone Wolf' ? '' : `g${pk.slice(5)}${String(fr?.attrs.gen ?? b.slide?.attrs.gen ?? 'gen5')}`;
+      const photo = fr?.brand === 'Lone Wolf' ? (pk === 'glock19' ? 'tw19' : 'tw17') : `g${pk.slice(5)}${String(fr?.attrs.gen ?? b.slide?.attrs.gen ?? 'gen5')}`;
       if (GLOCK_PHOTOS[photo]) return { m: { ...sm, sh: GLOCK_PHOTOS[photo].sb }, frame: MODELS[key] ?? m, gripH: GLOCK_H[key] ?? 5.04, magH: (ms ? GLOCK_MAG_H[ms] : GLOCK_H[key] ?? 5.04) + over, grooves: 0, photo };
       return { m: sm, frame: MODELS[key] ?? m, gripH: GLOCK_H[key] ?? 5.04, magH: (ms ? GLOCK_MAG_H[ms] : GLOCK_H[key] ?? 5.04) + over, grooves: grooved ? (key === 'glock26' ? 2 : 3) : 0 };
     }
@@ -1513,6 +1513,15 @@ function glockOpening([x0, y0, x1, y1]: number[]) {
 
 /** A Glock frame measured from a photo (GLOCK_PHOTOS): its outline, guard opening, controls, back strap seam and
  *  grip texture, all where the photo shows them. Texture is the shared dot stipple at 0.1" pitch. */
+/** A tilted magazine catch from its four corners, with grip ribs running between its top and bottom edges. */
+function catchPoly(q: number[]) {
+  const [ax, ay, bx, by, cx, cy, dx, dy] = q;
+  const at = (t: number, s: number) => `${f(ax + (bx - ax) * t + ((dx + (cx - dx) * t) - (ax + (bx - ax) * t)) * s)},${f(ay + (by - ay) * t + ((dy + (cy - dy) * t) - (ay + (by - ay) * t)) * s)}`;
+  let ribs = '';
+  for (let t = 0.18; t < 0.85; t += 0.16) ribs += ` M${at(t, 0.2)} L${at(t, 0.8)}`;
+  return polyPath(q, same, true) + ribs;
+}
+
 function glockPhotoFrame(ph: GlockPhoto, o: { dust: number; yRail: number; rail: boolean; seam: boolean }) {
   const pts = ph.frame;
   const xs = pts.filter((_, i) => !(i % 2)), ys = pts.filter((_, i) => i % 2);
@@ -1531,14 +1540,14 @@ function glockPhotoFrame(ph: GlockPhoto, o: { dust: number; yRail: number; rail:
   const controls = rr(ph.slideStop, 0.06) + ` M${f(s0 + 0.06)},${f(s1 + 0.09)} L${f(s2 - 0.06)},${f(s1 + 0.09)} M${f(s0 + 0.06)},${f((s1 + s3) / 2 + 0.03)} L${f(s2 - 0.06)},${f((s1 + s3) / 2 + 0.03)}`
     + ' ' + rr(ph.takedown, 0.02) + ` M${f(t0 + 0.03)},${f(t1 + 0.1)} L${f(t2 - 0.03)},${f(t1 + 0.1)} M${f(t0 + 0.03)},${f(t1 + 0.16)} L${f(t2 - 0.03)},${f(t1 + 0.16)}`
     + ' ' + OC(ph.triggerPin[0], ph.triggerPin[1], ph.triggerPin[2]) + ' ' + OC(ph.housingPin[0], ph.housingPin[1], ph.housingPin[2])
-    + ' ' + rr(ph.magCatch, 0.03) + repeat(c0 + 0.07, c2 - 0.06, 0.07, (x) => ` M${x},${f(c1 + 0.05)} L${x},${f(c3 - 0.05)}`);
+    + ' ' + (ph.magCatchPoly ? catchPoly(ph.magCatchPoly) : rr(ph.magCatch, 0.03) + repeat(c0 + 0.07, c2 - 0.06, 0.07, (x) => ` M${x},${f(c1 + 0.05)} L${x},${f(c3 - 0.05)}`));
   // Grip texture: the side panel between its molded rear edge and the front strap, and the back strap between the
   // outline and its seam. The logo plate is left smooth.
   const lineX = (q: number[], y: number) => {
     for (let i = 0; i + 3 < q.length; i += 2) if ((q[i + 1] - y) * (q[i + 3] - y) <= 0) return q[i] + ((y - q[i + 1]) / (q[i + 3] - q[i + 1] || 1)) * (q[i + 2] - q[i]);
     return NaN;
   };
-  const [l0, l1, l2, l3] = ph.logo;
+  const [l0, l1, l2, l3] = ph.logo ?? [0, 0, 0, 0];
   // The front strap's line, carried up past the trigger guard so the texture stops where the strap would be.
   const fa = crossings(pts, ph.texBottom - 0.4), fb = crossings(pts, (ph.texBottom + ys.reduce((a, b) => Math.max(a, b > 2.4 && b < 3 ? b : a), 2.4)) / 2);
   const ya = ph.texBottom - 0.4, yb = (ph.texBottom + ys.reduce((a, b) => Math.max(a, b > 2.4 && b < 3 ? b : a), 2.4)) / 2;
@@ -1555,7 +1564,7 @@ function glockPhotoFrame(ph: GlockPhoto, o: { dust: number; yRail: number; rail:
     }
     if (!Number.isNaN(sm) && y < ph.texBottom - 0.15) for (let x = back + 0.06 + off / 2; x < sm - 0.05; x += 0.08) stipple += `M${f(x)},${f(y)} L${f(x + 0.014)},${f(y)} `;
   }
-  const frameDetail = `${rail} ${controls} ${o.seam ? P(ph.seam) : ''} ${P(ph.panelRear)} ${rr(ph.logo, 0.06)}`;
+  const frameDetail = `${rail} ${controls} ${o.seam ? P(ph.seam) : ''} ${P(ph.panelRear)} ${ph.logo ? rr(ph.logo, 0.06) : ''}`;
   return { mapped: pts, heel, toe, tang, hole: P(glockOpening(ph.hole), true), frameDetail, stipple };
 }
 
