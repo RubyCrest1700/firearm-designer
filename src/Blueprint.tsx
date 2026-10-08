@@ -1546,7 +1546,17 @@ function glockPhotoFrame(ph: GlockPhoto, o: { dust: number; yRail: number; rail:
   const pts = ph.frame;
   const xs = pts.filter((_, i) => !(i % 2)), ys = pts.filter((_, i) => i % 2);
   const low = xs.filter((_, i) => ys[i] > ph.gb - 0.1); // 0.1: the slim frames' grip bottom slopes
-  const heel: [number, number] = [Math.min(...low), ph.gb], toe: [number, number] = [Math.max(...low), ph.gb];
+  // On the slim frames the heel sits higher than the toe; a magazine's plate then follows that slope rather than the lowest point.
+  const lowY = (x: number) => {
+    let m = -Infinity;
+    for (let i = 0; i < pts.length; i += 2) {
+      const [ax, ay, bx, by] = [pts[i], pts[i + 1], pts[(i + 2) % pts.length], pts[(i + 3) % pts.length]];
+      if ((ax - x) * (bx - x) <= 0 && ax !== bx) m = Math.max(m, ay + ((x - ax) / (bx - ax)) * (by - ay));
+    }
+    return m;
+  };
+  const hx0 = Math.min(...low), tx0 = Math.max(...low), sloped = Math.abs(lowY(hx0 + 0.06) - lowY(tx0 - 0.06)) > 0.05;
+  const heel: [number, number] = [hx0, sloped ? lowY(hx0 + 0.06) : ph.gb], toe: [number, number] = [tx0, sloped ? lowY(tx0 - 0.06) : ph.gb];
   const tang = -Math.min(...xs.filter((_, i) => ys[i] < ph.sb + 0.4));
   const P = (q: number[], close = false) => polyPath(q, same, close);
   const rr = ([x0, y0, x1, y1]: number[], r: number) =>
@@ -1633,6 +1643,22 @@ function smooth(pts: number[], w: number) {
     for (let j = -w; j <= w; j++) { const k = (i + j + n) % n; x += pts[2 * k]; y += pts[2 * k + 1]; }
     out.push(x / (2 * w + 1), y / (2 * w + 1));
   }
+  return out;
+}
+
+/** Calms the pixel-step jitter of a photo or patent trace: points that wobble less than tol off the line through
+ * their neighbours are pulled onto it, while real corners (bigger turns) are left alone. */
+function smoothJitter(pts: number[], tol = 0.02, closed = true) {
+  const n = pts.length / 2, out = pts.slice();
+  for (let pass = 0; pass < 2; pass++)
+    for (let i = closed ? 0 : 1; i < (closed ? n : n - 1); i++) {
+      const a = (i + n - 1) % n, b = (i + 1) % n;
+      const [ax, ay, x, y, bx, by] = [out[2 * a], out[2 * a + 1], out[2 * i], out[2 * i + 1], out[2 * b], out[2 * b + 1]];
+      const L = Math.hypot(bx - ax, by - ay);
+      if (!L) continue;
+      const d = Math.abs((bx - ax) * (ay - y) - (ax - x) * (by - ay)) / L;
+      if (d < tol) { out[2 * i] = (ax + 2 * x + bx) / 4; out[2 * i + 1] = (ay + 2 * y + by) / 4; }
+    }
   return out;
 }
 
@@ -1766,7 +1792,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   // The Glock guard opening has a squared front: nearly vertical front wall and tight corners (US 4,539,889 FIG. 1).
   const glockHole = glockOpening(mk.hole);
   let hole = glock ? polyPath(glockHole, frameMap, true) : pr.frame.hole ? polyPath(scF(pr.frame.hole), frameMap, true) : '';
-  const outlines = pr.frame.outline.map((ol) => (glock ? smooth(fillWeb(densify(scF(ol), 0.05), mk.sh + 0.15, mk.gripBottom - 0.1, 0.65), 2) : ol));
+  const outlines = pr.frame.outline.map((ol) => (glock ? smooth(fillWeb(densify(scF(ol), 0.05), mk.sh + 0.15, mk.gripBottom - 0.1, 0.65), 2) : smoothJitter(ol)));
   if (!glock && (v.beaver || v.undercut || v.flare)) {
     // Sig grip modules that leave the patent's shape: the X-Series, Wilson Combat and AXG modules reach further back
     // under the hand (beavertail) and higher under the guard (undercut); the X-Carry and Wilson modules flare the mag well.
@@ -1808,8 +1834,8 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   const patentRail = (ol: number[]) => !!modPh?.front && ((key === 'p365' && ol.every((c, i) => (i % 2 ? c > mk.sh + 0.03 : c > 3.6))) || ol.every((c, i) => (i % 2 ? c > 1.3 : true)) && Math.max(...ol.filter((_, i) => !(i % 2))) > 4.0 || ol.every((c, i) => (i % 2 ? c > 0.95 : c > 5.5)));
   const keepDetail = (ol: number[]) => !patentLever(ol) && !patentRail(ol) && (glock || (modPh ? Math.max(...ol.filter((_, i) => i % 2)) < h0y + 0.2 && Math.min(...ol.filter((_, i) => !(i % 2))) > -0.12
     : v.texture === 'patent' || Math.min(...ol.filter((_, i) => i % 2)) < h1y - 0.1));
-  let frameDetail = pr.frame.detail.filter(keepDetail).map((ol) => polyPath(scF(ol), frameMap, false)).join(' ');
-  let slideDetail = pr.slide.detail.map((ol) => polyPath(scS(ol), slideMap, false)).join(' ');
+  let frameDetail = pr.frame.detail.filter(keepDetail).map((ol) => polyPath(glock ? scF(ol) : smoothJitter(scF(ol), 0.02, false), frameMap, false)).join(' ');
+  let slideDetail = pr.slide.detail.map((ol) => polyPath(glock ? scS(ol) : smoothJitter(scS(ol), 0.02, false), slideMap, false)).join(' ');
   let slideCuts: { erase: string; edge: string } | undefined, pocket: [number, number, number] | undefined;
   let stipple = '';
   let tang = -mk.tang;
@@ -2016,7 +2042,18 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
       };
       const pxs = ph.plate.filter((_, i) => !(i % 2)), bx0 = Math.min(...pxs) + 0.12, bx1 = Math.max(...pxs) - 0.16;
       const gb0 = colY(mapped, bx0, Math.max), gb1 = colY(mapped, bx1, Math.max), pt0 = colY(ph.plate, bx0, Math.min), pt1 = colY(ph.plate, bx1, Math.min);
-      const gapBody = [gb0, gb1, pt0, pt1].every(Number.isFinite) && pt0 > gb0 + 0.01 ? ` M${f(bx0)},${f(gb0)} L${f(bx1)},${f(gb1)} L${f(bx1)},${f(pt1)} L${f(bx0)},${f(pt0)} Z` : '';
+      // Its front face flares forward into the plate; its bottom follows the plate's own top edge so the two lines coincide.
+      const pys = ph.plate.filter((_, i) => i % 2), pMid = (Math.min(...pys) + Math.max(...pys)) / 2;
+      const ptop: number[] = [];
+      for (let i = 0; i < ph.plate.length; i += 2) if (ph.plate[i + 1] < pMid && ph.plate[i] > bx0 - 0.03 && ph.plate[i] < bx1 + 0.07) ptop.push(ph.plate[i], ph.plate[i + 1]);
+      const ptopD = ptop.map((v, i) => (i % 2 ? '' : ` L${f(v)},${f(ptop[i + 1])}`)).filter(Boolean).sort((p1, p2) => parseFloat(p2.slice(2)) - parseFloat(p1.slice(2))).join('');
+      // Its top follows the grip's own bottom edge (the big-frame grips are notched at the front of the well).
+      const mys = mapped.filter((_, i) => i % 2), gMax = Math.max(...mys), gtop: [number, number][] = [];
+      for (let i = 0; i < mapped.length; i += 2) if (mapped[i + 1] > gMax - 0.3 && mapped[i] > bx0 && mapped[i] < bx1) gtop.push([mapped[i], mapped[i + 1]]);
+      const gtopD = gtop.sort((p1, p2) => p1[0] - p2[0]).map(([x, y]) => ` L${f(x)},${f(y)}`).join('');
+      const pfy = colY(ph.plate, bx1 + 0.07, Math.min), pry = colY(ph.plate, bx0 - 0.03, Math.min);
+      const gapBody = [gb0, gb1, pt0, pt1, pfy, pry].every(Number.isFinite) && Math.max(pt0 - gb0, pt1 - gb1) > 0.035
+        ? ` M${f(bx0)},${f(gb0)}${gtopD} L${f(bx1)},${f(gb1)} Q${f(bx1)},${f(pfy)} ${f(bx1 + 0.07)},${f(pfy)}${ptopD} L${f(bx0 - 0.03)},${f(pry)} Q${f(bx0)},${f(pry)} ${f(bx0)},${f(gb0)} Z` : '';
       photoTrig = { d: ph.trigger, line: ph.triggerLine, top: ph.hole[1], plate: polyPath(ph.plate, same, true) + gapBody, yMB: Math.max(...ph.plate.filter((_, i) => i % 2)) };
     }
   }
@@ -2088,7 +2125,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     slideD: face && modPh?.nose ? photoSlide(face[0], modPh.nose[0]) : pr.slide.outline.map((ol) => polyPath(scS(ol), slideMap, true)).join(' ') + slideNose,
     slideDetail, slideCuts, pocket,
     // A photo-traced module closes its own grip bottom, so the factory mag window doesn't show.
-    windowD: win && !modPh ? polyPath(win, grip, true) : '',
+    windowD: win && !modPh ? polyPath(smoothJitter(win), grip, true) : '',
   };
 }
 
@@ -2460,6 +2497,17 @@ function pistol(platform: Platform, build: Build): Scene {
     P.push({ slot: 'spk', internal: true, z: 20, row: 'top', target: px(0.6, bc),
       el: <path d={T(`M0.06,${f(bc - 0.09)} L${f(port0 - 0.3)},${f(bc - 0.09)} L${f(port0 - 0.3)},${f(bc + 0.09)} L0.06,${f(bc + 0.09)} Z M0.06,${f(bc - 0.2)} L0.24,${f(bc - 0.2)} L0.24,${f(bc + 0.2)} L0.06,${f(bc + 0.2)}`)} /> });
 
+  // A closed outline through [x, height, corner radius] points, each corner rounded with a quadratic fillet.
+  const rounded = (q: number[][]) => {
+    const n = q.length, out: string[] = [];
+    for (let i = 0; i < n; i++) {
+      const [x, h, r] = q[i], [px0, ph] = q[(i + n - 1) % n], [nx, nh] = q[(i + 1) % n];
+      const d0 = Math.hypot(px0 - x, ph - h), d1 = Math.hypot(nx - x, nh - h), k0 = Math.min(r, d0 / 2) / d0, k1 = Math.min(r, d1 / 2) / d1;
+      const a = [x + (px0 - x) * k0, -(h + (ph - h) * k0)], c = [x + (nx - x) * k1, -(h + (nh - h) * k1)];
+      out.push(`${i ? 'L' : 'M'}${f(a[0])},${f(a[1])}` + (r ? ` Q${f(x)},${f(-h)} ${f(c[0])},${f(c[1])}` : ''));
+    }
+    return out.join(' ') + ' Z';
+  };
   /* Sights */
   const sh = b.sights?.attrs.height === 'suppressor' ? 0.4 : SIGHT;
   const sightSlot = has('sights') ? own('sights') : undefined;
@@ -2485,29 +2533,34 @@ function pistol(platform: Platform, build: Build): Scene {
   const supp = sp?.attrs.height === 'suppressor';
   const style = sig ? 'sig' : matches(sp, /HD XR/) ? 'hdxr' : matches(sp, /Charger/) ? 'charger' : supp ? 'supp' : !sp || sp.brand === 'Glock' ? 'oem' : 'steel';
   const fh = supp ? sh + 0.03 : sh - 0.04;
-  const rearD = {
-    sig: `M${r0},0 L${f(r0 + 0.12)},${f(-sh)} L${f(r1 - 0.2)},${f(-sh)} L${r1},0 Z`,
-    oem: `M${r0},0 L${f(r0 + 0.03)},${f(-sh)} L${f(r1 - 0.18)},${f(-sh)} L${r1},0 Z`,
-    steel: `M${r0},0 L${f(r0 + 0.02)},${f(-sh)} L${f(r1 - 0.14)},${f(-sh)} L${r1},0 Z`,
-    supp: `M${f(r0 + 0.04)},0 L${f(r0 + 0.05)},${f(-sh)} L${f(r1 - 0.12)},${f(-sh)} Q${f(r1 - 0.07)},${f(-sh)} ${f(r1 - 0.07)},${f(-sh + 0.05)} L${f(r1 - 0.04)},0 Z`,
-    charger: `M${f(r0 + 0.02)},0 L${f(r0 + 0.02)},${f(-sh)} L${f(r0 + 0.2)},${f(-sh)} L${f(r1 - 0.06)},${f(-sh * 0.55)} L${r1},0 Z`,
-    hdxr: `M${r0},0 L${r0},${f(-sh)} L${f(r0 + 0.22)},${f(-sh)} L${f(r0 + 0.25)},${f(-sh * 0.5)} L${f(r1 - 0.12)},${f(-sh * 0.5)} L${r1},0 Z`,
-  }[style];
-  const frontD = style === 'oem'
-    ? `M${f(fr0)},0 L${f(fr0 + 0.02)},${f(-fh)} L${f(fr1 - 0.12)},${f(-fh)} L${f(fr1)},0 Z`
-    : style === 'supp' || style === 'charger'
-      ? `M${f(fr0 + 0.02)},0 L${f(fr0 + 0.04)},${f(-fh)} L${f(fr1 - 0.1)},${f(-fh)} Q${f(fr1 - 0.02)},${f(-fh)} ${f(fr1 - 0.02)},${f(-fh + 0.08)} L${f(fr1 - 0.02)},0 Z`
-      : `M${f(fr0)},0 L${f(fr0 + 0.08)},${f(-fh)} L${f(fr1 - 0.06)},${f(-fh)} L${f(fr1)},0 Z`;
-  const sightsD = `${rearD} ${frontD}`;
-  // Plain polymer sights carry nothing; night sights carry their tritium vials (the HD XR's in its tall back blade),
-  // fiber sights a rod down the front post. The dovetails show as the line just under the slide's top.
-  const night = !sp || matches(sp, /Tritium|Night/i), fiber = matches(sp, /Fiber|TFX/i);
-  const rv = style === 'hdxr' ? r0 + 0.11 : (r0 + r1) / 2 - (style === 'charger' ? 0.08 : 0);
+  const amg = sp?.brand === 'AmeriGlo', tfx = matches(sp, /TFX/);
+  // Each profile is a list of [x, height, corner radius]; every corner gets a small radius so the blocks read as machined steel.
+  const rearQ: Record<string, number[][]> = {
+    sig: [[r0, 0, 0], [r0 + 0.12, sh, 0.015], [r1 - 0.2, sh, 0.02], [r1, 0, 0]],
+    oem: [[r0, 0, 0], [r0 + 0.03, sh, 0.015], [r1 - 0.18, sh, 0.02], [r1, 0, 0]],
+    steel: [[r0, 0, 0], [r0 + 0.015, sh, 0.02], [r1 - 0.15, sh, 0.04], [r1, 0.05, 0.02], [r1, 0, 0]],
+    // Night Fision's drawing: a square block; AmeriGlo's slopes down at its front face.
+    supp: amg ? [[r0 + 0.04, 0, 0], [r0 + 0.05, sh, 0.02], [r1 - 0.16, sh, 0.03], [r1 - 0.03, 0.05, 0.02], [r1 - 0.03, 0, 0]]
+      : [[r0 + 0.05, 0, 0], [r0 + 0.05, sh, 0.02], [r1 - 0.07, sh, 0.025], [r1 - 0.07, 0, 0]],
+    // Dawson's Charger: a square box whose upright front face is the racking ledge.
+    charger: [[r0 + 0.03, 0, 0], [r0 + 0.03, sh, 0.02], [r1 - 0.07, sh, 0.012], [r1 - 0.07, 0, 0]],
+    // Trijicon's HD XR: a tall blade at the back and a ledge at half height running forward.
+    hdxr: [[r0, 0, 0], [r0, sh, 0.015], [r0 + 0.2, sh, 0.015], [r0 + 0.21, sh * 0.52, 0.03], [r1 - 0.12, sh * 0.52, 0.025], [r1, 0, 0]],
+  };
+  const frontQ: number[][] = style === 'oem' ? [[fr0, 0, 0], [fr0 + 0.02, fh, 0.01], [fr1 - 0.12, fh, 0.015], [fr1, 0, 0]]
+    : style === 'supp' && !amg ? [[fr0 + 0.02, 0, 0], [fr0 + 0.035, fh, 0.015], [fr1 - 0.02, fh, 0.07], [fr1 - 0.02, 0, 0]]
+    : style === 'supp' ? [[fr0 + 0.03, 0, 0], [fr0 + 0.05, fh, 0.015], [fr1 - 0.03, fh, 0.02], [fr1 - 0.04, 0, 0]]
+    : style === 'hdxr' ? [[fr0 + 0.03, 0, 0], [fr0 + 0.07, fh, 0.015], [fr1 - 0.05, fh, 0.015], [fr1 - 0.01, 0, 0]]
+    : tfx ? [[fr0 - 0.06, 0, 0], [fr0 - 0.045, fh, 0.02], [fr1 - 0.02, fh, 0.06], [fr1, 0, 0]]
+    : [[fr0 + 0.04, 0, 0], [fr0 + 0.05, fh, 0.015], [fr1 - 0.05, fh, 0.02], [fr1 - 0.03, 0, 0]];
+  const sightsD = `${rounded(rearQ[style])} ${rounded(frontQ)}`;
+  // Tritium vials face the shooter, so a side view doesn't show them; a fiber sight's rod shows through its window.
+  // The dovetails show as the line just under the slide's top; Night Fision's front has a step where the blade meets its base.
+  const fiber = matches(sp, /Fiber|TFX/i);
   const sightDet = `M${f(r0 + 0.04)},0.1 L${f(r1 - 0.04)},0.1 M${f(r0 + 0.04)},0.1 L${f(r0 + 0.1)},0 M${f(r1 - 0.04)},0.1 L${f(r1 - 0.1)},0 `
-    + (night && style !== 'oem' ? O2(rv, -sh * 0.62, 0.045) : '') + ` M${f(fr0 + 0.04)},0.08 L${f(fr1 - 0.04)},0.08 `
-    + (night && style !== 'oem' ? O2((fr0 + fr1) / 2, -fh * 0.62, 0.045) : '')
-    + (fiber ? ` M${f(fr0 + 0.1)},${f(-fh * 0.62)} L${f(fr1 - 0.05)},${f(-fh * 0.62)} ${O2(fr0 + 0.12, -fh * 0.62, 0.03)}` : '')
-    + (style === 'hdxr' ? ` M${f(r0 + 0.22)},${f(-sh * 0.5)} L${f(r0 + 0.02)},${f(-sh * 0.5)}` : '');
+    + ` M${f(fr0 + 0.04)},0.08 L${f(fr1 - 0.04)},0.08 `
+    + (style === 'supp' && !amg ? ` M${f(fr0 + 0.025)},-0.09 L${f(fr1 - 0.02)},-0.09` : '')
+    + (fiber ? ` ${rounded([[frontQ[1][0] + 0.03, fh - 0.09, 0.022], [frontQ[2][0] - 0.05, fh - 0.09, 0.022], [frontQ[2][0] - 0.05, fh - 0.045, 0.022], [frontQ[1][0] + 0.03, fh - 0.045, 0.022]])}` : '');
   P.push({ slot: sightSlot, z: 10, row: 'top', target: px((r0 + r1) / 2, -sh), el: <><path d={T(sightsD)} /><path className="detail" d={T(sightDet)} /></> });
 
   /* Optic */
