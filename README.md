@@ -4,7 +4,8 @@ A PCPartPicker-style build planner for modular firearm platforms. Pick a platfor
 each slot, and the app checks compatibility, compares retailer prices, and suggests budget,
 best-value and premium builds. It is a planning tool, not a store.
 
-Platforms: AR-15, AR-10 (DPMS and Armalite patterns), Glock 17, 19, 26, Glock 43X/48, Sig P320, Sig P365.
+Platforms: AR-15, AR-10 (DPMS and Armalite patterns), AR-9, Glock 17 / 19 / 19X / 26 / 34 / 45 / 47, Glock 43X / 48,
+Glock 20 / 21, Sig P320, Sig P365, S&W M&P 2.0, Springfield Hellcat. The AKs and 1911/2011 are shelved in archive/.
 
 ## Run it
 

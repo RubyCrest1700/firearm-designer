@@ -241,16 +241,16 @@ export const pistolAddonSlots: Slot[] = [
 /** Accessory rails: Glock universal (G17/19/26), Glock slimline Rail frames, Sig P365 proprietary, 1913 Picatinny
  *  (P320, M&P, Hellcat Pro), and the 3" Hellcat's short proprietary rail. */
 export type PistolRail = 'glock' | 'glockslim' | 'p365' | 'pic' | 'hellcat';
-const RAIL_LABEL: Record<string, string> = { glock: 'Glock accessory rail', glockslim: 'Glock 43X/48 Rail frame', p365: 'P365 rail', pic: '1913 Picatinny rail', hellcat: '3" Hellcat rail' };
+const RAIL_LABEL: Record<string, string> = { glock: 'Glock accessory rail', glockslim: 'Glock 43X / 48 Rail frame', p365: 'P365 rail', pic: '1913 Picatinny rail', hellcat: '3" Hellcat rail' };
 
 export const pistolLights: Part[] = parts('light', [
   { id: 'p-light-tlr7a', brand: 'Streamlight', name: 'TLR-7A', specs: ['500 lm', 'Glock and 1913 rail keys'], attrs: { rails: ['glock', 'pic'], light: 'tlr7a' },
     offers: [['BRN', 139.99], ['PA', 134.99]] },
   { id: 'p-light-x300', brand: 'SureFire', name: 'X300U-A', specs: ['1,000 lm', 'Universal and Picatinny mounts'], attrs: { rails: ['glock', 'pic'], light: 'x300' },
     offers: [['BRN', 379.0], ['OP', 389.0]] },
-  { id: 'p-light-tlr7sub-g', brand: 'Streamlight', name: 'TLR-7 Sub, Glock 43X/48 Rail', specs: ['500 lm', 'Glock slimline rail'], attrs: { rails: ['glockslim'], light: 'tlr7sub' },
+  { id: 'p-light-tlr7sub-g', brand: 'Streamlight', name: 'TLR-7 Sub, Glock 43X / 48 Rail', specs: ['500 lm', 'Glock slimline rail'], attrs: { rails: ['glockslim'], light: 'tlr7sub' },
     offers: [['BRN', 145.0]] },
-  { id: 'p-light-tlr7sub-s', brand: 'Streamlight', name: 'TLR-7 Sub, Sig P365/XL', specs: ['500 lm', 'P365 rail'], attrs: { rails: ['p365'], light: 'tlr7sub' },
+  { id: 'p-light-tlr7sub-s', brand: 'Streamlight', name: 'TLR-7 Sub, Sig P365 / XL', specs: ['500 lm', 'P365 rail'], attrs: { rails: ['p365'], light: 'tlr7sub' },
     offers: [['BRN', 145.0]] },
   { id: 'p-light-tlr7sub-h', brand: 'Streamlight', name: 'TLR-7 Sub, Springfield Hellcat', specs: ['500 lm', '3" Hellcat rail'], attrs: { rails: ['hellcat'], light: 'tlr7sub' },
     offers: [['BRN', 129.99]] },

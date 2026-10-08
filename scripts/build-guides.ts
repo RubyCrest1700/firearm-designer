@@ -16,6 +16,8 @@ for (const g of GUIDES) write(`dist/guides/${g.slug}/index.html`, redirectPage(`
 write('dist/guides/index.html', redirectPage('/faq/'));
 // The double-stack 9mm Glock builder's page had a shorter address before the G34, G45, G19X and G47 joined it.
 write('dist/build/glock-17-19-26/index.html', redirectPage(`/build/${platformSlug(PAGE_VIEWS.find((p) => p.pageId === 'glock9')!)}/`));
+// Shelved platforms' pages (AK and 1911/2011) forward to the list of platforms.
+for (const slug of ['akm', 'ak-74', '1911', '2011']) write(`dist/build/${slug}/index.html`, redirectPage('/build/'));
 for (const p of PAGE_VIEWS) write(`dist/build/${platformSlug(p)}/index.html`, platformPage(p));
 write('dist/build/index.html', platformsIndexPage());
 write('dist/404.html', notFoundPage());
