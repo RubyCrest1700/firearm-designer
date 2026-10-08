@@ -1088,7 +1088,7 @@ function pistolSpec(platform: Platform, b: Build): PistolSpec {
       if (platform.id === 'glock20') {
         const fr = b.frame;
         const grooved = !fr || !matches(fr, /No finger grooves/);
-        const photo = fr?.brand === 'Lone Wolf' ? undefined : 'g20gen4';
+        const photo = fr?.brand === 'Lone Wolf' ? 'tw20' : 'g20gen4';
         return { m: photo ? { ...m, sh: GLOCK_PHOTOS[photo].sb } : m, frame: m, gripH: 5.51, magH: b.mag?.attrs.ext ? 6.5 : 5.51, grooves: grooved ? 3 : 0, large: true, photo };
       }
       const fr = b.frame;
@@ -1100,9 +1100,9 @@ function pistolSpec(platform: Platform, b: Build): PistolSpec {
       const sk = 'glock' + String(a(b.slide, 'len') ?? a(fr, 'model') ?? 'G19').slice(1);
       const key = platform.id === 'glock9' ? fk : platform.id;
       const sm = platform.id === 'glock9' ? MODELS[sk] : m;
-      // The photo of the frame this build uses (the G34 and G47 ride on G17 and G45 frames); the Timberwolf keeps its own drawing.
+      // The photo of the frame this build uses (the G34 and G47 ride on G17 and G45 frames; Timberwolf frames have their own).
       const pk = ({ glock34: 'glock17', glock47: 'glock45' } as Record<string, string>)[key] ?? key;
-      const photo = fr?.brand === 'Lone Wolf' ? '' : `g${pk.slice(5)}${String(fr?.attrs.gen ?? b.slide?.attrs.gen ?? 'gen5')}`;
+      const photo = fr?.brand === 'Lone Wolf' ? (pk === 'glock19' ? 'tw19' : 'tw17') : `g${pk.slice(5)}${String(fr?.attrs.gen ?? b.slide?.attrs.gen ?? 'gen5')}`;
       if (GLOCK_PHOTOS[photo]) return { m: { ...sm, sh: GLOCK_PHOTOS[photo].sb }, frame: MODELS[key] ?? m, gripH: GLOCK_H[key] ?? 5.04, magH: (ms ? GLOCK_MAG_H[ms] : GLOCK_H[key] ?? 5.04) + over, grooves: 0, photo };
       return { m: sm, frame: MODELS[key] ?? m, gripH: GLOCK_H[key] ?? 5.04, magH: (ms ? GLOCK_MAG_H[ms] : GLOCK_H[key] ?? 5.04) + over, grooves: grooved ? (key === 'glock26' ? 2 : 3) : 0 };
     }
