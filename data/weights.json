@@ -126,6 +126,26 @@
       "basis": "estimate",
       "src": null
     },
+    "a10-irons-mbus": {
+      "oz": 2.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-irons-mbuspro": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-irons-mbusr": {
+      "oz": 1.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "a10-irons-troy": {
+      "oz": 4.0,
+      "basis": "estimate",
+      "src": null
+    },
     "a10-lower-aero": {
       "oz": 11.0,
       "basis": "estimate",
@@ -408,6 +428,21 @@
     },
     "a9-hg-psa": {
       "oz": 10.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-irons-mbus": {
+      "oz": 2.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-irons-mbuspro": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "a9-irons-troy": {
+      "oz": 4.0,
       "basis": "estimate",
       "src": null
     },
@@ -853,6 +888,26 @@
     },
     "ar-hg-psa": {
       "oz": 10.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-irons-mbus": {
+      "oz": 2.3,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-irons-mbuspro": {
+      "oz": 5.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-irons-mbusr": {
+      "oz": 1.2,
+      "basis": "estimate",
+      "src": null
+    },
+    "ar-irons-troy": {
+      "oz": 4.0,
       "basis": "estimate",
       "src": null
     },
