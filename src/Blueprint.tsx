@@ -1278,14 +1278,14 @@ function rel(pts: string, y0: number, closed: boolean) {
  *  The P320's curved shoe bows back and its tip curls forward; the P365's runs forward to a tip near the guard;
  *  the Glock's blade has the safety lever down its face. */
 const TRIGGERS: Record<ProfileKey, { face: number; curved: (y0: number) => string; flat: (y0: number) => string; line: { curved: string | ((y0: number) => string); flat: string | ((y0: number) => string) }; hook?: string }> = {
-  // The P320's triggers traced from flat photos (the curved shoe from Sig's Subcompact view, the flat skeleton shoe from the
-  // AXG): both hang from the front of the guard's top and sweep forward to a tip near the guard's bottom.
+  // The P320's triggers traced from flat photos (the curved shoe from RSR Group's P320 Compact photo: a wedge under the
+  // frame, then a slim blade; the flat skeleton shoe from the AXG): both hang from the front of the guard's top and sweep forward to a tip near the guard's bottom.
   p320: {
     face: 2.95,
-    curved: (y0) => rel('2.514,0 2.518,0.012 2.61,0.096 2.655,0.164 2.804,0.574 2.868,0.672 2.929,0.733 3.033,0.803 3.143,0.838 3.186,0.844 3.297,0.838 3.38,0.801 3.388,0.782 3.37,0.746 3.29,0.711 3.186,0.641 3.082,0.537 3.025,0.452 2.972,0.317 2.953,0.231 2.947,0.108 2.97,0', y0, true),
+    curved: (y0) => rel('2.676,0 2.731,0.061 2.777,0.134 2.79,0.199 2.79,0.346 2.805,0.493 2.841,0.621 2.896,0.713 2.97,0.787 3.062,0.842 3.135,0.869 3.191,0.864 3.203,0.833 3.191,0.805 3.117,0.75 3.025,0.658 2.961,0.548 2.915,0.419 2.9,0.29 2.906,0.162 2.93,0.07 2.97,0', y0, true),
     flat: (y0) => rel('2.477,0 2.484,0.046 2.56,0.124 2.932,0.774 2.98,0.828 3.112,0.935 3.14,0.949 3.159,0.942 3.18,0.914 3.18,0.871 3.137,0.821 3.118,0.782 2.953,0.179 2.951,0.14 2.959,0.089 3.009,0', y0, true),
     line: {
-      curved: (y0) => rel('2.92,0.02 2.9,0.34 2.98,0.54 3.1,0.68', y0, false),
+      curved: (y0) => rel('2.878,0.061 2.863,0.254 2.878,0.438 2.933,0.603 3.025,0.722 3.145,0.824', y0, false),
       flat: (y0) => rel('2.958,0.05 2.99,0.31 3.09,0.76', y0, false) + ' ' + rel('2.739,0.089 2.766,0.081 2.805,0.088 2.832,0.105 2.856,0.136 2.957,0.502 2.949,0.518 2.918,0.519 2.892,0.498 2.709,0.179 2.7,0.151 2.702,0.124', y0, true),
     },
   },
@@ -1751,7 +1751,9 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   const noseX1 = Math.max(...slideCut.flatMap((ol) => ol.filter((v, i) => !(i % 2) && ol[i + 1] > mk.sh - 0.3 && ol[i + 1] < mk.sh - 0.01))) - 0.03;
   const faceShift = modPh?.nose ? noseX1 - modPh.nose[1] : 0;
   const face = modPh?.front?.map((v, i) => (i % 2 ? v : v + faceShift));
-  const modOl = modPh ? (face ? clipToFace(modPh.frame, face) : clipFront(modPh.frame, fx(mk.dust))) : undefined;
+  // The dust cover's front moves with the face (as the rail lines do), so the frame meets the slide's nose with no gap.
+  const modFrame = modPh && face ? modPh.frame.map((v, i) => (i % 2 || v < modPh.front![0] - 0.6 ? v : v + faceShift)) : modPh?.frame;
+  const modOl = modPh ? (face ? clipToFace(modFrame!, face) : clipFront(modPh.frame, fx(mk.dust))) : undefined;
   if (modPh && modOl) {
     hole = polyPath(modPh.hole, same, true);
     const yb = Math.max(...modOl.filter((_, i) => i % 2));
@@ -1840,7 +1842,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
       stipple += (modPh?.strips ?? []).map((q) => dotsIn(q, 0.06, same, 0.02)).join('');
       if (modPh?.fan) {
         const [fx0, fy0] = modPh.fan;
-        for (const a of [110, 121, 132, 142, 152, 163, 174, 185]) {
+        for (const a of [111, 120, 130, 141, 153, 166, 180]) {
           const r = (a * Math.PI) / 180, pts: number[] = [];
           for (let t = 0.3; t < 3; t += 0.02) {
             const x = fx0 + Math.cos(r) * t, y = fy0 + Math.sin(r) * t;
@@ -1963,11 +1965,24 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   }
   const yGB = Math.max(heel[1], toe[1]);
   // The P320's photo-traced triggers keep their size unless a module's guard is too short for them; then they shorten to clear it by 0.08".
+  // On a photo-traced module the trigger hangs from that module's own guard opening, so its top meets the opening's top
+  // edge instead of poking into the frame above it.
+  const fc = TRIGGERS[key].face, mh = modPh?.hole;
+  const holeY = (x: number, pick: (...v: number[]) => number) => {
+    const ys: number[] = [];
+    for (let i = 0; mh && i < mh.length; i += 2) {
+      const [ax, ay, bx, by] = [mh[i], mh[i + 1], mh[(i + 2) % mh.length], mh[(i + 3) % mh.length]];
+      if ((ax - x) * (bx - x) <= 0 && ax !== bx) ys.push(ay + ((x - ax) / (bx - ax)) * (by - ay));
+    }
+    return ys.length ? pick(...ys) : NaN;
+  };
+  const tTop = mh ? holeY(fc - 0.2, Math.min) : h0y, tBot = mh ? holeY(fc + 0.2, Math.max) : h1y;
+  const t0 = Number.isFinite(tTop) ? tTop : h0y, t1 = Number.isFinite(tBot) ? tBot : h1y;
   const reachP320 = (d: string) => {
     if (key !== 'p320' && key !== 'p365') return d;
-    const k = Math.min(1, (h1y - 0.08 - h0y) / (key === 'p365' ? (o.flat ? 0.824 : 0.818) : o.flat ? 0.949 : 0.844));
+    const k = Math.min(1, (t1 - 0.08 - t0) / (key === 'p365' ? (o.flat ? 0.824 : 0.818) : o.flat ? 0.949 : 0.869));
     let i = 0;
-    return d.replace(/-?\d*\.?\d+/g, (n) => (i++ % 2 ? n3(h0y + (+n - h0y) * k) : n));
+    return d.replace(/-?\d*\.?\d+/g, (n) => (i++ % 2 ? n3(t0 + (+n - t0) * k) : n));
   };
   const trigLine = o.flat ? TRIGGERS[key].line.flat : TRIGGERS[key].line.curved;
   // A slide longer than the frame (G34 on a G17 frame, G47 or G19X on a G45 frame): ahead of the dust cover the
@@ -1985,11 +2000,11 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   return {
     key, SL, muzzle: sx(mk.muzzle), tang, bc: mk.bore, springY: mk.spring, sh: mk.sh,
     port0, port1, portH: R.portH,
-    xt: photoTrig ? 3.5 : TRIGGERS[key].face, trigTop: photoTrig?.top ?? h0y,
-    trigD: photoTrig?.d ?? reachP320(scD((o.flat ? TRIGGERS[key].flat : TRIGGERS[key].curved)(h0y - dy) + (v.hook && TRIGGERS[key].hook ? ' ' + TRIGGERS[key].hook : ''))),
-    trigLine: photoTrig?.line ?? reachP320(scD(typeof trigLine === 'string' ? trigLine : trigLine(h0y - dy))),
+    xt: photoTrig ? 3.5 : TRIGGERS[key].face, trigTop: photoTrig?.top ?? t0,
+    trigD: photoTrig?.d ?? reachP320(scD((o.flat ? TRIGGERS[key].flat : TRIGGERS[key].curved)(t0 - dy) + (v.hook && TRIGGERS[key].hook ? ' ' + TRIGGERS[key].hook : ''))),
+    trigLine: photoTrig?.line ?? reachP320(scD(typeof trigLine === 'string' ? trigLine : trigLine(t0 - dy))),
     gF, dust, railY: mk.railBottom, fcuX0,
-    heel, toe, yGB, yMB: photoTrig ? photoTrig.yMB + ext : yGB + ext + BASE, ext, plateD: photoTrig?.plate,
+    heel, toe, yGB, yMB: photoTrig ? photoTrig.yMB + ext : yGB + ext + BASE, ext, plateD: photoTrig?.plate ?? (modPh?.lip ? polyPath(modPh.lip, same, true) : undefined),
     frameD: (glock ? polyPath(mapped, (x, y) => [x, y], true) : modOl ? polyPath(modOl, same, true) : outlines.map((ol) => polyPath(ol, frameMap, true)).join(' ')) + ' ' + hole,
     frameDetail, stipple,
     slideD: face && modPh?.nose ? photoSlide(face[0], modPh.nose[0]) : pr.slide.outline.map((ol) => polyPath(scS(ol), slideMap, true)).join(' ') + slideNose,
