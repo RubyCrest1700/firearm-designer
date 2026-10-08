@@ -2195,12 +2195,12 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
       const [a, b] = [fx(x0), fx(x1)], r = (y1 - y0) / 2.5;
       return polyPath(roundCorners([a, y0, b, y0, b, y1, a, y1], r), same, true) + repeat(a + 0.1, a + 0.1 + (ribs - 1) * 0.05, 0.05, (x) => ` M${x},${f(y0 + 0.05)} L${x},${f(y1 - 0.05)}`);
     };
-    // The mag release is a rounded button tipped about 7 degrees nose-down, ribbed across its face.
-    const [m0, m1] = frameMap(2.11, 2.11), [mx, my] = [m0 + 0.027, m1 + 0.053], th = (7 * Math.PI) / 180;
+    // The mag release, measured on RSR's flat photo: a stadium-shaped button 0.5" long and 0.24" tall, tipped about 9 degrees
+    // nose-down, smooth over its rear half and ribbed across its front half.
+    const [m0, m1] = frameMap(2.11, 2.11), [mx, my] = [m0 + 0.027, m1 + 0.053], th = (9 * Math.PI) / 180;
     const rot = (u: number, w: number) => [mx + u * Math.cos(th) - w * Math.sin(th), my + u * Math.sin(th) + w * Math.cos(th)];
-    // The button itself is only the ribbed front half of the dished recess the photo shows; the recess is left undrawn.
-    const mr = polyPath(roundCorners([rot(0, -0.118), rot(0.27, -0.118), rot(0.27, 0.118), rot(0, 0.118)].flat(), 0.09), same, true)
-      + repeat(0.05, 0.22, 0.042, (u) => { const [a, b] = [rot(+u, -0.085), rot(+u, 0.085)]; return ` M${f(a[0])},${f(a[1])} L${f(b[0])},${f(b[1])}`; });
+    const mr = polyPath(roundCorners([rot(-0.25, -0.12), rot(0.25, -0.12), rot(0.25, 0.12), rot(-0.25, 0.12)].flat(), 0.115), same, true)
+      + repeat(0.01, 0.22, 0.035, (u) => { const [a, b] = [rot(+u, -0.1), rot(+u, 0.1)]; return ` M${f(a[0])},${f(a[1])} L${f(b[0])},${f(b[1])}`; });
     frameDetail += ` ${tab(1.28, mk.sh + 0.07, 1.87, mk.sh + 0.28, 5)} ${mr} ${OC(fx(2.7), 1.185, 0.045)} ${OC(fx(3.08), 1.355, 0.085)}`;
   }
 
