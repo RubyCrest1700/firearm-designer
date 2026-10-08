@@ -640,9 +640,19 @@ tr:first-child td { border-top: 0; }
 .faq-links a { color: var(--ink); font-weight: 600; text-decoration: none; }
 .faq-links a:hover { color: var(--blue); text-decoration: underline; }
 a.link { text-decoration: none; }
+.drops { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.drop-card { width: 100%; height: 100%; padding: 14px 16px; display: grid; gap: 4px; align-content: start; text-align: left; color: var(--ink); transition: border-color .15s; }
+.drop-card:hover { border-color: var(--cta); }
+.drop-name { font-weight: 600; line-height: 1.3; }
+.drop-meta { font-size: 13px; color: var(--muted); }
+.drop-price { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 2px; }
+.drop-price s { color: var(--faint); font-size: 13.5px; }
+.drop-price b { font-size: 16px; }
+.drop-price .change-chip { margin-top: 0; }
 @media (max-width: 899px) {
   .hero-row { grid-template-columns: 1fr; gap: 24px; padding-top: 28px; padding-bottom: 28px; }
   .steps, .home-split { grid-template-columns: 1fr; }
+  .drops { grid-template-columns: 1fr 1fr; }
   .tile-grid { grid-template-columns: 1fr 1fr; }
   .tile-grid.rifle .tile { grid-column: span 2; }
   .tile-grid.pistol .tile { grid-column: span 1; }
@@ -657,6 +667,7 @@ a.link { text-decoration: none; }
   .hero-actions .btn { flex: 1; }
   .home-section { padding-top: 28px; }
   .home-h2 { font-size: 22px; }
+  .drops { grid-template-columns: 1fr; gap: 10px; }
   .tile-grid { gap: 12px; }
 }
 
