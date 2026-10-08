@@ -1544,9 +1544,10 @@ function glockPhotoFrame(ph: GlockPhoto, o: { dust: number; yRail: number; rail:
   const controls = rr(ph.slideStop, 0.06) + ` M${f(s0 + 0.06)},${f(s1 + 0.09)} L${f(s2 - 0.06)},${f(s1 + 0.09)} M${f(s0 + 0.06)},${f((s1 + s3) / 2 + 0.03)} L${f(s2 - 0.06)},${f((s1 + s3) / 2 + 0.03)}`
     + ' ' + rr(ph.takedown, 0.02) + ` M${f(t0 + 0.03)},${f(t1 + 0.1)} L${f(t2 - 0.03)},${f(t1 + 0.1)} M${f(t0 + 0.03)},${f(t1 + 0.16)} L${f(t2 - 0.03)},${f(t1 + 0.16)}`
     + ' ' + OC(ph.triggerPin[0], ph.triggerPin[1], ph.triggerPin[2]) + ' ' + OC(ph.housingPin[0], ph.housingPin[1], ph.housingPin[2])
+    + (ph.lockPin ? ' ' + OC(ph.lockPin[0], ph.lockPin[1], ph.lockPin[2]) : '')
     + ' ' + (ph.magCatchPoly ? catchPoly(ph.magCatchPoly) : rr(ph.magCatch, 0.03) + repeat(c0 + 0.07, c2 - 0.06, 0.07, (x) => ` M${x},${f(c1 + 0.05)} L${x},${f(c3 - 0.05)}`));
   // Grip texture: the side panel between its molded rear edge and the front strap, and the back strap between the
-  // outline and its seam. The logo plate is left smooth.
+  // outline and its seam, all at the same 0.1" pitch. The logo plate is left smooth.
   const lineX = (q: number[], y: number) => {
     for (let i = 0; i + 3 < q.length; i += 2) if ((q[i + 1] - y) * (q[i + 3] - y) <= 0) return q[i] + ((y - q[i + 1]) / (q[i + 3] - q[i + 1] || 1)) * (q[i + 2] - q[i]);
     return NaN;
@@ -1564,9 +1565,12 @@ function glockPhotoFrame(ph: GlockPhoto, o: { dust: number; yRail: number; rail:
     const rear = lineX(ph.panelRear, y), sm = lineX(ph.seam, y);
     if (!Number.isNaN(rear)) for (let x = rear + 0.08 + off; x < frontX - 0.07; x += 0.1) {
       if (x > l0 - 0.04 && x < l2 + 0.04 && y > l1 - 0.04 && y < l3 + 0.04) continue;
+      if (x > c0 - 0.05 && x < c2 + 0.05 && y < c3 + 0.05) continue; // smooth around the mag catch
       stipple += `M${f(x)},${f(y)} L${f(x + 0.014)},${f(y)} `;
     }
-    if (!Number.isNaN(sm) && y < ph.texBottom - 0.15) for (let x = back + 0.06 + off / 2; x < sm - 0.05; x += 0.08) stipple += `M${f(x)},${f(y)} L${f(x + 0.014)},${f(y)} `;
+    // Back strap: behind the seam, or behind the panel edge on the slim frames (no separate back strap).
+    const strapEdge = ph.seam.length ? sm : rear;
+    if (!Number.isNaN(strapEdge) && y < ph.texBottom - 0.15) for (let x = back + 0.07 + off; x < strapEdge - 0.06; x += 0.1) stipple += `M${f(x)},${f(y)} L${f(x + 0.014)},${f(y)} `;
   }
   const frameDetail = `${rail} ${controls} ${o.seam ? P(ph.seam) : ''} ${P(ph.panelRear)} ${ph.logo ? rr(ph.logo, 0.06) : ''}`;
   return { mapped: pts, heel, toe, tang, hole: P(glockOpening(ph.hole), true), frameDetail, stipple };
