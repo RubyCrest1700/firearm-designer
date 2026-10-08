@@ -1833,10 +1833,14 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   // A grip module traced with its front face (the Subcompact, the AXG and the Wilson) keeps the slide at its published length, so the slide covers the module as in the photos.
   const photoNose = key === 'p320' && !!v.module && !!SIG_MODULE_PHOTOS[v.module]?.nose;
   const dS = glock || photoNose ? spec.m.slide - mk.slide : spec.m.oal - R.oal; // slide length change
-  const dF = glock ? spec.frame.slide - mk.slide : spec.frame.oal - R.oal; // dust cover length change
+  const SL = mk.slide + dS;
+  // The P320 patent is the M17, whose slide comes down around the recoil spring in front of a short dust cover. On
+  // RSR's flat photos of the commercial P320s (Full, Compact, Carry, X-Carry) and Sig's M18 the module's dust cover runs
+  // to the muzzle under a plain slide, so the nose is cut off the slide and the dust cover reaches the slide's front.
+  const noNose = key === 'p320' && !photoNose;
+  const dF = glock ? spec.frame.slide - mk.slide : noNose && !v.module ? SL + 0.03 - mk.dust : spec.frame.oal - R.oal; // dust cover length change
   // Grip length change. The G42 drawing's own height (grip bottom plus sights and floor plate) is a little under the published 4.13".
   const dH = spec.gripH - (glock ? (mk.gripBottom + SIGHT + BASE) : R.h);
-  const SL = mk.slide + dS;
   // Ejection port: as drawn on the Hellcat; over the chamber on the others (their patents show the left side).
   // The P320's traced port marks sat about 0.5" too far back. The patent's own port box runs 2.72" to 3.87", which matches
   // RSR's flat M18 photo and a flat M17 photo (2.6" to 2.77" ahead of the slide's top rear corner, 1.2" long), the same on
@@ -1904,8 +1908,26 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   const ext = Math.max(0, spec.magH - spec.gripH);
   // The Glock guard opening has a squared front: nearly vertical front wall and tight corners (US 4,539,889 FIG. 1).
   const glockHole = glockOpening(mk.hole);
-  let hole = glock ? polyPath(glockHole, frameMap, true) : pr.frame.hole ? polyPath(scF(pr.frame.hole), frameMap, true) : '';
-  const outlines = pr.frame.outline.map((ol) => (glock ? smooth(fillWeb(densify(scF(ol), 0.05), mk.sh + 0.15, mk.gripBottom - 0.1, 0.65), 2) : smoothJitter(ol)));
+  // The factory P365 guard, checked on RSR's flat P365 photo: the patent draws its walls too thick and its opening
+  // about 0.1" long at the back. The opening's rear and top close in (rear 0.1", front 0.03", top 0.04"), the outer
+  // front wall comes back 0.024" and the bottom rises 0.015" to 0.06" toward the front.
+  const g365 = key === 'p365' && !v.module;
+  const hl = (x: number) => Math.max(0, Math.min(1, (x - h0x) / (h1x - h0x)));
+  const tightHole = (pts: number[]) => (!g365 ? pts : pts.map((c, i) => (i % 2 ? c + 0.04 * Math.max(0, Math.min(1, (h1y - c) / (h1y - h0y))) : c + 0.1 - 0.07 * hl(c))));
+  const tightOuter = (pts: number[]) => {
+    if (!g365) return pts;
+    const out = pts.slice();
+    for (let i = 0; i < out.length; i += 2) {
+      const x = pts[i], y = pts[i + 1];
+      if (x < h0x + 0.4 || y < h0y + 0.1 || y > h1y + 0.25) continue;
+      const cl = (t: number) => Math.max(0, Math.min(1, t));
+      out[i] = x - 0.024 * cl((x - h1x + 0.25) / 0.2);
+      out[i + 1] = y - (0.015 + 0.045 * cl((x - h0x - 0.6) / (h1x - h0x - 0.6))) * cl((y - h1y + 0.15) / 0.13);
+    }
+    return out;
+  };
+  let hole = glock ? polyPath(glockHole, frameMap, true) : pr.frame.hole ? polyPath(tightHole(scF(pr.frame.hole)), frameMap, true) : '';
+  const outlines = pr.frame.outline.map((ol) => (glock ? smooth(fillWeb(densify(scF(ol), 0.05), mk.sh + 0.15, mk.gripBottom - 0.1, 0.65), 2) : tightOuter(smoothJitter(ol))));
   if (!glock && (v.beaver || v.undercut || v.flare)) {
     // Sig grip modules that leave the patent's shape: the X-Series, Wilson Combat and AXG modules reach further back
     // under the hand (beavertail) and higher under the guard (undercut); the X-Carry and Wilson modules flare the mag well.
@@ -1929,7 +1951,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   const face = modPh?.front?.map((v, i) => (i % 2 ? v : v + faceShift));
   // The dust cover's front moves with the face (as the rail lines do), so the frame meets the slide's nose with no gap.
   const modFrame = modPh && face ? modPh.frame.map((v, i) => (i % 2 || v < modPh.front![0] - 0.6 ? v : v + faceShift)) : modPh?.frame;
-  const modOl = modPh ? (face ? clipToFace(modFrame!, face) : clipFront(modPh.frame, fx(mk.dust))) : undefined;
+  const modOl = modPh ? (face ? clipToFace(modFrame!, face) : clipFront(modPh.frame, noNose ? SL + 0.06 : fx(mk.dust))) : undefined;
   if (modPh && modOl) {
     hole = polyPath(modPh.hole, same, true);
     const yb = Math.max(...modOl.filter((_, i) => i % 2));
@@ -1963,10 +1985,13 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   // The P365 patent draws the mag window's raised border as six short broken strokes; they're replaced below by one
   // smooth border line around the window, as on RSR's flat P365 photo.
   const p365Border = (ol: number[]) => key === 'p365' && ol.every((v, i) => (i % 2 ? v > 3.4 : v > 0.2 && v < 1.52));
-  let frameDetail = pr.frame.detail.filter((ol) => keepDetail(ol) && !p365Border(ol)).map((ol) => polyPath(glock ? scF(ol) : smoothJitter(scF(ol), 0.02, false), frameMap, false)).join(' ');
+  // Detail lines around the P365 guard opening move with it.
+  const nearHole = (ol: number[]) => g365 && ol.every((c, i) => (i % 2 ? c > h0y - 0.08 && c < h1y + 0.08 : c > h0x + 0.05 && c < h1x + 0.08));
+  let frameDetail = pr.frame.detail.filter((ol) => keepDetail(ol) && !p365Border(ol)).map((ol) => polyPath(glock ? scF(ol) : nearHole(scF(ol)) ? tightHole(smoothJitter(scF(ol), 0.02, false)) : smoothJitter(scF(ol), 0.02, false), frameMap, false)).join(' ');
   // The P320 patent draws the barrel hood and a top line inside its port; the barrel piece draws the hood, so those go.
   const inPort = (ol: number[]) => key === 'p320' && ol.every((v, i) => (i % 2 ? v < 0.55 : v > port0 - 0.08 && v < port1 + 0.02));
-  let slideDetail = pr.slide.detail.filter((ol) => !inPort(ol)).map((ol) => polyPath(glock ? scS(ol) : smoothJitter(scS(ol), 0.02, false), slideMap, false)).join(' ');
+  const inNose = (ol: number[]) => noNose && scS(ol).every((c, i) => (i % 2 ? c > mk.sh - 0.01 : true));
+  let slideDetail = pr.slide.detail.filter((ol) => !inPort(ol) && !inNose(ol)).map((ol) => polyPath(glock ? scS(ol) : smoothJitter(scS(ol), 0.02, false), slideMap, false)).join(' ');
   let slideCuts: { erase: string; edge: string } | undefined, pocket: [number, number, number] | undefined;
   let stipple = '';
   let tang = -mk.tang;
@@ -2347,7 +2372,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     wellCut: glock && spec.photo?.startsWith('tw') ? polyPath(GLOCK_PHOTOS[spec.photo].plate, same, true) : undefined,
     frameD: (glock ? polyPath(smoothPoly(mapped), (x, y) => [x, y], true) : modOl ? polyPath(smoothPoly(modOl), same, true) : outlines.map((ol) => polyPath(ol, frameMap, true)).join(' ')) + ' ' + hole,
     frameDetail, stipple,
-    slideD: face && modPh?.nose ? photoSlide(face[0], modPh.nose[0]) : pr.slide.outline.map((ol) => polyPath(scS(ol), slideMap, true)).join(' ') + slideNose,
+    slideD: face && modPh?.nose ? photoSlide(face[0], modPh.nose[0]) : pr.slide.outline.map((ol) => polyPath(noNose ? swapXY(clipFront(swapXY(scS(ol)), mk.sh)) : scS(ol), slideMap, true)).join(' ') + slideNose,
     slideDetail, slideCuts, pocket,
     // A photo-traced module closes its own grip bottom, so the factory mag window doesn't show.
     windowD: win && !modPh && key !== 'hellcat' ? polyPath(key === 'p365' ? roundCorners(win, 0.06) : smoothJitter(win), grip, true) : '',
