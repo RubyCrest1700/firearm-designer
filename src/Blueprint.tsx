@@ -1609,6 +1609,10 @@ interface ProfileGeo {
   gF: number; dust: number; railY: number;
   heel: [number, number]; toe: [number, number]; yGB: number; yMB: number; ext: number;
   frameD: string; frameDetail: string; stipple: string; slideD: string; slideDetail: string; windowD: string;
+  /** Cuts through the slide's outline (an aftermarket slide's optic pocket and top slots): erased, then edged. */
+  slideCuts?: { erase: string; edge: string };
+  /** An aftermarket slide's optic pocket at the rear, as [front x, depth]; its rear sight sits ahead of it. */
+  pocket?: [number, number];
   /** Floor plate measured from a photo (flush OEM magazine). */
   plateD?: string;
   /** The floor plate's top face and the gap above it, for a flush magazine in a flared mag well's cut. */
@@ -1794,6 +1798,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     : v.texture === 'patent' || Math.min(...ol.filter((_, i) => i % 2)) < h1y - 0.1));
   let frameDetail = pr.frame.detail.filter(keepDetail).map((ol) => polyPath(scF(ol), frameMap, false)).join(' ');
   let slideDetail = pr.slide.detail.map((ol) => polyPath(scS(ol), slideMap, false)).join(' ');
+  let slideCuts: { erase: string; edge: string } | undefined, pocket: [number, number] | undefined;
   let stipple = '';
   let tang = -mk.tang;
   let fcuX0 = -Infinity;
@@ -1961,7 +1966,21 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
       : v.slide === 'brownells' ? brownellsSlide(SL, SH, port1) : '';
     // Aftermarket slides drawn from their photos: no lower edge line, only the top chamfer.
     const topLine = `M0.05,0.12 L${f(SL - 0.1)},0.12`;
-    if (after) slideDetail = `${topLine} ${after} ${extractor} ${face}`;
+    if (after) {
+      slideDetail = `${topLine} ${after} ${extractor} ${face}`;
+      // RMR-cut aftermarket slides pocket the optic at the very rear (from 0.2", 0.1" deep, measured on GGP's flat render)
+      // and carry the rear sight on the block between the pocket and the port.
+      const pk1 = port0 - 0.62;
+      pocket = [pk1, 0.1];
+      slideCuts = { erase: `M0.2,-0.03 L0.2,0.1 L${f(pk1)},0.1 L${f(pk1)},-0.03 Z`, edge: `M0.2,0 L0.2,0.1 L${f(pk1)},0.1 L${f(pk1)},0` };
+      if (v.slide === 'zaffiri') {
+        // Zaffiri's top slots cut down through the top corner, so they notch the outline.
+        const xs: number[] = [];
+        for (let x = port1 + 0.25; x < SL - 1.0; x += (SL - 1.25 - port1) / 4.5) xs.push(x);
+        slideCuts.erase += xs.map((x) => ` M${f(x)},-0.03 L${f(x)},0 L${f(x + 0.12)},0.3 L${f(x + 0.26)},0.3 L${f(x + 0.14)},0 L${f(x + 0.14)},-0.03 Z`).join('');
+        slideCuts.edge += xs.map((x) => ` M${f(x)},0 L${f(x + 0.12)},0.3 L${f(x + 0.26)},0.3 L${f(x + 0.14)},0`).join('');
+      }
+    }
     const ph = spec.photo ? GLOCK_PHOTOS[spec.photo] : undefined;
     if (ph) {
       // A frame measured from a photo replaces the patent-based frame, and the slide gets the photo's serrations.
@@ -2040,7 +2059,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     frameD: (glock ? polyPath(mapped, (x, y) => [x, y], true) : modOl ? polyPath(modOl, same, true) : outlines.map((ol) => polyPath(ol, frameMap, true)).join(' ')) + ' ' + hole,
     frameDetail, stipple,
     slideD: face && modPh?.nose ? photoSlide(face[0], modPh.nose[0]) : pr.slide.outline.map((ol) => polyPath(scS(ol), slideMap, true)).join(' ') + slideNose,
-    slideDetail,
+    slideDetail, slideCuts, pocket,
     // A photo-traced module closes its own grip bottom, so the factory mag window doesn't show.
     windowD: win && !modPh ? polyPath(win, grip, true) : '',
   };
@@ -2140,7 +2159,9 @@ function profilePieces(P: Piece[], g: ProfileGeo, o: {
   P.push({ slot: o.own('slide'), z: 8, row: 'top', target: px(SL - 1.0, g.sh * 0.5),
     el: <>
       <path fillRule="evenodd" d={T(`${g.slideD} ${port}`)} />
-      <path className="detail" d={T(`${g.slideDetail} ${lightCuts} ${ports} ${plate} ${extractor}`)} />
+      {g.slideCuts && <path className="solid" d={T(g.slideCuts.erase)} />}
+      {g.slideCuts && <path style={{ fill: 'none' }} d={T(g.slideCuts.edge)} />}
+      <path className="detail" d={T(`${g.slideDetail} ${lightCuts} ${ports} ${g.pocket ? '' : plate} ${extractor}`)} />
     </> });
 }
 
@@ -2168,8 +2189,18 @@ function zevSlide(SL: number, SH: number, port0: number, port1: number) {
   const under = polyPath(roundCorners([port0 - 0.75, SH * 0.5, port1 + 0.05, SH * 0.5, port1 + 0.05, SH * 0.8, port0 - 0.75, SH * 0.8], 0.06), same, true);
   const x0 = port1 + 0.3, x1 = SL - 0.7, w = (x1 - x0 - 0.12) / 4;
   let win = polyPath(roundCorners([x0, SH * 0.4, x1, SH * 0.4, x1, SH * 0.88, x0, SH * 0.88], 0.06), same, true);
-  for (let i = 0; i < 4; i++) { const a = x0 + 0.06 + i * w + 0.05, b = a + w - 0.1; win += ' ' + polyPath(roundCorners([a, SH * 0.5, b, SH * 0.5, b, SH * 0.78, a, SH * 0.78], 0.04), same, true); }
-  return `${rear} ${under} ${win} M${f(port1)},0.28 L${f(SL - 0.12)},0.28`;
+  for (let i = 0; i < 4; i++) { const a = x0 + 0.06 + i * w + 0.05, b = a + w - 0.1; win += ' ' + throughWindow(a, SH * 0.5, b, SH * 0.78); }
+  const step = `M${f(x0 + 0.06)},${f(SH * 0.4 + 0.035)} L${f(x1 - 0.06)},${f(SH * 0.4 + 0.035)} M${f(port0 - 0.69)},${f(SH * 0.5 + 0.035)} L${f(port1)},${f(SH * 0.5 + 0.035)}`;
+  return `${rear} ${under} ${win} ${step} M${f(port1)},0.28 L${f(SL - 0.12)},0.28`;
+}
+
+/** A window cut through the slide wall: its rim, the wall's inner edge just inside it (the wall's thickness, so the
+ *  window reads as a hole rather than a panel), and the barrel's top and bottom edges seen through it. */
+function throughWindow(x0: number, y0: number, x1: number, y1: number) {
+  const same: Map2 = (x, y) => [x, y];
+  const rim = polyPath(roundCorners([x0, y0, x1, y0, x1, y1, x0, y1], 0.04), same, true);
+  const wall = `M${f(x0 + 0.03)},${f(y1 - 0.03)} L${f(x0 + 0.03)},${f(y0 + 0.05)} Q${f(x0 + 0.03)},${f(y0 + 0.03)} ${f(x0 + 0.05)},${f(y0 + 0.03)} L${f(x1 - 0.03)},${f(y0 + 0.03)}`;
+  return `${rim} ${wall}`;
 }
 
 /** Brownells RMR slide, from its angled render: straight grooves at the rear and a second set just ahead of the port. */
@@ -2182,14 +2213,16 @@ function brownellsSlide(SL: number, SH: number, port1: number) {
  *  nose with three long windows low in it, five notches across the top ahead of the port, and the bevel down the nose. */
 function zaffiriSlide(SL: number, SH: number, port0: number, port1: number) {
   const same: Map2 = (x, y) => [x, y];
-  const rear = repeat(0.22, 1.05, 0.13, (x) => `M${x},0.16 L${f(x + 0.04)},${f(SH * 0.78)}`);
+  // Each rear groove is a wide scallop: two walls with a rounded foot.
+  const rear = repeat(0.22, 1.05, 0.13, (x) => `M${x},0.16 L${f(x + 0.02)},${f(SH * 0.72)} Q${f(x + 0.05)},${f(SH * 0.8)} ${f(x + 0.08)},${f(SH * 0.72)} L${f(x + 0.08)},0.16`);
   const x0 = port0 - 1.0, x1 = SL - 0.55;
   const panel = polyPath(roundCorners([x0, SH * 0.42, x1, SH * 0.42, x1, SH * 0.9, x0, SH * 0.9], 0.08), same, true);
   const a = port1 + 0.15, w = (x1 - 0.12 - a) / 3;
   let slots = '';
-  for (let i = 0; i < 3; i++) { const s0 = a + i * w + 0.04, s1 = s0 + w - 0.08; slots += ' ' + polyPath(roundCorners([s0, SH * 0.6, s1, SH * 0.6, s1, SH * 0.8, s0, SH * 0.8], 0.04), same, true); }
-  const notches = repeat(port1 + 0.25, SL - 1.0, (SL - 1.25 - port1) / 4.5, (x) => `M${x},0 L${x},0.14 L${f(x + 0.16)},0.14 L${f(x + 0.16)},0`);
-  return `${rear} ${panel}${slots} ${notches} M${f(SL - 0.4)},0.02 L${f(SL - 0.03)},0.3`;
+  for (let i = 0; i < 3; i++) { const s0 = a + i * w + 0.04, s1 = s0 + w - 0.08; slots += ' ' + throughWindow(s0, SH * 0.6, s1, SH * 0.8); }
+  // The panel is sunk into the side: its upper edge shows a second, inner line where the wall steps down.
+  const step = `M${f(x0 + 0.08)},${f(SH * 0.42 + 0.035)} L${f(x1 - 0.08)},${f(SH * 0.42 + 0.035)}`;
+  return `${rear} ${panel} ${step}${slots} M${f(SL - 0.4)},0.02 L${f(SL - 0.03)},0.3`;
 }
 
 /** Moves (and scales) a path made only of M, L, Q and Z commands: every number pair is a point. */
@@ -2386,7 +2419,10 @@ function pistol(platform: Platform, build: Build): Scene {
   // Tritium or fiber inserts show as small circles. Sig rear sights are longer with a sloped back.
   // The P365's rear sight is shorter, so an optic fits between it and the ejection port as on the real slide.
   const p365 = geo.key === 'p365';
-  const r0 = p365 ? 0.1 : sig ? 0.14 : 0.2, r1 = p365 ? 0.6 : sig ? 0.86 : 0.74;
+  // Glock rear sights measured on RSR's flat G17/G19 photos: 0.24" to 0.66" from the slide's rear at the base. An
+  // aftermarket RMR slide carries its rear sight on the block between the optic pocket and the port.
+  const pk = geo.pocket;
+  const r0 = pk ? pk[0] + 0.06 : p365 ? 0.1 : sig ? 0.14 : 0.24, r1 = pk ? geo.port0 - 0.08 : p365 ? 0.6 : sig ? 0.86 : 0.66;
   // Front sights sit near the muzzle end, measured back from the slide's front on RSR's and Wilson's flat photos:
   // Sig 0.14" to 0.56", Glock 0.16" to 0.44", M&P 0.08" to 0.49", Hellcat 0.10" to 0.60".
   const [fa, fb] = sig ? [0.56, 0.14] : geo.key === 'mp' ? [0.49, 0.08] : geo.key === 'hellcat' ? [0.6, 0.1] : [0.44, 0.16];
@@ -2410,9 +2446,10 @@ function pistol(platform: Platform, build: Build): Scene {
   const fp = (b.optic?.attrs.footprint as string) ?? (cut === 'none' ? 'rmr' : cut);
   const po = pistolOptic(b.optic, fp);
   // An optic ends just behind the ejection port, never over it (the P365's and Hellcat's short slides pull it back).
-  const ox0 = Math.min(0.9, geo.port0 - 0.06 - po.len);
-  P.push({ slot: 'optic', z: 11, row: 'top', target: px(ox0 + po.len / 2, -po.h),
-    el: <><path fillRule="evenodd" d={T(movePath(po.od, ox0, 0))} /><path className="detail" d={T(movePath(po.odet, ox0, 0))} /></> });
+  // In an aftermarket slide's rear pocket the optic sits down in the pocket, at its rear.
+  const ox0 = pk ? 0.24 : Math.min(0.9, geo.port0 - 0.06 - po.len), oy0 = pk ? pk[1] : 0;
+  P.push({ slot: 'optic', z: 11, row: 'top', target: px(ox0 + po.len / 2, oy0 - po.h),
+    el: <><path fillRule="evenodd" d={T(movePath(po.od, ox0, oy0))} /><path className="detail" d={T(movePath(po.odet, ox0, oy0))} /></> });
 
   /* Weapon light on the dust cover rail, drawn only once chosen */
   let pFront = front;
