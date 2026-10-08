@@ -343,9 +343,7 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
 
   // Pistol grip, each one in the catalog drawn to its own profile. The MOE keeps the A2's rake with a smooth front
   // strap (no finger ridge) and Magpul's long side panel; the MOE+ is the same grip overmoulded all round; the MOE-K2+
-  // stands near vertical with its extended backstrap and palm swell; BCM's Gunfighter Mod 3 leans at its reduced
-  // angle with a straight front strap, a tang filling the gap behind the receiver, a fillet up to the trigger guard and
-  // the hexagonal texture; Hogue's rubber grip has its finger grooves and palm swell under a cobblestone finish.
+  // and BCM's Gunfighter Mod 3 are traced from their side photos (below); Hogue's rubber grip has its finger grooves and palm swell under a cobblestone finish.
   // Without a grip chosen, the A2-style grip traced from the lower's patent stands in.
   const gr = b.grip;
   const gk = matches(gr, /K2/) ? 'k2' : matches(gr, /Gunfighter/) ? 'bcm' : matches(gr, /Finger grooves|OverMolded/) ? 'hogue' : matches(gr, /MOE\+/) ? 'moeplus' : matches(gr, /MOE/) ? 'moe' : 'a2';
@@ -365,17 +363,25 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
     } else gripTex = dotsIn([0.14, 2.5, 1.56, 2.5, 1.56, 2.6, 1.5, 3.0, 1.32, 3.6, 1.0, 4.15, 0.42, 5.05, 0.3, 5.22, -1.42, 4.92], 0.13);
     gripAt = [-0.3, 4.0];
   } else if (gk === 'k2') {
-    gripO = 'M0.28,1.92 L-0.05,1.94 Q-0.3,1.96 -0.3,2.2 Q-1.05,3.5 -1.22,5.0 Q-1.34,5.2 -1.2,5.3 L0.2,5.5 Q0.5,5.55 0.55,5.3 L1.1,3.7 Q1.45,3.0 1.62,2.7 Q1.70,2.5 1.70,2.3 L1.70,1.96 Z';
-    gripDet = 'M-1.1,5.05 L0.42,5.3';
-    gripTex = dotsIn([-0.15, 2.45, 1.56, 2.45, 1.56, 2.6, 1.5, 2.95, 1.2, 3.7, 0.45, 5.05, -1.0, 4.88, -0.72, 3.6], 0.13);
-    gripAt = [0.1, 4.0];
+    // Traced from Magpul's side photo of the MOE-K2+, set by its top face: the hump of its extended backstrap, a
+    // steep body and a flat floor plate. It is rubber overmoulded, smooth on the sides with grooves down both straps.
+    gripO = 'M0.05,1.58 L-0.17,1.70 L-0.19,1.94 L-0.11,2.15 L0.24,2.40 L0.23,2.52 L0.17,2.65 L0.04,2.79 L-0.08,2.97 L-0.87,5.00 L-0.76,5.19 L-0.46,5.33 L0.39,5.53 L0.92,5.58 L1.00,5.49 L0.98,5.29 L0.91,5.11 L1.44,3.41 L1.56,3.24 L1.79,3.15 L1.82,2.38 L1.75,2.23 L1.71,2.03 L1.59,1.91 L0.68,1.96 L0.51,1.73 L0.25,1.59 Z';
+    const strap = (x0: number, y0: number, x1: number, y1: number, d: number) => {
+      const n = Math.round(Math.hypot(x1 - x0, y1 - y0) / 0.15), ux = (x1 - x0) / n, uy = (y1 - y0) / n, l = Math.hypot(ux, uy);
+      return Array.from({ length: n - 1 }, (_, k) => { const x = x0 + ux * (k + 1), y = y0 + uy * (k + 1); return `M${f(x)},${f(y)} L${f(x + d * uy / l)},${f(y - d * ux / l)}`; }).join(' ');
+    };
+    gripDet = `M-0.72,5.12 L0.9,5.42 ${strap(1.42, 3.5, 0.95, 5.0, 0.17)} ${strap(-0.12, 3.15, -0.8, 4.9, -0.15)}`;
+    gripTex = '';
+    gripAt = [0.4, 4.0];
   } else if (gk === 'bcm') {
-    gripO = 'M0.28,1.92 L0.05,1.95 Q-0.12,1.97 -0.15,2.15 L-1.42,5.05 Q-1.55,5.22 -1.42,5.3 L0.2,5.58 Q0.45,5.62 0.52,5.4 L1.75,2.65 L1.88,2.35 L1.9,2.05 L1.70,1.96 Z';
-    gripDet = 'M-1.3,5.08 L0.42,5.38';
-    const panel = [0.0, 2.55, 1.6, 2.55, 1.5, 2.9, 0.55, 4.95, -1.15, 4.7, -0.15, 2.75];
-    gripDet += ' ' + polyPath(panel, same, true);
-    gripTex = hatchIn(panel, 60, 0.18) + hatchIn(panel, -60, 0.18);
-    gripAt = [0.1, 4.0];
+    // Traced from BCM's side photo of the Gunfighter Mod 3, turned so its top face sits on the receiver: the
+    // beavertail tang, the reduced angle, the tab reaching up to the trigger guard, the flared base with its
+    // storage door, and the textured panel down the side.
+    gripO = 'M-0.03,1.39 L-0.11,1.47 L-0.13,1.60 L0.08,1.77 L0.18,1.95 L0.24,2.33 L0.23,2.66 L0.13,3.00 L-0.19,3.63 L-0.53,4.53 L-0.62,4.83 L-0.61,5.09 L-0.52,5.22 L-0.24,5.34 L0.44,5.52 L0.77,5.58 L0.87,5.57 L0.99,5.49 L1.03,5.39 L1.02,5.30 L0.93,5.16 L1.50,3.28 L1.56,3.20 L1.99,3.09 L2.03,3.02 L1.73,2.97 L1.72,2.15 L1.64,2.02 L1.47,1.94 L0.61,1.96 L0.52,1.76 L0.39,1.60 L0.20,1.46 L0.05,1.39 Z';
+    const panel = [0.83, 2.55, 1.36, 2.66, 1.33, 3.31, 0.76, 5.2, -0.44, 4.86, -0.27, 4.16, 0.26, 3.1];
+    gripDet = `M-0.5,5.2 L0.95,5.48 M0.3,5.36 Q0.45,5.25 0.62,5.4 ${polyPath(panel, same, true)}`;
+    gripTex = dotsIn(panel, 0.14);
+    gripAt = [0.4, 4.0];
   } else {
     gripO = 'M0.28,1.92 L0.2,1.96 Q0.06,2.05 0.02,2.25 Q-1.15,3.6 -1.62,4.9 Q-1.78,5.1 -1.7,5.25 L-0.05,5.6 Q0.3,5.65 0.42,5.35 L0.5,5.07 Q0.86,4.78 0.77,4.26 Q1.21,3.89 1.11,3.37 Q1.56,3.01 1.46,2.49 Q1.62,2.15 1.70,1.96 Z';
     gripTex = dotsIn([0.1, 2.45, 1.5, 2.45, 1.42, 2.6, 1.08, 3.36, 0.73, 4.25, 0.42, 5.04, 0.05, 5.4, -1.55, 5.06, -1.3, 4.7, -0.85, 3.95, -0.45, 3.3], 0.16);
@@ -474,34 +480,54 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
         </>
       : <path d={T(`M${f(GX - 0.42)},${gb625 ? -0.78 : -0.86} L${f(GX + 0.55)},${gb625 ? -0.78 : -0.86} L${f(GX + 0.55)},${gb625 ? 0.36 : 0.44} L${f(GX - 0.42)},${gb625 ? 0.36 : 0.44} Z${gbAdj ? ` M${f(GX + 0.55)},-0.72 L${f(GX + 0.74)},-0.72 L${f(GX + 0.74)},-0.46 L${f(GX + 0.55)},-0.46 Z M${f(GX + 0.74)},-0.59 L${f(GX + 0.66)},-0.59` : ''}`)} /> });
 
+  let hgBot = 0.98;
   if (freeFloat) {
-    // Free-float rails, each to its maker's profile: the top rail level with the upper's (the ATLAS S-ONE only
-    // carries rail at its ends), M-LOK slots along the side at 3 o'clock, and each maker's own lightening cuts
-    // below them: BCM's short 4:30 slots, Geissele's ovals and big rear bolts, Midwest's long narrow slots and
-    // anti-rotation tab, Seekins' angled cuts. The rest keep the plain rail with its bottom slots.
+    // Free-float rails, each read off the maker's side photo (inches from the rail's rear face and down from the
+    // top of its rail). The side shows three rows of M-LOK slots, upper, 3 o'clock and lower, at 1.5" to 1.55"
+    // pitch. ATLAS S-ONE: rail only at its ends, paired thin slots above and below the main row, a QD hole and a
+    // notched tab under the rear. BCM MCMR: teardrop and round cuts under the rail, thin slots either side of
+    // the main row, and a raked nose. Geissele MK16: plain rectangular slots, a QD hole and a clamp hanging below
+    // the barrel nut with two screws. Midwest Combat Rail: a round hole between every rail slot, a clamp with two
+    // screws and an anti-rotation tab at the rear. Seekins keeps its angled cuts; the rest keep the plain rail.
     const hk = matches(hg, /ATLAS|S-ONE/) ? 'atlas' : matches(hg, /MCMR/) ? 'mcmr' : matches(hg, /MK16|Super Modular/) ? 'mk16' : matches(hg, /Combat Rail/) ? 'mi' : matches(hg, /SP3R/) ? 'seekins' : 'plain';
-    const bot = { atlas: 0.72, mcmr: 0.78, mk16: 0.9, mi: 0.8, seekins: 0.85, plain: 0.95 }[hk];
     const top = RAIL;
+    const Y = (v: number) => f(top + v);
+    const bot = top + { atlas: 2.05, mcmr: 1.98, mk16: 2.08, mi: 2.05, seekins: 2.1, plain: 2.2 }[hk];
+    hgBot = bot;
     const slotRow = (y: number, h: number, len: number, from: number, to: number, pitch: number) => {
       const r = h / 2;
       return repeat(from, to - len - r, pitch, (x) => `M${x},${f(y - r)} L${f(x + len)},${f(y - r)} Q${f(x + len + r)},${f(y - r)} ${f(x + len + r)},${f(y)} Q${f(x + len + r)},${f(y + r)} ${f(x + len)},${f(y + r)} L${x},${f(y + r)} Q${f(x - r)},${f(y + r)} ${f(x - r)},${f(y)} Q${f(x - r)},${f(y - r)} ${x},${f(y - r)} Z`);
     };
+    // A row of M-LOK slots between v0 and v1 below the rail top, from `from` inches past the rail's rear face to
+    // its nose: square-ended with small corner radii, or round-ended when `round`.
+    const row = (v0: number, v1: number, from: number, len: number, pitch: number, round = false, end = 0.3) => {
+      if (round) return slotRow(top + (v0 + v1) / 2, v1 - v0, len - (v1 - v0), RF + from + (v1 - v0) / 2, HX - end, pitch);
+      const r = Math.min(0.06, (v1 - v0) / 3), y0 = top + v0, y1 = top + v1;
+      return repeat(RF + from, HX - end - len, pitch, (x) => `M${f(x + r)},${f(y0)} L${f(x + len - r)},${f(y0)} Q${f(x + len)},${f(y0)} ${f(x + len)},${f(y0 + r)} L${f(x + len)},${f(y1 - r)} Q${f(x + len)},${f(y1)} ${f(x + len - r)},${f(y1)} L${f(x + r)},${f(y1)} Q${x},${f(y1)} ${x},${f(y1 - r)} L${x},${f(y0 + r)} Q${x},${f(y0)} ${f(x + r)},${f(y0)} Z`);
+    };
     const mlok = (from: number, to: number) => slotRow(-0.03, 0.34, 1.1, from, to, 1.6);
     // Inch-space circles: these sit inside paths that go through T, so they can't use px arcs.
     const screws = (y: number) => ` ${OC(RF + 0.3, y, 0.1)} ${OC(RF + 0.65, y, 0.1)}`;
+    const railBase = (x0: number, x1: number) => `M${f(x0)},${Y(0.2)} L${f(x1)},${Y(0.2)}`;
     let hgO: string, hgD: string;
     if (hk === 'atlas') {
-      hgO = `M${f(RF)},${f(top + 0.32)} L${f(RF + 0.3)},${f(top + 0.32)} L${f(RF + 0.3)},${f(top)} L${f(RF + 2.1)},${f(top)} L${f(RF + 2.1)},${f(top + 0.32)} L${f(HX - 1.7)},${f(top + 0.32)} L${f(HX - 1.7)},${f(top)} L${f(HX - 0.2)},${f(top)} Q${f(HX)},${f(top)} ${f(HX)},${f(top + 0.2)} L${f(HX)},${f(bot - 0.2)} Q${f(HX)},${f(bot)} ${f(HX - 0.2)},${f(bot)} L${f(RF)},${f(bot)} Z`;
-      hgD = `${pic(RF + 0.45, HX - 1.75, top)} ${pic(HX - 1.55, HX - 0.25, top)} M${f(RF + 0.3)},${f(top + 0.2)} L${f(RF + 2.1)},${f(top + 0.2)} M${f(HX - 1.7)},${f(top + 0.2)} L${f(HX - 0.1)},${f(top + 0.2)} M${f(RF + 0.75)},${f(top + 0.32)} L${f(RF + 0.75)},${f(bot)} ${mlok(RF + 1.3, HX - 0.4)} ${repeat(RF + 1.3, HX - 1.5, 1.6, (x) => `M${x},${f(bot - 0.14)} L${f(x + 1.1)},${f(bot - 0.14)}`)} ${screws(bot - 0.25)}`;
+      const dip = 0.3;
+      hgO = `M${f(RF)},${Y(dip)} L${f(RF + 0.35)},${Y(dip)} L${f(RF + 0.35)},${Y(0)} L${f(RF + 2.1)},${Y(0)} Q${f(RF + 2.25)},${Y(dip)} ${f(RF + 2.45)},${Y(dip)} L${f(HX - 2.4)},${Y(dip)} Q${f(HX - 2.15)},${Y(dip)} ${f(HX - 2.0)},${Y(0)} L${f(HX - 0.1)},${Y(0)} Q${f(HX)},${Y(0)} ${f(HX)},${Y(0.1)} L${f(HX)},${f(bot - 0.1)} Q${f(HX)},${f(bot)} ${f(HX - 0.1)},${f(bot)} L${f(RF + 1.45)},${f(bot)} L${f(RF + 1.35)},${Y(2.2)} L${f(RF + 1.1)},${Y(2.2)} L${f(RF + 1.0)},${Y(2.0)} L${f(RF + 0.85)},${Y(2.0)} L${f(RF + 0.8)},${Y(2.2)} L${f(RF + 0.3)},${Y(2.2)} L${f(RF + 0.3)},${Y(1.75)} L${f(RF)},${Y(1.75)} Z`;
+      hgD = `${pic(RF + 0.45, RF + 2.0, top)} ${pic(HX - 1.95, HX - 0.15, top)} ${railBase(RF + 0.35, RF + 2.1)} ${railBase(HX - 2.0, HX - 0.05)} M${f(RF + 0.3)},${Y(dip)} L${f(RF + 0.3)},${Y(1.75)}`
+        + ` ${row(0.48, 0.6, 2.5, 0.9, 1.0, true)} ${row(0.72, 0.84, 2.5, 0.9, 1.0, true)} ${row(1.47, 1.58, 2.5, 0.9, 1.0, true)} ${row(1.7, 1.8, 2.5, 0.9, 1.0, true)} ${row(1.03, 1.3, 3.45, 1.15, 1.5, true)} ${OC(RF + 2.65, top + 1.16, 0.16)}`;
     } else if (hk === 'mcmr') {
-      hgO = `M${f(RF)},${f(top)} L${f(HX - 0.2)},${f(top)} Q${f(HX)},${f(top)} ${f(HX)},${f(top + 0.2)} L${f(HX)},${f(bot - 0.15)} Q${f(HX)},${f(bot)} ${f(HX - 0.15)},${f(bot)} L${f(RF)},${f(bot)} Z`;
-      hgD = `${pic(RF + 0.25, HX - 0.3, top)} M${f(RF)},${f(top + 0.2)} L${f(HX - 0.1)},${f(top + 0.2)} M${f(RF + 0.85)},${f(top + 0.2)} L${f(RF + 0.85)},${f(bot)} ${mlok(RF + 1.3, HX - 0.4)} ${slotRow(bot - 0.3, 0.2, 0.7, RF + 1.5, HX - 0.4, 1.6)} ${screws(bot - 0.22)}`;
+      hgO = `M${f(RF + 0.05)},${Y(0)} L${f(HX - 0.5)},${Y(0)} L${f(HX - 0.5)},${Y(0.42)} L${f(HX)},${Y(0.95)} L${f(HX)},${Y(1.65)} Q${f(HX)},${f(bot)} ${f(HX - 0.35)},${f(bot)} L${f(RF + 0.25)},${f(bot)} Q${f(RF)},${f(bot)} ${f(RF)},${f(bot - 0.3)} L${f(RF)},${Y(0.35)} L${f(RF - 0.1)},${Y(0.35)} L${f(RF - 0.1)},${Y(0.2)} L${f(RF + 0.05)},${Y(0.2)} Z`;
+      const cuts = repeat(RF + 1.45, HX - 0.9, 0.78, (x) => `M${f(x)},${Y(0.52)} Q${f(x - 0.08)},${Y(0.52)} ${f(x - 0.06)},${Y(0.44)} L${f(x + 0.1)},${Y(0.3)} Q${f(x + 0.16)},${Y(0.27)} ${f(x + 0.16)},${Y(0.35)} L${f(x + 0.12)},${Y(0.5)} Q${f(x + 0.1)},${Y(0.54)} ${f(x)},${Y(0.52)} Z ${OC(+x + 0.42, top + 0.42, 0.05)}`);
+      hgD = `${pic(RF + 0.25, HX - 0.6, top)} ${railBase(RF + 0.05, HX - 0.5)} ${cuts} ${row(0.68, 0.78, 2.0, 1.1, 1.5, true, 0.55)} ${row(1.05, 1.3, 2.45, 1.0, 1.5, false, 0.3)} ${row(1.62, 1.72, 2.0, 1.1, 1.5, true, 0.45)} ${OC(RF + 0.85, top + 0.55, 0.07)}`;
     } else if (hk === 'mk16') {
-      hgO = `M${f(RF)},${f(top)} L${f(HX - 0.8)},${f(top)} L${f(HX)},${f(top + 0.55)} L${f(HX)},${f(bot - 0.2)} Q${f(HX)},${f(bot)} ${f(HX - 0.2)},${f(bot)} L${f(RF + 1.0)},${f(bot)} L${f(RF + 1.0)},${f(bot + 0.12)} L${f(RF)},${f(bot + 0.12)} Z`;
-      hgD = `${pic(RF + 0.25, HX - 0.85, top)} M${f(RF)},${f(top + 0.2)} L${f(HX - 0.75)},${f(top + 0.2)} M${f(RF + 1.0)},${f(top + 0.2)} L${f(RF + 1.0)},${f(bot)} ${mlok(RF + 1.6, HX - 0.5)} ${slotRow(bot - 0.32, 0.26, 0.5, RF + 1.9, HX - 0.6, 1.6)} ${screws(bot - 0.12)}`;
+      hgO = `M${f(RF + 0.15)},${Y(0)} L${f(HX - 0.2)},${Y(0)} L${f(HX)},${Y(0.25)} L${f(HX)},${Y(1.75)} L${f(HX - 0.3)},${f(bot)} L${f(RF + 2.5)},${f(bot)} L${f(RF + 2.25)},${Y(2.57)} L${f(RF + 0.5)},${Y(2.57)} L${f(RF + 0.5)},${Y(1.55)} L${f(RF + 0.15)},${Y(1.55)} Z M${f(RF + 0.15)},${Y(0.55)} L${f(RF - 0.1)},${Y(0.55)} L${f(RF - 0.1)},${Y(0.75)} L${f(RF + 0.15)},${Y(0.75)}`;
+      hgD = `${pic(RF + 0.3, HX - 0.25, top)} ${railBase(RF + 0.15, HX - 0.15)} M${f(RF + 2.2)},${Y(0.62)} Q${f(RF + 2.4)},${Y(0.52)} ${f(RF + 3.9)},${Y(0.52)}`
+        + ` ${row(0.72, 0.98, 4.35, 1.2, 1.53)} ${row(1.25, 1.52, 2.8, 1.2, 1.53)} ${row(1.75, 1.95, 2.8, 1.2, 1.53)} ${OC(RF + 2.95, top + 0.82, 0.15)} ${OC(RF + 0.9, top + 2.27, 0.14)} ${OC(RF + 1.9, top + 2.27, 0.14)}`;
     } else if (hk === 'mi') {
-      hgO = `M${f(RF)},${f(top)} L${f(HX - 0.15)},${f(top)} L${f(HX)},${f(top + 0.15)} L${f(HX)},${f(bot - 0.15)} L${f(HX - 0.15)},${f(bot)} L${f(RF)},${f(bot)} Z M${f(RF + 0.05)},${f(top)} L${f(RF + 0.05)},${f(top - 0.1)} L${f(RF + 0.65)},${f(top - 0.1)} L${f(RF + 0.65)},${f(top)} Z`;
-      hgD = `${pic(RF + 0.85, HX - 0.3, top)} M${f(RF)},${f(top + 0.2)} L${f(HX - 0.1)},${f(top + 0.2)} M${f(RF + 0.75)},${f(top + 0.2)} L${f(RF + 0.75)},${f(bot)} ${mlok(RF + 1.3, HX - 0.4)} ${slotRow(bot - 0.3, 0.14, 1.2, RF + 1.3, HX - 0.4, 1.6)} ${screws(bot - 0.25)}`;
+      hgO = `M${f(RF + 0.1)},${Y(0)} L${f(HX - 0.05)},${Y(0)} L${f(HX)},${Y(0.1)} L${f(HX)},${Y(1.85)} L${f(HX - 0.45)},${f(bot)} L${f(RF + 2.1)},${f(bot)} L${f(RF + 1.75)},${Y(2.44)} L${f(RF + 0.3)},${Y(2.44)} Q${f(RF + 0.1)},${Y(2.44)} ${f(RF + 0.1)},${Y(2.25)} L${f(RF + 0.1)},${Y(1.05)} L${f(RF - 0.08)},${Y(1.05)} L${f(RF - 0.08)},${Y(0.75)} L${f(RF + 0.1)},${Y(0.75)} Z`;
+      const holes = repeat(RF + 2.4, HX - 0.5, 0.394, (x) => OC(+x, top + 0.55, 0.09));
+      hgD = `${pic(RF + 0.25, HX - 0.2, top)} ${railBase(RF + 0.1, HX - 0.05)} ${holes} ${row(0.85, 1.05, 3.75, 1.15, 1.53)} ${row(1.38, 1.58, 2.85, 1.15, 1.53)} ${row(1.83, 1.93, 2.85, 1.15, 1.53, true, 0.5)}`
+        + ` ${OC(RF + 1.95, top + 1.5, 0.16)} ${OC(RF + 0.55, top + 2.25, 0.11)} ${OC(RF + 1.15, top + 2.25, 0.11)} M${f(RF + 0.65)},${Y(0.85)} L${f(RF + 1.85)},${Y(0.85)} Q${f(RF + 1.95)},${Y(0.92)} ${f(RF + 1.85)},${Y(1.0)} L${f(RF + 0.65)},${Y(1.0)} Q${f(RF + 0.55)},${Y(0.92)} ${f(RF + 0.65)},${Y(0.85)} Z`;
     } else if (hk === 'seekins') {
       hgO = `M${f(RF)},${f(top)} L${f(HX - 0.4)},${f(top)} L${f(HX)},${f(top + 0.3)} L${f(HX)},${f(bot - 0.15)} Q${f(HX)},${f(bot)} ${f(HX - 0.15)},${f(bot)} L${f(RF)},${f(bot)} Z`;
       hgD = `${pic(RF + 0.25, HX - 0.45, top)} M${f(RF)},${f(top + 0.2)} L${f(HX - 0.35)},${f(top + 0.2)} M${f(RF + 0.8)},${f(top + 0.2)} L${f(RF + 0.8)},${f(bot)} ${mlok(RF + 1.3, HX - 0.4)} ${repeat(RF + 1.4, HX - 0.9, 1.6, (x) => `M${x},${f(bot - 0.5)} L${f(x + 0.55)},${f(bot - 0.5)} L${f(x + 0.4)},${f(bot - 0.15)} L${f(x - 0.15)},${f(bot - 0.15)} Z`)} ${screws(bot - 0.25)}`;
@@ -596,7 +622,7 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
   // hidden behind the handguard and drawn in dashed hidden lines.
   const mounts = mountsFor(b, place, H);
   const RAIL_TOP = freeFloat ? RAIL : -0.98;
-  const RAIL_BOT = freeFloat ? 0.95 : 0.98;
+  const RAIL_BOT = hgBot;
   const mountPiece = (slot: string, el: ReactNode, x0: number, x1: number, y0: number, y1: number) => {
     const m = mounts[slot];
     const outside = m.side === 'bottom' ? y1 + 0.55 : m.side === 'top' ? y0 - 0.55 : RAIL_TOP - 0.45;
