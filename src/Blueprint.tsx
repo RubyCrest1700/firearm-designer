@@ -1620,6 +1620,8 @@ interface ProfileGeo {
   gF: number; dust: number; railY: number;
   heel: [number, number]; toe: [number, number]; yGB: number; yMB: number; ext: number;
   frameD: string; frameDetail: string; stipple: string; slideD: string; slideDetail: string; windowD: string;
+  /** False where the frame's own outline already draws the window's edge (P365), so the mag face only fills it. */
+  windowEdge?: boolean;
   /** Cuts through the slide's outline (an aftermarket slide's optic pocket and top slots): erased, then edged. */
   slideCuts?: { erase: string; edge: string };
   /** An aftermarket slide's optic pocket, as [rear x, front x, depth]; its rear sight sits behind it. */
@@ -1836,12 +1838,16 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   const patentRail = (ol: number[]) => !!modPh?.front && ((key === 'p365' && ol.every((c, i) => (i % 2 ? c > mk.sh + 0.03 : c > 3.6))) || ol.every((c, i) => (i % 2 ? c > 1.3 : true)) && Math.max(...ol.filter((_, i) => !(i % 2))) > 4.0 || ol.every((c, i) => (i % 2 ? c > 0.95 : c > 5.5)));
   const keepDetail = (ol: number[]) => !patentLever(ol) && !patentRail(ol) && (glock || (modPh ? Math.max(...ol.filter((_, i) => i % 2)) < h0y + 0.2 && Math.min(...ol.filter((_, i) => !(i % 2))) > -0.12
     : v.texture === 'patent' || Math.min(...ol.filter((_, i) => i % 2)) < h1y - 0.1));
-  let frameDetail = pr.frame.detail.filter(keepDetail).map((ol) => polyPath(glock ? scF(ol) : smoothJitter(scF(ol), 0.02, false), frameMap, false)).join(' ');
+  // The P365 patent draws the mag window's raised border as six short broken strokes; they're replaced below by one
+  // smooth border line around the window, as on RSR's flat P365 photo.
+  const p365Border = (ol: number[]) => key === 'p365' && ol.every((v, i) => (i % 2 ? v > 3.4 : v > 0.2 && v < 1.52));
+  let frameDetail = pr.frame.detail.filter((ol) => keepDetail(ol) && !p365Border(ol)).map((ol) => polyPath(glock ? scF(ol) : smoothJitter(scF(ol), 0.02, false), frameMap, false)).join(' ');
   let slideDetail = pr.slide.detail.map((ol) => polyPath(glock ? scS(ol) : smoothJitter(scS(ol), 0.02, false), slideMap, false)).join(' ');
   let slideCuts: { erase: string; edge: string } | undefined, pocket: [number, number, number] | undefined;
   let stipple = '';
   let tang = -mk.tang;
   let fcuX0 = -Infinity;
+  if (key === 'p365' && mk.magWindow) frameDetail += ' ' + polyPath([0.15, 3.795, 0.42, 3.47, 0.448, 3.452, 0.48, 3.448, 1.14, 3.638, 1.166, 3.654, 1.182, 3.68, 1.3, 3.93], frameMap, false);
   if (key === 'p320') {
     // The takedown lever as the flat photos show it: a paddle with five ribs at the rear and a lobe hanging down at the
     // front. It sits about 0.1" further back on the shorter Subcompact slide.
@@ -2128,7 +2134,8 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     slideD: face && modPh?.nose ? photoSlide(face[0], modPh.nose[0]) : pr.slide.outline.map((ol) => polyPath(scS(ol), slideMap, true)).join(' ') + slideNose,
     slideDetail, slideCuts, pocket,
     // A photo-traced module closes its own grip bottom, so the factory mag window doesn't show.
-    windowD: win && !modPh ? polyPath(smoothJitter(win), grip, true) : '',
+    windowD: win && !modPh ? polyPath(key === 'p365' ? roundCorners(win, 0.06) : smoothJitter(win), grip, true) : '',
+    windowEdge: key !== 'p365',
   };
 }
 
@@ -2162,14 +2169,15 @@ function profilePieces(P: Piece[], g: ProfileGeo, o: {
   // Sig's 15-round sleeve runs straight on down the grip's line (its straps lean back about 0.15" per inch on RSR's
   // flat P365 photos), so its sides lean back with the grip rather than standing upright.
   // Every longer magazine's body (and Sig's 15-round sleeve) runs straight on down the grip's line, so it leans back
-  // with the grip rather than standing upright; its floor plate is the same plate, shifted back with it.
-  const lean = e > 0.25, sl = o.mag === 'sleeve' && e > 0.25, k = lean ? GRIP_LEAN[g.key] : 0, lx = (x: number, dy: number) => f(x - k * dy);
+  // with the grip rather than standing upright (half the grip's lean; the full lean looked overdone); its floor plate
+  // is the same plate, shifted back with it, and its front runs in one line to the plate's curve, as the upright one does.
+  const lean = e > 0.25, sl = o.mag === 'sleeve' && e > 0.25, k = lean ? GRIP_LEAN[g.key] * 0.5 : 0, lx = (x: number, dy: number) => f(x - k * dy);
   const floor = sl
     ? `M${f(hx + 0.04)},${f(hy)} L${f(tx - 0.02)},${f(ty)} L${lx(tx - 0.02, e + 0.02)},${f(ty + e + 0.02)} Q${lx(tx - 0.01, bb)},${f(ty + bb)} ${lx(tx - 0.1, bb)},${f(ty + bb)} L${lx(hx + 0.12, bb)},${f(hy + bb)} Q${lx(hx + 0.03, bb)},${f(hy + bb)} ${lx(hx + 0.04, e + 0.02)},${f(hy + e + 0.02)} Z`
     : lean && pm
-    ? `M${f(hx + 0.04)},${f(hy)} L${f(tx - 0.02)},${f(ty)} L${lx(tx - 0.02, e)},${f(ty + e)} L${lx(tx + 0.05, e + 0.03)},${f(ty + e + 0.03)} Q${lx(tx + 0.1, bb - 0.02)},${f(ty + bb - 0.02)} ${lx(tx - 0.1, bb)},${f(ty + bb)} L${lx(hx + 0.1, bb)},${f(hy + bb)} Q${lx(hx - 0.06, bb)},${f(hy + bb)} ${lx(hx - 0.03, e + 0.04)},${f(hy + e + 0.04)} L${lx(hx + 0.04, e)},${f(hy + e)} Z`
+    ? `M${f(hx + 0.04)},${f(hy)} L${f(tx - 0.02)},${f(ty)} L${lx(tx + 0.05, e + 0.03)},${f(ty + e + 0.03)} Q${lx(tx + 0.1, bb - 0.02)},${f(ty + bb - 0.02)} ${lx(tx - 0.1, bb)},${f(ty + bb)} L${lx(hx + 0.1, bb)},${f(hy + bb)} Q${lx(hx - 0.06, bb)},${f(hy + bb)} ${lx(hx - 0.03, e + 0.04)},${f(hy + e + 0.04)} Z`
     : lean && !s15
-    ? `M${f(hx + 0.04)},${f(hy)} L${f(tx - 0.02)},${f(ty)} L${lx(tx - 0.02, e)},${f(ty + e)} L${lx(tx + 0.03, e + 0.03)},${f(ty + e + 0.03)} Q${lx(tx + 0.07, bb)},${f(ty + bb)} ${lx(tx - 0.06, bb)},${f(ty + bb)} L${lx(hx + 0.08, bb)},${f(hy + bb)} Q${lx(hx - 0.05, bb - 0.02)},${f(hy + bb - 0.02)} ${lx(hx - 0.02, e + 0.04)},${f(hy + e + 0.04)} L${lx(hx + 0.04, e)},${f(hy + e)} Z`
+    ? `M${f(hx + 0.04)},${f(hy)} L${f(tx - 0.02)},${f(ty)} L${lx(tx + 0.03, e + 0.03)},${f(ty + e + 0.03)} Q${lx(tx + 0.07, bb)},${f(ty + bb)} ${lx(tx - 0.06, bb)},${f(ty + bb)} L${lx(hx + 0.08, bb)},${f(hy + bb)} Q${lx(hx - 0.05, bb - 0.02)},${f(hy + bb - 0.02)} ${lx(hx - 0.02, e + 0.04)},${f(hy + e + 0.04)} Z`
     : pm
     ? `M${f(hx + 0.04)},${f(hy)} L${f(tx - 0.02)},${f(ty)} L${f(tx + 0.05)},${f(ty + e + 0.02)} Q${f(tx + 0.1)},${f(ty + bb - 0.02)} ${f(tx - 0.1)},${f(ty + bb)} L${f(hx + 0.1)},${f(hy + bb)} Q${f(hx - 0.06)},${f(hy + bb)} ${f(hx - 0.03)},${f(hy + e + 0.03)} Z`
     : s15
@@ -2193,9 +2201,11 @@ function profilePieces(P: Piece[], g: ProfileGeo, o: {
   let extLines = '';
   if (e > 0.25) {
     // Sig's P365 15-round magazine wears a textured polymer sleeve over its extension (Shooting Illustrated's photo).
-    if (o.mag === 'sleeve') {
+    // Springfield's longer Hellcat magazines wear a polymer sleeve carrying the grip's texture (RSR's photo of a Hellcat
+    // with the 13-round magazine).
+    if (o.mag === 'sleeve' || g.key === 'hellcat') {
       const pan = [+lx(hx + 0.12, 0.08), hy + 0.08, +lx(tx - 0.08, 0.08), ty + 0.08, +lx(tx - 0.08, e - 0.02), ty + e - 0.02, +lx(hx + 0.12, e - 0.02), hy + e - 0.02];
-      extLines += polyPath(roundCorners(pan, 0.04), same, true) + ' ' + dotsIn(pan, 0.07, same, 0.04);
+      extLines += polyPath(roundCorners(pan, 0.04), same, true) + ' ' + dotsIn(pan, g.key === 'hellcat' ? 0.1 : 0.07, same, 0.04);
     } else if (o.mag === 'ets') for (let t = 0.22; t < e - 0.05; t += 0.2) extLines += `M${lx(hx + 0.3, t)},${f(hy + t - 0.07)} L${lx(tx - 0.55, t)},${f(ty + t - 0.07)} Q${lx(tx - 0.35, t)},${f(ty + t - 0.06)} ${lx(tx - 0.25, t)},${f(ty + t)} Q${lx(tx - 0.35, t)},${f(ty + t + 0.06)} ${lx(tx - 0.55, t)},${f(ty + t + 0.07)} L${lx(hx + 0.3, t)},${f(hy + t + 0.07)} Z `;
     else for (let t = 0.25; t < e - 0.1; t += 0.32) extLines += OC(+lx(hx + 0.17, t), hy + t, 0.03) + ' ';
   }
@@ -2208,7 +2218,7 @@ function profilePieces(P: Piece[], g: ProfileGeo, o: {
   const sleeveFill = o.mag === 'sleeve' && !!g.windowD && body === floor;
   P.push({ slot: o.own('mag'), z: 2, row: 'bottom', target: px((hx + tx) / 2, (hy + ty) / 2 + bb - 0.06),
     el: <>
-      {g.windowD && !sleeveFill && <path d={T(g.windowD)} />}
+      {g.windowD && !sleeveFill && <path style={g.windowEdge ? undefined : { stroke: 'none' }} d={T(g.windowD)} />}
       {sleeveFill ? <>
         <path style={{ stroke: 'none' }} d={T(`${g.windowD} ${body}`)} />
         <path style={{ fill: 'none' }} d={T('M' + body.slice(top0.length).trim().slice(1).replace(/\s*Z\s*$/, '') + ` L${f(hx + 0.04)},${f(hy)}`)} />
