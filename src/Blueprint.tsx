@@ -21,6 +21,8 @@ interface Piece {
   slot?: string;
   /** Internal parts use hidden (dashed) lines, as on an engineering drawing. */
   internal?: boolean;
+  /** A factory part that comes on another slot's part (a slide's own sights): while its slot is empty it takes that slot's state. */
+  factoryOf?: string;
   z: number;
   /** Callout anchor in px and which callout row it uses. */
   target: [number, number];
@@ -1835,8 +1837,15 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   // Grip length change. The G42 drawing's own height (grip bottom plus sights and floor plate) is a little under the published 4.13".
   const dH = spec.gripH - (glock ? (mk.gripBottom + SIGHT + BASE) : R.h);
   const SL = mk.slide + dS;
-  // Ejection port: as drawn on the P320; over the chamber on the others (their patents show the left side).
+  // Ejection port: as drawn on the Hellcat; over the chamber on the others (their patents show the left side).
+  // The P320's traced port marks sat about 0.5" too far back. The patent's own port box runs 2.72" to 3.87", which matches
+  // RSR's flat M18 photo and a flat M17 photo (2.6" to 2.77" ahead of the slide's top rear corner, 1.2" long), the same on
+  // every size since the breech is the same.
   let port0 = mk.port0, port1 = mk.port1;
+  if (key === 'p320') { port0 = 2.72; port1 = 3.87; }
+  // The M&P patent draws it about 0.35" too far back too: S&W's flat M&P9 M2.0 photo has it 2.94" ahead of the slide's
+  // top rear corner, 1.1" long.
+  if (key === 'mp') { port0 = -0.01 + 2.94; port1 = port0 + 1.1; }
   if (port0 == null) {
     const barrel = spec.breech != null ? spec.m.slide - spec.breech : spec.m.barrel;
     // Glock ports measured on RSR's flat photos (G17, G19, G26, G43X, G20): they start 0.07" to 0.19" ahead of the
@@ -1955,7 +1964,9 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   // smooth border line around the window, as on RSR's flat P365 photo.
   const p365Border = (ol: number[]) => key === 'p365' && ol.every((v, i) => (i % 2 ? v > 3.4 : v > 0.2 && v < 1.52));
   let frameDetail = pr.frame.detail.filter((ol) => keepDetail(ol) && !p365Border(ol)).map((ol) => polyPath(glock ? scF(ol) : smoothJitter(scF(ol), 0.02, false), frameMap, false)).join(' ');
-  let slideDetail = pr.slide.detail.map((ol) => polyPath(glock ? scS(ol) : smoothJitter(scS(ol), 0.02, false), slideMap, false)).join(' ');
+  // The P320 patent draws the barrel hood and a top line inside its port; the barrel piece draws the hood, so those go.
+  const inPort = (ol: number[]) => key === 'p320' && ol.every((v, i) => (i % 2 ? v < 0.55 : v > port0 - 0.08 && v < port1 + 0.02));
+  let slideDetail = pr.slide.detail.filter((ol) => !inPort(ol)).map((ol) => polyPath(glock ? scS(ol) : smoothJitter(scS(ol), 0.02, false), slideMap, false)).join(' ');
   let slideCuts: { erase: string; edge: string } | undefined, pocket: [number, number, number] | undefined;
   let stipple = '';
   let tang = -mk.tang;
@@ -2752,8 +2763,11 @@ function pistol(platform: Platform, build: Build): Scene {
   const p365 = geo.key === 'p365';
   // Glock rear sights measured on RSR's flat G17/G19 photos: 0.24" to 0.66" from the slide's rear at the base. An
   // aftermarket RMR slide keeps its rear sight there too, just behind the optic pocket.
+  // The P320's rear sight, on the flat P320 Compact photo: 0.1" to 0.72" at the base, its top 0.22" to 0.52".
+  // The M&P's sits right at the back of the slide: 0.03" to 0.46" on S&W's flat M&P9 M2.0 photo.
   const pk = geo.pocket;
-  const r0 = p365 ? 0.1 : sig ? 0.14 : 0.24, r1 = pk ? pk[0] - 0.02 : p365 ? 0.6 : sig ? 0.86 : 0.66;
+  const mpR = geo.key === 'mp';
+  const r0 = p365 ? 0.1 : sig ? 0.1 : mpR ? 0.03 : 0.24, r1 = pk ? pk[0] - 0.02 : p365 ? 0.6 : sig ? 0.72 : mpR ? 0.46 : 0.66;
   // Front sights sit near the muzzle end, measured back from the slide's front on RSR's and Wilson's flat photos:
   // Sig 0.14" to 0.56", Glock 0.16" to 0.44", M&P 0.08" to 0.49", Hellcat 0.10" to 0.60".
   const [fa, fb] = sig ? [0.56, 0.14] : geo.key === 'mp' ? [0.49, 0.08] : geo.key === 'hellcat' ? [0.6, 0.1] : [0.44, 0.16];
@@ -2814,7 +2828,9 @@ function pistol(platform: Platform, build: Build): Scene {
     + ` M${f(fr0 + 0.04)},0.08 L${f(fr1 - 0.04)},0.08 `
     + (style === 'supp' && !amg ? ` M${f(fr0 + 0.025)},-0.09 L${f(fr1 - 0.02)},-0.09` : '')
     + (fiber ? ` ${rounded([[frontQ[1][0] + 0.03, fh - 0.09, 0.022], [frontQ[2][0] - 0.05, fh - 0.09, 0.022], [frontQ[2][0] - 0.05, fh - 0.045, 0.022], [frontQ[1][0] + 0.03, fh - 0.045, 0.022]])}` : '');
-  P.push({ slot: sightSlot, z: 10, row: 'top', target: px((r0 + r1) / 2, -sh), el: <><path d={T(sightsD)} /><path className="detail" d={T(sightDet)} /></> });
+  // An optional Sights slot left empty means the slide's own factory sights, drawn with the slide.
+  const sightsFactory = !base && !b.sights && platform.slots.some((s) => s.id === 'sights' && !s.required) ? 'slide' : undefined;
+  P.push({ slot: sightSlot, factoryOf: sightsFactory, z: 10, row: 'top', target: px((r0 + r1) / 2, -sh), el: <><path d={T(sightsD)} /><path className="detail" d={T(sightDet)} /></> });
 
   /* Optic */
   P.push({ slot: 'optic', z: 11, row: 'top', target: px(ox0 + po.len / 2, oy0 - po.h),
@@ -2903,7 +2919,8 @@ export function Blueprint({ platform, build, place, states, active, onPick, onHo
     <svg className={'bp' + (compact ? ' bp-thumb' : '')} viewBox={viewBox} role={compact ? 'img' : 'group'} aria-label={`${platform.name} build drawing`}>
       <path className="bp-center" d={`M${cx0},${cy} L${cx1},${cy}`} />
       {pieces.map((p, i) => {
-        const state: RegionState | 'static' = p.slot ? states[p.slot] ?? 'empty' : 'static';
+        const own = p.slot ? states[p.slot] ?? 'empty' : 'static';
+        const state: RegionState | 'static' = own === 'empty' && p.factoryOf ? states[p.factoryOf] ?? 'empty' : own;
         const cls = ['bp-part', state, p.internal ? 'internal' : '', p.slot && p.slot === active ? 'active' : ''].join(' ');
         if (!p.slot || compact || !onPick) return <g key={i} className={cls} aria-hidden="true">{p.el}</g>;
         const slot = platform.slots.find((s) => s.id === p.slot)!;
