@@ -1144,7 +1144,8 @@ const GLOCK_H: Record<string, number> = { glock17: 5.47, glock34: 5.47, glock19:
 const GLOCK_MAG_H: Record<number, number> = { 4: 5.47, 3: 5.47, 2: 5.04, 1: 4.17 };
 const P320_H: Record<string, number> = { full: 5.5, carry: 5.5, compact: 5.3, subcompact: 4.7 };
 const P320_DUST: Record<string, string> = { full: 'full', carry: 'compact', compact: 'compact', subcompact: 'subcompact' };
-const P365_H: Record<string, number> = { std: 4.3, xl: 4.8, ext: 5.2 };
+// Heights with each magazine; the 15-round magazine makes any P365 5.5" tall (Sig's launch chart).
+const P365_H: Record<string, number> = { std: 4.3, xl: 4.8, ext: 5.5 };
 const MP_H: Record<string, number> = { fs: 5.5, c: 5.3 };
 const HELLCAT_H: Record<string, number> = { '3': 4.0, pro: 4.8 };
 const SIGHT = 0.2; // standard rear sight height above the slide
@@ -2038,7 +2039,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
 function profilePieces(P: Piece[], g: ProfileGeo, o: {
   T: ReturnType<typeof makeT>; px: (x: number, y: number) => [number, number];
   frameSlot: string; trig: string; flat: boolean; comp: boolean; cut: string; lighten: boolean; SL: number;
-  own: (slot: string) => string; mag: 'oem' | 'pmag' | 's15' | 'ets';
+  own: (slot: string) => string; mag: 'oem' | 'pmag' | 's15' | 'ets' | 'sleeve';
 }) {
   const { T, px, SL } = o;
   /* Frame or grip module, with its controls and texture as drawn on the patent */
@@ -2067,7 +2068,11 @@ function profilePieces(P: Piece[], g: ProfileGeo, o: {
   const body = g.wellD && floor.startsWith(top0) ? g.wellD + floor.slice(top0.length) : floor;
   let extLines = '';
   if (e > 0.25) {
-    if (o.mag === 'ets') for (let t = 0.22; t < e - 0.05; t += 0.2) extLines += `M${f(hx + 0.3)},${f(hy + t - 0.07)} L${f(tx - 0.55)},${f(ty + t - 0.07)} Q${f(tx - 0.35)},${f(ty + t - 0.06)} ${f(tx - 0.25)},${f(ty + t)} Q${f(tx - 0.35)},${f(ty + t + 0.06)} ${f(tx - 0.55)},${f(ty + t + 0.07)} L${f(hx + 0.3)},${f(hy + t + 0.07)} Z `;
+    // Sig's P365 15-round magazine wears a textured polymer sleeve over its extension (Shooting Illustrated's photo).
+    if (o.mag === 'sleeve') {
+      const pan = [hx + 0.1, hy + 0.08, tx - 0.06, ty + 0.08, tx - 0.02, ty + e - 0.02, hx + 0.12, hy + e - 0.02];
+      extLines += polyPath(roundCorners(pan, 0.04), same, true) + ' ' + dotsIn(pan, 0.07, same, 0.04);
+    } else if (o.mag === 'ets') for (let t = 0.22; t < e - 0.05; t += 0.2) extLines += `M${f(hx + 0.3)},${f(hy + t - 0.07)} L${f(tx - 0.55)},${f(ty + t - 0.07)} Q${f(tx - 0.35)},${f(ty + t - 0.06)} ${f(tx - 0.25)},${f(ty + t)} Q${f(tx - 0.35)},${f(ty + t + 0.06)} ${f(tx - 0.55)},${f(ty + t + 0.07)} L${f(hx + 0.3)},${f(hy + t + 0.07)} Z `;
     else for (let t = 0.25; t < e - 0.1; t += 0.32) extLines += OC(hx + 0.17, hy + t, 0.03) + ' ';
   }
   const seam = pm ? `M${f(hx + 0.06)},${f(hy + e + 0.08)} L${f(tx)},${f(ty + e + 0.08)} ${OC((hx + tx) / 2 - 0.25, hy + bb - 0.1, 0.012)} ${OC((hx + tx) / 2, hy + bb - 0.1, 0.012)} ${OC((hx + tx) / 2 + 0.25, hy + bb - 0.1, 0.012)}`
@@ -2252,7 +2257,7 @@ function pistol(platform: Platform, build: Build): Scene {
   const frameSlot = has('frame') ? 'frame' : base ? 'pistol' : 'grip';
   const { railY: yRail, gF, dust, yMB, bc, port0, port1, springY } = geo;
   const rear = Math.min(-tang, geo.heel[0]);
-  const magKind = matches(b.mag, /PMAG/) ? 'pmag' : matches(b.mag, /S15/) ? 's15' : b.mag?.brand === 'ETS' ? 'ets' : 'oem';
+  const magKind = matches(b.mag, /PMAG/) ? 'pmag' : matches(b.mag, /S15/) ? 's15' : b.mag?.brand === 'ETS' ? 'ets' : matches(b.mag, /P365 15-Round/) ? 'sleeve' : 'oem';
   profilePieces(P, geo, { T, px, frameSlot, trig: own(trig), flat, comp, cut, lighten, SL, own, mag: magKind });
 
   /* Barrel: hood shows in the ejection port; the rest is hidden; threads run past the slide */
@@ -2299,8 +2304,10 @@ function pistol(platform: Platform, build: Build): Scene {
   // The P365's rear sight is shorter, so an optic fits between it and the ejection port as on the real slide.
   const p365 = geo.key === 'p365';
   const r0 = p365 ? 0.1 : sig ? 0.14 : 0.2, r1 = p365 ? 0.6 : sig ? 0.86 : 0.74;
-  // Sig front sights sit near the muzzle end: 0.14" to 0.56" back from the slide's front on RSR's and Wilson's photos.
-  const fr0 = SL - (sig ? 0.56 : 0.62), fr1 = SL - (sig ? 0.14 : 0.34);
+  // Front sights sit near the muzzle end, measured back from the slide's front on RSR's and Wilson's flat photos:
+  // Sig 0.14" to 0.56", Glock 0.16" to 0.44", M&P 0.08" to 0.49", Hellcat 0.10" to 0.60".
+  const [fa, fb] = sig ? [0.56, 0.14] : geo.key === 'mp' ? [0.49, 0.08] : geo.key === 'hellcat' ? [0.6, 0.1] : [0.44, 0.16];
+  const fr0 = SL - fa, fr1 = SL - fb;
   const sightsD = (sig
     ? `M${r0},0 L${f(r0 + 0.12)},${f(-sh)} L${f(r1 - 0.2)},${f(-sh)} L${r1},0 Z`
     : `M${r0},0 L${f(r0 + 0.04)},${f(-sh)} L${f(r1 - 0.06)},${f(-sh)} L${r1},0 Z`)
@@ -2319,8 +2326,8 @@ function pistol(platform: Platform, build: Build): Scene {
   /* Optic */
   const fp = (b.optic?.attrs.footprint as string) ?? (cut === 'none' ? 'rmr' : cut);
   const po = pistolOptic(b.optic, fp);
-  // A P365 optic ends just behind the ejection port.
-  const ox0 = p365 ? Math.min(0.9, geo.port0 - 0.06 - po.len) : 0.9;
+  // An optic ends just behind the ejection port, never over it (the P365's and Hellcat's short slides pull it back).
+  const ox0 = Math.min(0.9, geo.port0 - 0.06 - po.len);
   P.push({ slot: 'optic', z: 11, row: 'top', target: px(ox0 + po.len / 2, -po.h),
     el: <><path fillRule="evenodd" d={T(movePath(po.od, ox0, 0))} /><path className="detail" d={T(movePath(po.odet, ox0, 0))} /></> });
 
