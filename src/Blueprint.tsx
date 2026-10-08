@@ -3,6 +3,7 @@ import { mountsFor } from './data/addons';
 import { AR_PROFILES, type ArPiece } from './data/arProfiles';
 import { OPTIC_PROFILES } from './data/opticProfiles';
 import { GLOCK_PHOTOS, type GlockPhoto } from './data/glockPhotos';
+import { OPTIC_PHOTOS } from './data/opticPhotos';
 import { SIG_MODULE_PHOTOS, MODULE_PANEL, MODULE_STRIPS, MODULE_LOGO, MODULE_CATCH, AXG_PANEL, AXG_FIELD, AXG_SCREWS, AXG_SERRATIONS } from './data/sigModulePhotos';
 import { PROFILES } from './data/pistolProfiles';
 import type { Build, Part, Placement, Platform } from './types';
@@ -2155,6 +2156,10 @@ function pistolOptic(o: Part | undefined, fp: string): { od: string; odet: strin
   const kind = matches(o, /MPS/) ? 'mps' : fp === 'acro' || matches(o, /EPS|enclosed/i) ? 'enclosed'
     : matches(o, /SRO/) ? 'sro' : matches(o, /DeltaPoint/) ? 'dpp' : matches(o, /Venom/) ? 'venom' : matches(o, /RomeoZero/) ? 'r0'
     : o?.brand === 'Shield' ? 'rmsc' : matches(o, /RomeoX/) ? 'romeox' : matches(o, /Romeo1/) ? 'romeo1' : holo ? (small ? 'holok' : 'holo') : small ? 'rmrcc' : 'rmr';
+  // Every dot with a flat side photo is drawn from it (src/data/opticPhotos.ts); the Venom, with only angled photos, keeps
+  // the drawn-to-measure shape below.
+  const photo = OPTIC_PHOTOS[kind === 'enclosed' ? (fp === 'acro' ? 'acro' : 'eps') : kind];
+  if (photo) return { od: photo.od, odet: photo.odet, len: photo.len, h: photo.h };
   if (kind === 'enclosed' || kind === 'mps') {
     const mps = kind === 'mps';
     const L = fp === 'acro' ? (mps ? 1.85 : 2.05) : 1.8, H = mps ? 1.1 : fp === 'acro' ? 1.22 : 1.0;
