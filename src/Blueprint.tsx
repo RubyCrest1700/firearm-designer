@@ -1632,6 +1632,8 @@ interface ProfileGeo {
   well?: number[];
   /** Where a longer magazine's body sits: the factory grip's heel and toe (a flared module only hides its top). */
   magHeel?: [number, number]; magToe?: [number, number];
+  /** A flared well's cut that any magazine fills (Timberwolf frames): drawn with a longer magazine's body too. */
+  wellCut?: string;
 }
 
 /** Moving average over a closed polyline (w points each side), to calm the wobble of a dotted drawing's trace. */
@@ -2120,6 +2122,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     trigLine: photoTrig?.line ?? reachP320(scD(typeof trigLine === 'string' ? trigLine : trigLine(t0 - dy))),
     gF, dust, railY: mk.railBottom, fcuX0,
     heel, toe, yGB, yMB: photoTrig ? photoTrig.yMB + ext : yGB + ext + BASE, ext, plateD: photoTrig?.plate ?? (modPh?.lip ? polyPath(modPh.lip, same, true) : undefined), lipDet: modPh?.lip ? lipEdge(modPh.lip) : undefined, well: modPh?.well, magHeel: modPh?.plate ? heelF : undefined, magToe: modPh?.plate ? toeF : undefined,
+    wellCut: glock && spec.photo?.startsWith('tw') ? polyPath(GLOCK_PHOTOS[spec.photo].plate, same, true) : undefined,
     frameD: (glock ? polyPath(mapped, (x, y) => [x, y], true) : modOl ? polyPath(modOl, same, true) : outlines.map((ol) => polyPath(ol, frameMap, true)).join(' ')) + ' ' + hole,
     frameDetail, stipple,
     slideD: face && modPh?.nose ? photoSlide(face[0], modPh.nose[0]) : pr.slide.outline.map((ol) => polyPath(scS(ol), slideMap, true)).join(' ') + slideNose,
@@ -2128,6 +2131,9 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     windowD: win && !modPh ? polyPath(smoothJitter(win), grip, true) : '',
   };
 }
+
+/** How far each grip's midline leans back per inch of drop over its lowest inch (measured on the flat photos). */
+const GRIP_LEAN: Record<ProfileKey, number> = { glock: 0.27, p320: 0.22, p365: 0.15, mp: 0.23, hellcat: 0.23 };
 
 function profilePieces(P: Piece[], g: ProfileGeo, o: {
   T: ReturnType<typeof makeT>; px: (x: number, y: number) => [number, number];
@@ -2155,9 +2161,15 @@ function profilePieces(P: Piece[], g: ProfileGeo, o: {
   const pm = o.mag === 'pmag', s15 = o.mag === 's15';
   // Sig's 15-round sleeve runs straight on down the grip's line (its straps lean back about 0.15" per inch on RSR's
   // flat P365 photos), so its sides lean back with the grip rather than standing upright.
-  const sl = o.mag === 'sleeve' && e > 0.25, k = 0.15, lx = (x: number, dy: number) => f(x - k * dy);
+  // Every longer magazine's body (and Sig's 15-round sleeve) runs straight on down the grip's line, so it leans back
+  // with the grip rather than standing upright; its floor plate is the same plate, shifted back with it.
+  const lean = e > 0.25, sl = o.mag === 'sleeve' && e > 0.25, k = lean ? GRIP_LEAN[g.key] : 0, lx = (x: number, dy: number) => f(x - k * dy);
   const floor = sl
     ? `M${f(hx + 0.04)},${f(hy)} L${f(tx - 0.02)},${f(ty)} L${lx(tx - 0.02, e + 0.02)},${f(ty + e + 0.02)} Q${lx(tx - 0.01, bb)},${f(ty + bb)} ${lx(tx - 0.1, bb)},${f(ty + bb)} L${lx(hx + 0.12, bb)},${f(hy + bb)} Q${lx(hx + 0.03, bb)},${f(hy + bb)} ${lx(hx + 0.04, e + 0.02)},${f(hy + e + 0.02)} Z`
+    : lean && pm
+    ? `M${f(hx + 0.04)},${f(hy)} L${f(tx - 0.02)},${f(ty)} L${lx(tx - 0.02, e)},${f(ty + e)} L${lx(tx + 0.05, e + 0.03)},${f(ty + e + 0.03)} Q${lx(tx + 0.1, bb - 0.02)},${f(ty + bb - 0.02)} ${lx(tx - 0.1, bb)},${f(ty + bb)} L${lx(hx + 0.1, bb)},${f(hy + bb)} Q${lx(hx - 0.06, bb)},${f(hy + bb)} ${lx(hx - 0.03, e + 0.04)},${f(hy + e + 0.04)} L${lx(hx + 0.04, e)},${f(hy + e)} Z`
+    : lean && !s15
+    ? `M${f(hx + 0.04)},${f(hy)} L${f(tx - 0.02)},${f(ty)} L${lx(tx - 0.02, e)},${f(ty + e)} L${lx(tx + 0.03, e + 0.03)},${f(ty + e + 0.03)} Q${lx(tx + 0.07, bb)},${f(ty + bb)} ${lx(tx - 0.06, bb)},${f(ty + bb)} L${lx(hx + 0.08, bb)},${f(hy + bb)} Q${lx(hx - 0.05, bb - 0.02)},${f(hy + bb - 0.02)} ${lx(hx - 0.02, e + 0.04)},${f(hy + e + 0.04)} L${lx(hx + 0.04, e)},${f(hy + e)} Z`
     : pm
     ? `M${f(hx + 0.04)},${f(hy)} L${f(tx - 0.02)},${f(ty)} L${f(tx + 0.05)},${f(ty + e + 0.02)} Q${f(tx + 0.1)},${f(ty + bb - 0.02)} ${f(tx - 0.1)},${f(ty + bb)} L${f(hx + 0.1)},${f(hy + bb)} Q${f(hx - 0.06)},${f(hy + bb)} ${f(hx - 0.03)},${f(hy + e + 0.03)} Z`
     : s15
@@ -2168,7 +2180,7 @@ function profilePieces(P: Piece[], g: ProfileGeo, o: {
   const top0 = `M${f(hx + 0.04)},${f(hy)} L${f(tx - 0.02)},${f(ty)}`;
   let body = floor;
   if (long && g.well && floor.startsWith(top0)) {
-    const w = g.well, rx = (y: number) => hx + 0.04 + (hy - y) * (sl ? k : 0.06 / (e + 0.04));
+    const w = g.well, rx = (y: number) => hx + 0.04 + (hy - y) * (lean && !s15 ? k : 0.06 / (e + 0.04));
     for (let i = 0; i + 3 < w.length; i += 2) {
       const d0 = w[i] - rx(w[i + 1]), d1 = w[i + 2] - rx(w[i + 3]);
       if (d0 <= 0 && d1 > 0) {
@@ -2184,12 +2196,12 @@ function profilePieces(P: Piece[], g: ProfileGeo, o: {
     if (o.mag === 'sleeve') {
       const pan = [+lx(hx + 0.12, 0.08), hy + 0.08, +lx(tx - 0.08, 0.08), ty + 0.08, +lx(tx - 0.08, e - 0.02), ty + e - 0.02, +lx(hx + 0.12, e - 0.02), hy + e - 0.02];
       extLines += polyPath(roundCorners(pan, 0.04), same, true) + ' ' + dotsIn(pan, 0.07, same, 0.04);
-    } else if (o.mag === 'ets') for (let t = 0.22; t < e - 0.05; t += 0.2) extLines += `M${f(hx + 0.3)},${f(hy + t - 0.07)} L${f(tx - 0.55)},${f(ty + t - 0.07)} Q${f(tx - 0.35)},${f(ty + t - 0.06)} ${f(tx - 0.25)},${f(ty + t)} Q${f(tx - 0.35)},${f(ty + t + 0.06)} ${f(tx - 0.55)},${f(ty + t + 0.07)} L${f(hx + 0.3)},${f(hy + t + 0.07)} Z `;
-    else for (let t = 0.25; t < e - 0.1; t += 0.32) extLines += OC(hx + 0.17, hy + t, 0.03) + ' ';
+    } else if (o.mag === 'ets') for (let t = 0.22; t < e - 0.05; t += 0.2) extLines += `M${lx(hx + 0.3, t)},${f(hy + t - 0.07)} L${lx(tx - 0.55, t)},${f(ty + t - 0.07)} Q${lx(tx - 0.35, t)},${f(ty + t - 0.06)} ${lx(tx - 0.25, t)},${f(ty + t)} Q${lx(tx - 0.35, t)},${f(ty + t + 0.06)} ${lx(tx - 0.55, t)},${f(ty + t + 0.07)} L${lx(hx + 0.3, t)},${f(hy + t + 0.07)} Z `;
+    else for (let t = 0.25; t < e - 0.1; t += 0.32) extLines += OC(+lx(hx + 0.17, t), hy + t, 0.03) + ' ';
   }
-  const seam = pm ? `M${f(hx + 0.06)},${f(hy + e + 0.08)} L${f(tx)},${f(ty + e + 0.08)} ${OC((hx + tx) / 2 - 0.25, hy + bb - 0.1, 0.012)} ${OC((hx + tx) / 2, hy + bb - 0.1, 0.012)} ${OC((hx + tx) / 2 + 0.25, hy + bb - 0.1, 0.012)}`
+  const seam = pm ? `M${lx(hx + 0.06, e + 0.08)},${f(hy + e + 0.08)} L${lx(tx, e + 0.08)},${f(ty + e + 0.08)} ${[-0.25, 0, 0.25].map((d) => OC(+lx((hx + tx) / 2 + d, bb - 0.1), hy + bb - 0.1, 0.012)).join(' ')}`
     : s15 ? `M${f(hx + 0.03)},${f(hy + e + 0.03)} L${f(tx - 0.01)},${f(ty + e + 0.03)}`
-      : sl ? `M${lx(hx + 0.1, bb - 0.07)},${f(hy + bb - 0.07)} L${lx(tx - 0.08, bb - 0.07)},${f(ty + bb - 0.07)}`
+      : lean ? `M${lx(hx + 0.1, bb - 0.07)},${f(hy + bb - 0.07)} L${lx(tx - 0.08, bb - 0.07)},${f(ty + bb - 0.07)}`
       : `M${f(hx + 0.1)},${f(hy + bb - 0.07)} L${f(tx - 0.08)},${f(ty + bb - 0.07)}`;
   const photoPlate = g.plateD && o.mag === 'oem' && e < 0.05;
   // The 15-round sleeve fills the grip's mag window up to its edge, so only its sides and bottom are drawn below the grip.
@@ -2201,6 +2213,7 @@ function profilePieces(P: Piece[], g: ProfileGeo, o: {
         <path style={{ stroke: 'none' }} d={T(`${g.windowD} ${body}`)} />
         <path style={{ fill: 'none' }} d={T('M' + body.slice(top0.length).trim().slice(1).replace(/\s*Z\s*$/, '') + ` L${f(hx + 0.04)},${f(hy)}`)} />
       </> : <path d={T(photoPlate ? g.plateD! : body)} />}
+      {!photoPlate && g.wellCut && <path d={T(g.wellCut)} />}
       {!photoPlate && <path className="detail" d={T(`${seam} ${extLines}`)} />}
       {photoPlate && g.lipDet && <path className="detail" d={T(g.lipDet)} />}
     </> });
