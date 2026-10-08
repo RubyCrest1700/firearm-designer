@@ -227,7 +227,7 @@ export const GUIDES: Guide[] = [
     lede: 'Every double-stack 9mm Glock takes the same magazine, just in different lengths. A longer magazine works in a shorter grip; a shorter one goes in a longer grip but sits up inside it.',
     answers: [
       '<b>Yes, G17 mags work in a G19 and a G26.</b> They lock in and feed, and stick out below the grip.',
-      '<b>G19 mags work in a G26</b> the same way, and the long 21 and 24-round mags work in all of them.',
+      '<b>G19 mags work in a G26</b> the same way, and the long 21- and 24-round mags work in all of them.',
       'The <b>G34, G45, G19X and G47 have the full-size grip</b>, so G17 mags fit flush.',
       'Going the other way is the problem: a <b>shorter magazine sits up inside a longer grip</b>. It locks in, but you can\'t grab it to strip it out.',
       'A sleeve or a grip extension can fill the gap when a longer magazine sticks out.',
@@ -279,7 +279,7 @@ export const GUIDES: Guide[] = [
     slug: 'pistol-weapon-light-compatibility',
     title: 'Pistol Weapon Light Compatibility: Glock, Sig P320 and P365 Rails',
     h1: 'Which weapon lights fit your pistol?',
-    description: 'TLR-7A, X300 or TLR-7 Sub? See which pistol lights fit the Glock, Glock 43X/48, Sig P320 and P365 rails, and which holsters carry each light.',
+    description: 'TLR-7A, X300 or TLR-7 Sub? See which pistol lights fit the Glock, Glock 43X / 48, Sig P320 and P365 rails, and which holsters carry each light.',
     platform: 'glock19',
     crumb: 'Pistol Lights',
     lede: 'A weapon light clamps to the accessory rail under the barrel, and pistol rails are not all the same. Full-size Glocks and the P320 take the common compact lights; the slim Glocks and the P365 need a light made for their rail.',
@@ -294,8 +294,8 @@ export const GUIDES: Guide[] = [
         models: [
           { label: 'Glock 17 / 19 / 26 / 34', platform: 'glock19', with: ['g19-frame-g3'] },
           { label: 'Glock 45 / 19X / 47', platform: 'glock45', with: ['g45-frame-g5'] },
-          { label: 'Glock 43X/48 Rail frame', platform: 'glock43x', with: ['gs-frame-43xr'] },
-          { label: 'Glock 43X/48 standard frame', platform: 'glock43x', with: ['gs-frame-43x'] },
+          { label: 'Glock 43X / 48 Rail Frame', platform: 'glock43x', with: ['gs-frame-43xr'] },
+          { label: 'Glock 43X / 48 Standard Frame', platform: 'glock43x', with: ['gs-frame-43x'] },
           { label: 'Sig P320', platform: 'p320', with: ['p-grip-carry'] },
           { label: 'Sig P365 and P365XL', platform: 'p365', with: ['p365-grip-std'] },
         ] },

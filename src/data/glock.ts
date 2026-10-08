@@ -65,7 +65,7 @@ const rsaLabel = (r: unknown) => {
 
 const slots = [
   { id: 'frame', name: 'Frame', group: 'Lower', required: true, hint: 'The serialized part. Its generation decides the rest of the build.' },
-  { id: 'fcg', name: 'Trigger & frame parts', group: 'Lower', required: true, hint: 'Trigger, housing, connector, locking block, pins. Same across G17/19/26.' },
+  { id: 'fcg', name: 'Trigger & frame parts', group: 'Lower', required: true, hint: 'Trigger, housing, connector, locking block, pins.' },
   { id: 'slide', name: 'Slide', group: 'Upper', required: true, hint: 'A Gen3 slide fits Gen3 and Gen4 frames. Gen5 only fits Gen5. A longer slide can go on a shorter frame.' },
   { id: 'spk', name: 'Slide parts kit', group: 'Upper', required: true, hint: 'Firing pin, extractor, safety plunger, backplate.' },
   { id: 'barrel', name: 'Barrel', group: 'Upper', required: true, hint: 'Goes with the slide: match its length and generation. Gen5 Marksman barrels only fit Gen5 slides.' },

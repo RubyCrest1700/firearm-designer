@@ -15,7 +15,7 @@
       if (r.origin === location.origin && r.pathname !== '/feedback/') from = r.pathname;
     } catch {}
   }
-  if (!from.startsWith('/')) from = '';
+  if (!from.startsWith('/') || from.startsWith('//') || from.startsWith('/\\')) from = '';
   form.elements.page.value = from;
   if (from) {
     const back = sent.querySelector('.back-link');
