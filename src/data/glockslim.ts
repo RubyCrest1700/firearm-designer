@@ -72,9 +72,9 @@ const allParts = [
   ]),
   ...parts('optic', [
     { id: 'gs-opt-507k', brand: 'Holosun', name: 'HS507K X2', specs: ['Holosun K footprint', 'Multi-reticle'], attrs: { footprint: 'k' },
-      offers: [['PA', 269.99], ['OP', 274.99]], pick: pick('value', 'The common pick for slim Glocks. Needs a plate on the standard MOS cut.') },
+      offers: [['PA', 269.99], ['OP', 274.99]] },
     { id: 'gs-opt-rmsc', brand: 'Shield', name: 'RMSc 4 MOA', specs: ['RMSc footprint', 'Very low profile'], attrs: { footprint: 'rmsc' },
-      offers: [['BRN', 299.99], ['OP', 289.99]] },
+      offers: [['BRN', 299.99], ['OP', 289.99]], pick: pick('value', 'Fits the slim MOS cut directly, no plate.') },
     { id: 'gs-opt-epsc', brand: 'Holosun', name: 'EPS Carry', specs: ['Holosun K footprint', 'Enclosed emitter'], attrs: { footprint: 'k' },
       offers: [['PA', 349.99], ['OP', 354.99]] },
     { id: 'gs-opt-rmr', brand: 'Trijicon', name: 'RMR Type 2, 3.25 MOA', specs: ['RMR footprint'], attrs: { footprint: 'rmr' },
@@ -126,7 +126,7 @@ export const glockSlim: Platform = {
   rules,
   presets: {
     budget: ['gs-frame-48', 'gs-fcg-oem', 'gs-slide-48', 'gs-spk-oem', 'gs-bbl-48', 'gs-rsa-48', 'gs-sight-oem', 'gs-mag-oem10'],
-    value: ['gs-frame-43x', 'gs-fcg-apex', 'gs-slide-48mos', 'gs-spk-oem', 'gs-bbl-48', 'gs-rsa-48', 'gs-sight-ameriglo', 'gs-opt-507k', 'gs-mag-oem10'],
+    value: ['gs-frame-43x', 'gs-fcg-apex', 'gs-slide-48mos', 'gs-spk-oem', 'gs-bbl-48', 'gs-rsa-48', 'gs-sight-ameriglo', 'gs-opt-rmsc', 'gs-mag-oem10'],
     premium: ['gs-frame-43xr', 'gs-fcg-apex', 'gs-slide-48mos', 'gs-spk-oem', 'gs-bbl-48tp', 'gs-rsa-48', 'gs-sight-ameriglo', 'gs-opt-rmsc', 'gs-mag-s15'],
   },
 };
