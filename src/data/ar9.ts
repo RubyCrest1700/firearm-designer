@@ -1,6 +1,7 @@
 import type { Build, Issue, Placement, Platform } from '../types';
 import { boreIssue, parts, pick, threadIssue } from './helpers';
 import { rifleAddonParts, rifleAddonRules, rifleAddonSlots } from './addons';
+import { ironParts, ironRules, ironsSlot } from './irons';
 
 /**
  * AR-9: a 9mm AR built on a dedicated pistol-caliber lower. It runs straight blowback, so there is no gas
@@ -30,6 +31,7 @@ const slots = [
   { id: 'muzzle', name: 'Muzzle device', group: 'Accessories', required: false, hint: 'Must be 1/2x28 and bored for 9mm; 5.56 devices are too narrow.' },
   { id: 'mag', name: 'Magazine', group: 'Accessories', required: false, hint: 'Glock or Colt SMG pattern, to match the lower.' },
   { id: 'optic', name: 'Optic', group: 'Accessories', required: false, hint: 'Prices include a mount where noted.' },
+  ironsSlot,
   ...rifleAddonSlots,
 ];
 
@@ -223,6 +225,7 @@ function rules(b: Build, place: Placement = {}): Issue[] {
       out.push({ severity: 'info', slots: ['handguard', 'barrel'], message: `The ${hg}" rail runs ${(hg - bl).toFixed(1)}" past the end of the ${bl}" barrel, a popular shrouded look. Install the muzzle device before the rail, and make sure it fits inside the rail.` });
   }
   out.push(...rifleAddonRules(b, false, place));
+  out.push(...ironRules(b, b.gasblock));
   return out;
 }
 
@@ -233,10 +236,10 @@ export const ar9: Platform = {
   maker: 'AR Platform',
   blurb: '9mm blowback AR on a dedicated lower. Pick Glock or Colt magazines first; the rest is mostly AR-15.',
   slots,
-  parts: [...allParts, ...rifleAddonParts],
+  parts: [...allParts, ...ironParts('a9', false), ...rifleAddonParts],
   rules,
-  // Plain: no optic, no muzzle device (none here is a factory-style 9mm hider) and a Glock 17 magazine.
-  base: ['a9-lower-psa', 'a9-lpk-psa', 'a9-trig-psa', 'a9-buf-kak', 'a9-stock-psa', 'a9-grip-moe', 'a9-upper-psa', 'a9-bbl-aero16', 'a9-hg-psa', 'a9-bcg-psa', 'a9-ch-aero', 'a9-mag-g17'],
+  // Plain: iron sights, no optic, no muzzle device (none here is a factory-style 9mm hider) and a Glock 17 magazine.
+  base: ['a9-lower-psa', 'a9-lpk-psa', 'a9-trig-psa', 'a9-buf-kak', 'a9-stock-psa', 'a9-grip-moe', 'a9-upper-psa', 'a9-bbl-aero16', 'a9-hg-psa', 'a9-bcg-psa', 'a9-ch-aero', 'a9-irons-mbus', 'a9-mag-g17'],
   presets: {
     budget: ['a9-lower-psa', 'a9-lpk-psa', 'a9-trig-psa', 'a9-buf-kak', 'a9-stock-psa', 'a9-grip-moe', 'a9-upper-psa', 'a9-bbl-aero16', 'a9-hg-psa', 'a9-bcg-psa', 'a9-ch-aero', 'a9-mz-kak', 'a9-mag-gl9', 'a9-opt-romeo5x'],
     value: ['a9-lower-aero', 'a9-lpk-aero', 'a9-trig-angstadt', 'a9-buf-aero', 'a9-brace-sba3', 'a9-grip-bcm', 'a9-upper-aero', 'a9-bbl-faxon85', 'a9-hg-aero9', 'a9-bcg-aero', 'a9-ch-bcm', 'a9-mz-psa', 'a9-mag-gl9', 'a9-opt-holosun'],

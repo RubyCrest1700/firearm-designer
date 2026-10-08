@@ -874,6 +874,28 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
   P.push({ slot: 'optic', z: 14, row: 'top', target: [ot[0], f(ot[1] + (RAIL + 1.1) * S)],
     el: <><path fillRule="evenodd" d={T(movePath(od, 0, RAIL + 1.1))} /><path className="detail" d={T(movePath(odet, 0, RAIL + 1.1))} /></> });
 
+  // Iron sights: the rear at the back of the receiver rail, the front at the front of the handguard rail (an A2 front
+  // sight base already is the front sight). Flip-up sights stand at the AR's 1.41" sight line above the rail with no
+  // optic, and lie folded under one. Side profiles follow Magpul's MBUS photos.
+  const irons = b.irons;
+  if (irons) {
+    const up = !opt;
+    const sightAt = (x0: number, rail: number, q: number[]) => polyPath(roundCorners(q.map((v, i) => (i % 2 ? rail - v : x0 + v)), 0.035), same, true);
+    const rearQ = up ? [0, 0, 1.35, 0, 1.35, 0.22, 1.2, 0.32, 0.78, 0.32, 0.64, 1.62, 0.4, 1.62, 0.3, 0.32, 0.15, 0.32, 0, 0.2]
+      : [0, 0, 1.35, 0, 1.35, 0.22, 1.2, 0.48, 0.3, 0.48, 0.15, 0.32, 0, 0.2];
+    const frontQ = up ? [0, 0, 1.1, 0, 1.1, 0.2, 0.98, 0.32, 0.94, 0.32, 0.84, 1.62, 0.75, 1.62, 0.73, 1.4, 0.63, 1.4, 0.61, 1.62, 0.52, 1.62, 0.42, 0.32, 0.15, 0.32, 0, 0.2]
+      : [0, 0, 1.1, 0, 1.1, 0.2, 0.95, 0.46, 0.2, 0.46, 0.1, 0.3, 0, 0.2];
+    const rx = 0.3 * kx, fx0 = HX - 1.5, showFront = !!irons.attrs.front && !fsb && freeFloat;
+    const rearD = irons.attrs.rear ? sightAt(rx, RAIL, rearQ) : '';
+    const frontD = showFront ? sightAt(fx0, RAIL, frontQ) : '';
+    const det = (irons.attrs.rear ? (up ? `${OC(rx + 0.52, RAIL - 1.41, 0.07)} M${f(rx + 0.15)},${f(RAIL - 0.12)} L${f(rx + 1.2)},${f(RAIL - 0.12)}`
+      : `M${f(rx + 0.3)},${f(RAIL - 0.32)} L${f(rx + 1.2)},${f(RAIL - 0.32)} M${f(rx + 0.15)},${f(RAIL - 0.12)} L${f(rx + 1.2)},${f(RAIL - 0.12)}`) : '')
+      + (showFront ? (up ? ` M${f(fx0 + 0.655)},${f(RAIL - 1.4)} L${f(fx0 + 0.655)},${f(RAIL - 1.52)} L${f(fx0 + 0.705)},${f(RAIL - 1.52)} L${f(fx0 + 0.705)},${f(RAIL - 1.4)} M${f(fx0 + 0.15)},${f(RAIL - 0.12)} L${f(fx0 + 0.95)},${f(RAIL - 0.12)}`
+        : ` M${f(fx0 + 0.2)},${f(RAIL - 0.3)} L${f(fx0 + 0.95)},${f(RAIL - 0.3)} M${f(fx0 + 0.15)},${f(RAIL - 0.12)} L${f(fx0 + 0.95)},${f(RAIL - 0.12)}`) : '');
+    P.push({ slot: 'irons', z: 13, row: 'top', target: px(irons.attrs.rear ? rx + 0.5 : fx0 + 0.6, RAIL - (up ? 1.62 : 0.48)),
+      el: <><path d={T(`${rearD} ${frontD}`)} /><path className="detail" d={T(det)} /></> });
+  }
+
   // Add-ons, drawn only once chosen. Sizes are the makers' published lengths, rounded.
   // Lights, lasers and foregrips go where the builder put them: on the top, right, left or bottom of the
   // handguard, at a distance from the receiver. This is the right-side view, so anything on the left is

@@ -1,6 +1,7 @@
 import type { Build, Issue, Placement, Platform } from '../types';
 import { boreIssue, parts, pick, threadIssue } from './helpers';
 import { rifleAddonParts, rifleAddonRules, rifleAddonSlots } from './addons';
+import { ironParts, ironRules, ironsSlot } from './irons';
 
 /** Approximate gas port distance from the receiver face, in inches. */
 const PORT_DISTANCE: Record<string, number> = { pistol: 4.5, carbine: 7.5, midlength: 9.5, rifle: 12.5 };
@@ -21,6 +22,7 @@ const slots = [
   { id: 'charging', name: 'Charging handle', group: 'Upper', required: true, hint: 'Any mil-spec handle fits.' },
   { id: 'muzzle', name: 'Muzzle device', group: 'Accessories', required: false, hint: 'Thread pitch must match the barrel.' },
   { id: 'optic', name: 'Optic', group: 'Accessories', required: false, hint: 'Prices include a mount where noted.' },
+  ironsSlot,
   ...rifleAddonSlots,
 ];
 
@@ -305,6 +307,7 @@ function rules(b: Build, place: Placement = {}): Issue[] {
   if (barrel && (barrel.attrs.length as number) < 16 && stock)
     out.push({ severity: 'warn', slots: ['barrel', 'stock'], message: `A barrel under 16" with a stock makes a short-barreled rifle under the NFA. Approve an ATF Form 1 before assembly, or build it as a pistol without a stock.` });
   out.push(...rifleAddonRules(b, false, place));
+  out.push(...ironRules(b, b.gasblock));
   return out;
 }
 
@@ -315,10 +318,10 @@ export const ar15: Platform = {
   maker: 'AR Platform',
   blurb: 'Mil-spec AR-15 / M4 pattern. Build from a stripped lower up.',
   slots,
-  parts: [...allParts, ...rifleAddonParts],
+  parts: [...allParts, ...ironParts('ar'), ...rifleAddonParts],
   rules,
   presets: {
-    budget: ['ar-lower-anderson', 'ar-lpk-psa', 'ar-trig-psa', 'ar-buf-psa', 'ar-stock-psa', 'ar-grip-moe', 'ar-upper-psa', 'ar-bbl-psa16', 'ar-gb-aero750', 'ar-gt-carbine', 'ar-hg-psa', 'ar-bcg-psa', 'ar-ch-aero', 'ar-mz-a2'],
+    budget: ['ar-lower-anderson', 'ar-lpk-psa', 'ar-trig-psa', 'ar-buf-psa', 'ar-stock-psa', 'ar-grip-moe', 'ar-upper-psa', 'ar-bbl-psa16', 'ar-gb-aero750', 'ar-gt-carbine', 'ar-hg-psa', 'ar-bcg-psa', 'ar-ch-aero', 'ar-mz-a2', 'ar-irons-mbus'],
     value: ['ar-lower-aero', 'ar-lpk-aero', 'ar-trig-alg', 'ar-buf-aero', 'ar-stock-moesl', 'ar-grip-bcm', 'ar-upper-aero', 'ar-bbl-ba16', 'ar-gb-aero750', 'ar-gt-mid', 'ar-hg-mi', 'ar-bcg-toolcraft', 'ar-ch-bcm', 'ar-mz-a2', 'ar-opt-vortex'],
     premium: ['ar-lower-seekins', 'ar-lpk-bcm', 'ar-trig-geissele', 'ar-buf-vltor', 'ar-stock-bcm', 'ar-grip-k2', 'ar-upper-bcm', 'ar-bbl-bcm', 'ar-gb-sa750', 'ar-gt-mid', 'ar-hg-bcm', 'ar-bcg-bcm', 'ar-ch-radian', 'ar-mz-warcomp', 'ar-opt-aimpoint'],
   },

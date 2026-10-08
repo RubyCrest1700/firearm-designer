@@ -1,6 +1,7 @@
 import type { Build, Issue, Placement, Platform } from '../types';
 import { boreIssue, parts, pick, threadIssue } from './helpers';
 import { rifleAddonParts, rifleAddonRules, rifleAddonSlots } from './addons';
+import { ironParts, ironRules, ironsSlot } from './irons';
 
 /**
  * AR-10 / LR-308 (.308 Win and 6.5 Creedmoor). Unlike the AR-15 there is no single
@@ -36,6 +37,7 @@ const slots = [
   { id: 'muzzle', name: 'Muzzle device', group: 'Accessories', required: false, hint: 'Most .308 barrels are threaded 5/8x24.' },
   { id: 'mag', name: 'Magazine', group: 'Accessories', required: false, hint: 'SR-25 pattern (Magpul PMAG LR/SR) mags fit DPMS and current Armalite A-series lowers.' },
   { id: 'optic', name: 'Optic', group: 'Accessories', required: false, hint: 'Prices include a mount where noted.' },
+  ironsSlot,
   ...rifleAddonSlots,
 ];
 
@@ -232,6 +234,7 @@ function rules(b: Build, place: Placement = {}): Issue[] {
       out.push({ severity: 'info', slots: ['handguard', 'barrel'], message: `The gas block sits about ${port}" out, so a ${hg}" handguard leaves it exposed.` });
   }
   out.push(...rifleAddonRules(b, true, place));
+  out.push(...ironRules(b, b.gasblock));
   return out;
 }
 
@@ -242,10 +245,10 @@ export const ar10: Platform = {
   maker: 'AR Platform',
   blurb: '.308 Win / 6.5 Creedmoor. Pick DPMS or Armalite pattern first; most parts follow from it.',
   slots,
-  parts: [...allParts, ...rifleAddonParts],
+  parts: [...allParts, ...ironParts('a10'), ...rifleAddonParts],
   rules,
   presets: {
-    budget: ['a10-lower-psa', 'a10-lpk-dpms', 'a10-trig-psa', 'a10-buf-psa', 'a10-stock-psa', 'a10-grip-moe', 'a10-upper-psa', 'a10-bbl-psa18', 'a10-gb-750', 'a10-gt-mid', 'a10-hg-psa', 'a10-bcg-psa', 'a10-ch-dpms', 'a10-mz-a2', 'a10-mag-pmag'],
+    budget: ['a10-lower-psa', 'a10-lpk-dpms', 'a10-trig-psa', 'a10-buf-psa', 'a10-stock-psa', 'a10-grip-moe', 'a10-upper-psa', 'a10-bbl-psa18', 'a10-gb-750', 'a10-gt-mid', 'a10-hg-psa', 'a10-bcg-psa', 'a10-ch-dpms', 'a10-mz-a2', 'a10-mag-pmag', 'a10-irons-mbus'],
     value: ['a10-lower-aero', 'a10-lpk-dpms', 'a10-trig-alg', 'a10-buf-aero', 'a10-stock-moesl', 'a10-grip-bcm', 'a10-upper-aero', 'a10-bbl-ba18', 'a10-gb-750', 'a10-gt-rifle', 'a10-hg-atlas', 'a10-bcg-toolcraft', 'a10-ch-radian', 'a10-mz-pa', 'a10-mag-pmag', 'a10-opt-vortex'],
     premium: ['a10-lower-seekins', 'a10-lpk-dpms', 'a10-trig-geissele', 'a10-buf-aero', 'a10-stock-ubr', 'a10-grip-bcm', 'a10-upper-seekins', 'a10-bbl-criterion', 'a10-gb-875', 'a10-gt-rifle', 'a10-hg-seekins', 'a10-bcg-jp', 'a10-ch-radian', 'a10-mz-pa', 'a10-mag-pmag', 'a10-opt-venom'],
   },
