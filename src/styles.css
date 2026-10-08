@@ -248,6 +248,13 @@ h1 { font: 700 clamp(28px, 4.2vw, 40px)/1.08 var(--f-head); letter-spacing: -.00
 .bp-part path.solid { fill: var(--bp-bg) !important; stroke: none !important; }
 .bp-part .stipple { stroke-linecap: round; stroke-width: 1.6; opacity: .5; }
 .bp-part .hidden-line, .bp-part.internal path { fill: none; stroke-dasharray: 5 3.5; stroke-width: 1; opacity: .75; }
+/* Internal parts (bolt carrier, barrel inside the slide, recoil spring, fire control unit, gas tube) stay hidden from the
+   outside view so it isn't cluttered; they show while that part is hovered, focused or picked, or when it has a fit problem. */
+.bp-part .hidden-line, .bp-part.internal path { visibility: hidden; }
+.bp-part.internal .hit { visibility: visible; }
+.bp-part[role=button]:hover .hidden-line, .bp-part.active .hidden-line, .bp-part[role=button]:focus-visible .hidden-line,
+.bp-part.internal[role=button]:hover path, .bp-part.internal.active path, .bp-part.internal[role=button]:focus-visible path,
+.bp-part.internal.warn path, .bp-part.internal.error path { visibility: visible; }
 .bp-part.static { opacity: .4; }
 .bp-part.empty path { fill: none; stroke: rgba(234,243,255,.5); stroke-dasharray: 2 3; }
 .bp-part.warn path { stroke: #ffd27a; }
