@@ -1614,7 +1614,9 @@ interface ProfileGeo {
   /** The floor plate's top face and the gap above it, for a flush magazine in a flared mag well's cut. */
   lipDet?: string;
   /** A flared mag well's bottom edge with its front cut, which a longer magazine fills up to. */
-  wellD?: string;
+  well?: number[];
+  /** Where a longer magazine's body sits: the factory grip's heel and toe (a flared module only hides its top). */
+  magHeel?: [number, number]; magToe?: [number, number];
 }
 
 /** Moving average over a closed polyline (w points each side), to calm the wobble of a dotted drawing's trace. */
@@ -1741,6 +1743,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   const slideMap: Map2 = (x, y) => [sx(x) + (rearSh && x < 0.9 ? rearSh * Math.max(0, Math.min(1, y / mk.sh)) * Math.min(1, (0.9 - x) / 0.5) : 0), y];
   let heel = grip(mk.heel[0], mk.heel[1]);
   let toe = grip(mk.toe[0], mk.toe[1]);
+  const heelF = heel, toeF = toe;
   const ext = Math.max(0, spec.magH - spec.gripH);
   // The Glock guard opening has a squared front: nearly vertical front wall and tight corners (US 4,539,889 FIG. 1).
   const glockHole = glockOpening(mk.hole);
@@ -2026,7 +2029,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     trigD: photoTrig?.d ?? reachP320(scD((o.flat ? TRIGGERS[key].flat : TRIGGERS[key].curved)(t0 - dy) + (v.hook && TRIGGERS[key].hook ? ' ' + TRIGGERS[key].hook : ''))),
     trigLine: photoTrig?.line ?? reachP320(scD(typeof trigLine === 'string' ? trigLine : trigLine(t0 - dy))),
     gF, dust, railY: mk.railBottom, fcuX0,
-    heel, toe, yGB, yMB: photoTrig ? photoTrig.yMB + ext : yGB + ext + BASE, ext, plateD: photoTrig?.plate ?? (modPh?.lip ? polyPath(modPh.lip, same, true) : undefined), lipDet: modPh?.lip ? lipEdge(modPh.lip) : undefined, wellD: modPh?.well ? polyPath(modPh.well, same, false) : undefined,
+    heel, toe, yGB, yMB: photoTrig ? photoTrig.yMB + ext : yGB + ext + BASE, ext, plateD: photoTrig?.plate ?? (modPh?.lip ? polyPath(modPh.lip, same, true) : undefined), lipDet: modPh?.lip ? lipEdge(modPh.lip) : undefined, well: modPh?.well, magHeel: modPh?.plate ? heelF : undefined, magToe: modPh?.plate ? toeF : undefined,
     frameD: (glock ? polyPath(mapped, (x, y) => [x, y], true) : modOl ? polyPath(modOl, same, true) : outlines.map((ol) => polyPath(ol, frameMap, true)).join(' ')) + ' ' + hole,
     frameDetail, stipple,
     slideD: face && modPh?.nose ? photoSlide(face[0], modPh.nose[0]) : pr.slide.outline.map((ol) => polyPath(scS(ol), slideMap, true)).join(' ') + slideNose,
@@ -2052,7 +2055,9 @@ function profilePieces(P: Piece[], g: ProfileGeo, o: {
     </> });
 
   /* Magazine: shows through the window in the grip's bottom edge, then the floor plate (and any extension) below */
-  const [hx, hy] = g.heel, [tx, ty] = g.toe;
+  // A longer magazine is the same part in every grip, so it hangs where it does in the factory grip.
+  const long = g.ext > 0.25;
+  const [hx, hy] = long && g.magHeel ? g.magHeel : g.heel, [tx, ty] = long && g.magToe ? g.magToe : g.toe;
   const e = g.ext, bb = e + BASE;
   // Floor plates: Glock's and Sig's flat plates with a lip at the front; Magpul's deeper plate with its rounded front and dot
   // matrix; Shield's thin stamped steel plate. An extended body carries round-count windows down its spine; ETS bodies are
@@ -2064,8 +2069,20 @@ function profilePieces(P: Piece[], g: ProfileGeo, o: {
       ? `M${f(hx + 0.04)},${f(hy)} L${f(tx - 0.02)},${f(ty)} L${f(tx + 0.01)},${f(ty + e + 0.03)} L${f(tx + 0.01)},${f(ty + bb - 0.05)} L${f(hx - 0.01)},${f(hy + bb - 0.05)} L${f(hx - 0.01)},${f(hy + e + 0.03)} Z`
       : `M${f(hx + 0.04)},${f(hy)} L${f(tx - 0.02)},${f(ty)} L${f(tx + 0.03)},${f(ty + e + 0.03)} Q${f(tx + 0.07)},${f(ty + bb)} ${f(tx - 0.06)},${f(ty + bb)} L${f(hx + 0.08)},${f(hy + bb)} Q${f(hx - 0.05)},${f(hy + bb - 0.02)} ${f(hx - 0.02)},${f(hy + e + 0.04)} Z`;
   // In a flared mag well with a cut at its front, a longer magazine's body runs up into the cut along the well's edge.
+  // Its rear wall carries up until it meets the well's edge.
   const top0 = `M${f(hx + 0.04)},${f(hy)} L${f(tx - 0.02)},${f(ty)}`;
-  const body = g.wellD && floor.startsWith(top0) ? g.wellD + floor.slice(top0.length) : floor;
+  let body = floor;
+  if (long && g.well && floor.startsWith(top0)) {
+    const w = g.well, rx = (y: number) => hx + 0.04 + ((hy - y) * 0.06) / (e + 0.04);
+    for (let i = 0; i + 3 < w.length; i += 2) {
+      const d0 = w[i] - rx(w[i + 1]), d1 = w[i + 2] - rx(w[i + 3]);
+      if (d0 <= 0 && d1 > 0) {
+        const t = -d0 / (d1 - d0), y = w[i + 1] + t * (w[i + 3] - w[i + 1]);
+        body = polyPath([rx(y), y, ...w.slice(i + 2)], same, false) + floor.slice(top0.length);
+        break;
+      }
+    }
+  }
   let extLines = '';
   if (e > 0.25) {
     // Sig's P365 15-round magazine wears a textured polymer sleeve over its extension (Shooting Illustrated's photo).
@@ -2079,10 +2096,15 @@ function profilePieces(P: Piece[], g: ProfileGeo, o: {
     : s15 ? `M${f(hx + 0.03)},${f(hy + e + 0.03)} L${f(tx - 0.01)},${f(ty + e + 0.03)}`
       : `M${f(hx + 0.1)},${f(hy + bb - 0.07)} L${f(tx - 0.08)},${f(ty + bb - 0.07)}`;
   const photoPlate = g.plateD && o.mag === 'oem' && e < 0.05;
+  // The 15-round sleeve fills the grip's mag window up to its edge, so only its sides and bottom are drawn below the grip.
+  const sleeveFill = o.mag === 'sleeve' && !!g.windowD && body === floor;
   P.push({ slot: o.own('mag'), z: 2, row: 'bottom', target: px((hx + tx) / 2, (hy + ty) / 2 + bb - 0.06),
     el: <>
-      {g.windowD && <path d={T(g.windowD)} />}
-      <path d={T(photoPlate ? g.plateD! : body)} />
+      {g.windowD && !sleeveFill && <path d={T(g.windowD)} />}
+      {sleeveFill ? <>
+        <path style={{ stroke: 'none' }} d={T(`${g.windowD} ${body}`)} />
+        <path style={{ fill: 'none' }} d={T('M' + body.slice(top0.length).trim().slice(1).replace(/\s*Z\s*$/, '') + ` L${f(hx + 0.04)},${f(hy)}`)} />
+      </> : <path d={T(photoPlate ? g.plateD! : body)} />}
       {!photoPlate && <path className="detail" d={T(`${seam} ${extLines}`)} />}
       {photoPlate && g.lipDet && <path className="detail" d={T(g.lipDet)} />}
     </> });
