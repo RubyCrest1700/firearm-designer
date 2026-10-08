@@ -1692,8 +1692,10 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   let port0 = mk.port0, port1 = mk.port1;
   if (port0 == null) {
     const barrel = spec.breech != null ? spec.m.slide - spec.breech : spec.m.barrel;
-    port0 = SL - barrel - (glock ? 0.16 : 0.12);
-    port1 = port0 + (glock ? (o.slim ? 1.1 : 1.28) : 1.02);
+    // Glock ports measured on RSR's flat photos (G17, G19, G26, G43X, G20): they start 0.07" to 0.19" ahead of the
+    // breech face (0.15" on the 9mm slides) and run 1.1" long (1.3" on the 10mm/.45 slides).
+    port0 = SL - barrel + (glock ? (spec.large ? 0.07 : 0.15) : -0.12);
+    port1 = port0 + (glock ? (spec.large ? 1.32 : o.slim ? 1.11 : 1.13) : 1.02);
   }
   const sx = stretchX(port1 + 0.1, mk.frontSerr - 0.05, mk.slide, dS);
   const fa = h1x + 0.3;
@@ -1897,6 +1899,11 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     const extractor = `M${f(port0 - 0.7)},0.24 L${f(port0 - 0.04)},0.24 L${f(port0 - 0.04)},0.42 L${f(port0 - 0.7)},0.42 Z`;
     const face = `M${f(SL - 0.05)},${f(mk.bore - 0.2)} L${f(SL - 0.05)},${f(mk.bore + 0.2)}`;
     slideDetail = `${lines} ${rearSerr} ${fSerr} ${extractor} ${face} ${chamfer}`;
+    const after = v.slide === 'ggp' ? ggpSlide(SL, SH) : v.slide === 'zev' ? zevSlide(SL, SH, port0, port1) : v.slide === 'zaffiri' ? zaffiriSlide(SL, SH, port0, port1)
+      : v.slide === 'brownells' ? brownellsSlide(SL, SH, port1) : '';
+    // Aftermarket slides drawn from their photos: no lower edge line, only the top chamfer.
+    const topLine = `M0.05,0.12 L${f(SL - 0.1)},0.12`;
+    if (after) slideDetail = `${topLine} ${after} ${extractor} ${face}`;
     const ph = spec.photo ? GLOCK_PHOTOS[spec.photo] : undefined;
     if (ph) {
       // A frame measured from a photo replaces the patent-based frame, and the slide gets the photo's serrations.
@@ -1905,7 +1912,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
       const sr = ph.serrations;
       const grooves = (xs: number[]) => xs.map((x) => `M${f(x)},${sr.y0} L${f(x + lean)},${sr.y1} M${f(x + sr.w)},${sr.y0} L${f(x + sr.w + lean)},${sr.y1}`).join(' ');
       const fx0 = SL - 1.5;
-      slideDetail = `${lines} ${grooves(sr.x)} ${o.frontSerr ? grooves(sr.x.slice(0, 5).map((x) => fx0 + (x - sr.x[0]))) : ''} ${extractor} ${face} ${chamfer}`;
+      slideDetail = after ? `${topLine} ${after} ${extractor} ${face}` : `${lines} ${grooves(sr.x)} ${o.frontSerr ? grooves(sr.x.slice(0, 5).map((x) => fx0 + (x - sr.x[0]))) : ''} ${extractor} ${face} ${chamfer}`;
       photoTrig = { d: ph.trigger, line: ph.triggerLine, top: ph.hole[1], plate: polyPath(ph.plate, same, true), yMB: Math.max(...ph.plate.filter((_, i) => i % 2)) };
     }
   }
@@ -2024,6 +2031,54 @@ function profilePieces(P: Piece[], g: ProfileGeo, o: {
       <path fillRule="evenodd" d={T(`${g.slideD} ${port}`)} />
       <path className="detail" d={T(`${g.slideDetail} ${lightCuts} ${ports} ${plate} ${extractor}`)} />
     </> });
+}
+
+/** Grey Ghost Precision Combat slide, right side, measured on GGP's flat V3 render (slide 1037 px long, 125 px tall):
+ *  five wide cuts at each end leaning back toward the top at about 37 degrees, the long recessed panel under the
+ *  port with GGP's name in it, and the bevel down the top of the nose. */
+function ggpSlide(SL: number, SH: number) {
+  const gx = (x: number) => ((x - 23) / 1037) * SL, gy = (y: number) => ((y - 34) / 125) * SH;
+  const cut = (xb: number, yt: number) => {
+    const xt = xb - 0.75 * (157 - yt);
+    return `M${f(gx(xt))},${f(gy(yt))} L${f(gx(xb))},${f(gy(157))} M${f(gx(xt + 14))},${f(gy(yt))} L${f(gx(xb + 14))},${f(gy(157))}`;
+  };
+  const rear = [108, 153, 198, 243, 288].map((x) => cut(x, 48)).join(' ');
+  const front = [846, 890, 933, 976, 1019].map((x) => cut(x, 48)).join(' ');
+  const panel = polyPath(roundCorners([gx(322), gy(93), gx(772), gy(93), gx(772), gy(135), gx(322), gy(135)], 0.07), (x, y) => [x, y], true);
+  const bevel = `M${f(gx(1000))},0.02 L${f(SL - 0.03)},${f(gy(52))}`;
+  return `${rear} ${front} ${panel} ${bevel}`;
+}
+
+/** ZEV Glock slide, drawn from ZEV's angled Z19 render (no flat photo found): wide straight rear grooves, a recessed
+ *  panel under the port, four windows through a recessed panel ahead of it, and a broad chamfer along the top. */
+function zevSlide(SL: number, SH: number, port0: number, port1: number) {
+  const same: Map2 = (x, y) => [x, y];
+  const rear = repeat(0.24, 1.05, 0.16, (x) => `M${x},0.2 L${x},${f(SH - 0.1)}`);
+  const under = polyPath(roundCorners([port0 - 0.75, SH * 0.5, port1 + 0.05, SH * 0.5, port1 + 0.05, SH * 0.8, port0 - 0.75, SH * 0.8], 0.06), same, true);
+  const x0 = port1 + 0.3, x1 = SL - 0.7, w = (x1 - x0 - 0.12) / 4;
+  let win = polyPath(roundCorners([x0, SH * 0.4, x1, SH * 0.4, x1, SH * 0.88, x0, SH * 0.88], 0.06), same, true);
+  for (let i = 0; i < 4; i++) { const a = x0 + 0.06 + i * w + 0.05, b = a + w - 0.1; win += ' ' + polyPath(roundCorners([a, SH * 0.5, b, SH * 0.5, b, SH * 0.78, a, SH * 0.78], 0.04), same, true); }
+  return `${rear} ${under} ${win} M${f(port1)},0.28 L${f(SL - 0.12)},0.28`;
+}
+
+/** Brownells RMR slide, from its angled render: straight grooves at the rear and a second set just ahead of the port. */
+function brownellsSlide(SL: number, SH: number, port1: number) {
+  const g = (x0: number) => repeat(x0, x0 + 0.84, 0.14, (x) => `M${x},0.2 L${x},${f(SH - 0.08)}`);
+  return `${g(0.25)} ${g(Math.min(port1 + 0.3, SL - 1.6))}`;
+}
+
+/** Zaffiri ZPS.2, from its two mildly angled renders: seven wide scalloped rear grooves stopping above the panel line, a long recessed panel from the extractor to the
+ *  nose with three long windows low in it, five notches across the top ahead of the port, and the bevel down the nose. */
+function zaffiriSlide(SL: number, SH: number, port0: number, port1: number) {
+  const same: Map2 = (x, y) => [x, y];
+  const rear = repeat(0.22, 1.05, 0.13, (x) => `M${x},0.16 L${f(x + 0.04)},${f(SH * 0.78)}`);
+  const x0 = port0 - 1.0, x1 = SL - 0.55;
+  const panel = polyPath(roundCorners([x0, SH * 0.42, x1, SH * 0.42, x1, SH * 0.9, x0, SH * 0.9], 0.08), same, true);
+  const a = port1 + 0.15, w = (x1 - 0.12 - a) / 3;
+  let slots = '';
+  for (let i = 0; i < 3; i++) { const s0 = a + i * w + 0.04, s1 = s0 + w - 0.08; slots += ' ' + polyPath(roundCorners([s0, SH * 0.6, s1, SH * 0.6, s1, SH * 0.8, s0, SH * 0.8], 0.04), same, true); }
+  const notches = repeat(port1 + 0.25, SL - 1.0, (SL - 1.25 - port1) / 4.5, (x) => `M${x},0 L${x},0.14 L${f(x + 0.16)},0.14 L${f(x + 0.16)},0`);
+  return `${rear} ${panel}${slots} ${notches} M${f(SL - 0.4)},0.02 L${f(SL - 0.03)},0.3`;
 }
 
 /** Moves (and scales) a path made only of M, L, Q and Z commands: every number pair is a point. */
@@ -2170,7 +2225,7 @@ function pistol(platform: Platform, build: Build): Scene {
 
   const comp = matches(b.slide, /Comp|Spectre/);
   const cut = (b.slide?.attrs.cut as string | undefined) ?? 'none';
-  const lighten = matches(b.slide, /Octane|Lightening/);
+  const lighten = matches(b.slide, /Lightening/) && b.slide?.brand !== 'ZEV';
   const frameSlot = has('frame') ? 'frame' : base ? 'pistol' : 'grip';
   const { railY: yRail, gF, dust, yMB, bc, port0, port1, springY } = geo;
   const rear = Math.min(-tang, geo.heel[0]);
