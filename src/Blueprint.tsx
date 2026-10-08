@@ -1258,18 +1258,21 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   let slideDetail = pr.slide.detail.map((ol) => polyPath(scS(ol), slideMap, false)).join(' ');
   let stipple = '';
   let tang = -mk.tang;
-  if (!glock && v.texture !== 'patent') {
+  if (!glock) {
     // Side panel between the straps, inset from both, from under the guard to above the heel.
     const mappedS = outlines[0].flatMap((_, i, a) => (i % 2 ? [] : frameMap(a[i], a[i + 1])));
-    const inset = v.texture === 'axg' ? 0.26 : 0.18;
+    const inset = v.texture === 'axg' ? 0.26 : v.texture === 'patent' ? 0.3 : 0.18;
     const ys: number[] = [];
-    const yTop = grip(0, h1y + 0.55)[1], yBot = Math.min(heel[1], toe[1]) - 0.42;
+    // Factory modules are textured from just under the trigger guard to near the floor plate.
+    const pat = v.texture === 'patent';
+    const yTop = grip(0, h1y + (pat ? 0.18 : 0.55))[1], yBot = Math.min(heel[1], toe[1]) - (pat ? 0.3 : 0.42);
     for (let y = yTop; y < yBot; y += 0.08) ys.push(y);
     ys.push(yBot);
     const edge = ys.map((y) => { const xs = crossings(mappedS, y); return [xs[0] + inset, xs[xs.length - 1] - inset]; });
     const panel = [...ys.flatMap((y, i) => [edge[i][0], y]), ...[...ys].reverse().flatMap((y, i) => [edge[ys.length - 1 - i][1], y])];
     const outline = polyPath(panel, same, true);
-    if (v.texture === 'x') stipple = dotsIn(panel, 0.1, same, 0.06);
+    // The factory modules keep their molded panel lines from the patent; the texture inside is the shared 0.1" dots.
+    if (v.texture === 'x' || v.texture === 'patent') stipple = dotsIn(panel, 0.1, same, 0.06);
     else if (v.texture === 'wilson') stipple = hatchIn(panel, 50, 0.13, same, 0.05) + hatchIn(panel, -50, 0.13, same, 0.05);
     else {
       // AXG: G10 panels screwed to the alloy frame, and checkering down the front strap.
@@ -1278,7 +1281,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
       for (let i = 0; i < ys.length; i += 2) check += `M${f(edge[i][1] + inset - 0.14)},${f(ys[i])} L${f(edge[i][1] + inset - 0.04)},${f(ys[i])} `;
       stipple = OC(cx, ys[2], 0.07) + ' ' + OC(cx2, ys[ys.length - 3], 0.07) + ' ' + check;
     }
-    frameDetail += ' ' + outline;
+    if (v.texture !== 'patent') frameDetail += ' ' + outline;
   }
   const gF = fx(h1x + 0.15), dust = fx(mk.dust);
   let mapped: number[] = [];
@@ -1356,6 +1359,15 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   }
   if (key === 'hellcat') slideDetail += ' ' + (v.slide === 'apex' || v.slide === 'tp' ? aftermarketSerr(SL, mk.sh, port1, v.slide) : HELLCAT_SERR.map((p) => polyPath(scS(p.pts), slideMap, p.close)).join(' '));
   if (key === 'mp') slideDetail += ' ' + mpSerr(SL, mk.sh);
+  if (key === 'mp') {
+    // Slide stop lever and the knurled takedown lever with its pin, where the M&P photo shows them.
+    const y0 = mk.sh + 0.08, y1 = mk.sh + 0.33, a = fx(1.95), b = fx(2.95);
+    frameDetail += ` M${f(a + 0.08)},${f(y0)} L${f(b - 0.06)},${f(y0)} Q${f(b)},${f(y0)} ${f(b)},${f(y0 + 0.06)} L${f(b)},${f(y1 - 0.06)} Q${f(b)},${f(y1)} ${f(b - 0.06)},${f(y1)} L${f(a + 0.08)},${f(y1)} Q${f(a)},${f(y1)} ${f(a)},${f(y1 - 0.08)} L${f(a)},${f(y0 + 0.08)} Q${f(a)},${f(y0)} ${f(a + 0.08)},${f(y0)} Z`
+      + repeat(a + 0.12, a + 0.42, 0.075, (x) => ` M${x},${f(y0 + 0.05)} L${x},${f(y1 - 0.05)}`)
+      + ` M${f(fx(3.12) + 0.06)},${f(mk.sh + 0.07)} L${f(fx(3.9) - 0.06)},${f(mk.sh + 0.07)} Q${f(fx(3.9))},${f(mk.sh + 0.07)} ${f(fx(3.9))},${f(mk.sh + 0.13)} L${f(fx(3.9))},${f(mk.sh + 0.26)} Q${f(fx(3.9))},${f(mk.sh + 0.32)} ${f(fx(3.9) - 0.06)},${f(mk.sh + 0.32)} L${f(fx(3.12) + 0.06)},${f(mk.sh + 0.32)} Q${f(fx(3.12))},${f(mk.sh + 0.32)} ${f(fx(3.12))},${f(mk.sh + 0.26)} L${f(fx(3.12))},${f(mk.sh + 0.13)} Q${f(fx(3.12))},${f(mk.sh + 0.07)} ${f(fx(3.12) + 0.06)},${f(mk.sh + 0.07)} Z`
+      + repeat(fx(3.2), fx(3.82), 0.06, (x) => ` M${x},${f(mk.sh + 0.1)} L${x},${f(mk.sh + 0.29)}`)
+      + ` ${OC(fx(4.0), mk.sh + 0.2, 0.07)}`;
+  }
   if (key === 'hellcat') {
     // Takedown lever and slide stop on the frame flat, in place of the drawing's molded contour lines.
     frameDetail += ` ${OC(fx(2.4), mk.railBottom + 0.32, 0.17)} ${OC(fx(2.4), mk.railBottom + 0.32, 0.06)} M${f(fx(2.0))},${f(mk.railBottom + 0.1)} L${f(fx(1.75))},${f(mk.railBottom + 0.1)} Q${f(fx(1.6))},${f(mk.railBottom + 0.12)} ${f(fx(1.6))},${f(mk.railBottom + 0.24)} L${f(fx(1.62))},${f(mk.railBottom + 0.3)} L${f(fx(1.95))},${f(mk.railBottom + 0.28)}`;
