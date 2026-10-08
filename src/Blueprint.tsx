@@ -722,7 +722,7 @@ const MODELS: Record<string, PistolModel> = {
 };
 
 /** Published height with a flush magazine, by grip size / magazine size. */
-const GLOCK_H: Record<string, number> = { glock17: 5.47, glock19: 5.04, glock26: 4.17, glock45: 5.47, glock20: 5.51 };
+const GLOCK_H: Record<string, number> = { glock17: 5.47, glock34: 5.47, glock19: 5.04, glock26: 4.17, glock45: 5.47, glock47: 5.47, glock20: 5.51 };
 const GLOCK_MAG_H: Record<number, number> = { 4: 5.47, 3: 5.47, 2: 5.04, 1: 4.17 };
 const P320_H: Record<string, number> = { full: 5.5, carry: 5.5, compact: 5.3, subcompact: 4.7 };
 const P320_DUST: Record<string, string> = { full: 'full', carry: 'compact', compact: 'compact', subcompact: 'subcompact' };
@@ -752,7 +752,9 @@ function pistolSpec(platform: Platform, b: Build): PistolSpec {
   switch (platform.id) {
     case 'glock43x': {
       const pick = (v?: string) => (v === '43X' ? MODELS.g43x : MODELS.g48);
-      return { m: pick(a(b.slide, 'len') ?? a(b.frame, 'len')), frame: pick(a(b.frame, 'len') ?? a(b.slide, 'len')), gripH: 5.04, magH: 5.04, grooves: 0 };
+      const fl = a(b.frame, 'len') ?? a(b.slide, 'len');
+      const ph = GLOCK_PHOTOS[fl === '43X' ? 'g43x' : 'g48'];
+      return { m: { ...pick(a(b.slide, 'len') ?? a(b.frame, 'len')), sh: ph.sb }, frame: pick(fl), gripH: 5.04, magH: 5.04, grooves: 0, photo: fl === '43X' ? 'g43x' : 'g48' };
     }
     case 'p320': {
       const size = a(b.grip, 'size') ?? 'carry';
@@ -788,7 +790,8 @@ function pistolSpec(platform: Platform, b: Build): PistolSpec {
       if (platform.id === 'glock20') {
         const fr = b.frame;
         const grooved = !fr || !matches(fr, /No finger grooves/);
-        return { m, frame: m, gripH: 5.51, magH: b.mag?.attrs.ext ? 6.5 : 5.51, grooves: grooved ? 3 : 0, large: true };
+        const photo = fr?.brand === 'Lone Wolf' ? undefined : 'g20gen4';
+        return { m: photo ? { ...m, sh: GLOCK_PHOTOS[photo].sb } : m, frame: m, gripH: 5.51, magH: b.mag?.attrs.ext ? 6.5 : 5.51, grooves: grooved ? 3 : 0, large: true, photo };
       }
       const fr = b.frame;
       const grooved = !fr || (/gen3|gen4/.test(String(fr.attrs.gen)) && !matches(fr, /No finger grooves/));
@@ -799,7 +802,9 @@ function pistolSpec(platform: Platform, b: Build): PistolSpec {
       const sk = 'glock' + String(a(b.slide, 'len') ?? a(fr, 'model') ?? 'G19').slice(1);
       const key = platform.id === 'glock9' ? fk : platform.id;
       const sm = platform.id === 'glock9' ? MODELS[sk] : m;
-      const photo = `g${key.slice(5)}${String(fr?.attrs.gen ?? '')}`;
+      // The photo of the frame this build uses (the G34 and G47 ride on G17 and G45 frames); the Timberwolf keeps its own drawing.
+      const pk = ({ glock34: 'glock17', glock47: 'glock45' } as Record<string, string>)[key] ?? key;
+      const photo = fr?.brand === 'Lone Wolf' ? '' : `g${pk.slice(5)}${String(fr?.attrs.gen ?? b.slide?.attrs.gen ?? 'gen5')}`;
       if (GLOCK_PHOTOS[photo]) return { m: { ...sm, sh: GLOCK_PHOTOS[photo].sb }, frame: MODELS[key] ?? m, gripH: GLOCK_H[key] ?? 5.04, magH: (ms ? GLOCK_MAG_H[ms] : GLOCK_H[key] ?? 5.04) + over, grooves: 0, photo };
       return { m: sm, frame: MODELS[key] ?? m, gripH: GLOCK_H[key] ?? 5.04, magH: (ms ? GLOCK_MAG_H[ms] : GLOCK_H[key] ?? 5.04) + over, grooves: grooved ? (key === 'glock26' ? 2 : 3) : 0 };
     }
@@ -1094,16 +1099,17 @@ function glockOpening([x0, y0, x1, y1]: number[]) {
 function glockPhotoFrame(ph: GlockPhoto, o: { dust: number; yRail: number; rail: boolean; seam: boolean }) {
   const pts = ph.frame;
   const xs = pts.filter((_, i) => !(i % 2)), ys = pts.filter((_, i) => i % 2);
-  const low = xs.filter((_, i) => ys[i] > ph.gb - 0.04);
+  const low = xs.filter((_, i) => ys[i] > ph.gb - 0.1); // 0.1: the slim frames' grip bottom slopes
   const heel: [number, number] = [Math.min(...low), ph.gb], toe: [number, number] = [Math.max(...low), ph.gb];
   const tang = -Math.min(...xs.filter((_, i) => ys[i] < ph.sb + 0.4));
   const P = (q: number[], close = false) => polyPath(q, same, close);
   const rr = ([x0, y0, x1, y1]: number[], r: number) =>
     `M${f(x0 + r)},${f(y0)} L${f(x1 - r)},${f(y0)} Q${f(x1)},${f(y0)} ${f(x1)},${f(y0 + r)} L${f(x1)},${f(y1 - r)} Q${f(x1)},${f(y1)} ${f(x1 - r)},${f(y1)} L${f(x0 + r)},${f(y1)} Q${f(x0)},${f(y1)} ${f(x0)},${f(y1 - r)} L${f(x0)},${f(y0 + r)} Q${f(x0)},${f(y0)} ${f(x0 + r)},${f(y0)} Z`;
   // Dust cover: its bottom edge, from the outline, carries the accessory rail's cross slot.
-  const front = xs.map((x, i) => (x > o.dust - 1.2 && x < o.dust - 0.2 ? ys[i] : 0));
+  const dust = Math.max(...xs); // the photo's own dust cover front
+  const front = xs.map((x, i) => (x > dust - 1.2 && x < dust - 0.2 ? ys[i] : 0));
   const yDust = Math.max(...front);
-  const rail = o.rail ? ` M${f(o.dust - 0.58)},${f(yDust - 0.14)} L${f(o.dust - 0.58)},${f(yDust)} M${f(o.dust - 0.42)},${f(yDust - 0.14)} L${f(o.dust - 0.42)},${f(yDust)} M${f(o.dust - 1.6)},${f(yDust - 0.14)} L${f(o.dust - 0.1)},${f(yDust - 0.14)}` : '';
+  const rail = o.rail ? ` M${f(dust - 0.58)},${f(yDust - 0.14)} L${f(dust - 0.58)},${f(yDust)} M${f(dust - 0.42)},${f(yDust - 0.14)} L${f(dust - 0.42)},${f(yDust)} M${f(dust - 1.6)},${f(yDust - 0.14)} L${f(dust - 0.12)},${f(yDust - 0.14)}` : '';
   const [s0, s1, s2, s3] = ph.slideStop, [t0, t1, t2, t3] = ph.takedown, [c0, c1, c2, c3] = ph.magCatch;
   const controls = rr(ph.slideStop, 0.06) + ` M${f(s0 + 0.06)},${f(s1 + 0.09)} L${f(s2 - 0.06)},${f(s1 + 0.09)} M${f(s0 + 0.06)},${f((s1 + s3) / 2 + 0.03)} L${f(s2 - 0.06)},${f((s1 + s3) / 2 + 0.03)}`
     + ' ' + rr(ph.takedown, 0.02) + ` M${f(t0 + 0.03)},${f(t1 + 0.1)} L${f(t2 - 0.03)},${f(t1 + 0.1)} M${f(t0 + 0.03)},${f(t1 + 0.16)} L${f(t2 - 0.03)},${f(t1 + 0.16)}`
