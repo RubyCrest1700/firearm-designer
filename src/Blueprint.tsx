@@ -2,6 +2,7 @@ import { useRef, useState, type ReactNode } from 'react';
 import { mountsFor } from './data/addons';
 import { AR_PROFILES, type ArPiece } from './data/arProfiles';
 import { OPTIC_PROFILES } from './data/opticProfiles';
+import { GLOCK_PHOTOS, type GlockPhoto } from './data/glockPhotos';
 import { PROFILES } from './data/pistolProfiles';
 import type { Build, Part, Placement, Platform } from './types';
 
@@ -721,7 +722,7 @@ const MODELS: Record<string, PistolModel> = {
 };
 
 /** Published height with a flush magazine, by grip size / magazine size. */
-const GLOCK_H: Record<string, number> = { glock17: 5.47, glock19: 5.04, glock26: 4.17, glock45: 5.47, glock20: 5.51 };
+const GLOCK_H: Record<string, number> = { glock17: 5.47, glock34: 5.47, glock19: 5.04, glock26: 4.17, glock45: 5.47, glock47: 5.47, glock20: 5.51 };
 const GLOCK_MAG_H: Record<number, number> = { 4: 5.47, 3: 5.47, 2: 5.04, 1: 4.17 };
 const P320_H: Record<string, number> = { full: 5.5, carry: 5.5, compact: 5.3, subcompact: 4.7 };
 const P320_DUST: Record<string, string> = { full: 'full', carry: 'compact', compact: 'compact', subcompact: 'subcompact' };
@@ -742,6 +743,8 @@ interface PistolSpec {
   breech?: number;
   /** Large-frame Glock (G20/G21): a deeper grip front to back. */
   large?: boolean;
+  /** Glock frame measured from a photo (GLOCK_PHOTOS key), when we have one for this frame. */
+  photo?: string;
 }
 
 function pistolSpec(platform: Platform, b: Build): PistolSpec {
@@ -749,7 +752,9 @@ function pistolSpec(platform: Platform, b: Build): PistolSpec {
   switch (platform.id) {
     case 'glock43x': {
       const pick = (v?: string) => (v === '43X' ? MODELS.g43x : MODELS.g48);
-      return { m: pick(a(b.slide, 'len') ?? a(b.frame, 'len')), frame: pick(a(b.frame, 'len') ?? a(b.slide, 'len')), gripH: 5.04, magH: 5.04, grooves: 0 };
+      const fl = a(b.frame, 'len') ?? a(b.slide, 'len');
+      const ph = GLOCK_PHOTOS[fl === '43X' ? 'g43x' : 'g48'];
+      return { m: { ...pick(a(b.slide, 'len') ?? a(b.frame, 'len')), sh: ph.sb }, frame: pick(fl), gripH: 5.04, magH: 5.04, grooves: 0, photo: fl === '43X' ? 'g43x' : 'g48' };
     }
     case 'p320': {
       const size = a(b.grip, 'size') ?? 'carry';
@@ -785,7 +790,8 @@ function pistolSpec(platform: Platform, b: Build): PistolSpec {
       if (platform.id === 'glock20') {
         const fr = b.frame;
         const grooved = !fr || !matches(fr, /No finger grooves/);
-        return { m, frame: m, gripH: 5.51, magH: b.mag?.attrs.ext ? 6.5 : 5.51, grooves: grooved ? 3 : 0, large: true };
+        const photo = fr?.brand === 'Lone Wolf' ? undefined : 'g20gen4';
+        return { m: photo ? { ...m, sh: GLOCK_PHOTOS[photo].sb } : m, frame: m, gripH: 5.51, magH: b.mag?.attrs.ext ? 6.5 : 5.51, grooves: grooved ? 3 : 0, large: true, photo };
       }
       const fr = b.frame;
       const grooved = !fr || (/gen3|gen4/.test(String(fr.attrs.gen)) && !matches(fr, /No finger grooves/));
@@ -796,6 +802,10 @@ function pistolSpec(platform: Platform, b: Build): PistolSpec {
       const sk = 'glock' + String(a(b.slide, 'len') ?? a(fr, 'model') ?? 'G19').slice(1);
       const key = platform.id === 'glock9' ? fk : platform.id;
       const sm = platform.id === 'glock9' ? MODELS[sk] : m;
+      // The photo of the frame this build uses (the G34 and G47 ride on G17 and G45 frames); the Timberwolf keeps its own drawing.
+      const pk = ({ glock34: 'glock17', glock47: 'glock45' } as Record<string, string>)[key] ?? key;
+      const photo = fr?.brand === 'Lone Wolf' ? '' : `g${pk.slice(5)}${String(fr?.attrs.gen ?? b.slide?.attrs.gen ?? 'gen5')}`;
+      if (GLOCK_PHOTOS[photo]) return { m: { ...sm, sh: GLOCK_PHOTOS[photo].sb }, frame: MODELS[key] ?? m, gripH: GLOCK_H[key] ?? 5.04, magH: (ms ? GLOCK_MAG_H[ms] : GLOCK_H[key] ?? 5.04) + over, grooves: 0, photo };
       return { m: sm, frame: MODELS[key] ?? m, gripH: GLOCK_H[key] ?? 5.04, magH: (ms ? GLOCK_MAG_H[ms] : GLOCK_H[key] ?? 5.04) + over, grooves: grooved ? (key === 'glock26' ? 2 : 3) : 0 };
     }
   }
@@ -1072,6 +1082,66 @@ function glockGrip(traced: number[], o: { SH: number; hole: number[]; slim: bool
   return { pts, heel: [hx, yGB] as [number, number], toe: [toeX, yGB] as [number, number], tang, h1x };
 }
 
+/** Glock's trigger guard opening: a squared front (nearly vertical front wall, tight corners) and a rounder back
+ *  (US 4,539,889 FIG. 1), in the box [x0, y0, x1, y1]. */
+function glockOpening([x0, y0, x1, y1]: number[]) {
+  const r = (cx: number, cy: number, rr: number, a0: number, a1: number, n = 5) => {
+    const out: number[] = [];
+    for (let k = 0; k <= n; k++) { const a = a0 + ((a1 - a0) * k) / n; out.push(cx + rr * Math.cos(a), cy + rr * Math.sin(a)); }
+    return out;
+  };
+  const PI = Math.PI;
+  return [...r(x0 + 0.3, y0 + 0.3, 0.3, PI, 1.5 * PI), ...r(x1 - 0.16, y0 + 0.16, 0.16, 1.5 * PI, 2 * PI), ...r(x1 - 0.2, y1 - 0.2, 0.2, 0, 0.5 * PI), ...r(x0 + 0.34, y1 - 0.34, 0.34, 0.5 * PI, PI)];
+}
+
+/** A Glock frame measured from a photo (GLOCK_PHOTOS): its outline, guard opening, controls, back strap seam and
+ *  grip texture, all where the photo shows them. Texture is the shared dot stipple at 0.1" pitch. */
+function glockPhotoFrame(ph: GlockPhoto, o: { dust: number; yRail: number; rail: boolean; seam: boolean }) {
+  const pts = ph.frame;
+  const xs = pts.filter((_, i) => !(i % 2)), ys = pts.filter((_, i) => i % 2);
+  const low = xs.filter((_, i) => ys[i] > ph.gb - 0.1); // 0.1: the slim frames' grip bottom slopes
+  const heel: [number, number] = [Math.min(...low), ph.gb], toe: [number, number] = [Math.max(...low), ph.gb];
+  const tang = -Math.min(...xs.filter((_, i) => ys[i] < ph.sb + 0.4));
+  const P = (q: number[], close = false) => polyPath(q, same, close);
+  const rr = ([x0, y0, x1, y1]: number[], r: number) =>
+    `M${f(x0 + r)},${f(y0)} L${f(x1 - r)},${f(y0)} Q${f(x1)},${f(y0)} ${f(x1)},${f(y0 + r)} L${f(x1)},${f(y1 - r)} Q${f(x1)},${f(y1)} ${f(x1 - r)},${f(y1)} L${f(x0 + r)},${f(y1)} Q${f(x0)},${f(y1)} ${f(x0)},${f(y1 - r)} L${f(x0)},${f(y0 + r)} Q${f(x0)},${f(y0)} ${f(x0 + r)},${f(y0)} Z`;
+  // Dust cover: its bottom edge, from the outline, carries the accessory rail's cross slot.
+  const dust = Math.max(...xs); // the photo's own dust cover front
+  const front = xs.map((x, i) => (x > dust - 1.2 && x < dust - 0.2 ? ys[i] : 0));
+  const yDust = Math.max(...front);
+  const rail = o.rail ? ` M${f(dust - 0.58)},${f(yDust - 0.14)} L${f(dust - 0.58)},${f(yDust)} M${f(dust - 0.42)},${f(yDust - 0.14)} L${f(dust - 0.42)},${f(yDust)} M${f(dust - 1.6)},${f(yDust - 0.14)} L${f(dust - 0.12)},${f(yDust - 0.14)}` : '';
+  const [s0, s1, s2, s3] = ph.slideStop, [t0, t1, t2, t3] = ph.takedown, [c0, c1, c2, c3] = ph.magCatch;
+  const controls = rr(ph.slideStop, 0.06) + ` M${f(s0 + 0.06)},${f(s1 + 0.09)} L${f(s2 - 0.06)},${f(s1 + 0.09)} M${f(s0 + 0.06)},${f((s1 + s3) / 2 + 0.03)} L${f(s2 - 0.06)},${f((s1 + s3) / 2 + 0.03)}`
+    + ' ' + rr(ph.takedown, 0.02) + ` M${f(t0 + 0.03)},${f(t1 + 0.1)} L${f(t2 - 0.03)},${f(t1 + 0.1)} M${f(t0 + 0.03)},${f(t1 + 0.16)} L${f(t2 - 0.03)},${f(t1 + 0.16)}`
+    + ' ' + OC(ph.triggerPin[0], ph.triggerPin[1], ph.triggerPin[2]) + ' ' + OC(ph.housingPin[0], ph.housingPin[1], ph.housingPin[2])
+    + ' ' + rr(ph.magCatch, 0.03) + repeat(c0 + 0.07, c2 - 0.06, 0.07, (x) => ` M${x},${f(c1 + 0.05)} L${x},${f(c3 - 0.05)}`);
+  // Grip texture: the side panel between its molded rear edge and the front strap, and the back strap between the
+  // outline and its seam. The logo plate is left smooth.
+  const lineX = (q: number[], y: number) => {
+    for (let i = 0; i + 3 < q.length; i += 2) if ((q[i + 1] - y) * (q[i + 3] - y) <= 0) return q[i] + ((y - q[i + 1]) / (q[i + 3] - q[i + 1] || 1)) * (q[i + 2] - q[i]);
+    return NaN;
+  };
+  const [l0, l1, l2, l3] = ph.logo;
+  // The front strap's line, carried up past the trigger guard so the texture stops where the strap would be.
+  const fa = crossings(pts, ph.texBottom - 0.4), fb = crossings(pts, (ph.texBottom + ys.reduce((a, b) => Math.max(a, b > 2.4 && b < 3 ? b : a), 2.4)) / 2);
+  const ya = ph.texBottom - 0.4, yb = (ph.texBottom + ys.reduce((a, b) => Math.max(a, b > 2.4 && b < 3 ? b : a), 2.4)) / 2;
+  const strap = (y: number) => fa[fa.length - 1] + ((y - ya) / (yb - ya)) * (fb[fb.length - 1] - fa[fa.length - 1]);
+  let stipple = '';
+  for (let y = ph.texTop, row = 0; y <= ph.texBottom; y += 0.1, row++) {
+    const c = crossings(pts, y);
+    const off = row % 2 ? 0.05 : 0;
+    const back = c[0], frontX = Math.min(c[c.length - 1], strap(y));
+    const rear = lineX(ph.panelRear, y), sm = lineX(ph.seam, y);
+    if (!Number.isNaN(rear)) for (let x = rear + 0.08 + off; x < frontX - 0.07; x += 0.1) {
+      if (x > l0 - 0.04 && x < l2 + 0.04 && y > l1 - 0.04 && y < l3 + 0.04) continue;
+      stipple += `M${f(x)},${f(y)} L${f(x + 0.014)},${f(y)} `;
+    }
+    if (!Number.isNaN(sm) && y < ph.texBottom - 0.15) for (let x = back + 0.06 + off / 2; x < sm - 0.05; x += 0.08) stipple += `M${f(x)},${f(y)} L${f(x + 0.014)},${f(y)} `;
+  }
+  const frameDetail = `${rail} ${controls} ${o.seam ? P(ph.seam) : ''} ${P(ph.panelRear)} ${rr(ph.logo, 0.06)}`;
+  return { mapped: pts, heel, toe, tang, hole: P(glockOpening(ph.hole), true), frameDetail, stipple };
+}
+
 /** Where a horizontal line at y crosses a closed polyline. */
 function crossings(pts: number[], y: number) {
   const xs: number[] = [];
@@ -1090,6 +1160,8 @@ interface ProfileGeo {
   gF: number; dust: number; railY: number;
   heel: [number, number]; toe: [number, number]; yGB: number; yMB: number; ext: number;
   frameD: string; frameDetail: string; stipple: string; slideD: string; slideDetail: string; windowD: string;
+  /** Floor plate measured from a photo (flush OEM magazine). */
+  plateD?: string;
 }
 
 /** Moving average over a closed polyline (w points each side), to calm the wobble of a dotted drawing's trace. */
@@ -1165,17 +1237,8 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   let toe = grip(mk.toe[0], mk.toe[1]);
   const ext = Math.max(0, spec.magH - spec.gripH);
   // The Glock guard opening has a squared front: nearly vertical front wall and tight corners (US 4,539,889 FIG. 1).
-  const glockHole = (() => {
-    const [x0, y0, x1, y1] = mk.hole;
-    const r = (cx: number, cy: number, rr: number, a0: number, a1: number, n = 5) => {
-      const out: number[] = [];
-      for (let k = 0; k <= n; k++) { const a = a0 + ((a1 - a0) * k) / n; out.push(cx + rr * Math.cos(a), cy + rr * Math.sin(a)); }
-      return out;
-    };
-    const PI = Math.PI;
-    return [...r(x0 + 0.3, y0 + 0.3, 0.3, PI, 1.5 * PI), ...r(x1 - 0.16, y0 + 0.16, 0.16, 1.5 * PI, 2 * PI), ...r(x1 - 0.2, y1 - 0.2, 0.2, 0, 0.5 * PI), ...r(x0 + 0.34, y1 - 0.34, 0.34, 0.5 * PI, PI)];
-  })();
-  const hole = glock ? polyPath(glockHole, frameMap, true) : pr.frame.hole ? polyPath(scF(pr.frame.hole), frameMap, true) : '';
+  const glockHole = glockOpening(mk.hole);
+  let hole = glock ? polyPath(glockHole, frameMap, true) : pr.frame.hole ? polyPath(scF(pr.frame.hole), frameMap, true) : '';
   const outlines = pr.frame.outline.map((ol) => (glock ? smooth(fillWeb(densify(scF(ol), 0.05), mk.sh + 0.15, mk.gripBottom - 0.1, 0.65), 2) : ol));
   if (!glock && (v.beaver || v.undercut || v.flare)) {
     // Sig grip modules that leave the patent's shape: the X-Series, Wilson Combat and AXG modules reach further back
@@ -1219,6 +1282,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   }
   const gF = fx(h1x + 0.15), dust = fx(mk.dust);
   let mapped: number[] = [];
+  let photoTrig: { d: string; line: string; top: number; plate: string; yMB: number } | undefined;
   if (glock) {
     // The G42 drawing's detail lines are dotted CAD shading; draw Glock's own details on the traced outline instead.
     const traced = outlines[0].flatMap((_, i, a) => (i % 2 ? [] : frameMap(a[i], a[i + 1])));
@@ -1278,6 +1342,17 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     const extractor = `M${f(port0 - 0.7)},0.24 L${f(port0 - 0.04)},0.24 L${f(port0 - 0.04)},0.42 L${f(port0 - 0.7)},0.42 Z`;
     const face = `M${f(SL - 0.05)},${f(mk.bore - 0.2)} L${f(SL - 0.05)},${f(mk.bore + 0.2)}`;
     slideDetail = `${lines} ${rearSerr} ${fSerr} ${extractor} ${face} ${chamfer}`;
+    const ph = spec.photo ? GLOCK_PHOTOS[spec.photo] : undefined;
+    if (ph) {
+      // A frame measured from a photo replaces the patent-based frame, and the slide gets the photo's serrations.
+      const pf = glockPhotoFrame(ph, { dust, yRail, rail: !o.slim || v.rail, seam: v.seam });
+      ({ mapped, heel, toe, tang, hole, frameDetail, stipple } = pf);
+      const sr = ph.serrations;
+      const grooves = (xs: number[]) => xs.map((x) => `M${f(x)},${sr.y0} L${f(x + lean)},${sr.y1} M${f(x + sr.w)},${sr.y0} L${f(x + sr.w + lean)},${sr.y1}`).join(' ');
+      const fx0 = SL - 1.5;
+      slideDetail = `${lines} ${grooves(sr.x)} ${o.frontSerr ? grooves(sr.x.slice(0, 5).map((x) => fx0 + (x - sr.x[0]))) : ''} ${extractor} ${face} ${chamfer}`;
+      photoTrig = { d: ph.trigger, line: ph.triggerLine, top: ph.hole[1], plate: polyPath(ph.plate, same, true), yMB: Math.max(...ph.plate.filter((_, i) => i % 2)) };
+    }
   }
   if (key === 'hellcat') slideDetail += ' ' + (v.slide === 'apex' || v.slide === 'tp' ? aftermarketSerr(SL, mk.sh, port1, v.slide) : HELLCAT_SERR.map((p) => polyPath(scS(p.pts), slideMap, p.close)).join(' '));
   if (key === 'mp') slideDetail += ' ' + mpSerr(SL, mk.sh);
@@ -1286,17 +1361,22 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     frameDetail += ` ${OC(fx(2.4), mk.railBottom + 0.32, 0.17)} ${OC(fx(2.4), mk.railBottom + 0.32, 0.06)} M${f(fx(2.0))},${f(mk.railBottom + 0.1)} L${f(fx(1.75))},${f(mk.railBottom + 0.1)} Q${f(fx(1.6))},${f(mk.railBottom + 0.12)} ${f(fx(1.6))},${f(mk.railBottom + 0.24)} L${f(fx(1.62))},${f(mk.railBottom + 0.3)} L${f(fx(1.95))},${f(mk.railBottom + 0.28)}`;
   }
   const yGB = Math.max(heel[1], toe[1]);
+  // A slide longer than the frame (G34 on a G17 frame, G47 or G19X on a G45 frame): ahead of the dust cover the
+  // slide's nose comes down around the recoil spring, about 0.4" below the slide flats on the photos.
+  const fF = glock && spec.photo ? Math.max(...mapped.filter((_, i) => !(i % 2))) : SL;
+  const ny = mk.sh + 0.4;
+  const slideNose = SL > fF + 0.1 ? ` M${f(fF)},${f(mk.sh)} L${f(SL)},${f(mk.sh)} L${f(SL)},${f(ny - 0.12)} Q${f(SL)},${f(ny)} ${f(SL - 0.12)},${f(ny)} L${f(fF)},${f(ny)} Z` : '';
   return {
     key, SL, muzzle: sx(mk.muzzle), tang, bc: mk.bore, springY: mk.spring, sh: mk.sh,
     port0, port1, portH: R.portH,
-    xt: TRIGGERS[key].face, trigTop: h0y,
-    trigD: scD((o.flat ? TRIGGERS[key].flat : TRIGGERS[key].curved)(h0y - dy) + (v.hook && TRIGGERS[key].hook ? ' ' + TRIGGERS[key].hook : '')),
-    trigLine: scD(o.flat ? TRIGGERS[key].line.flat : TRIGGERS[key].line.curved),
+    xt: photoTrig ? 3.5 : TRIGGERS[key].face, trigTop: photoTrig?.top ?? h0y,
+    trigD: photoTrig?.d ?? scD((o.flat ? TRIGGERS[key].flat : TRIGGERS[key].curved)(h0y - dy) + (v.hook && TRIGGERS[key].hook ? ' ' + TRIGGERS[key].hook : '')),
+    trigLine: photoTrig?.line ?? scD(o.flat ? TRIGGERS[key].line.flat : TRIGGERS[key].line.curved),
     gF, dust, railY: mk.railBottom,
-    heel, toe, yGB, yMB: yGB + ext + BASE, ext,
+    heel, toe, yGB, yMB: photoTrig ? photoTrig.yMB + ext : yGB + ext + BASE, ext, plateD: photoTrig?.plate,
     frameD: (glock ? polyPath(mapped, (x, y) => [x, y], true) : outlines.map((ol) => polyPath(ol, frameMap, true)).join(' ')) + ' ' + hole,
     frameDetail, stipple,
-    slideD: pr.slide.outline.map((ol) => polyPath(scS(ol), slideMap, true)).join(' '),
+    slideD: pr.slide.outline.map((ol) => polyPath(scS(ol), slideMap, true)).join(' ') + slideNose,
     slideDetail,
     windowD: win ? polyPath(win, grip, true) : '',
   };
@@ -1337,11 +1417,12 @@ function profilePieces(P: Piece[], g: ProfileGeo, o: {
   const seam = pm ? `M${f(hx + 0.06)},${f(hy + e + 0.08)} L${f(tx)},${f(ty + e + 0.08)} ${OC((hx + tx) / 2 - 0.25, hy + bb - 0.1, 0.012)} ${OC((hx + tx) / 2, hy + bb - 0.1, 0.012)} ${OC((hx + tx) / 2 + 0.25, hy + bb - 0.1, 0.012)}`
     : s15 ? `M${f(hx + 0.03)},${f(hy + e + 0.03)} L${f(tx - 0.01)},${f(ty + e + 0.03)}`
       : `M${f(hx + 0.1)},${f(hy + bb - 0.07)} L${f(tx - 0.08)},${f(ty + bb - 0.07)}`;
+  const photoPlate = g.plateD && o.mag === 'oem' && e < 0.05;
   P.push({ slot: o.own('mag'), z: 2, row: 'bottom', target: px((hx + tx) / 2, (hy + ty) / 2 + bb - 0.06),
     el: <>
       {g.windowD && <path d={T(g.windowD)} />}
-      <path d={T(floor)} />
-      <path className="detail" d={T(`${seam} ${extLines}`)} />
+      <path d={T(photoPlate ? g.plateD! : floor)} />
+      {!photoPlate && <path className="detail" d={T(`${seam} ${extLines}`)} />}
     </> });
 
   /* Trigger: hangs from the top of the guard opening, shaped as in the patents (which show it as a broken line) */
