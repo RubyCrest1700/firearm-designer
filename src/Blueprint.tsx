@@ -1289,11 +1289,16 @@ const TRIGGERS: Record<ProfileKey, { face: number; curved: (y0: number) => strin
       flat: (y0) => rel('2.958,0.05 2.99,0.31 3.09,0.76', y0, false) + ' ' + rel('2.739,0.089 2.766,0.081 2.805,0.088 2.832,0.105 2.856,0.136 2.957,0.502 2.949,0.518 2.918,0.519 2.892,0.498 2.709,0.179 2.7,0.151 2.702,0.124', y0, true),
     },
   },
+  // The P365's triggers traced from RSR Group's flat photos (the flat shoe from the P365XL, the curved one from the P365,
+  // scaled by its trigger guard): both hang from the guard's top and sweep forward to a tip near the guard's bottom.
   p365: {
-    face: 2.8,
-    curved: (y0) => `M2.6,${y0} Q2.54,1.72 2.7,1.92 Q2.78,1.98 2.86,1.95 Q2.89,1.92 2.86,1.89 Q2.76,1.76 2.8,${y0} Z`,
-    flat: (y0) => `M2.62,${y0} L2.62,1.9 Q2.62,1.95 2.67,1.95 L2.78,1.95 Q2.82,1.95 2.81,1.9 L2.8,${y0} Z`,
-    line: { curved: 'M2.74,1.4 Q2.72,1.7 2.8,1.88', flat: 'M2.71,1.42 L2.71,1.88' },
+    face: 3.15,
+    curved: (y0) => rel('2.795,0.003 2.832,0.209 2.853,0.286 2.912,0.418 2.991,0.541 3.053,0.615 3.13,0.692 3.216,0.756 3.314,0.8 3.397,0.818 3.428,0.812 3.428,0.784 3.382,0.753 3.308,0.689 3.237,0.606 3.188,0.526 3.154,0.449 3.13,0.369 3.118,0.295 3.121,0.148 3.154,0.003', y0, true),
+    flat: (y0) => rel('2.814,0.014 2.814,0.049 2.835,0.101 3.238,0.737 3.284,0.785 3.332,0.813 3.363,0.824 3.412,0.82 3.426,0.799 3.429,0.754 3.419,0.733 3.36,0.681 3.141,0.146 3.138,0.07 3.151,0.01', y0, true),
+    line: {
+      curved: (y0) => rel('3.07,0.05 3.06,0.3 3.15,0.55 3.3,0.74', y0, false),
+      flat: (y0) => rel('3.09,0.15 3.31,0.7', y0, false),
+    },
   },
   glock: {
     face: 2.98,
@@ -1682,7 +1687,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   const [h0x, h0y, h1x, h1y] = mk.hole;
   // The Glock drawing is a G42, so its sizes are fitted by slide length; the Sigs by overall length.
   // A grip module traced with its front face (the Subcompact, the AXG and the Wilson) keeps the slide at its published length, so the slide covers the module as in the photos.
-  const photoNose = !glock && !!v.module && !!SIG_MODULE_PHOTOS[v.module]?.nose;
+  const photoNose = key === 'p320' && !!v.module && !!SIG_MODULE_PHOTOS[v.module]?.nose;
   const dS = glock || photoNose ? spec.m.slide - mk.slide : spec.m.oal - R.oal; // slide length change
   const dF = glock ? spec.frame.slide - mk.slide : spec.frame.oal - R.oal; // dust cover length change
   // Grip length change. The G42 drawing's own height (grip bottom plus sights and floor plate) is a little under the published 4.13".
@@ -1759,7 +1764,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   // The P320's takedown lever is drawn from the photos below, so the patent's version of it is dropped.
   const patentLever = (ol: number[]) => key === 'p320' && ol.every((c, i) => (i % 2 ? c > 1.03 && c < 1.43 : c > 2.0 && c < 3.62));
   // A module with its photo's front face draws its own dust cover and rail, so the patent's lines there are dropped.
-  const patentRail = (ol: number[]) => !!modPh?.front && (ol.every((c, i) => (i % 2 ? c > 1.3 : true)) && Math.max(...ol.filter((_, i) => !(i % 2))) > 4.0 || ol.every((c, i) => (i % 2 ? c > 0.95 : c > 5.5)));
+  const patentRail = (ol: number[]) => !!modPh?.front && ((key === 'p365' && ol.every((c, i) => (i % 2 ? c > mk.sh + 0.03 : c > 3.6))) || ol.every((c, i) => (i % 2 ? c > 1.3 : true)) && Math.max(...ol.filter((_, i) => !(i % 2))) > 4.0 || ol.every((c, i) => (i % 2 ? c > 0.95 : c > 5.5)));
   const keepDetail = (ol: number[]) => !patentLever(ol) && !patentRail(ol) && (glock || (modPh ? Math.max(...ol.filter((_, i) => i % 2)) < h0y + 0.2
     : v.texture === 'patent' || Math.min(...ol.filter((_, i) => i % 2)) < h1y - 0.1));
   let frameDetail = pr.frame.detail.filter(keepDetail).map((ol) => polyPath(scF(ol), frameMap, false)).join(' ');
@@ -1942,8 +1947,8 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   const yGB = Math.max(heel[1], toe[1]);
   // The P320's photo-traced triggers keep their size unless a module's guard is too short for them; then they shorten to clear it by 0.08".
   const reachP320 = (d: string) => {
-    if (key !== 'p320') return d;
-    const k = Math.min(1, (h1y - 0.08 - h0y) / (o.flat ? 0.949 : 0.844));
+    if (key !== 'p320' && key !== 'p365') return d;
+    const k = Math.min(1, (h1y - 0.08 - h0y) / (key === 'p365' ? (o.flat ? 0.824 : 0.818) : o.flat ? 0.949 : 0.844));
     let i = 0;
     return d.replace(/-?\d*\.?\d+/g, (n) => (i++ % 2 ? n3(h0y + (+n - h0y) * k) : n));
   };
@@ -2161,7 +2166,7 @@ function pistol(platform: Platform, build: Build): Scene {
     bigCatch: gen === 'gen4' || gen === 'gen5' || matches(fr, /Timberwolf|TWF/), seam: gen === 'gen4' || gen === 'gen5' || matches(fr, /Timberwolf/),
     sf: !!fr?.attrs.sf, flare5: gen === 'gen5', timberwolf: matches(fr, /Timberwolf/), rail: !!fr?.attrs.rail,
     beaver: wilson || axg, undercut: wilson || axg, flare: wilson,
-    module: matches(gr, /X-Series Full/) ? 'xfull' : matches(gr, /X-Series Carry/) ? 'xcarry' : gr?.id === 'p-grip-sub' ? 'sub' : gr?.id === 'p-grip-wilson' ? 'wilson' : axg ? 'axg' : undefined,
+    module: matches(gr, /X-Series Full/) ? 'xfull' : matches(gr, /X-Series Carry/) ? 'xcarry' : gr?.id === 'p-grip-sub' ? 'sub' : gr?.id === 'p-grip-wilson' ? 'wilson' : gr?.id === 'p365-grip-wilson' ? 'wilson365' : axg ? 'axg' : undefined,
     texture: wilson ? 'wilson' : axg ? 'axg' : xs ? 'x' : 'patent',
     slide: b.slide?.brand === 'Brownells' ? 'brownells' : matches(b.slide, /Combat Slide/) ? 'ggp' : matches(b.slide, /Octane/) ? 'zev' : matches(b.slide, /ZPS/) ? 'zaffiri'
       : b.slide?.brand === 'Apex Tactical' ? 'apex' : matches(b.slide, /Axiom/) ? 'tp' : matches(b.slide, /Gen5/) ? 'gen5' : 'oem',
