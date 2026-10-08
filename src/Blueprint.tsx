@@ -529,10 +529,10 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
   let md: string;
   let mdet = '';
   let mlen: number;
-  // Each device to its own shape. Lantac Dragon: a squared can with three side windows shrinking toward its
-  // coned nose. Precision Armament M4-72: a fat three-chamber brake, its ports raked back. VG6 Gamma: two side
-  // chambers behind three flash-hider slots. SureFire WarComp: the SOCOM's three tines with two ports cut in its
-  // top. 3-prong hiders: traced from US D577,410 FIG. 1; other brakes from US D285,238 FIG. 1. 9mm cans are smooth
+  // Each device to its own shape. Lantac Dragon: a squared can, solid at the rear, with three side windows shrinking
+  // toward its coned nose. Precision Armament M4-72: a fat brake cut by three deep raked slots into swept fins. VG6 Gamma: two side
+  // chambers behind three flash-hider slots. SureFire WarComp: the SOCOM's three tines ahead of a grid of round
+  // ports. 3-prong hiders: traced from US D577,410 FIG. 1; other brakes from US D285,238 FIG. 1. 9mm cans are smooth
   // tubes, bell-mouthed (KAK) or coned (PSA's linear comp); Odin's Atlas 9 is a squared two-port comp.
   const mk = matches(mz, /Dragon/) ? 'dragon' : matches(mz, /M4-72/) ? 'm472' : matches(mz, /Gamma/) ? 'gamma' : matches(mz, /WarComp/) ? 'warcomp'
     : matches(mz, /prong/i) ? 'prong' : matches(mz, /Flash Can|Linear/) ? 'can' : matches(mz, /Atlas 9/) ? 'comp9' : matches(mz, /brake/i) ? 'brake' : matches(mz, /comp/i) ? 'comp' : 'a2';
@@ -545,15 +545,18 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
     const t = arPaths(AR_PROFILES[key], (x, y) => [BX + x, y - h / 2]);
     mlen = mk === 'brake' ? 2.25 : 2.2;
     md = t.o;
-    mdet = t.d + (mk === 'warcomp' ? ` ${window(BX + 0.45, BX + 0.7, -h / 2, -h / 2 + 0.2)} ${window(BX + 0.85, BX + 1.1, -h / 2, -h / 2 + 0.2)}` : '');
+    mdet = t.d + (mk === 'warcomp' ? ' ' + [0.4, 0.58].flatMap((d) => [-0.2, 0, 0.2].map((y) => OC(BX + d, y, 0.06))).join(' ') : '');
   } else if (mk === 'dragon') {
     mlen = 2.25;
     md = tube(mlen, 0.44, `L${f(BX + 2.05)},-0.44 L${f(BX + mlen)},-0.28 L${f(BX + mlen)},0.28 L${f(BX + 2.05)},0.44`);
-    mdet = `${window(BX + 0.45, BX + 0.98, -0.3, 0.2)} ${window(BX + 1.1, BX + 1.55, -0.3, 0.2)} ${window(BX + 1.67, BX + 2.0, -0.3, 0.2)} ${vents([0.55, 1.2, 1.72], 0.44)}`;
+    mdet = `M${f(BX + 0.55)},-0.44 L${f(BX + 0.55)},0.44 ${window(BX + 0.95, BX + 1.33, -0.3, 0.22)} ${window(BX + 1.42, BX + 1.75, -0.3, 0.22)} ${window(BX + 1.84, BX + 2.04, -0.26, 0.18)} ${vents([1.05, 1.5], 0.44)}`;
   } else if (mk === 'm472') {
     mlen = 2.3;
-    md = tube(mlen, 0.5);
-    mdet = [0.4, 1.0, 1.6].map((d) => `M${f(BX + d + 0.15)},-0.42 L${f(BX + d + 0.55)},-0.42 L${f(BX + d + 0.4)},0.42 L${f(BX + d)},0.42 Z`).join(' ') + ` ${vents([0.6, 1.2, 1.8], 0.5)}`;
+    // Three deep cuts raked back into the body leave fins swept toward the muzzle.
+    const top = [0.6, 1.2, 1.8].map((d) => `L${f(BX + d)},-0.5 L${f(BX + d - 0.12)},-0.16 L${f(BX + d + 0.24)},-0.5`).join(' ');
+    const bot = [1.8, 1.2, 0.6].map((d) => `L${f(BX + d + 0.24)},0.5 L${f(BX + d - 0.12)},0.16 L${f(BX + d)},0.5`).join(' ');
+    md = `M${f(BX)},-0.4 L${f(BX + 0.28)},-0.4 L${f(BX + 0.28)},-0.5 ${top} L${f(BX + mlen)},-0.5 L${f(BX + mlen)},0.5 ${bot} L${f(BX + 0.28)},0.5 L${f(BX + 0.28)},0.4 L${f(BX)},0.4 Z`;
+    mdet = `M${f(BX + 0.28)},-0.4 L${f(BX + 0.28)},0.4 M${f(BX + 2.12)},-0.5 L${f(BX + 2.12)},0.5`;
   } else if (mk === 'gamma') {
     mlen = 2.2;
     md = tube(mlen, 0.43);
@@ -601,57 +604,192 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
       move: { at: m.at, min: m.min, max: m.max, step: m.step, scale: S },
       dim: [f(ox + RF * S), f(ox + x0 * S), f(oy + outside * S), `${inch(m.at)} from receiver`], el });
   };
+  // Every add-on is drawn in its own frame: u inches from its rear end, v inches out from the rail it sits on.
+  // On the top or bottom rail its mount shows; on a side rail the mount is behind it and only the body shows.
+  // Shapes are measured from maker and retailer side photos, scaled to the published lengths.
+  // A solid backing hides the handguard lines behind a light, laser or magnifier that sits in front of it.
+  type At = (u: number, v: number) => string;
+  const frame = (side: string, x0: number, vc: number): At => (u, v) =>
+    `${f(x0 + u)},${f(side === 'top' ? RAIL_TOP - v : side === 'bottom' ? RAIL_BOT + v : -0.08 - (v - vc))}`;
+  const lp = (at: At, ...s: (string | number)[]) => {
+    let d = '';
+    for (let i = 0; i < s.length;) {
+      const c = s[i++] as string;
+      if (c === 'Z') { d += 'Z '; continue; }
+      const pts = c === 'Q' ? 2 : 1;
+      d += c;
+      for (let k = 0; k < pts; k++, i += 2) d += `${k ? ' ' : ''}${at(s[i] as number, s[i + 1] as number)}`;
+      d += ' ';
+    }
+    return d;
+  };
+  // A round body from its radius profile [u, r], rear to front; a repeated u is a step. Rings go at every step.
+  const revolve = (at: At, prof: number[][], vc: number) => {
+    const o = prof.map(([u, r]) => at(u, vc - r)).concat([...prof].reverse().map(([u, r]) => at(u, vc + r)));
+    const steps = prof.filter((p, i) => i && prof[i - 1][0] === p[0] && i < prof.length - 1).map(([u]) => {
+      const r = Math.min(...prof.filter((p) => p[0] === u).map((p) => p[1])) - 0.03;
+      return `M${at(u, vc - r)} L${at(u, vc + r)}`;
+    });
+    return { o: `M${o.join(' L')} Z`, rings: steps.join(' ') };
+  };
+  const knurl = (at: At, u0: number, u1: number, vc: number, r: number) =>
+    repeat(u0 + 0.06, u1 - 0.04, 0.09, (u) => `M${at(u, vc - r + 0.05)} L${at(u, vc + r - 0.05)}`);
+  const sideMount = (side: string) => side === 'top' || side === 'bottom';
+  const addon = (slot: string, side: string, x0: number, x1: number, vMax: number, outline: string, detail: string) => {
+    const y = (v: number) => side === 'top' ? RAIL_TOP - v : side === 'bottom' ? RAIL_BOT + v : v;
+    const [y0, y1] = side === 'top' ? [y(vMax), RAIL_TOP] : side === 'bottom' ? [RAIL_BOT, y(vMax)] : [-0.08 - vMax / 2, -0.08 + vMax / 2];
+    mountPiece(slot, <>
+      {side !== 'left' && <path className="solid" d={T(outline)} />}
+      <path fillRule="evenodd" d={T(outline)} />
+      <path className="detail" d={T(detail)} />
+    </>, x0, x1, y0, y1);
+  };
+
   if (b.light && mounts.light) {
     const m = mounts.light;
-    const len = m.len;
-    const r = 0.5, hr = 0.62, gap = 0.24;
-    const cy = m.side === 'bottom' ? RAIL_BOT + gap + r : m.side === 'top' ? RAIL_TOP - gap - r : -0.08;
-    const x0 = RF + m.at, x1 = x0 + len, hx = x1 - 1.1;
-    const tab = m.side === 'bottom' ? `M${f(x0 + 0.8)},${f(RAIL_BOT)} L${f(x0 + 0.8)},${f(cy - r)} M${f(x0 + 2.0)},${f(RAIL_BOT)} L${f(x0 + 2.0)},${f(cy - r)}`
-      : m.side === 'top' ? `M${f(x0 + 0.8)},${f(RAIL_TOP)} L${f(x0 + 0.8)},${f(cy + r)} M${f(x0 + 2.0)},${f(RAIL_TOP)} L${f(x0 + 2.0)},${f(cy + r)}` : '';
-    mountPiece('light', <>
-      <path d={T(`M${f(x0)},${f(cy - r)} L${f(hx)},${f(cy - r)} L${f(hx + 0.3)},${f(cy - hr)} L${f(x1)},${f(cy - hr)} L${f(x1)},${f(cy + hr)} L${f(hx + 0.3)},${f(cy + hr)} L${f(hx)},${f(cy + r)} L${f(x0)},${f(cy + r)} Q${f(x0 - 0.25)},${f(cy)} ${f(x0)},${f(cy - r)} Z`)} />
-      <path className="detail" d={T(`${tab} M${f(x1 - 0.12)},${f(cy - hr + 0.08)} L${f(x1 - 0.12)},${f(cy + hr - 0.08)} ${repeat(x0 + 0.5, hx - 0.4, 0.35, (x) => `M${x},${f(cy - r + 0.12)} L${x},${f(cy + r - 0.12)}`)}`)} />
-    </>, x0, x1, cy - hr, cy + hr);
+    const x0 = RF + m.at, side = m.side, show = sideMount(side);
+    let prof: number[][], vc: number, mount = '', mdet = '', lens: number, knurls = '', vMax: number;
+    if (matches(b.light, /M600/)) {
+      // SureFire M600DF: tail switch, knurled tailcap, clamp ring with the M75 clamp on the rail and its
+      // thumbscrew under the body, plain 1" tube, then the two-step 1.25" bezel.
+      vc = 0.74;
+      prof = [[0, 0.3], [0.04, 0.34], [0.25, 0.34], [0.25, 0.47], [0.95, 0.47], [0.95, 0.43], [1.05, 0.43], [1.05, 0.53], [2.1, 0.53], [2.1, 0.5], [3.35, 0.5], [3.55, 0.58], [4.1, 0.58], [4.1, 0.625], [5.25, 0.625], [5.3, 0.58]];
+      knurls = knurl(frame(side, x0, vc), 0.25, 0.95, vc, 0.47);
+      const at = frame(side, x0, vc);
+      if (show) {
+        mount = lp(at, 'M', 1.15, vc - 0.5, 'L', 1.15, 0.12, 'L', 1.3, 0, 'L', 1.95, 0, 'L', 2.05, 0.12, 'L', 2.05, vc - 0.5, 'Z',
+          'M', 1.35, vc + 0.5, 'L', 1.35, vc + 0.68, 'L', 1.45, vc + 0.68, 'L', 1.45, vc + 0.9, 'L', 1.85, vc + 0.9, 'L', 1.85, vc + 0.68, 'L', 1.95, vc + 0.68, 'L', 1.95, vc + 0.5, 'Z');
+        mdet = repeat(1.5, 1.8, 0.08, (u) => `M${at(u, vc + 0.7)} L${at(u, vc + 0.88)}`) + ` M${at(1.15, 0.2)} L${at(2.05, 0.2)}`;
+      }
+      lens = 5.22; vMax = vc + (show ? 0.9 : 0.625);
+    } else if (matches(b.light, /HL-X/)) {
+      // Streamlight HL-X: long tail and switch body, a clamp ring, a short neck, then the flared 1.4" head.
+      vc = 0.76;
+      prof = [[0, 0.38], [0.12, 0.47], [1.95, 0.49], [1.95, 0.55], [2.95, 0.55], [2.95, 0.45], [3.35, 0.45], [3.35, 0.52], [3.75, 0.52], [4.3, 0.69], [5.35, 0.69], [5.4, 0.64]];
+      const at = frame(side, x0, vc);
+      if (show) {
+        mount = lp(at, 'M', 2.05, vc - 0.55, 'L', 2.05, 0.1, 'L', 2.2, 0, 'L', 2.8, 0, 'L', 2.9, 0.1, 'L', 2.9, vc - 0.55, 'Z');
+        mdet = `M${at(2.15, 0.18)} L${at(2.8, 0.18)}`;
+      }
+      knurls = repeat(0.4, 1.7, 0.26, (u) => `M${at(u, vc - 0.4)} L${at(u, vc + 0.4)}`) + ` M${at(4.4, vc - 0.6)} L${at(4.4, vc + 0.6)}`;
+      lens = 5.3; vMax = vc + 0.69;
+    } else if (matches(b.light, /REIN/)) {
+      // Cloud Defensive REIN Micro: tailcap with its rocker, an octagonal ring, slim body and a 1" head,
+      // held on an inline M-LOK plate under the body.
+      vc = 0.56;
+      prof = [[0, 0.38], [0.05, 0.43], [0.65, 0.43], [0.65, 0.46], [1.0, 0.46], [1.0, 0.36], [1.95, 0.36], [2.05, 0.5], [3.55, 0.5], [3.6, 0.46]];
+      const at = frame(side, x0, vc);
+      if (show) mount = lp(at, 'M', 1.05, 0, 'L', 2.0, 0, 'L', 2.0, vc - 0.36, 'L', 1.05, vc - 0.36, 'Z');
+      knurls = lp(at, 'M', 0.25, vc + 0.43, 'L', 0.25, vc + 0.28, 'L', 0.42, vc + 0.28, 'L', 0.42, vc + 0.43) + ` M${at(0.82, vc - 0.46)} L${at(0.82, vc + 0.46)} M${at(2.5, vc - 0.5)} L${at(2.5, vc + 0.5)}`;
+      lens = 3.52; vMax = vc + 0.5;
+    } else {
+      vc = 0.74;
+      prof = [[0, 0.45], [0.1, 0.5], [m.len - 1.1, 0.5], [m.len - 0.8, 0.62], [m.len, 0.62]];
+      lens = m.len - 0.12; vMax = vc + 0.62;
+    }
+    const at = frame(side, x0, vc);
+    const body = revolve(at, prof, vc);
+    const rl = prof[prof.length - 1][1] - 0.06;
+    addon('light', side, x0, x0 + m.len, vMax, body.o + mount, `${body.rings} ${knurls} ${mdet} M${at(lens, vc - rl)} L${at(lens, vc + rl)}`);
   }
   if (b.laser && mounts.laser) {
     const m = mounts.laser;
-    const combo = matches(b.laser, /CMR|light/i);
-    const h = combo ? 1.3 : 1.1;
-    const x0 = RF + m.at, x1 = x0 + m.len;
-    const ya = m.side === 'bottom' ? RAIL_BOT : m.side === 'top' ? RAIL_TOP - h : -0.08 - h / 2;
-    const yb = ya + h;
-    mountPiece('laser', <>
-      <path d={T(`M${f(x0)},${f(ya + 0.15)} Q${f(x0)},${f(ya)} ${f(x0 + 0.15)},${f(ya)} L${f(x1 - 0.1)},${f(ya)} Q${f(x1)},${f(ya)} ${f(x1)},${f(ya + 0.1)} L${f(x1)},${f(yb - 0.1)} Q${f(x1)},${f(yb)} ${f(x1 - 0.1)},${f(yb)} L${f(x0 + 0.15)},${f(yb)} Q${f(x0)},${f(yb)} ${f(x0)},${f(yb - 0.15)} Z`)} />
-      <path className="detail" d={T(`M${f(x1 - 0.18)},${f(ya + 0.2)} L${f(x1 - 0.18)},${f(ya + h * 0.5)}${combo ? ` M${f(x1 - 0.18)},${f(ya + h * 0.6)} L${f(x1 - 0.18)},${f(yb - 0.2)}` : ''} M${f(x0 + 0.3)},${f(m.side === 'top' ? yb - 0.25 : ya + 0.25)} L${f(x1 - 0.7)},${f(m.side === 'top' ? yb - 0.25 : ya + 0.25)}`)} />
-    </>, x0, x1, ya, yb);
+    const x0 = RF + m.at, side = m.side, show = sideMount(side);
+    if (matches(b.laser, /CMR/)) {
+      // Crimson Trace CMR-301: a rounded light-and-laser body sitting flat on the rail: rear cap, seam,
+      // a waisted front and a crenellated bezel; a groove runs along the side.
+      const vc = 0.6, at = frame(side, x0, vc);
+      const prof = [[0, 0.46], [0.04, 0.5], [0.25, 0.5], [0.25, 0.57], [0.82, 0.57], [0.82, 0.6], [2.55, 0.6], [2.75, 0.55], [3.15, 0.55], [3.15, 0.53], [3.3, 0.53], [3.3, 0.6], [3.6, 0.6], [3.9, 0.45]];
+      const body = revolve(at, prof, vc);
+      addon('laser', side, x0, x0 + m.len, 1.2, body.o,
+        `${body.rings} M${at(0.25, vc)} L${at(2.6, vc)} M${at(0.25, vc - 0.08)} L${at(2.6, vc - 0.08)} ${repeat(3.42, 3.75, 0.11, (u) => `M${at(u, vc - 0.5)} L${at(u + 0.05, vc - 0.3)}`)}`);
+    } else if (matches(b.laser, /LS117/)) {
+      // Holosun LS117: a squared housing on its own QD Picatinny mount, knurled battery cap at the rear,
+      // windage screw on the side, elevation screw on top and the emitter in a step at the front.
+      const vb = show ? 0.42 : 0, vt = vb + 0.85, vc = (vb + vt) / 2, at = frame(side, x0, vc);
+      const o = lp(at, 'M', 0.5, vb + 0.2, 'L', 0.7, vb, 'L', 2.75, vb, 'L', 2.75, vb + 0.1, 'L', 2.97, vb + 0.1, 'L', 2.97, vc - 0.3, 'L', 3.2, vc - 0.27,
+        'L', 3.2, vc + 0.27, 'L', 2.97, vc + 0.3, 'L', 2.97, vt - 0.1, 'L', 2.75, vt - 0.1, 'L', 2.75, vt, 'L', 2.35, vt, 'L', 2.35, vt + 0.12, 'L', 1.85, vt + 0.12, 'L', 1.85, vt, 'L', 0.5, vt, 'Z',
+        'M', 0.5, vc - 0.38, 'L', 0.04, vc - 0.38, 'L', 0, vc - 0.32, 'L', 0, vc + 0.32, 'L', 0.04, vc + 0.38, 'L', 0.5, vc + 0.38, 'Z')
+        + (show ? lp(at, 'M', 1.1, vb, 'L', 1.1, 0.08, 'L', 1.2, 0, 'L', 2.5, 0, 'L', 2.6, 0.08, 'L', 2.6, vb, 'Z') : '');
+      const sc = at(2.1, vc - 0.05).split(',').map(Number);
+      addon('laser', side, x0, x0 + m.len, vt + 0.12, o,
+        `${knurl(at, 0, 0.5, vc, 0.38)} M${at(2.97, vb + 0.1)} L${at(2.97, vt - 0.1)} ${OC(sc[0], sc[1], 0.24)} ${OC(sc[0], sc[1], 0.17)}${show ? ` ${OC(...(at(1.85, vb / 2).split(',').map(Number) as [number, number]), 0.1)}` : ''}`);
+    } else {
+      const h = 1.1, vc = h / 2, at = frame(side, x0, vc);
+      addon('laser', side, x0, x0 + m.len, h, lp(at, 'M', 0, 0.1, 'L', 0.1, 0, 'L', m.len - 0.1, 0, 'L', m.len, 0.1, 'L', m.len, h - 0.1, 'L', m.len - 0.1, h, 'L', 0.1, h, 'L', 0, h - 0.1, 'Z'),
+        `M${at(m.len - 0.18, 0.2)} L${at(m.len - 0.18, h - 0.2)}`);
+    }
   }
   if (b.foregrip && mounts.foregrip) {
     const m = mounts.foregrip;
     const kind = b.foregrip.attrs.kind;
     const h = (b.foregrip.attrs.h as number) ?? 1;
-    const x0 = RF + m.at, x1 = x0 + m.len, y = RAIL_BOT, yb = y + h;
-    const d = kind === 'vertical'
-      ? `M${f(x0)},${f(y)} L${f(x1)},${f(y)} L${f(x1 - 0.12)},${f(yb - 0.25)} Q${f(x1 - 0.16)},${f(yb)} ${f(x1 - 0.42)},${f(yb)} L${f(x0 + 0.3)},${f(yb)} Q${f(x0 + 0.05)},${f(yb)} ${f(x0 + 0.08)},${f(yb - 0.28)} Z`
-      : kind === 'angled'
-        ? `M${f(x0)},${f(y)} L${f(x1)},${f(y)} L${f(x1 - 0.15)},${f(y + 0.28)} L${f(x0 + 0.55)},${f(yb)} Q${f(x0 + 0.1)},${f(yb + 0.02)} ${f(x0)},${f(yb - 0.35)} Z`
-        : `M${f(x0)},${f(y)} L${f(x1)},${f(y)} L${f(x1)},${f(yb - 0.1)} Q${f(x1)},${f(yb)} ${f(x1 - 0.12)},${f(yb)} L${f(x0 + 0.55)},${f(yb)} L${f(x0)},${f(y + 0.12)} Z`;
-    const det = kind === 'vertical'
-      ? repeat(y + 0.7, yb - 0.4, 0.42, (yy) => `M${f(x0 + 0.2)},${yy} L${f(x1 - 0.2)},${yy}`)
-      : `M${f(x0 + 0.25)},${f(y + 0.12)} L${f(x1 - 0.25)},${f(y + 0.12)}`;
-    mountPiece('foregrip', <><path d={T(d)} /><path className="detail" d={T(det)} /></>, x0, x1, y, yb);
+    const L = m.len, x0 = RF + m.at, at = frame('bottom', x0, 0);
+    let o: string, det: string;
+    if (matches(b.foregrip, /MVG/)) {
+      // Magpul MVG: flared top, a waist under the palm, then a full-width body with grooved front and rear edges.
+      o = lp(at, 'M', 0.02, 0, 'L', L - 0.02, 0, 'L', L, 0.22, 'Q', L - 0.15, 0.5, L - 0.15, 0.85, 'Q', L - 0.15, 1.35, L - 0.03, 1.65, 'L', L - 0.03, h - 0.3,
+        'Q', L - 0.03, h, L - 0.33, h, 'L', 0.33, h, 'Q', 0.03, h, 0.03, h - 0.3, 'L', 0.03, 1.65, 'Q', 0.15, 1.35, 0.15, 0.85, 'Q', 0.15, 0.5, 0, 0.22, 'Z');
+      det = repeat(1.85, h - 0.45, 0.2, (v) => `M${at(0.03, v)} L${at(0.2, v)} M${at(L - 0.03, v)} L${at(L - 0.2, v)}`) + ` M${at(0.15, 0.12)} L${at(L - 0.15, 0.12)}`;
+    } else if (matches(b.foregrip, /Vertical Grip Mod 3/)) {
+      // BCM Mod 3: a short block under a wider rounded top, a textured panel and ridges down the front.
+      o = lp(at, 'M', 0.05, 0, 'L', L - 0.05, 0, 'Q', L, 0, L, 0.15, 'L', L, 0.3, 'L', L - 0.2, 0.58, 'L', L - 0.18, h - 0.18, 'Q', L - 0.18, h, L - 0.36, h,
+        'L', 0.33, h, 'Q', 0.15, h, 0.15, h - 0.18, 'L', 0.15, 0.58, 'L', 0, 0.3, 'L', 0, 0.15, 'Q', 0, 0, 0.05, 0, 'Z');
+      det = lp(at, 'M', 0.35, 0.7, 'L', L - 0.45, 0.7, 'L', L - 0.45, h - 0.25, 'L', 0.35, h - 0.25, 'Z') + repeat(0.75, h - 0.3, 0.14, (v) => `M${at(L - 0.18, v)} L${at(L - 0.32, v)}`);
+    } else if (matches(b.foregrip, /Kinesthetic/)) {
+      // BCM KAG: a long ramp from the front down to a deep rear body that ends in a forward hook.
+      o = lp(at, 'M', 0, 0, 'L', L, 0, 'L', L, 0.06, 'L', L - 0.2, 0.3, 'L', 1.75, h * 0.42, 'Q', 1.35, h * 0.55, 1.62, h * 0.88, 'Q', 1.55, h, 1.2, h,
+        'L', 0.85, h * 0.97, 'Q', 0.4, h * 0.85, 0.32, h * 0.58, 'L', 0.15, 0.25, 'Z');
+      det = `M${at(0.3, 0.12)} L${at(L - 0.3, 0.12)} ` + repeat(2.0, L - 0.4, 0.16, (u) => `M${at(u, 0.42 * h - (u - 1.75) * (0.42 * h - 0.3) / (L - 1.95) - 0.02)} L${at(u + 0.06, 0.42 * h - (u - 1.75) * (0.42 * h - 0.3) / (L - 1.95) - 0.14)}`);
+    } else if (matches(b.foregrip, /AFG/)) {
+      // Magpul AFG-2: an open triangle, its rear leg reaching the low point and a ramp climbing to the front,
+      // with a short foot at the front end of the rail bar.
+      o = lp(at, 'M', 0, 0, 'L', L, 0, 'L', L, 0.48, 'Q', L - 0.05, 0.66, L - 0.25, 0.66, 'L', L - 0.42, 0.66, 'Q', L - 0.62, 0.62, L - 0.64, 0.42, 'L', L - 0.7, 0.2,
+        'L', 3.1, 0.2, 'L', 1.05, h - 0.06, 'Q', 0.85, h + 0.04, 0.7, h - 0.12, 'L', 0, 0.18, 'Z',
+        'M', 0.42, 0.3, 'L', 2.55, 0.3, 'L', 0.92, h - 0.42, 'Z');
+      det = `M${at(0.2, 0.1)} L${at(L - 0.2, 0.1)}`;
+    } else if (matches(b.foregrip, /Hand Stop/)) {
+      // Magpul hand stop: a lip at the rear that hooks forward, curving back up into the rail toward the front.
+      o = lp(at, 'M', 0, 0, 'L', L, 0, 'L', L, 0.05, 'Q', 0.75, 0.1, 0.52, 0.52, 'Q', 0.47, 0.64, 0.36, 0.62, 'L', 0.2, 0.58, 'Q', 0.05, 0.52, 0.03, 0.35, 'Z');
+      det = repeat(0.62, 1.1, 0.12, (u) => `M${at(u, 0.12 + (1.1 - u) * 0.45)} L${at(u + 0.05, 0.05 + (1.1 - u) * 0.4)}`);
+    } else if (kind === 'vertical') {
+      o = lp(at, 'M', 0, 0, 'L', L, 0, 'L', L - 0.12, h - 0.25, 'Q', L - 0.16, h, L - 0.42, h, 'L', 0.3, h, 'Q', 0.05, h, 0.08, h - 0.28, 'Z');
+      det = repeat(0.7, h - 0.4, 0.42, (v) => `M${at(0.2, v)} L${at(L - 0.2, v)}`);
+    } else if (kind === 'angled') {
+      o = lp(at, 'M', 0, 0, 'L', L, 0, 'L', L - 0.15, 0.28, 'L', 0.55, h, 'Q', 0.1, h + 0.02, 0, h - 0.35, 'Z');
+      det = `M${at(0.25, 0.12)} L${at(L - 0.25, 0.12)}`;
+    } else {
+      o = lp(at, 'M', 0, 0, 'L', L, 0, 'L', L, h - 0.1, 'Q', L, h, L - 0.12, h, 'L', 0.55, h, 'L', 0, 0.12, 'Z');
+      det = `M${at(0.25, 0.12)} L${at(L - 0.25, 0.12)}`;
+    }
+    mountPiece('foregrip', <><path fillRule="evenodd" d={T(o)} /><path className="detail" d={T(det)} /></>, x0, x0 + L, RAIL_BOT, RAIL_BOT + h);
   }
   const mag3x = b.magnifier;
   if (mag3x && opt?.attrs.kind === 'dot') {
-    // Behind the red dot on the receiver rail, at the dot's height, flipped up in line.
+    // Behind the red dot on the receiver rail, at the dot's height, flipped up in line, on its flip mount.
+    // Holosun HM3X: a plain 1.6" body between rubber eye and objective rings, turrets on top and side.
+    // Vortex VMX-3T: knurled eyepiece, a 30 mm tube and a larger faceted turret housing.
     const cy = (matches(opt, /reflex|510/i) ? -2.42 : -2.3) + RAIL + 1.1;
-    const x1 = 1.9;
-    const x0 = x1 - 4.1;
-    const r = 0.72;
-    P.push({ slot: 'magnifier', z: 14, row: 'top', target: px(x0 + 1.6, cy - r),
+    const vmx = matches(mag3x, /VMX/);
+    const L = vmx ? 4.3 : 4.0;
+    const x1 = 1.9, x0 = x1 - L;
+    const at: At = (u, v) => `${f(x0 + u)},${f(cy - v)}`;
+    const prof = vmx
+      ? [[0, 0.64], [0.04, 0.68], [0.5, 0.68], [0.5, 0.6], [0.6, 0.6], [0.6, 0.62], [1.4, 0.64], [1.6, 0.86], [3.2, 0.86], [3.4, 0.7], [4.25, 0.7], [4.3, 0.66]]
+      : [[0, 0.56], [0.04, 0.6], [0.45, 0.6], [0.45, 0.72], [0.55, 0.79], [3.6, 0.79], [3.7, 0.72], [3.7, 0.6], [3.96, 0.6], [4.0, 0.56]];
+    const body = revolve(at, prof, 0);
+    const rT = vmx ? 0.86 : 0.79;
+    const [k0, k1] = vmx ? [2.2, 2.6] : [2.3, 2.7];
+    const top = lp(at, 'M', k0, rT - 0.02, 'L', k0, rT + 0.12, 'L', k1, rT + 0.12, 'L', k1, rT - 0.02);
+    const [m0, m1] = vmx ? [1.75, 3.0] : [1.9, 3.3];
+    const base = lp(at, 'M', m0 + 0.1, -rT + 0.02, 'L', m0 + 0.1, -rT - 0.18, 'L', m0, -rT - 0.18, 'L', m0, cy - RAIL, 'L', m1, cy - RAIL, 'L', m1, -rT - 0.18, 'L', m1 - 0.1, -rT - 0.18, 'L', m1 - 0.1, -rT + 0.02);
+    const sc = at((k0 + k1) / 2, 0.1).split(',').map(Number);
+    const o = `${body.o} ${top} Z ${base} Z`;
+    P.push({ slot: 'magnifier', z: 14, row: 'top', target: px(x0 + 1.6, cy - rT),
       el: <>
-        <path d={T(`M${f(x0)},${f(cy - r + 0.1)} L${f(x0 + 1.0)},${f(cy - r + 0.1)} L${f(x0 + 1.2)},${f(cy - r + 0.2)} L${f(x1 - 0.5)},${f(cy - r + 0.2)} L${f(x1 - 0.3)},${f(cy - r)} L${f(x1)},${f(cy - r)} L${f(x1)},${f(cy + r)} L${f(x1 - 0.3)},${f(cy + r)} L${f(x1 - 0.5)},${f(cy + r - 0.2)} L${f(x0 + 1.2)},${f(cy + r - 0.2)} L${f(x0 + 1.0)},${f(cy + r - 0.1)} L${f(x0)},${f(cy + r - 0.1)} Z`)} />
-        <path className="detail" d={T(`M${f(x0 + 1.6)},${f(cy + r - 0.2)} L${f(x0 + 1.6)},${f(RAIL)} L${f(x0 + 3.0)},${f(RAIL)} L${f(x0 + 3.0)},${f(cy + r - 0.2)} M${f(x0 + 0.5)},${f(cy - r + 0.1)} L${f(x0 + 0.5)},${f(cy + r - 0.1)}`)} />
+        <path className="solid" d={T(o)} />
+        <path d={T(o)} />
+        <path className="detail" d={T(`${body.rings} ${vmx ? knurl(at, 0, 0.5, 0, 0.68) : ''} ${OC(sc[0], sc[1], 0.2)} M${at(m0, -rT - 0.18 - 0.22)} L${at(m1, -rT - 0.18 - 0.22)} ${OC(...(at((m0 + m1) / 2, -rT - 0.6).split(',').map(Number) as [number, number]), 0.09)}`)} />
       </> });
   }
 

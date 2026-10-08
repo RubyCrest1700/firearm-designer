@@ -27,6 +27,7 @@ const BP_CSS = `
 .bp-center { stroke: rgba(234,243,255,.35); stroke-width: 1; stroke-dasharray: 18 4 3 4; fill: none; }
 .bp-part path { fill: rgba(234,243,255,.05); stroke: ${C.ink}; stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
 .bp-part .detail { fill: none; stroke-width: .9; opacity: .8; }
+.bp-part path.solid { fill: ${C.bp}; stroke: none; }
 .bp-part .hidden-line { fill: none; stroke-dasharray: 5 3.5; stroke-width: 1; opacity: .75; }
 .internal path { fill: none; stroke-dasharray: 5 3.5; stroke-width: 1; opacity: .75; }
 .static { opacity: .4; }
