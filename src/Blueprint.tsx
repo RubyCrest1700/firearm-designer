@@ -2230,7 +2230,7 @@ function profilePieces(P: Piece[], g: ProfileGeo, o: {
         <path style={{ stroke: 'none' }} d={T(`${g.windowD} ${body}`)} />
         <path style={{ fill: 'none' }} d={T('M' + body.slice(top0.length).trim().slice(1).replace(/\s*Z\s*$/, '') + ` L${f(hx + 0.04)},${f(hy)}`)} />
       </> : <path d={T(photoPlate ? g.plateD! : body)} />}
-      {!photoPlate && g.wellCut && <path d={T(g.wellCut)} />}
+      {!photoPlate && g.wellCut && e < 0.05 && <path d={T(g.wellCut)} />}
       {!photoPlate && !hcFlush && <path className="detail" d={T(`${seam} ${extLines}`)} />}
       {photoPlate && g.lipDet && <path className="detail" d={T(g.lipDet)} />}
     </> });
@@ -2588,16 +2588,24 @@ function pistol(platform: Platform, build: Build): Scene {
   const po = pistolOptic(b.optic, fp);
   // An optic ends just behind the ejection port, never over it (the P365's and Hellcat's short slides pull it back).
   // On an aftermarket slide the optic sits down in its pocket, at the pocket's rear.
-  // A red dot never sits on the iron sights: on a factory slide it moves forward to clear the rear sight, and where the
-  // slide is too short for both (as on the real guns, whose rear sight comes off for the optic plate) the rear sight goes.
+  // A red dot never sits on the iron sights. Where the rear sight goes depends on the slide (checked against the makers'
+  // and reviewers' descriptions, /mnt/project-files/drawing-refinement/consistency/rear-sight-with-optic.md):
+  // - behind (Glock MOS and RMR cuts, P365, M&P Optics Ready and C.O.R.E.): the dot sits ahead of the rear sight;
+  // - ahead (Springfield's Hellcat OSP): the dot sits at the back of the slide and the rear sight stays in front of it;
+  // - off (Sig's M18 and X-Series slides, whose rear sight is part of the optic plate): the rear sight comes off.
+  // A slide too short on the drawing for both drops the rear sight too.
   const portX = geo.port0 - 0.06, clearX = r1 + 0.03;
-  const dropRear = !!b.optic && !pk && portX - clearX < po.len;
-  const ox0 = pk ? pk[0] + 0.04 : dropRear ? Math.min(0.9, portX - po.len) : Math.min(Math.max(0.9, clearX), portX - po.len), oy0 = pk ? pk[2] : 0;
-  const sightsD = `${dropRear ? '' : rounded(rearQ[style])} ${rounded(frontQ)}`;
+  const mode = !b.optic || pk ? 'behind' : ((b.slide?.attrs.rearSight as string | undefined) ?? (geo.key === 'hellcat' && !b.slide?.id.startsWith('hc-slide') ? 'ahead' : 'behind'));
+  const aheadX = 0.12 + po.len + 0.03, dxRear = mode === 'ahead' && aheadX + (r1 - r0) < portX ? aheadX - r0 : 0;
+  const dropRear = !!b.optic && !pk && (mode === 'off' || (mode === 'behind' && portX - clearX < po.len) || (mode === 'ahead' && !dxRear));
+  const ox0 = pk ? pk[0] + 0.04 : dxRear ? 0.12 : dropRear ? Math.min(0.9, portX - po.len) : Math.min(Math.max(0.9, clearX), portX - po.len), oy0 = pk ? pk[2] : 0;
+  const shiftR = (q: number[][]) => q.map(([x, h, r]) => [x + dxRear, h, r]);
+  const sightsD = `${dropRear ? '' : rounded(shiftR(rearQ[style]))} ${rounded(frontQ)}`;
   // Tritium vials face the shooter, so a side view doesn't show them; a fiber sight's rod shows through its window.
   // The dovetails show as the line just under the slide's top; Night Fision's front has a step where the blade meets its base.
   const fiber = matches(sp, /Fiber|TFX/i);
-  const sightDet = (dropRear ? '' : `M${f(r0 + 0.04)},0.1 L${f(r1 - 0.04)},0.1 M${f(r0 + 0.04)},0.1 L${f(r0 + 0.1)},0 M${f(r1 - 0.04)},0.1 L${f(r1 - 0.1)},0 `)
+  const [q0, q1] = [r0 + dxRear, r1 + dxRear];
+  const sightDet = (dropRear ? '' : `M${f(q0 + 0.04)},0.1 L${f(q1 - 0.04)},0.1 M${f(q0 + 0.04)},0.1 L${f(q0 + 0.1)},0 M${f(q1 - 0.04)},0.1 L${f(q1 - 0.1)},0 `)
     + ` M${f(fr0 + 0.04)},0.08 L${f(fr1 - 0.04)},0.08 `
     + (style === 'supp' && !amg ? ` M${f(fr0 + 0.025)},-0.09 L${f(fr1 - 0.02)},-0.09` : '')
     + (fiber ? ` ${rounded([[frontQ[1][0] + 0.03, fh - 0.09, 0.022], [frontQ[2][0] - 0.05, fh - 0.09, 0.022], [frontQ[2][0] - 0.05, fh - 0.045, 0.022], [frontQ[1][0] + 0.03, fh - 0.045, 0.022]])}` : '');
