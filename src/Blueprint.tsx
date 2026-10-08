@@ -1428,7 +1428,7 @@ function glockPhotoFrame(ph: GlockPhoto, o: { dust: number; yRail: number; rail:
     for (let i = 0; i + 3 < q.length; i += 2) if ((q[i + 1] - y) * (q[i + 3] - y) <= 0) return q[i] + ((y - q[i + 1]) / (q[i + 3] - q[i + 1] || 1)) * (q[i + 2] - q[i]);
     return NaN;
   };
-  const [l0, l1, l2, l3] = ph.logo;
+  const [l0, l1, l2, l3] = ph.logo ?? [0, 0, 0, 0];
   // The front strap's line, carried up past the trigger guard so the texture stops where the strap would be.
   const fa = crossings(pts, ph.texBottom - 0.4), fb = crossings(pts, (ph.texBottom + ys.reduce((a, b) => Math.max(a, b > 2.4 && b < 3 ? b : a), 2.4)) / 2);
   const ya = ph.texBottom - 0.4, yb = (ph.texBottom + ys.reduce((a, b) => Math.max(a, b > 2.4 && b < 3 ? b : a), 2.4)) / 2;
@@ -1445,7 +1445,7 @@ function glockPhotoFrame(ph: GlockPhoto, o: { dust: number; yRail: number; rail:
     }
     if (!Number.isNaN(sm) && y < ph.texBottom - 0.15) for (let x = back + 0.06 + off / 2; x < sm - 0.05; x += 0.08) stipple += `M${f(x)},${f(y)} L${f(x + 0.014)},${f(y)} `;
   }
-  const frameDetail = `${rail} ${controls} ${o.seam ? P(ph.seam) : ''} ${P(ph.panelRear)} ${rr(ph.logo, 0.06)}`;
+  const frameDetail = `${rail} ${controls} ${o.seam ? P(ph.seam) : ''} ${P(ph.panelRear)} ${ph.logo ? rr(ph.logo, 0.06) : ''}`;
   return { mapped: pts, heel, toe, tang, hole: P(glockOpening(ph.hole), true), frameDetail, stipple };
 }
 
