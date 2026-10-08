@@ -1746,7 +1746,18 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     const rb = Math.min(...pr.slide.outline.flatMap((ol) => scS(ol).filter((x, i) => !(i % 2) && ol[i + 1] * ks > mk.sh - 0.08)));
     if (key === 'p320' && tr - rb > 0.15) rearSh = tr - 0.02 - rb;
   }
-  const slideMap: Map2 = (x, y) => [sx(x) + (rearSh && x < 0.9 ? rearSh * Math.max(0, Math.min(1, y / mk.sh)) * Math.min(1, (0.9 - x) / 0.5) : 0), y];
+  // The G42 patent's slide outline runs 0.165" past its slide length mark and has a notch low in its face, so drawn
+  // to the published lengths the Glock slides overhung their frames by about a quarter inch. On RSR's flat photos the
+  // dust cover's front is about 0.06" behind the slide's face, and the face runs straight down to a rounded bottom
+  // corner. So the last 0.4" of the patent slide is pulled in to end at the published length, and the notch is filled.
+  const noseMax = glock ? Math.max(...pr.slide.outline[0].filter((_, i) => !(i % 2))) : 0;
+  const noseA = mk.slide - 0.4, noseK = glock ? 0.4 / (noseMax - noseA) : 1;
+  const nose = (x: number, y: number) => {
+    if (!glock || x <= noseA) return x;
+    const yr = y / ks;
+    return noseA + ((yr > 0.59 && yr < 0.72 && x > noseMax - 0.12 ? noseMax - 0.008 : x) - noseA) * noseK;
+  };
+  const slideMap: Map2 = (x0, y) => { const x = nose(x0, y); return [sx(x) + (rearSh && x < 0.9 ? rearSh * Math.max(0, Math.min(1, y / mk.sh)) * Math.min(1, (0.9 - x) / 0.5) : 0), y]; };
   let heel = grip(mk.heel[0], mk.heel[1]);
   let toe = grip(mk.toe[0], mk.toe[1]);
   const heelF = heel, toeF = toe;
@@ -2051,7 +2062,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
       + ` M${f(faceX)},${f(mk.sh)} L${f(noseX1)},${f(mk.sh)} L${f(noseX1)},${f(noseY - r)} Q${f(noseX1)},${f(noseY)} ${f(noseX1 - r)},${f(noseY)} L${f(faceX)},${f(noseY)} Z`;
   };
   return {
-    key, SL, muzzle: sx(mk.muzzle), tang, bc: mk.bore, springY: mk.spring, sh: mk.sh,
+    key, SL, muzzle: sx(nose(mk.muzzle, 0)), tang, bc: mk.bore, springY: mk.spring, sh: mk.sh,
     port0, port1, portH: R.portH,
     xt: photoTrig ? 3.5 : TRIGGERS[key].face, trigTop: photoTrig?.top ?? t0,
     trigD: photoTrig?.d ?? reachP320(scD((o.flat ? TRIGGERS[key].flat : TRIGGERS[key].curved)(t0 - dy) + (v.hook && TRIGGERS[key].hook ? ' ' + TRIGGERS[key].hook : ''))),
