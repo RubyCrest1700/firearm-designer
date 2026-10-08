@@ -1537,13 +1537,13 @@ function glockOpening([x0, y0, x1, y1]: number[]) {
 
 /** A Glock frame measured from a photo (GLOCK_PHOTOS): its outline, guard opening, controls, back strap seam and
  *  grip texture, all where the photo shows them. Texture is the shared dot stipple at 0.1" pitch. */
-/** A tilted magazine catch from its four corners, with grip ribs running between its top and bottom edges. */
+/** A tilted magazine catch from its four corners, with eight grip ribs running between its top and bottom edges. */
 function catchPoly(q: number[]) {
   const [ax, ay, bx, by, cx, cy, dx, dy] = q;
   const at = (t: number, s: number) => `${f(ax + (bx - ax) * t + ((dx + (cx - dx) * t) - (ax + (bx - ax) * t)) * s)},${f(ay + (by - ay) * t + ((dy + (cy - dy) * t) - (ay + (by - ay) * t)) * s)}`;
   let ribs = '';
-  for (let t = 0.18; t < 0.85; t += 0.16) ribs += ` M${at(t, 0.2)} L${at(t, 0.8)}`;
-  return polyPath(q, same, true) + ribs;
+  for (let t = 0.12; t < 0.9; t += 0.11) ribs += ` M${at(t, 0.15)} L${at(t, 0.85)}`;
+  return polyPath(roundCorners(q, 0.02), same, true) + ribs;
 }
 
 function glockPhotoFrame(ph: GlockPhoto, o: { dust: number; yRail: number; rail: boolean; seam: boolean }) {
@@ -1561,11 +1561,25 @@ function glockPhotoFrame(ph: GlockPhoto, o: { dust: number; yRail: number; rail:
   const yDust = Math.max(...front);
   const rail = o.rail ? ` M${f(dust - 0.58)},${f(yDust - 0.14)} L${f(dust - 0.58)},${f(yDust)} M${f(dust - 0.42)},${f(yDust - 0.14)} L${f(dust - 0.42)},${f(yDust)} M${f(dust - 1.6)},${f(yDust - 0.14)} L${f(dust - 0.12)},${f(yDust - 0.14)}` : '';
   const [s0, s1, s2, s3] = ph.slideStop, [t0, t1, t2, t3] = ph.takedown, [c0, c1, c2, c3] = ph.magCatch;
+  // Measured on RSR's flat left-side G19 Gen5 photo and carried to every Glock (the parts are shared):
+  // - the slide stop sits over a molded relief whose rounded floor runs a little past both ends of the lever;
+  // - the takedown tab leans forward at the top (about 17 degrees) inside a tipped, rounded scallop in the frame;
+  // - the mag catch is tipped about 22 degrees with the grip, its height about 0.7 of its box, with eight ribs.
+  const relief = ph.relief === false ? '' : ` M${f(s0 - 0.135)},${f(s3 - 0.045)} L${f(s0 - 0.135)},${f(s3 + 0.095)} Q${f(s0 - 0.135)},${f(s3 + 0.135)} ${f(s0 - 0.095)},${f(s3 + 0.135)}`
+    + ` L${f(s2 + 0.09)},${f(s3 + 0.135)} Q${f(s2 + 0.13)},${f(s3 + 0.135)} ${f(s2 + 0.13)},${f(s3 + 0.095)} L${f(s2 + 0.13)},${f(s3 - 0.045)}`;
+  const tc = (t0 + t2) / 2, tk = (t3 - t1) / 0.32, tp = (dx: number, dy: number, base: number) => [tc + dx, base + dy * tk];
+  const tab = [tp(-0.009, 0.019, t1), tp(0.076, 0.052, t1), tp(-0.015, 0.026, t3), tp(-0.1, -0.007, t3)].flat();
+  const scallop = [[-0.198, -0.046], [0.272, -0.033], [0.298, 0.032], [0.181, 0.307], [-0.055, 0.425], [-0.29, 0.385], [-0.303, 0.242], [-0.238, 0.006]].flatMap(([dx, dy]) => tp(dx, dy, t1));
+  const tabRibs = [0.3, 0.5, 0.7].map((t) => { const [ax, ay] = [tab[6] + (tab[0] - tab[6]) * t, tab[7] + (tab[1] - tab[7]) * t], [bx, by] = [tab[4] + (tab[2] - tab[4]) * t, tab[5] + (tab[3] - tab[5]) * t];
+    return ` M${f(ax + (bx - ax) * 0.15)},${f(ay + (by - ay) * 0.15)} L${f(ax + (bx - ax) * 0.85)},${f(ay + (by - ay) * 0.85)}`; }).join('');
+  const th = (22 * Math.PI) / 180, [cw, chh] = [(c2 - c0) / 2, ((c3 - c1) * 0.7) / 2], [ccx, ccy] = [(c0 + c2) / 2 + 0.03, (c1 + c3) / 2 + 0.02];
+  const crot = (u: number, w: number) => [ccx + u * Math.cos(th) - w * Math.sin(th), ccy + u * Math.sin(th) + w * Math.cos(th)];
+  const catchQ = ph.magCatchPoly ?? [crot(-cw, -chh), crot(cw, -chh), crot(cw, chh), crot(-cw, chh)].flat();
   const controls = rr(ph.slideStop, 0.06) + ` M${f(s0 + 0.06)},${f(s1 + 0.09)} L${f(s2 - 0.06)},${f(s1 + 0.09)} M${f(s0 + 0.06)},${f((s1 + s3) / 2 + 0.03)} L${f(s2 - 0.06)},${f((s1 + s3) / 2 + 0.03)}`
-    + ' ' + rr(ph.takedown, 0.02) + ` M${f(t0 + 0.03)},${f(t1 + 0.1)} L${f(t2 - 0.03)},${f(t1 + 0.1)} M${f(t0 + 0.03)},${f(t1 + 0.16)} L${f(t2 - 0.03)},${f(t1 + 0.16)}`
+    + relief + ' ' + polyPath(roundCorners(scallop, 0.07), same, true) + ' ' + polyPath(roundCorners(tab, 0.015), same, true) + tabRibs
     + ' ' + OC(ph.triggerPin[0], ph.triggerPin[1], ph.triggerPin[2]) + ' ' + OC(ph.housingPin[0], ph.housingPin[1], ph.housingPin[2])
     + (ph.lockPin ? ' ' + OC(ph.lockPin[0], ph.lockPin[1], ph.lockPin[2]) : '')
-    + ' ' + (ph.magCatchPoly ? catchPoly(ph.magCatchPoly) : rr(ph.magCatch, 0.03) + repeat(c0 + 0.07, c2 - 0.06, 0.07, (x) => ` M${x},${f(c1 + 0.05)} L${x},${f(c3 - 0.05)}`));
+    + ' ' + catchPoly(catchQ);
   // Grip texture: the side panel between its molded rear edge and the front strap, and the back strap between the
   // outline and its seam, all at the same 0.1" pitch. The logo plate is left smooth.
   const lineX = (q: number[], y: number) => {
@@ -1595,12 +1609,12 @@ function glockPhotoFrame(ph: GlockPhoto, o: { dust: number; yRail: number; rail:
     const strapEdge = ph.seam.length ? sm : rear;
     if (!Number.isNaN(strapEdge) && y < ph.texBottom - 0.15) for (let x = back + 0.07 + off; x < strapEdge - 0.06; x += 0.1) stipple += `M${f(x)},${f(y)} L${f(x + 0.014)},${f(y)} `;
   }
-  // The thumb rest: above the texture the frame dips in, and RSR's flat photos show its lower lip as one curve sweeping
-  // down from behind the slide stop's level to run level just above the mag catch (measured from the catch's corner).
-  const rest = [-1.3, -0.62, -1.11, -0.42, -0.91, -0.25, -0.71, -0.17, -0.44, -0.165, -0.17, -0.2];
-  let lip = `M${f(c0 + rest[0])},${f(c1 + rest[1])}`;
-  for (let k = 2; k + 3 < rest.length; k += 2) lip += ` Q${f(c0 + rest[k])},${f(c1 + rest[k + 1])} ${f(c0 + (rest[k] + rest[k + 2]) / 2)},${f(c1 + (rest[k + 1] + rest[k + 3]) / 2)}`;
-  lip += ` L${f(c0 + rest[rest.length - 2])},${f(c1 + rest[rest.length - 1])}`;
+  // The thumb rest: above the texture the frame dips in. On the flat left-side G19 Gen5 photo the dish's rear edge curves
+  // down from level with the slide stop's relief and its lower lip runs level into the mag catch's top rear corner.
+  const [qa, qb] = [catchQ[0], catchQ[1]];
+  // The Timberwolf frames are molded without the dish.
+  const lip = ph.relief === false ? '' : `M${f(qa - 0.77)},${f(qb - 0.515)} Q${f(qa - 0.84)},${f(qb - 0.185)} ${f(qa - 0.68)},${f(qb + 0.025)} Q${f(qa - 0.64)},${f(qb + 0.055)} ${f(qa - 0.55)},${f(qb + 0.055)}`
+    + ` L${f(qa - 0.12)},${f(qb + 0.05)} Q${f(qa - 0.07)},${f(qb + 0.045)} ${f(qa - 0.05)},${f(qb + 0.005)}`;
   const frameDetail = `${rail} ${controls} ${o.seam ? P(ph.seam) : ''} ${P(ph.panelRear)} ${ph.logo ? rr(ph.logo, 0.06) : ''} ${lip}`;
   return { mapped: pts, heel, toe, tang, hole: P(glockOpening(ph.hole), true), frameDetail, stipple };
 }
@@ -1853,11 +1867,16 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   // Behind the upper textured patch RSR's photo shows a smooth surface with one pin; the drawing's broken contour strokes
   // there are dropped and the patch's rear edge is drawn as one line below.
   const hellcatRear = (ol: number[]) => key === 'hellcat' && ol.every((c, i) => (i % 2 ? c > 1.15 && c < 2.2 : c > 0.72 && c < 1.15));
+  // The patent's short contour strokes above the guard and around the beavertail have no counterpart on RSR's flat photo
+  // (the frame there is smooth apart from the controls and the textured patch drawn below), so only its long edges stay.
+  const hellcatStray = (ol: number[]) => { if (key !== 'hellcat') return false;
+    const xs = ol.filter((_, i) => !(i % 2)), ys = ol.filter((_, i) => i % 2);
+    return Math.max(...ys) < h0y + 0.35 && Math.max(...ys) > mk.sh + 0.06 && Math.max(...xs) - Math.min(...xs) < 0.9; };
   const hellcatSlot = (ol: number[]) => key === 'hellcat' && ol.every((c, i) => (i % 2 ? c > 0.99 && c < 1.3 : c > 0.85 && c < 2.85)) && Math.max(...ol.filter((_, i) => !(i % 2))) - Math.min(...ol.filter((_, i) => !(i % 2))) > 1.4;
   // The M&P drawing's mag release and its palm swell and front field lines are redrawn from the photo below.
   const mpCatch = (ol: number[]) => key === 'mp' && (ol.every((c, i) => (i % 2 ? c > 2.3 && c < 2.7 : c > 1.8 && c < 2.15))
     || (v.texture === 'patent' && ol.length > 120 && Math.max(...ol.filter((_, i) => !(i % 2))) > 1.0));
-  const keepDetail = (ol: number[]) => !patentLever(ol) && !patentRail(ol) && !hellcatSlot(ol) && !hellcatRear(ol) && !mpCatch(ol) && (glock || (modPh ? Math.max(...ol.filter((_, i) => i % 2)) < h0y + 0.2 && Math.min(...ol.filter((_, i) => !(i % 2))) > -0.12
+  const keepDetail = (ol: number[]) => !patentLever(ol) && !patentRail(ol) && !hellcatSlot(ol) && !hellcatRear(ol) && !hellcatStray(ol) && !mpCatch(ol) && (glock || (modPh ? Math.max(...ol.filter((_, i) => i % 2)) < h0y + 0.2 && Math.min(...ol.filter((_, i) => !(i % 2))) > -0.12
     : v.texture === 'patent' || Math.min(...ol.filter((_, i) => i % 2)) < h1y - 0.1));
   let frameDetail = pr.frame.detail.filter(keepDetail).map((ol) => polyPath(scF(ol), frameMap, false)).join(' ');
   let slideDetail = pr.slide.detail.map((ol) => polyPath(scS(ol), slideMap, false)).join(' ');
@@ -2112,39 +2131,50 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
       const grooves = (xs: number[]) => xs.map((x) => `M${f(x)},${sr.y0} L${f(x + lean)},${sr.y1} M${f(x + sr.w)},${sr.y0} L${f(x + sr.w + lean)},${sr.y1}`).join(' ');
       const fx0 = SL - 1.5;
       slideDetail = after ? `${topLine} ${after} ${extractor} ${face}` : `${lines} ${grooves(sr.x)} ${o.frontSerr ? grooves(sr.x.slice(0, 5).map((x) => fx0 + (x - sr.x[0]))) : ''} ${extractor} ${face} ${chamfer}`;
-      photoTrig = { d: ph.trigger, line: ph.triggerLine, top: ph.hole[1], plate: polyPath(ph.plate, same, true), yMB: Math.max(...ph.plate.filter((_, i) => i % 2)) };
+      // Every Glock trigger as RSR's flat G19 Gen5 photos show it, sized to each photo's own trigger: the shoe, its safety
+      // blade standing proud of the face down to the tip, and the two pins on the shoe's left side.
+      const tn = ph.trigger.match(/-?\d*\.?\d+/g)!.map(Number), [tx0, ty0] = tn, tsc = (Math.max(...tn.filter((_, i) => i % 2)) - ty0) / 0.94;
+      const tq = (d: string) => { let i = 0; return d.replace(/-?\d*\.?\d+/g, (n) => n3(i++ % 2 ? ty0 + +n * tsc : tx0 + +n * tsc)); };
+      const tShoe = tq('M0,0 Q-0.01,0.47 0.27,0.72 Q0.43,0.86 0.51,0.895 Q0.56,0.895 0.555,0.85 Q0.48,0.76 0.38,0.62 Q0.25,0.42 0.28,0.2 L0.32,0 Z');
+      const tBlade = tq('M0.345,0.445 L0.62,0.73 Q0.645,0.775 0.615,0.81 L0.565,0.82');
+      const tPins = [[0.135, 0.222], [0.181, 0.464]].map(([x, y]) => OC(tx0 + x * tsc, ty0 + y * tsc, 0.028 * tsc)).join(' ');
+      photoTrig = { d: tShoe, line: `${tBlade} ${tPins}`, top: ph.hole[1], plate: polyPath(ph.plate, same, true), yMB: Math.max(...ph.plate.filter((_, i) => i % 2)) };
     }
   }
   if (key === 'hellcat') slideDetail += ' ' + (v.slide === 'apex' || v.slide === 'tp' ? aftermarketSerr(SL, mk.sh, port1, v.slide) : HELLCAT_SERR.map((p) => polyPath(scS(p.pts), slideMap, p.close)).join(' '));
   if (key === 'mp') slideDetail += ' ' + mpSerr(SL, mk.sh);
   if (key === 'mp') {
-    // Slide stop lever and the knurled takedown lever with its pin, where the M&P photo shows them.
-    const y0 = mk.sh + 0.08, y1 = mk.sh + 0.33, a = fx(1.95), b = fx(2.95);
-    frameDetail += ` M${f(a + 0.08)},${f(y0)} L${f(b - 0.06)},${f(y0)} Q${f(b)},${f(y0)} ${f(b)},${f(y0 + 0.06)} L${f(b)},${f(y1 - 0.06)} Q${f(b)},${f(y1)} ${f(b - 0.06)},${f(y1)} L${f(a + 0.08)},${f(y1)} Q${f(a)},${f(y1)} ${f(a)},${f(y1 - 0.08)} L${f(a)},${f(y0 + 0.08)} Q${f(a)},${f(y0)} ${f(a + 0.08)},${f(y0)} Z`
-      + repeat(a + 0.12, a + 0.42, 0.075, (x) => ` M${x},${f(y0 + 0.05)} L${x},${f(y1 - 0.05)}`)
-      + ` M${f(fx(3.12) + 0.06)},${f(mk.sh + 0.07)} L${f(fx(3.9) - 0.06)},${f(mk.sh + 0.07)} Q${f(fx(3.9))},${f(mk.sh + 0.07)} ${f(fx(3.9))},${f(mk.sh + 0.13)} L${f(fx(3.9))},${f(mk.sh + 0.26)} Q${f(fx(3.9))},${f(mk.sh + 0.32)} ${f(fx(3.9) - 0.06)},${f(mk.sh + 0.32)} L${f(fx(3.12) + 0.06)},${f(mk.sh + 0.32)} Q${f(fx(3.12))},${f(mk.sh + 0.32)} ${f(fx(3.12))},${f(mk.sh + 0.26)} L${f(fx(3.12))},${f(mk.sh + 0.13)} Q${f(fx(3.12))},${f(mk.sh + 0.07)} ${f(fx(3.12) + 0.06)},${f(mk.sh + 0.07)} Z`
-      + repeat(fx(3.2), fx(3.82), 0.06, (x) => ` M${x},${f(mk.sh + 0.1)} L${x},${f(mk.sh + 0.29)}`)
-      + ` ${OC(fx(4.0), mk.sh + 0.2, 0.07)}`;
+    // Measured on RSR's flat photo of the left side: the slide stop's ribbed pad with its slotted arm running forward, the
+    // small ribbed takedown lever ahead of it (its rear face sloping), and the two frame pins.
+    const a = fx(1.95), y = (d: number) => f(mk.sh + d), X = (d: number) => f(a + d);
+    frameDetail += ` M${X(-0.27)},${y(0.13)} L${X(0.13)},${y(0.13)} Q${X(0.165)},${y(0.13)} ${X(0.165)},${y(0.17)} L${X(0.165)},${y(0.25)} L${X(0.49)},${y(0.25)}`
+      + ` Q${X(0.55)},${y(0.25)} ${X(0.55)},${y(0.32)} Q${X(0.55)},${y(0.39)} ${X(0.49)},${y(0.39)} L${X(-0.25)},${y(0.39)} Q${X(-0.3)},${y(0.39)} ${X(-0.295)},${y(0.34)} L${X(-0.285)},${y(0.17)} Q${X(-0.28)},${y(0.13)} ${X(-0.27)},${y(0.13)} Z`
+      + repeat(mk.sh + 0.17, mk.sh + 0.36, 0.045, (yy) => ` M${X(-0.26)},${yy} L${X(0.12)},${yy}`)
+      + ` M${X(0.86)},${y(0.09)} L${X(0.98)},${y(0.09)} Q${X(1.01)},${y(0.09)} ${X(1.01)},${y(0.12)} L${X(1.01)},${y(0.36)} Q${X(1.01)},${y(0.39)} ${X(0.98)},${y(0.39)} L${X(0.83)},${y(0.39)} Q${X(0.8)},${y(0.39)} ${X(0.805)},${y(0.36)} L${X(0.84)},${y(0.12)} Q${X(0.845)},${y(0.09)} ${X(0.86)},${y(0.09)} Z`
+      + repeat(mk.sh + 0.13, mk.sh + 0.36, 0.04, (yy) => ` M${X(0.83 + (0.39 - (+yy - mk.sh)) * 0.12)},${yy} L${X(0.99)},${yy}`)
+      + ` ${OC(a + 1.74, mk.sh + 0.46, 0.05)} ${OC(a - 1.96, mk.sh + 0.24, 0.06)}`;
   }
   if (key === 'mp') {
-    // The reversible mag release as RSR's flat photo shows it (overlaid at scale): an oval button with a dished center tucked into
+    // The reversible mag release as RSR's flat photo shows it (overlaid at scale): a round button with a dished center tucked into
     // the corner between the guard's rear and the grip's front strap, level with the guard's lower half.
-    const [cx, cy, rx, ry] = [fx(1.995), 2.39, 0.215, 0.17], k = 0.5523;
+    const [cx, cy, rx, ry] = [fx(1.955), 2.39, 0.155, 0.15], k = 0.5523;
     const oval = `M${f(cx - rx)},${f(cy)} C${f(cx - rx)},${f(cy - ry * k)} ${f(cx - rx * k)},${f(cy - ry)} ${f(cx)},${f(cy - ry)} C${f(cx + rx * k)},${f(cy - ry)} ${f(cx + rx)},${f(cy - ry * k)} ${f(cx + rx)},${f(cy)} `
       + `C${f(cx + rx)},${f(cy + ry * k)} ${f(cx + rx * k)},${f(cy + ry)} ${f(cx)},${f(cy + ry)} C${f(cx - rx * k)},${f(cy + ry)} ${f(cx - rx)},${f(cy + ry * k)} ${f(cx - rx)},${f(cy)} Z`;
-    frameDetail += ` ${oval} ${OC(cx - 0.03, cy - 0.01, 0.115)}`;
+    frameDetail += ` ${oval} ${OC(cx - 0.01, cy, 0.1)}`;
   }
   if (key === 'hellcat') {
     // Controls where RSR's flat photo shows them: the slide stop just under the slide (a rounded tab with grip ribs), a pin
-    // above the guard, and the oval mag release just behind the guard in the smooth band, ribbed at its rear.
+    // above the guard and a larger pin ahead of it, and the mag release just behind the guard in the smooth band.
     const tab = (x0: number, y0: number, x1: number, y1: number, ribs: number) => {
       const [a, b] = [fx(x0), fx(x1)], r = (y1 - y0) / 2.5;
       return polyPath(roundCorners([a, y0, b, y0, b, y1, a, y1], r), same, true) + repeat(a + 0.1, a + 0.1 + (ribs - 1) * 0.05, 0.05, (x) => ` M${x},${f(y0 + 0.05)} L${x},${f(y1 - 0.05)}`);
     };
-    const [mx, my] = frameMap(2.11, 2.11);
-    const mr = polyPath(roundCorners([mx - 0.26, my - 0.15, mx + 0.26, my - 0.15, mx + 0.26, my + 0.15, mx - 0.26, my + 0.15], 0.13), same, true)
-      + repeat(mx - 0.17, mx - 0.02, 0.05, (x) => ` M${x},${f(my - 0.11)} L${x},${f(my + 0.11)}`);
-    frameDetail += ` ${tab(1.28, mk.sh + 0.07, 1.87, mk.sh + 0.28, 5)} ${mr} ${OC(fx(2.68), 1.11, 0.045)}`;
+    // The mag release is a stadium-shaped button tipped about 7 degrees nose-down, ribbed across its front half.
+    const [m0, m1] = frameMap(2.11, 2.11), [mx, my] = [m0 + 0.027, m1 + 0.053], th = (7 * Math.PI) / 180;
+    const rot = (u: number, w: number) => [mx + u * Math.cos(th) - w * Math.sin(th), my + u * Math.sin(th) + w * Math.cos(th)];
+    const mr = polyPath(roundCorners([rot(-0.27, -0.118), rot(0.27, -0.118), rot(0.27, 0.118), rot(-0.27, 0.118)].flat(), 0.11), same, true)
+      + repeat(0.03, 0.2, 0.042, (u) => { const [a, b] = [rot(+u, -0.085), rot(+u, 0.085)]; return ` M${f(a[0])},${f(a[1])} L${f(b[0])},${f(b[1])}`; });
+    frameDetail += ` ${tab(1.28, mk.sh + 0.07, 1.87, mk.sh + 0.28, 5)} ${mr} ${OC(fx(2.7), 1.185, 0.045)} ${OC(fx(3.08), 1.355, 0.085)}`;
   }
 
   const yGB = Math.max(heel[1], toe[1]);
