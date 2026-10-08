@@ -1681,7 +1681,9 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     hole: scF(raw.hole), heel: scF(raw.heel), toe: scF(raw.toe), magWindow: raw.magWindow && scF(raw.magWindow) } as unknown as typeof raw;
   const [h0x, h0y, h1x, h1y] = mk.hole;
   // The Glock drawing is a G42, so its sizes are fitted by slide length; the Sigs by overall length.
-  const dS = glock ? spec.m.slide - mk.slide : spec.m.oal - R.oal; // slide length change
+  // A grip module traced from a flat photo with the slide on (the Subcompact and the AXG) keeps the slide at its published length, so the slide covers the module as in the photo.
+  const photoNose = !glock && !!v.module && !!SIG_MODULE_PHOTOS[v.module]?.nose;
+  const dS = glock || photoNose ? spec.m.slide - mk.slide : spec.m.oal - R.oal; // slide length change
   const dF = glock ? spec.frame.slide - mk.slide : spec.frame.oal - R.oal; // dust cover length change
   // Grip length change. The G42 drawing's own height (grip bottom plus sights and floor plate) is a little under the published 4.13".
   const dH = spec.gripH - (glock ? (mk.gripBottom + SIGHT + BASE) : R.h);
