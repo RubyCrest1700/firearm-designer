@@ -3,7 +3,7 @@ import { mountsFor } from './data/addons';
 import { AR_PROFILES, type ArPiece } from './data/arProfiles';
 import { OPTIC_PROFILES } from './data/opticProfiles';
 import { GLOCK_PHOTOS, type GlockPhoto } from './data/glockPhotos';
-import { SIG_MODULE_PHOTOS, MODULE_PANEL, MODULE_STRIPS, MODULE_LOGO, MODULE_CATCH } from './data/sigModulePhotos';
+import { SIG_MODULE_PHOTOS, MODULE_PANEL, MODULE_STRIPS, MODULE_LOGO, MODULE_CATCH, AXG_PANEL, AXG_SCREWS } from './data/sigModulePhotos';
 import { PROFILES } from './data/pistolProfiles';
 import type { Build, Part, Placement, Platform } from './types';
 
@@ -1722,7 +1722,10 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   }
   // A grip module with its own texture replaces the patent's molded panels below the guard.
   // A photo-traced module keeps only the patent's lines above the trigger guard (the controls); its grip is its own.
+  // The AXG's G10 panel covers the grip right up to the slide, so it keeps only the controls and the patent's mag catch.
+  const patentCatch = (ol: number[]) => ol.every((c, i) => (i % 2 ? c > 2.39 && c < 2.8 : c > 1.5 && c < 1.95));
   const keepDetail = (ol: number[]) => glock || (modPh ? Math.max(...ol.filter((_, i) => i % 2)) < h0y + 0.2
+    : v.texture === 'axg' ? (Math.max(...ol.filter((_, i) => i % 2)) < 1.3 || Math.max(...ol.filter((_, i) => i % 2)) < h0y + 0.2 && Math.max(...ol.filter((_, i) => !(i % 2))) > 2.3) || patentCatch(ol)
     : v.texture === 'patent' || Math.min(...ol.filter((_, i) => i % 2)) < h1y - 0.1);
   let frameDetail = pr.frame.detail.filter(keepDetail).map((ol) => polyPath(scF(ol), frameMap, false)).join(' ');
   let slideDetail = pr.slide.detail.map((ol) => polyPath(scS(ol), slideMap, false)).join(' ');
@@ -1741,6 +1744,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     const edge = ys.map((y) => { const xs = crossings(mappedS, y); return [xs[0] + inset, xs[xs.length - 1] - inset]; });
     const panel = [...ys.flatMap((y, i) => [edge[i][0], y]), ...[...ys].reverse().flatMap((y, i) => [edge[ys.length - 1 - i][1], y])];
     if (modPh?.panel) panel.splice(0, panel.length, ...roundCorners(modPh.panel, 0.08));
+    if (v.texture === 'axg') panel.splice(0, panel.length, ...roundCorners(AXG_PANEL, 0.08));
     const outline = polyPath(panel, same, true);
     // The factory modules keep their molded panel lines from the patent; the texture inside is the shared 0.1" dots.
     if (modPh && !modPh.std) {
@@ -1763,11 +1767,10 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     } else if (v.texture === 'x' || v.texture === 'patent') stipple = dotsIn(panel, 0.1, same, 0.06);
     else if (v.texture === 'wilson') stipple = hatchIn(panel, 50, 0.13, same, 0.05) + hatchIn(panel, -50, 0.13, same, 0.05);
     else {
-      // AXG: G10 panels screwed to the alloy frame, and checkering down the front strap.
-      const cx = (edge[2][0] + edge[2][1]) / 2, cx2 = (edge[ys.length - 3][0] + edge[ys.length - 3][1]) / 2;
+      // AXG: a G10 panel held by two screws on the alloy frame (from the photo), and checkering down the front strap.
       let check = '';
       for (let i = 0; i < ys.length; i += 2) check += `M${f(edge[i][1] + inset - 0.14)},${f(ys[i])} L${f(edge[i][1] + inset - 0.04)},${f(ys[i])} `;
-      stipple = OC(cx, ys[2], 0.07) + ' ' + OC(cx2, ys[ys.length - 3], 0.07) + ' ' + check;
+      stipple = AXG_SCREWS.map(([sx, sy, sr]) => OC(sx, sy, sr) + ` M${f(sx - sr * 0.7)},${f(sy + sr * 0.7)} L${f(sx + sr * 0.7)},${f(sy - sr * 0.7)}`).join(' ') + ' ' + check;
     }
     if ((v.texture !== 'patent' && !modPh) || modPh?.std) frameDetail += ' ' + outline;
     // A photo-traced module's mag catch: the patent drawing's button, placed where that module's photo shows it.

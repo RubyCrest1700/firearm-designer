@@ -44,3 +44,8 @@ export const MODULE_CATCH: number[][] = [
   [1.762, 2.563, 1.792, 2.563],
   [1.811, 2.54, 1.859, 2.575],
 ];
+
+/** The P320 AXG's G10 grip panel and its two screws (x, y, radius), measured from a flat photo of the AXG Carry. */
+export const AXG_PANEL = [0.27, 1.05, 2.22, 1.05, 2.23, 1.52, 2.1, 1.77, 1.97, 2.0, 1.86, 2.25, 1.7, 2.45, 1.69, 2.75, 1.7, 2.9, 1.6, 3.57,
+  1.5, 4.37, 1.43, 4.92, 0.12, 4.97, 0.0, 4.0, 0.13, 3.0, 0.3, 2.0, 0.27, 1.4];
+export const AXG_SCREWS: [number, number, number][] = [[1.05, 2.35, 0.17], [0.43, 4.75, 0.17]];
