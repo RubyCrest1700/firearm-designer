@@ -1697,8 +1697,9 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   let port0 = mk.port0, port1 = mk.port1;
   if (port0 == null) {
     const barrel = spec.breech != null ? spec.m.slide - spec.breech : spec.m.barrel;
-    port0 = SL - barrel - (glock ? 0.16 : 0.12);
-    port1 = port0 + (glock ? (o.slim ? 1.1 : 1.28) : 1.02);
+    // The P365's port starts just ahead of the breech and runs 1.12" (Wilson's flat WCP365 XL photo).
+    port0 = SL - barrel - (glock ? 0.16 : key === 'p365' ? -0.02 : 0.12);
+    port1 = port0 + (glock ? (o.slim ? 1.1 : 1.28) : key === 'p365' ? 1.12 : 1.02);
   }
   const sx = stretchX(port1 + 0.1, mk.frontSerr - 0.05, mk.slide, dS);
   const fa = h1x + 0.3;
@@ -2281,8 +2282,11 @@ function pistol(platform: Platform, build: Build): Scene {
   const sightSlot = has('sights') ? own('sights') : undefined;
   // Rear sight: a block with a sloped face, square notch and the dovetail in the slide; front: a post on its dovetail.
   // Tritium or fiber inserts show as small circles. Sig rear sights are longer with a sloped back.
-  const r0 = sig ? 0.14 : 0.2, r1 = sig ? 0.86 : 0.74;
-  const fr0 = SL - (sig ? 0.72 : 0.62), fr1 = SL - (sig ? 0.36 : 0.34);
+  // The P365's rear sight is shorter, so an optic fits between it and the ejection port as on the real slide.
+  const p365 = geo.key === 'p365';
+  const r0 = p365 ? 0.1 : sig ? 0.14 : 0.2, r1 = p365 ? 0.6 : sig ? 0.86 : 0.74;
+  // Sig front sights sit near the muzzle end: 0.14" to 0.56" back from the slide's front on RSR's and Wilson's photos.
+  const fr0 = SL - (sig ? 0.56 : 0.62), fr1 = SL - (sig ? 0.14 : 0.34);
   const sightsD = (sig
     ? `M${r0},0 L${f(r0 + 0.12)},${f(-sh)} L${f(r1 - 0.2)},${f(-sh)} L${r1},0 Z`
     : `M${r0},0 L${f(r0 + 0.04)},${f(-sh)} L${f(r1 - 0.06)},${f(-sh)} L${r1},0 Z`)
@@ -2301,8 +2305,10 @@ function pistol(platform: Platform, build: Build): Scene {
   /* Optic */
   const fp = (b.optic?.attrs.footprint as string) ?? (cut === 'none' ? 'rmr' : cut);
   const po = pistolOptic(b.optic, fp);
-  P.push({ slot: 'optic', z: 11, row: 'top', target: px(0.9 + po.len / 2, -po.h),
-    el: <><path fillRule="evenodd" d={T(movePath(po.od, 0.9, 0))} /><path className="detail" d={T(movePath(po.odet, 0.9, 0))} /></> });
+  // A P365 optic ends just behind the ejection port.
+  const ox0 = p365 ? Math.min(0.9, geo.port0 - 0.06 - po.len) : 0.9;
+  P.push({ slot: 'optic', z: 11, row: 'top', target: px(ox0 + po.len / 2, -po.h),
+    el: <><path fillRule="evenodd" d={T(movePath(po.od, ox0, 0))} /><path className="detail" d={T(movePath(po.odet, ox0, 0))} /></> });
 
   /* Weapon light on the dust cover rail, drawn only once chosen */
   let pFront = front;
