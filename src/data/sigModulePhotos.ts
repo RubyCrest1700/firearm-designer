@@ -21,5 +21,11 @@ export const MODULE_STRIPS = [
   [1.36, 3.66, 1.53, 3.68, 1.34, 4.79, 1.17, 4.77],
 ];
 export const MODULE_LOGO: [number, number, number] = [0.85, 2.03, 0.3];
-/** The magazine catch: a rounded triangle, flat at the back and pointing forward. */
-export const MODULE_CATCH = [1.51, 2.46, 1.86, 2.665, 1.48, 2.85];
+/** The magazine catch: the patent drawing's button and recess lines, moved 0.04" back and 0.025" down to sit where the photos show it. */
+export const MODULE_CATCH: number[][] = [
+  [1.703, 2.765, 1.669, 2.781, 1.624, 2.788, 1.587, 2.781, 1.546, 2.743, 1.538, 2.716, 1.538, 2.662, 1.587, 2.483, 1.639, 2.433, 1.699, 2.433, 1.74, 2.456, 1.807, 2.536],
+  [1.706, 2.762, 1.721, 2.678, 1.755, 2.567],
+  [1.714, 2.765, 1.833, 2.735, 1.863, 2.712, 1.885, 2.666, 1.885, 2.628, 1.863, 2.578],
+  [1.762, 2.563, 1.792, 2.563],
+  [1.811, 2.54, 1.859, 2.575],
+];

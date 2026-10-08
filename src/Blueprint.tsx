@@ -1610,12 +1610,6 @@ function roundCorners(q: number[], r: number) {
   return out;
 }
 
-/** A polygon's corners pulled toward its centroid by d (an inset outline for a button in its recess). */
-function insetTri(q: number[], d: number) {
-  const n = q.length / 2, cx = q.filter((_, i) => !(i % 2)).reduce((a, b) => a + b) / n, cy = q.filter((_, i) => i % 2).reduce((a, b) => a + b) / n;
-  return q.map((v, i) => { const c = i % 2 ? cy : cx, k = Math.hypot(q[i - (i % 2)] - cx, q[i - (i % 2) + 1] - cy); return v + ((c - v) * d * 1.8) / k; });
-}
-
 /** A closed outline cut off at x = x1 (everything ahead of it dropped). */
 function clipFront(pts: number[], x1: number) {
   const out: number[] = [];
@@ -1752,7 +1746,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
       };
       stipple = [MODULE_PANEL, ...MODULE_STRIPS].map(dots).join('');
       frameDetail += ' ' + [MODULE_PANEL, ...MODULE_STRIPS].map((q) => polyPath(roundCorners(q, 0.06), same, true)).join(' ') + ' ' + OC(lx, ly, lr)
-        + ' ' + polyPath(roundCorners(MODULE_CATCH, 0.07), same, true) + ' ' + polyPath(roundCorners(insetTri(MODULE_CATCH, 0.04), 0.05), same, true);
+        + ' ' + MODULE_CATCH.map((l) => polyPath(l, same, false)).join(' ');
     } else if (v.texture === 'x' || v.texture === 'patent') stipple = dotsIn(panel, 0.1, same, 0.06);
     else if (v.texture === 'wilson') stipple = hatchIn(panel, 50, 0.13, same, 0.05) + hatchIn(panel, -50, 0.13, same, 0.05);
     else {
