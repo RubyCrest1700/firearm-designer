@@ -1610,6 +1610,8 @@ interface ProfileGeo {
   frameD: string; frameDetail: string; stipple: string; slideD: string; slideDetail: string; windowD: string;
   /** Floor plate measured from a photo (flush OEM magazine). */
   plateD?: string;
+  /** The floor plate's front lip in a flared mag well's notch, kept above a longer magazine's extension. */
+  lipD?: string;
 }
 
 /** Moving average over a closed polyline (w points each side), to calm the wobble of a dotted drawing's trace. */
@@ -2015,7 +2017,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     trigD: photoTrig?.d ?? reachP320(scD((o.flat ? TRIGGERS[key].flat : TRIGGERS[key].curved)(t0 - dy) + (v.hook && TRIGGERS[key].hook ? ' ' + TRIGGERS[key].hook : ''))),
     trigLine: photoTrig?.line ?? reachP320(scD(typeof trigLine === 'string' ? trigLine : trigLine(t0 - dy))),
     gF, dust, railY: mk.railBottom, fcuX0,
-    heel, toe, yGB, yMB: photoTrig ? photoTrig.yMB + ext : yGB + ext + BASE, ext, plateD: photoTrig?.plate ?? (modPh?.lip ? polyPath(modPh.lip, same, true) : undefined),
+    heel, toe, yGB, yMB: photoTrig ? photoTrig.yMB + ext : yGB + ext + BASE, ext, plateD: photoTrig?.plate ?? (modPh?.lip ? polyPath(modPh.lip, same, true) : undefined), lipD: modPh?.lip ? polyPath(modPh.lip, same, true) : undefined,
     frameD: (glock ? polyPath(mapped, (x, y) => [x, y], true) : modOl ? polyPath(modOl, same, true) : outlines.map((ol) => polyPath(ol, frameMap, true)).join(' ')) + ' ' + hole,
     frameDetail, stipple,
     slideD: face && modPh?.nose ? photoSlide(face[0], modPh.nose[0]) : pr.slide.outline.map((ol) => polyPath(scS(ol), slideMap, true)).join(' ') + slideNose,
@@ -2064,7 +2066,7 @@ function profilePieces(P: Piece[], g: ProfileGeo, o: {
   P.push({ slot: o.own('mag'), z: 2, row: 'bottom', target: px((hx + tx) / 2, (hy + ty) / 2 + bb - 0.06),
     el: <>
       {g.windowD && <path d={T(g.windowD)} />}
-      <path d={T(photoPlate ? g.plateD! : floor)} />
+      <path d={T(photoPlate ? g.plateD! : floor + (g.lipD ? ' ' + g.lipD : ''))} />
       {!photoPlate && <path className="detail" d={T(`${seam} ${extLines}`)} />}
     </> });
 
