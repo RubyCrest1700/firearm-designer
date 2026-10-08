@@ -243,7 +243,6 @@
       "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-slides-parts/slides-with-rmr-cut-for-glock-17/?sku=430111308"
     },
     "g19-bbl-faxon": {
-      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-barrels-parts/threaded-compact-barrel-for-glock~-19-gen-1-4/",
       "FAX": "https://faxonfirearms.com/GA910N19NGQ-N"
     },
     "g19-frame-lw": {
@@ -769,6 +768,9 @@
     },
     "gs-opt-epsc": {
       "PA": "https://www.primaryarms.com/holosun-eps-carry-enclosed-pistol-sight-2-moa-dot-red-reticle"
+    },
+    "g-plate-acro": {
+      "PA": "https://www.primaryarms.com/aimpoint-acro-mount-plate-fits-glock-mos"
     }
   }
 }

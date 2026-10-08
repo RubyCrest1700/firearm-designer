@@ -10,10 +10,10 @@ import { feedbackRoute } from './feedback.js';
 /** Keep in sync with the platform ids in src/data. */
 export const PLATFORM_IDS = ['ar15', 'ar10', 'ar9', 'glock9', 'glock43x', 'glock20', 'p320', 'p365', 'mp2', 'hellcat'];
 /**
- * Old platform ids that now open in another builder (src/data PLATFORM_ALIASES): the Glock 17, 19 and 26
- * became models of the double-stack 9mm Glock builder. Builds and links made before then still carry them.
+ * Model ids that open in another builder (src/data PLATFORM_ALIASES): the double-stack 9mm Glocks are models of
+ * one builder. Builds and links made before the merge, and model links, carry them.
  */
-export const PLATFORM_ALIASES = { glock17: 'glock9', glock19: 'glock9', glock26: 'glock9' };
+export const PLATFORM_ALIASES = Object.fromEntries(['glock17', 'glock19', 'glock19x', 'glock26', 'glock34', 'glock45', 'glock47'].map((m) => [m, 'glock9']));
 export const canonical = (platform) => PLATFORM_ALIASES[platform] ?? platform;
 export const isPlatform = (platform) => PLATFORM_IDS.includes(canonical(platform));
 /** A platform's id and the old ids that now open in it, for database queries. */
@@ -125,12 +125,14 @@ export async function handle(request, env, now = Date.now()) {
     // GET /health: lets the site check that share links work before handing them out
     if (request.method === 'GET' && path === '/health') return json({ ok: true }, 200, origin);
 
-    // GET /api/builds?platform=glock19&sort=top|new|bought&limit=24
+    // GET /api/builds?platform=glock9&sort=top|new|bought&limit=24 (platform may list several, comma-separated)
     if (request.method === 'GET' && path === '/api/builds') {
       const platform = url.searchParams.get('platform');
       const sort = SORTS[url.searchParams.get('sort') ?? 'top'] ?? SORTS.top;
       const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 24, 1), 60);
-      const ids = platform && isPlatform(platform) ? idsFor(canonical(platform)) : null;
+      const wanted = platform ? [...new Set(platform.split(',').filter(isPlatform).map(canonical))] : [];
+      if (platform && !wanted.length) return json({ builds: [] }, 200, origin);
+      const ids = wanted.length ? wanted.flatMap(idsFor) : null;
       const where = ids ? `WHERE hidden = 0 AND platform IN (${ids.map(() => '?').join(', ')})` : `WHERE hidden = 0 AND platform IN (${LIVE_PLATFORMS})`;
       const stmt = db.prepare(`SELECT * FROM builds ${where} ORDER BY ${sort} LIMIT ${limit}`);
       const { results } = await (ids ? stmt.bind(...ids) : stmt).all();

@@ -186,7 +186,7 @@ function rules(b: Build): Issue[] {
     out.push({ severity: 'warn', slots: ['fcg', 'frame'], message: `${b.fcg.brand} lists this trigger for ${(b.fcg.attrs.gens as string[]).map((g) => GEN[g]).join(' and ')} frames. Check with them before using it in a ${GEN[frame.attrs.gen as string]} frame.` });
   // Every Gen3 and Gen4 G20/G21 frame has the Glock accessory rail.
   const cal = slide?.attrs.cal as string | undefined;
-  out.push(...pistolAddonRules(b, 'glock', 'frame', cal && MODEL[cal].toLowerCase(), cal ? `Glock ${MODEL[cal].slice(1)}` : 'Glock 20/21'));
+  out.push(...pistolAddonRules(b, 'glock', 'frame', cal && MODEL[cal].toLowerCase(), cal ? `Glock ${MODEL[cal].slice(1)}` : 'Glock 20 / 21'));
   return out;
 }
 

@@ -42,6 +42,16 @@ test('shares a build and lists it', async () => {
   assert.equal((await call(e, 'GET', '/api/builds?platform=ar15')).body.builds.length, 0);
 });
 
+test('lists a family of platforms and nothing for unknown ones', async () => {
+  const e = env();
+  await share(e);
+  await share(e, { platform: 'glock34', name: 'Long G34' }, '2.2.2.2');
+  const names = async (q) => (await call(e, 'GET', `/api/builds?platform=${q}`)).body.builds.map((b) => b.name).sort();
+  assert.deepEqual(await names('glock9,p320,ar15'), ['Carry G19', 'Long G34']);
+  assert.deepEqual(await names('ar15,p320'), []);
+  assert.deepEqual(await names('nope'), []);
+});
+
 test('rejects bad input', async () => {
   const e = env();
   assert.equal((await share(e, { platform: 'nope' })).status, 400);

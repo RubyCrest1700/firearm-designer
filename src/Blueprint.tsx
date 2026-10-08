@@ -486,7 +486,8 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
       return repeat(from, to - len - r, pitch, (x) => `M${x},${f(y - r)} L${f(x + len)},${f(y - r)} Q${f(x + len + r)},${f(y - r)} ${f(x + len + r)},${f(y)} Q${f(x + len + r)},${f(y + r)} ${f(x + len)},${f(y + r)} L${x},${f(y + r)} Q${f(x - r)},${f(y + r)} ${f(x - r)},${f(y)} Q${f(x - r)},${f(y - r)} ${x},${f(y - r)} Z`);
     };
     const mlok = (from: number, to: number) => slotRow(-0.03, 0.34, 1.1, from, to, 1.6);
-    const screws = (y: number) => O((RF + 0.3) / kx, y / ky, 0.1) + O((RF + 0.65) / kx, y / ky, 0.1);
+    // Inch-space circles: these sit inside paths that go through T, so they can't use px arcs.
+    const screws = (y: number) => ` ${OC(RF + 0.3, y, 0.1)} ${OC(RF + 0.65, y, 0.1)}`;
     let hgO: string, hgD: string;
     if (hk === 'atlas') {
       hgO = `M${f(RF)},${f(top + 0.32)} L${f(RF + 0.3)},${f(top + 0.32)} L${f(RF + 0.3)},${f(top)} L${f(RF + 2.1)},${f(top)} L${f(RF + 2.1)},${f(top + 0.32)} L${f(HX - 1.7)},${f(top + 0.32)} L${f(HX - 1.7)},${f(top)} L${f(HX - 0.2)},${f(top)} Q${f(HX)},${f(top)} ${f(HX)},${f(top + 0.2)} L${f(HX)},${f(bot - 0.2)} Q${f(HX)},${f(bot)} ${f(HX - 0.2)},${f(bot)} L${f(RF)},${f(bot)} Z`;
@@ -505,7 +506,7 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
       hgD = `${pic(RF + 0.25, HX - 0.45, top)} M${f(RF)},${f(top + 0.2)} L${f(HX - 0.35)},${f(top + 0.2)} M${f(RF + 0.8)},${f(top + 0.2)} L${f(RF + 0.8)},${f(bot)} ${mlok(RF + 1.3, HX - 0.4)} ${repeat(RF + 1.4, HX - 0.9, 1.6, (x) => `M${x},${f(bot - 0.5)} L${f(x + 0.55)},${f(bot - 0.5)} L${f(x + 0.4)},${f(bot - 0.15)} L${f(x - 0.15)},${f(bot - 0.15)} Z`)} ${screws(bot - 0.25)}`;
     } else {
       hgO = `M${f(RF)},${f(top)} L${f(HX - 0.25)},${f(top)} Q${f(HX)},${f(top)} ${f(HX)},${f(top + 0.25)} L${f(HX)},${f(bot - 0.25)} Q${f(HX)},${f(bot)} ${f(HX - 0.25)},${f(bot)} L${f(RF)},${f(bot)} Z`;
-      hgD = `${pic(RF + 0.25, HX - 0.3, top)} M${f(RF)},${f(top + 0.2)} L${f(HX - 0.1)},${f(top + 0.2)} M${f(HX - 0.35)},${f(top + 0.2)} L${f(HX - 0.35)},${f(bot)} M${f(RF)},${f(bot - 0.33)} L${f(HX - 0.35)},${f(bot - 0.33)} M${f(RF + 0.55)},${f(bot - 0.33)} L${f(RF + 0.55)},${f(bot)} ${repeat(RF + 1.1, HX - 1.6, 1.6, (x) => `M${x},${f(bot - 0.23)} L${f(x + 0.9)},${f(bot - 0.23)}`)} ${mlok(RF + 1.1, HX - 0.5)} M${f(RF + 0.15)},${f(top + 0.2)} L${f(RF + 0.15)},${f(bot)} ${O((RF + 0.95) / kx, 0.38 / ky, 0.12)} ${O((HX - 0.75) / kx, 0.38 / ky, 0.12)}`;
+      hgD = `${pic(RF + 0.25, HX - 0.3, top)} M${f(RF)},${f(top + 0.2)} L${f(HX - 0.1)},${f(top + 0.2)} M${f(HX - 0.35)},${f(top + 0.2)} L${f(HX - 0.35)},${f(bot)} M${f(RF)},${f(bot - 0.33)} L${f(HX - 0.35)},${f(bot - 0.33)} M${f(RF + 0.55)},${f(bot - 0.33)} L${f(RF + 0.55)},${f(bot)} ${repeat(RF + 1.1, HX - 1.6, 1.6, (x) => `M${x},${f(bot - 0.23)} L${f(x + 0.9)},${f(bot - 0.23)}`)} ${mlok(RF + 1.1, HX - 0.5)} M${f(RF + 0.15)},${f(top + 0.2)} L${f(RF + 0.15)},${f(bot)} ${OC(RF + 0.95, 0.38, 0.12)} ${OC(HX - 0.75, 0.38, 0.12)}`;
     }
     P.push({ slot: 'handguard', z: 11, row: 'top', target: px(RF + H * 0.45, top), el: <><path d={T(hgO)} /><path className="detail" d={T(hgD)} /></> });
   } else {
