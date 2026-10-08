@@ -1756,7 +1756,9 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   // A photo-traced module keeps only the patent's lines above the trigger guard (the controls); its grip is its own.
   // The P320's takedown lever is drawn from the photos below, so the patent's version of it is dropped.
   const patentLever = (ol: number[]) => key === 'p320' && ol.every((c, i) => (i % 2 ? c > 1.03 && c < 1.43 : c > 2.0 && c < 3.62));
-  const keepDetail = (ol: number[]) => !patentLever(ol) && (glock || (modPh ? Math.max(...ol.filter((_, i) => i % 2)) < h0y + 0.2
+  // A module with its photo's front face draws its own dust cover and rail, so the patent's lines there are dropped.
+  const patentRail = (ol: number[]) => !!modPh?.front && (ol.every((c, i) => (i % 2 ? c > 1.3 : c > 3.7)) || ol.every((c, i) => (i % 2 ? c > 0.95 : c > 5.5)));
+  const keepDetail = (ol: number[]) => !patentLever(ol) && !patentRail(ol) && (glock || (modPh ? Math.max(...ol.filter((_, i) => i % 2)) < h0y + 0.2
     : v.texture === 'patent' || Math.min(...ol.filter((_, i) => i % 2)) < h1y - 0.1));
   let frameDetail = pr.frame.detail.filter(keepDetail).map((ol) => polyPath(scF(ol), frameMap, false)).join(' ');
   let slideDetail = pr.slide.detail.map((ol) => polyPath(scS(ol), slideMap, false)).join(' ');
