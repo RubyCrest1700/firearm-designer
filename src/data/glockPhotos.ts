@@ -10,6 +10,8 @@ export interface GlockPhoto {
   frame: number[]; hole: [number, number, number, number]; plate: number[];
   slideStop: [number, number, number, number]; takedown: [number, number, number, number]; triggerPin: [number, number, number];
   housingPin: [number, number, number]; magCatch: [number, number, number, number];
+  /** A tilted magazine catch, as four corners (top rear, top front, bottom front, bottom rear); overrides the box. */
+  magCatchPoly?: number[];
   /** Back strap seam, and the rear edge of the textured side panel, top to bottom. */
   seam: number[]; panelRear: number[];
   /** Top and bottom of the textured side panel, and the molded logo. */
@@ -213,10 +215,10 @@ export const GLOCK_PHOTOS: Record<string, GlockPhoto> = {
     hole: [2.71, 1.52, 4.35, 2.32],
     plate: [0.306, 5.435, 0.328, 5.491, 0.349, 5.506, 0.378, 5.511, 1.506, 5.464, 1.57, 5.444, 1.658, 5.364, 1.678, 5.316, 1.684, 5.233, 1.669, 5.19, 1.637, 5.168, 1.516, 5.169, 1.466, 5.15, 0.425, 5.15, 0.404, 5.165, 0.335, 5.292, 0.31, 5.385],
     slideStop: [1.69, 0.91, 2.13, 1.15], takedown: [3.68, 0.98, 3.84, 1.31], triggerPin: [3.1, 1.3, 0.075],
-    housingPin: [0.66, 1.92, 0.075], magCatch: [1.91, 2.07, 2.43, 2.39],
+    housingPin: [0.66, 1.92, 0.075], magCatch: [1.91, 2.07, 2.43, 2.39], magCatchPoly: [1.98, 2.11, 2.36, 2.13, 2.35, 2.35, 1.96, 2.32],
     seam: [],
     panelRear: [0.571, 2.3, 0.522, 2.6, 0.485, 2.9, 0.437, 3.2, 0.389, 3.5, 0.345, 3.8, 0.307, 4.1, 0.269, 4.4, 0.216, 4.6],
-    texTop: 2.3, texBottom: 4.6, logo: [1.04, 3.19, 1.44, 3.59],
+    texTop: 2.45, texBottom: 4.6, logo: [1.04, 3.19, 1.44, 3.59],
     serrations: ser(0.84),
     trigger: 'M2.87,1.52 Q2.86,1.99 3.21,2.37 Q3.31,2.46 3.43,2.38 Q3.45,2.34 3.41,2.29 Q3.19,2.03 3.14,1.52 Z', triggerLine: 'M3.00,1.61 Q3.01,1.99 3.31,2.32',
   },
@@ -227,7 +229,7 @@ export const GLOCK_PHOTOS: Record<string, GlockPhoto> = {
     hole: [2.71, 1.47, 4.32, 2.25],
     plate: [1.451, 4.745, 1.456, 4.801, 1.46, 4.816, 1.466, 4.821, 1.701, 4.774, 1.714, 4.754, 1.733, 4.674, 1.737, 4.626, 1.738, 4.543, 1.735, 4.5, 1.728, 4.478, 1.703, 4.479, 1.693, 4.46, 1.476, 4.46, 1.472, 4.475, 1.457, 4.602, 1.452, 4.695],
     slideStop: [1.69, 0.91, 2.13, 1.15], takedown: [3.54, 0.95, 3.73, 1.25], triggerPin: [3.15, 1.22, 0.075],
-    housingPin: [0.66, 1.79, 0.075], magCatch: [1.88, 1.9, 2.43, 2.24],
+    housingPin: [0.66, 1.79, 0.075], magCatch: [1.88, 1.9, 2.43, 2.24], magCatchPoly: [2, 1.94, 2.36, 2.03, 2.32, 2.2, 1.97, 2.15],
     seam: [],
     panelRear: [0.473, 2.3, 0.399, 2.6, 0.326, 2.9, 0.252, 3.2, 0.178, 3.5, 0.077, 3.8, 0.002, 3.91],
     texTop: 2.3, texBottom: 3.91, logo: [1.04, 3, 1.44, 3.4],
@@ -241,10 +243,10 @@ export const GLOCK_PHOTOS: Record<string, GlockPhoto> = {
     hole: [2.87, 1.56, 4.54, 2.36],
     plate: [0.197, 5.435, 0.22, 5.491, 0.242, 5.506, 0.272, 5.511, 1.452, 5.464, 1.518, 5.444, 1.61, 5.364, 1.631, 5.316, 1.637, 5.233, 1.621, 5.19, 1.588, 5.168, 1.462, 5.169, 1.41, 5.15, 0.322, 5.15, 0.299, 5.165, 0.227, 5.292, 0.201, 5.385],
     slideStop: [1.9, 0.87, 2.31, 1.1], takedown: [3.97, 1.02, 4.14, 1.34], triggerPin: [3.36, 1.3, 0.075],
-    housingPin: [0.73, 1.86, 0.075], magCatch: [2.06, 1.98, 2.61, 2.4],
+    housingPin: [0.73, 1.86, 0.075], magCatch: [2.06, 1.98, 2.61, 2.4], magCatchPoly: [2.18, 2.04, 2.52, 2.17, 2.46, 2.35, 2.12, 2.23],
     seam: [],
     panelRear: [0.554, 2.3, 0.479, 2.6, 0.404, 2.9, 0.32, 3.2, 0.237, 3.5, 0.159, 3.8, 0.081, 4.1, 0.023, 4.4, -0.027, 4.6],
-    texTop: 2.3, texBottom: 4.6, logo: [1.13, 3.15, 1.53, 3.55],
+    texTop: 2.45, texBottom: 4.6, logo: [1.13, 3.15, 1.53, 3.55],
     serrations: ser(0.88),
     trigger: 'M3.13,1.56 Q3.12,2.03 3.47,2.41 Q3.57,2.50 3.69,2.42 Q3.71,2.38 3.67,2.33 Q3.45,2.07 3.40,1.56 Z', triggerLine: 'M3.26,1.65 Q3.27,2.03 3.57,2.36',
   },

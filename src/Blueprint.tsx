@@ -1394,6 +1394,15 @@ function glockOpening([x0, y0, x1, y1]: number[]) {
 
 /** A Glock frame measured from a photo (GLOCK_PHOTOS): its outline, guard opening, controls, back strap seam and
  *  grip texture, all where the photo shows them. Texture is the shared dot stipple at 0.1" pitch. */
+/** A tilted magazine catch from its four corners, with grip ribs running between its top and bottom edges. */
+function catchPoly(q: number[]) {
+  const [ax, ay, bx, by, cx, cy, dx, dy] = q;
+  const at = (t: number, s: number) => `${f(ax + (bx - ax) * t + ((dx + (cx - dx) * t) - (ax + (bx - ax) * t)) * s)},${f(ay + (by - ay) * t + ((dy + (cy - dy) * t) - (ay + (by - ay) * t)) * s)}`;
+  let ribs = '';
+  for (let t = 0.18; t < 0.85; t += 0.16) ribs += ` M${at(t, 0.2)} L${at(t, 0.8)}`;
+  return polyPath(q, same, true) + ribs;
+}
+
 function glockPhotoFrame(ph: GlockPhoto, o: { dust: number; yRail: number; rail: boolean; seam: boolean }) {
   const pts = ph.frame;
   const xs = pts.filter((_, i) => !(i % 2)), ys = pts.filter((_, i) => i % 2);
@@ -1412,7 +1421,7 @@ function glockPhotoFrame(ph: GlockPhoto, o: { dust: number; yRail: number; rail:
   const controls = rr(ph.slideStop, 0.06) + ` M${f(s0 + 0.06)},${f(s1 + 0.09)} L${f(s2 - 0.06)},${f(s1 + 0.09)} M${f(s0 + 0.06)},${f((s1 + s3) / 2 + 0.03)} L${f(s2 - 0.06)},${f((s1 + s3) / 2 + 0.03)}`
     + ' ' + rr(ph.takedown, 0.02) + ` M${f(t0 + 0.03)},${f(t1 + 0.1)} L${f(t2 - 0.03)},${f(t1 + 0.1)} M${f(t0 + 0.03)},${f(t1 + 0.16)} L${f(t2 - 0.03)},${f(t1 + 0.16)}`
     + ' ' + OC(ph.triggerPin[0], ph.triggerPin[1], ph.triggerPin[2]) + ' ' + OC(ph.housingPin[0], ph.housingPin[1], ph.housingPin[2])
-    + ' ' + rr(ph.magCatch, 0.03) + repeat(c0 + 0.07, c2 - 0.06, 0.07, (x) => ` M${x},${f(c1 + 0.05)} L${x},${f(c3 - 0.05)}`);
+    + ' ' + (ph.magCatchPoly ? catchPoly(ph.magCatchPoly) : rr(ph.magCatch, 0.03) + repeat(c0 + 0.07, c2 - 0.06, 0.07, (x) => ` M${x},${f(c1 + 0.05)} L${x},${f(c3 - 0.05)}`));
   // Grip texture: the side panel between its molded rear edge and the front strap, and the back strap between the
   // outline and its seam. The logo plate is left smooth.
   const lineX = (q: number[], y: number) => {
