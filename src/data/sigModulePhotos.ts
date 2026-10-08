@@ -13,9 +13,13 @@ export const SIG_MODULE_PHOTOS: Record<'xfull' | 'xcarry', { frame: number[]; ho
   },
 };
 
-/** The X-Series grip panel (a rounded, raked rectangle of stipple) and the Sig roundel at its top, measured on the
- *  X-Full photo. Both modules share the grip, so both use them. */
-export const MODULE_PANEL = [0.3, 1.56, 1.34, 1.56, 1.4, 1.62, 1.06, 4.86, 1.0, 4.91, -0.43, 4.96, -0.49, 4.9, 0.24, 1.62];
-export const MODULE_LOGO: [number, number, number] = [0.75, 2.03, 0.27];
-/** The rounded-triangle magazine catch behind the trigger guard. */
-export const MODULE_CATCH = [1.63, 2.37, 1.87, 2.73, 1.73, 2.81, 1.48, 2.68, 1.53, 2.46];
+/** The X-Series grip as the X-Carry photo shows it (both modules share the grip): the main stippled panel with its
+ *  rounded corners and the step by the mag catch, the Sig roundel, and the stippled strips down the back and front straps. */
+export const MODULE_PANEL = [0.3, 1.65, 1.39, 1.66, 1.43, 1.71, 1.38, 2.62, 1.32, 2.81, 1.05, 4.68, 1.0, 4.73, -0.36, 4.73, -0.4, 4.68, 0.22, 1.71];
+export const MODULE_STRIPS = [
+  [-0.19, 2.78, -0.05, 2.81, -0.475, 4.75, -0.835, 4.73],
+  [1.36, 3.66, 1.53, 3.68, 1.34, 4.79, 1.17, 4.77],
+];
+export const MODULE_LOGO: [number, number, number] = [0.85, 2.03, 0.3];
+/** The magazine catch: a rounded triangle, flat at the back and pointing forward. */
+export const MODULE_CATCH = [1.51, 2.46, 1.86, 2.665, 1.48, 2.85];
