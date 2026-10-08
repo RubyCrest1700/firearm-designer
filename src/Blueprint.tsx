@@ -1965,7 +1965,20 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
       const grooves = (xs: number[]) => xs.map((x) => `M${f(x)},${sr.y0} L${f(x + lean)},${sr.y1} M${f(x + sr.w)},${sr.y0} L${f(x + sr.w + lean)},${sr.y1}`).join(' ');
       const fx0 = SL - 1.5;
       slideDetail = `${lines} ${grooves(sr.x)} ${o.frontSerr ? grooves(sr.x.slice(0, 5).map((x) => fx0 + (x - sr.x[0]))) : ''} ${extractor} ${face} ${chamfer}`;
-      photoTrig = { d: ph.trigger, line: ph.triggerLine, top: ph.hole[1], plate: polyPath(ph.plate, same, true), yMB: Math.max(...ph.plate.filter((_, i) => i % 2)) };
+      // The magazine's body shows in the narrow gap between the grip's bottom and the floor plate (RSR's photos), so it is
+      // drawn across that gap rather than leaving the plate floating.
+      const colY = (q: number[], x: number, pick: (...v: number[]) => number) => {
+        const ys: number[] = [];
+        for (let i = 0; i < q.length; i += 2) {
+          const [ax, ay, bx, by] = [q[i], q[i + 1], q[(i + 2) % q.length], q[(i + 3) % q.length]];
+          if ((ax - x) * (bx - x) <= 0 && ax !== bx) ys.push(ay + ((x - ax) / (bx - ax)) * (by - ay));
+        }
+        return ys.length ? pick(...ys) : NaN;
+      };
+      const pxs = ph.plate.filter((_, i) => !(i % 2)), bx0 = Math.min(...pxs) + 0.12, bx1 = Math.max(...pxs) - 0.16;
+      const gb0 = colY(mapped, bx0, Math.max), gb1 = colY(mapped, bx1, Math.max), pt0 = colY(ph.plate, bx0, Math.min), pt1 = colY(ph.plate, bx1, Math.min);
+      const gapBody = [gb0, gb1, pt0, pt1].every(Number.isFinite) && pt0 > gb0 + 0.01 ? ` M${f(bx0)},${f(gb0)} L${f(bx1)},${f(gb1)} L${f(bx1)},${f(pt1)} L${f(bx0)},${f(pt0)} Z` : '';
+      photoTrig = { d: ph.trigger, line: ph.triggerLine, top: ph.hole[1], plate: polyPath(ph.plate, same, true) + gapBody, yMB: Math.max(...ph.plate.filter((_, i) => i % 2)) };
     }
   }
   if (key === 'hellcat') slideDetail += ' ' + (v.slide === 'apex' || v.slide === 'tp' ? aftermarketSerr(SL, mk.sh, port1, v.slide) : HELLCAT_SERR.map((p) => polyPath(scS(p.pts), slideMap, p.close)).join(' '));
