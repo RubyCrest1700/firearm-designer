@@ -101,8 +101,17 @@ export function priceRange(part: Part): [number, number] {
 }
 
 export function presetSelection(platform: Platform, tier: Tier): Selection {
+  return selectionOf(platform, platform.presets[tier]);
+}
+
+/** The plain factory build a builder opens on (see Platform.base). */
+export function baseSelection(platform: Platform): Selection {
+  return selectionOf(platform, platform.base ?? platform.presets.budget);
+}
+
+function selectionOf(platform: Platform, ids: string[]): Selection {
   const sel: Selection = {};
-  for (const id of platform.presets[tier]) {
+  for (const id of ids) {
     const p = platform.parts.find((x) => x.id === id);
     if (p) sel[p.slot] = p.id;
   }

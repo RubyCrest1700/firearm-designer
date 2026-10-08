@@ -11,7 +11,7 @@ import { Resvg } from '@resvg/resvg-js';
 import { Blueprint, type RegionState } from '../src/Blueprint';
 import { COMMUNITY_API } from '../src/config';
 import { PLATFORMS, canonicalPlatform } from '../src/data/index';
-import { bestOffer, partIds, presetSelection, type Selection } from '../src/engine';
+import { baseSelection, bestOffer, partIds, type Selection } from '../src/engine';
 import { buildOf, selectionFromParts, totalOf } from '../src/store';
 import type { Platform } from '../src/types';
 
@@ -92,7 +92,7 @@ function buildCard(title: string, platform: Platform, sel: Selection) {
 /** For shared builds without their own picture: the platform drawing, with no parts count or total to get wrong. */
 function platformCard(platform: Platform) {
   const line = `CHECKED FOR FIT · <tspan fill="${C.cta}">BEST PRICES</tspan> ACROSS RETAILERS`;
-  return card(`${platform.name} build`, line, drawing(platform, presetSelection(platform, 'value'), ART.x, ART.y, ART.w, ART.h));
+  return card(`${platform.name} build`, line, drawing(platform, baseSelection(platform), ART.x, ART.y, ART.w, ART.h));
 }
 
 function siteCard() {
@@ -100,7 +100,7 @@ function siteCard() {
   return card(
     'Plan your build. Check the fit. Pay less.',
     'AR-15 · AR-10 · AR-9 · GLOCK · SIG · S&amp;W M&amp;P · HELLCAT',
-    drawing(ar, presetSelection(ar, 'value'), ART.x, ART.y, ART.w, ART.h),
+    drawing(ar, baseSelection(ar), ART.x, ART.y, ART.w, ART.h),
   );
 }
 

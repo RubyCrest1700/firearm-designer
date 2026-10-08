@@ -235,6 +235,8 @@ export const ar9: Platform = {
   slots,
   parts: [...allParts, ...rifleAddonParts],
   rules,
+  // Plain: no optic, no muzzle device (none here is a factory-style 9mm hider) and a Glock 17 magazine.
+  base: ['a9-lower-psa', 'a9-lpk-psa', 'a9-trig-psa', 'a9-buf-kak', 'a9-stock-psa', 'a9-grip-moe', 'a9-upper-psa', 'a9-bbl-aero16', 'a9-hg-psa', 'a9-bcg-psa', 'a9-ch-aero', 'a9-mag-g17'],
   presets: {
     budget: ['a9-lower-psa', 'a9-lpk-psa', 'a9-trig-psa', 'a9-buf-kak', 'a9-stock-psa', 'a9-grip-moe', 'a9-upper-psa', 'a9-bbl-aero16', 'a9-hg-psa', 'a9-bcg-psa', 'a9-ch-aero', 'a9-mz-kak', 'a9-mag-gl9', 'a9-opt-romeo5x'],
     value: ['a9-lower-aero', 'a9-lpk-aero', 'a9-trig-angstadt', 'a9-buf-aero', 'a9-brace-sba3', 'a9-grip-bcm', 'a9-upper-aero', 'a9-bbl-faxon85', 'a9-hg-aero9', 'a9-bcg-aero', 'a9-ch-bcm', 'a9-mz-psa', 'a9-mag-gl9', 'a9-opt-holosun'],

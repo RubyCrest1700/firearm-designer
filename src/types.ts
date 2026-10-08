@@ -66,6 +66,8 @@ export interface Platform {
   parts: Part[];
   rules: (b: Build, place?: Placement) => Issue[];
   presets: Record<Tier, string[]>;
+  /** The plain factory build the builder opens on: stock trigger, muzzle and magazine, iron sights, no add-ons. Defaults to the budget starter. */
+  base?: string[];
   /**
    * Named starting points inside one builder, such as the Glock 17, 19 and 26 in the double-stack 9mm Glock builder. Each
    * gets its own starter builds and search page, and its id still opens old links and saved builds.
@@ -83,6 +85,7 @@ export interface PlatformModel {
   short: string;
   blurb: string;
   presets: Record<Tier, string[]>;
+  base?: string[];
   /** The parts its own page lists (the builder still offers every part). */
   parts?: (p: Part) => boolean;
 }
