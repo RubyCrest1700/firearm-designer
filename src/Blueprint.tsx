@@ -1612,6 +1612,7 @@ interface ProfileGeo {
   plateD?: string;
   /** The floor plate's front lip in a flared mag well's notch, kept above a longer magazine's extension. */
   lipD?: string;
+  lipDet?: string;
 }
 
 /** Moving average over a closed polyline (w points each side), to calm the wobble of a dotted drawing's trace. */
@@ -2006,8 +2007,11 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   // On a photo-traced module the frame runs forward under the slide; the slide's nose is only the narrow block around
   // the recoil spring in front of the frame's face, with a rounded bottom corner, as the photos show.
   // The floor plate's top face shows as a line across its front, just under the lip's top edge.
+  // The dark gap between it and the top of the well's cut is hatched, so the plate reads as sitting back inside the cut.
   const lipEdge = (l: number[]) => { const xs = l.filter((_, i) => !(i % 2)), x0 = Math.min(...xs) + 0.04, x1 = Math.max(...xs) - 0.03, y = l[3] + 0.05;
-    return ` M${f(x0)},${f(y)} L${f(x1)},${f(y)}`; };
+    let d = ` M${f(x0)},${f(y)} L${f(x1)},${f(y)}`;
+    for (let x = x0 + 0.02; x < x1 - 0.12; x += 0.05) d += ` M${f(x)},${f(l[3] - 0.005)} L${f(x + 0.035)},${f(l[3] - 0.04)}`;
+    return d; };
   const photoSlide = (faceX: number, noseY: number) => {
     const r = 0.06;
     return slideCut.map((ol) => polyPath(ol, same, true)).join(' ')
@@ -2020,7 +2024,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     trigD: photoTrig?.d ?? reachP320(scD((o.flat ? TRIGGERS[key].flat : TRIGGERS[key].curved)(t0 - dy) + (v.hook && TRIGGERS[key].hook ? ' ' + TRIGGERS[key].hook : ''))),
     trigLine: photoTrig?.line ?? reachP320(scD(typeof trigLine === 'string' ? trigLine : trigLine(t0 - dy))),
     gF, dust, railY: mk.railBottom, fcuX0,
-    heel, toe, yGB, yMB: photoTrig ? photoTrig.yMB + ext : yGB + ext + BASE, ext, plateD: photoTrig?.plate ?? (modPh?.lip ? polyPath(modPh.lip, same, true) + lipEdge(modPh.lip) : undefined), lipD: modPh?.lip ? polyPath(modPh.lip, same, true) + lipEdge(modPh.lip) : undefined,
+    heel, toe, yGB, yMB: photoTrig ? photoTrig.yMB + ext : yGB + ext + BASE, ext, plateD: photoTrig?.plate ?? (modPh?.lip ? polyPath(modPh.lip, same, true) : undefined), lipD: modPh?.lip ? polyPath(modPh.lip, same, true) : undefined, lipDet: modPh?.lip ? lipEdge(modPh.lip) : undefined,
     frameD: (glock ? polyPath(mapped, (x, y) => [x, y], true) : modOl ? polyPath(modOl, same, true) : outlines.map((ol) => polyPath(ol, frameMap, true)).join(' ')) + ' ' + hole,
     frameDetail, stipple,
     slideD: face && modPh?.nose ? photoSlide(face[0], modPh.nose[0]) : pr.slide.outline.map((ol) => polyPath(scS(ol), slideMap, true)).join(' ') + slideNose,
@@ -2071,6 +2075,7 @@ function profilePieces(P: Piece[], g: ProfileGeo, o: {
       {g.windowD && <path d={T(g.windowD)} />}
       <path d={T(photoPlate ? g.plateD! : floor + (g.lipD ? ' ' + g.lipD : ''))} />
       {!photoPlate && <path className="detail" d={T(`${seam} ${extLines}`)} />}
+      {g.lipDet && <path className="detail" d={T(g.lipDet)} />}
     </> });
 
   /* Trigger: hangs from the top of the guard opening, shaped as in the patents (which show it as a broken line) */
