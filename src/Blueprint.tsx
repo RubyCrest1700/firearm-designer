@@ -1681,7 +1681,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     hole: scF(raw.hole), heel: scF(raw.heel), toe: scF(raw.toe), magWindow: raw.magWindow && scF(raw.magWindow) } as unknown as typeof raw;
   const [h0x, h0y, h1x, h1y] = mk.hole;
   // The Glock drawing is a G42, so its sizes are fitted by slide length; the Sigs by overall length.
-  // A grip module traced from a flat photo with the slide on (the Subcompact and the AXG) keeps the slide at its published length, so the slide covers the module as in the photo.
+  // A grip module traced with its front face (the Subcompact, the AXG and the Wilson) keeps the slide at its published length, so the slide covers the module as in the photos.
   const photoNose = !glock && !!v.module && !!SIG_MODULE_PHOTOS[v.module]?.nose;
   const dS = glock || photoNose ? spec.m.slide - mk.slide : spec.m.oal - R.oal; // slide length change
   const dF = glock ? spec.frame.slide - mk.slide : spec.frame.oal - R.oal; // dust cover length change
@@ -1759,7 +1759,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   // The P320's takedown lever is drawn from the photos below, so the patent's version of it is dropped.
   const patentLever = (ol: number[]) => key === 'p320' && ol.every((c, i) => (i % 2 ? c > 1.03 && c < 1.43 : c > 2.0 && c < 3.62));
   // A module with its photo's front face draws its own dust cover and rail, so the patent's lines there are dropped.
-  const patentRail = (ol: number[]) => !!modPh?.front && (ol.every((c, i) => (i % 2 ? c > 1.3 : c > 3.7)) || ol.every((c, i) => (i % 2 ? c > 0.95 : c > 5.5)));
+  const patentRail = (ol: number[]) => !!modPh?.front && (ol.every((c, i) => (i % 2 ? c > 1.3 : true)) && Math.max(...ol.filter((_, i) => !(i % 2))) > 4.0 || ol.every((c, i) => (i % 2 ? c > 0.95 : c > 5.5)));
   const keepDetail = (ol: number[]) => !patentLever(ol) && !patentRail(ol) && (glock || (modPh ? Math.max(...ol.filter((_, i) => i % 2)) < h0y + 0.2
     : v.texture === 'patent' || Math.min(...ol.filter((_, i) => i % 2)) < h1y - 0.1));
   let frameDetail = pr.frame.detail.filter(keepDetail).map((ol) => polyPath(scF(ol), frameMap, false)).join(' ');
@@ -1812,7 +1812,22 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
       stipple = [MODULE_PANEL, ...MODULE_STRIPS].map(dots).join('');
       frameDetail += ' ' + [MODULE_PANEL, ...MODULE_STRIPS].map((q) => polyPath(roundCorners(q, 0.06), same, true)).join(' ') + ' ' + OC(lx, ly, lr)
     } else if (v.texture === 'x' || v.texture === 'patent') stipple = dotsIn(panel, 0.1, same, 0.06) + (modPh?.strips ?? []).map((q) => dotsIn(q, 0.06, same, 0.02)).join('');
-    else if (v.texture === 'wilson') stipple = hatchIn(panel, 50, 0.13, same, 0.05) + hatchIn(panel, -50, 0.13, same, 0.05);
+    else if (v.texture === 'wilson') {
+      // Wilson's texture: diamond checkering, and on the photo-traced module grooves fanning down and back from above
+      // the mag catch, with stippled strips down both straps.
+      stipple = hatchIn(panel, 35, 0.085, same, 0.04) + hatchIn(panel, -35, 0.085, same, 0.04) + (modPh?.strips ?? []).map((q) => dotsIn(q, 0.06, same, 0.02)).join('');
+      if (modPh?.fan) {
+        const [fx0, fy0] = modPh.fan;
+        for (const a of [102, 115, 128, 145, 165]) {
+          const r = (a * Math.PI) / 180, pts: number[] = [];
+          for (let t = 0.6; t < 3; t += 0.02) {
+            const x = fx0 + Math.cos(r) * t, y = fy0 + Math.sin(r) * t;
+            if (inside(panel, x, y)) pts.push(x, y); else if (pts.length) break;
+          }
+          if (pts.length > 4) stipple += ' ' + polyPath(pts, same, false);
+        }
+      }
+    }
     else {
       // AXG: a G10 panel held by two screws on the alloy frame, a checkered field inside its raised rim, and
       // serrations down the back strap and front strap (all from the photo).
@@ -2146,7 +2161,7 @@ function pistol(platform: Platform, build: Build): Scene {
     bigCatch: gen === 'gen4' || gen === 'gen5' || matches(fr, /Timberwolf|TWF/), seam: gen === 'gen4' || gen === 'gen5' || matches(fr, /Timberwolf/),
     sf: !!fr?.attrs.sf, flare5: gen === 'gen5', timberwolf: matches(fr, /Timberwolf/), rail: !!fr?.attrs.rail,
     beaver: wilson || axg, undercut: wilson || axg, flare: wilson,
-    module: matches(gr, /X-Series Full/) ? 'xfull' : matches(gr, /X-Series Carry/) ? 'xcarry' : gr?.id === 'p-grip-sub' ? 'sub' : axg ? 'axg' : undefined,
+    module: matches(gr, /X-Series Full/) ? 'xfull' : matches(gr, /X-Series Carry/) ? 'xcarry' : gr?.id === 'p-grip-sub' ? 'sub' : gr?.id === 'p-grip-wilson' ? 'wilson' : axg ? 'axg' : undefined,
     texture: wilson ? 'wilson' : axg ? 'axg' : xs ? 'x' : 'patent',
     slide: b.slide?.brand === 'Brownells' ? 'brownells' : matches(b.slide, /Combat Slide/) ? 'ggp' : matches(b.slide, /Octane/) ? 'zev' : matches(b.slide, /ZPS/) ? 'zaffiri'
       : b.slide?.brand === 'Apex Tactical' ? 'apex' : matches(b.slide, /Axiom/) ? 'tp' : matches(b.slide, /Gen5/) ? 'gen5' : 'oem',
