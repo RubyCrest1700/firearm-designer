@@ -1722,7 +1722,17 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     return x - 0.1 * Math.sin(Math.PI * n * t) ** 2;
   };
   const frameMap: Map2 = (x, y) => grip(groove(fx(x), y), y);
-  const slideMap: Map2 = (x, y) => [sx(x), y];
+  // A traced module whose frame starts well forward of the patent's under the slide's rear (the Wilson): the
+  // slide's rear face stands more upright, as in Wilson's photo, so its lower rear corner meets the module's top.
+  const modTop = !glock && v.module ? SIG_MODULE_PHOTOS[v.module]?.frame : undefined;
+  let rearSh = 0;
+  if (modTop) {
+    const ys = modTop.filter((_, i) => i % 2), top = Math.min(...ys);
+    const tr = Math.min(...modTop.filter((x, i) => !(i % 2) && modTop[i + 1] < top + 0.06));
+    const rb = Math.min(...pr.slide.outline.flatMap((ol) => scS(ol).filter((x, i) => !(i % 2) && ol[i + 1] * ks > mk.sh - 0.08)));
+    if (key === 'p320' && tr - rb > 0.15) rearSh = tr - 0.02 - rb;
+  }
+  const slideMap: Map2 = (x, y) => [sx(x) + (rearSh && x < 0.9 ? rearSh * Math.max(0, Math.min(1, y / mk.sh)) * Math.min(1, (0.9 - x) / 0.5) : 0), y];
   let heel = grip(mk.heel[0], mk.heel[1]);
   let toe = grip(mk.toe[0], mk.toe[1]);
   const ext = Math.max(0, spec.magH - spec.gripH);
@@ -1769,7 +1779,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   const patentLever = (ol: number[]) => key === 'p320' && ol.every((c, i) => (i % 2 ? c > 1.03 && c < 1.43 : c > 2.0 && c < 3.62));
   // A module with its photo's front face draws its own dust cover and rail, so the patent's lines there are dropped.
   const patentRail = (ol: number[]) => !!modPh?.front && ((key === 'p365' && ol.every((c, i) => (i % 2 ? c > mk.sh + 0.03 : c > 3.6))) || ol.every((c, i) => (i % 2 ? c > 1.3 : true)) && Math.max(...ol.filter((_, i) => !(i % 2))) > 4.0 || ol.every((c, i) => (i % 2 ? c > 0.95 : c > 5.5)));
-  const keepDetail = (ol: number[]) => !patentLever(ol) && !patentRail(ol) && (glock || (modPh ? Math.max(...ol.filter((_, i) => i % 2)) < h0y + 0.2
+  const keepDetail = (ol: number[]) => !patentLever(ol) && !patentRail(ol) && (glock || (modPh ? Math.max(...ol.filter((_, i) => i % 2)) < h0y + 0.2 && Math.min(...ol.filter((_, i) => !(i % 2))) > -0.12
     : v.texture === 'patent' || Math.min(...ol.filter((_, i) => i % 2)) < h1y - 0.1));
   let frameDetail = pr.frame.detail.filter(keepDetail).map((ol) => polyPath(scF(ol), frameMap, false)).join(' ');
   let slideDetail = pr.slide.detail.map((ol) => polyPath(scS(ol), slideMap, false)).join(' ');
