@@ -41,8 +41,6 @@ const allParts = [
       offers: [['BRN', 723.0]], pick: pick('premium', 'The ported slide keeps the muzzle flat for fast follow-ups.') },
   ]),
   ...parts('slide', [
-    { id: 'hc-slide-apex', brand: 'Apex Tactical', name: 'Hellcat Pro Slide (stripped)', specs: ['Pro length', 'Direct mount RMSc and Holosun K', 'Fits 3" and Pro frames'],
-      attrs: { size: 'pro', cut: 'rmsc', k: true }, offers: [['BRN', 450.0]] },
     { id: 'hc-slide-tp', brand: 'True Precision', name: 'Axiom Hellcat Pro Slide, Optic Cut (stripped)', specs: ['Pro length', 'RMSc cut', 'Fits 3" and Pro frames'],
       attrs: { size: 'pro', cut: 'rmsc' }, offers: [['BRN', 395.0]] },
   ]),

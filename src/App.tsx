@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { PLATFORMS, PRICES_UPDATED_AT, canonicalPlatform } from './data';
 import { RETAILERS, buyUrl } from './data/retailers';
 import {
-  bestOffer, candidateIssues, encodeMount, issuesFor, money, ownedOf, ownsAny, partIds, placementOf, presetSelection, baseSelection, priceRange,
+  bestOffer, candidateIssues, encodeMount, issuesFor, money, ownedOf, ownsAny, partIds, placementOf, presetSelection, baseSelection, priceLabel, priceRange, priceText,
   selectionTokens, singleRetailerCarts, toBuild, withoutOwned, worst, type Owned, type Selection,
 } from './engine';
 import { findParts, isLink, type Found } from './find';
@@ -294,7 +294,7 @@ export default function App() {
           </div>
           <div>
             <p className="foot-title">Good to Know</p>
-            <p>Prices marked Sample aren't tracked yet. Always confirm the price at the retailer.</p>
+            <p>Prices marked Sample aren't tracked yet. List Price and dated Factory Part prices were checked by hand on that date; undated Factory Part prices are estimates. A From price is a holster before its light option. Always confirm the price at the retailer.</p>
             <p>Parts marked FFL are serialized. They are legally the firearm and ship to a licensed dealer. Laws vary by state.</p>
             <p>Some retailer links may earn us a small commission at no extra cost to you. It never changes which parts we show or how we check fit.</p>
           </div>
@@ -1032,7 +1032,7 @@ function Candidate({ part, open, issues, sev, selected, owned, onChoose, onBuyCl
   const best = bestOffer(part);
   const [lo, hi] = priceRange(part);
   const fit: RegionState = sev === 'ok' || sev === 'info' ? 'ok' : sev;
-  const live = part.offers.some((o) => o.checkedAt);
+  const label = best ? priceLabel(best) : '';
   return (
     <li className={'cand ' + fit + (selected ? ' selected' : '')}>
       <div className="cand-top">
@@ -1049,8 +1049,8 @@ function Candidate({ part, open, issues, sev, selected, owned, onChoose, onBuyCl
           {issues.map((i, n) => <p key={n} className={'row-issue ' + i.severity}>{i.message}</p>)}
         </div>
         <div className="cand-buy">
-          {best && <span className="amt">{money(best.price)}</span>}
-          {best && <span className="src">{RETAILERS[best.retailer].name}{live ? '' : ' · sample'}</span>}
+          {best && <span className="amt">{priceText(best)}</span>}
+          {best && <span className="src">{RETAILERS[best.retailer].name}{label ? ` · ${label}` : ''}</span>}
           <ChangeChip part={part} long />
           {!selected && <button className="btn primary" onClick={() => onChoose(false)}>Add to Build</button>}
           <button className={'own-btn' + (owned ? ' on' : '')} aria-pressed={owned} onClick={() => onChoose(true)}>{owned ? '✓ Owned' : 'I Own This'}</button>
@@ -1070,9 +1070,9 @@ function Candidate({ part, open, issues, sev, selected, owned, onChoose, onBuyCl
               {[...part.offers].sort((a, b) => a.price - b.price).map((o) => (
                 <tr key={o.retailer} className={best && o.retailer === best.retailer ? 'best' : ''}>
                   <td>{RETAILERS[o.retailer].name}</td>
-                  <td className="num">{money(o.price)}</td>
+                  <td className="num">{priceText(o)}</td>
                   <td>{o.inStock ? 'In Stock' : <span className="oos">Out</span>}</td>
-                  <td className="dim">{o.checkedAt ? `Live ${shortDate(o.checkedAt)}` : 'Sample'}</td>
+                  <td className="dim">{o.checkedAt ? `Live ${shortDate(o.checkedAt)}` : o.asOf ? `${priceLabel(o)} ${shortDate(o.asOf)}` : priceLabel(o)}</td>
                   <td className="num"><a href={buyUrl(o, `${part.brand} ${part.name}`)} target="_blank" rel="sponsored noopener" onClick={onBuyClick}>{o.url ? 'View ↗' : 'Search ↗'}</a></td>
                 </tr>
               ))}

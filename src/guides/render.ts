@@ -5,7 +5,7 @@
  */
 import { PLATFORMS, PRICES_UPDATED_AT } from '../data';
 import { RETAILERS, buyUrl } from '../data/retailers';
-import { bestOffer, money, presetSelection, worst } from '../engine';
+import { bestOffer, money, presetSelection, priceLabel, priceText, worst } from '../engine';
 import type { Part, Platform, Severity, Tier } from '../types';
 import { GUIDES, type AcrossChart, type FitChart, type Guide, type PairChart } from './content';
 import { titleCase } from '../text';
@@ -147,8 +147,9 @@ function priceHtml(part: Part) {
   if (!o) return '';
   const store = RETAILERS[o.retailer]?.name ?? o.retailer;
   const href = buyUrl(o, `${part.brand} ${part.name}`);
-  const when = o.checkedAt ? `checked ${shortDate(o.checkedAt)}` : 'sample price';
-  return `<p class="price"><b>${money(o.price)}</b> at <a href="${esc(href)}" rel="sponsored nofollow noopener" target="_blank">${esc(store)}</a> <span class="muted">(${when})</span></p>`;
+  const label = priceLabel(o).toLowerCase();
+  const when = o.checkedAt ? `checked ${shortDate(o.checkedAt)}` : o.asOf ? `${label}, checked ${shortDate(o.asOf)}` : o.basis === 'factory' ? 'factory part, estimated' : 'sample price';
+  return `<p class="price"><b>${priceText(o)}</b> at <a href="${esc(href)}" rel="sponsored nofollow noopener" target="_blank">${esc(store)}</a> <span class="muted">(${when})</span></p>`;
 }
 
 function picksHtml(platform: Platform, slots: string[]) {
@@ -223,7 +224,7 @@ ${o.jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).re
 <footer class="site-footer"><div class="wrap">
   <p class="brand-name small">Drop-In <b>Builds</b></p>
   <p>Plan a build part by part, check that everything fits, and see where each part costs least. We don't sell anything.</p>
-  <p>Fit charts come from the same rules the builder uses. Prices marked Sample aren't tracked yet; always confirm the price and fit with the retailer and the maker. Parts that are the serialized firearm ship to a licensed dealer, and laws vary by state.</p>
+  <p>Fit charts come from the same rules the builder uses. Prices marked Sample aren't tracked yet, List Price and dated Factory Part prices were checked by hand on that date, and undated Factory Part prices are estimates; always confirm the price and fit with the retailer and the maker. Parts that are the serialized firearm ship to a licensed dealer, and laws vary by state.</p>
   <p>Some retailer links may earn us a small commission at no extra cost to you. It never changes which parts we show or how we check fit.</p>
   <p><a class="foot-link" href="/feedback/">Send Feedback</a></p>
 </div></footer>
@@ -305,7 +306,7 @@ const GENERAL_FAQ: { section: string; items: { q: string; a: string }[] }[] = [
     { q: 'How are community builds featured?', a: 'Each week the builds with the most votes, and the most people clicking through to buy the parts, are featured at the top of the Community page.' },
   ] },
   { section: 'Prices and Alerts', items: [
-    { q: 'Where do the prices come from?', a: "We check retailer and maker sites every night where they allow it, and show each part's price at every retailer we track. Prices marked Sample aren't tracked yet, so always confirm the price at the retailer." },
+    { q: 'Where do the prices come from?', a: "We check retailer and maker sites every night where they allow it, and show each part's price at every retailer we track. Prices marked Sample aren't tracked yet, List Price and dated Factory Part prices were checked by hand on that date, and undated Factory Part prices are estimates, so always confirm the price at the retailer." },
     { q: "Why isn't my favorite retailer listed?", a: "Some retailers don't allow automated price checks, and we respect that. We add retailers as they make their prices available to us." },
     { q: 'How do price alerts work?', a: 'Save a build to My Builds, then enter your email there. We send one email a day at most, only when a part in a saved build moves by $20 and 10% or more. Every email has a one-click unsubscribe link.' },
     { q: 'What do you do with my email address?', a: "We only use it to send the price alerts you asked for. We don't sell it or share it, and unsubscribing deletes it." },

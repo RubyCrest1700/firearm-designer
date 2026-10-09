@@ -56,11 +56,6 @@
       "basis": "estimate",
       "src": null
     },
-    "a10-ch-armalite": {
-      "oz": 1.7,
-      "basis": "estimate",
-      "src": null
-    },
     "a10-ch-dpms": {
       "oz": 1.6,
       "basis": "estimate",
@@ -106,11 +101,6 @@
       "basis": "estimate",
       "src": null
     },
-    "a10-hg-armalite": {
-      "oz": 16.0,
-      "basis": "estimate",
-      "src": null
-    },
     "a10-hg-atlas": {
       "oz": 13.5,
       "basis": "estimate",
@@ -118,11 +108,6 @@
     },
     "a10-hg-psa": {
       "oz": 14.0,
-      "basis": "estimate",
-      "src": null
-    },
-    "a10-hg-seekins": {
-      "oz": 14.5,
       "basis": "estimate",
       "src": null
     },
@@ -151,18 +136,8 @@
       "basis": "estimate",
       "src": null
     },
-    "a10-lower-armalite": {
-      "oz": 12.0,
-      "basis": "estimate",
-      "src": null
-    },
     "a10-lower-psa": {
       "oz": 11.5,
-      "basis": "estimate",
-      "src": null
-    },
-    "a10-lower-seekins": {
-      "oz": 13.5,
       "basis": "estimate",
       "src": null
     },
@@ -266,18 +241,8 @@
       "basis": "estimate",
       "src": null
     },
-    "a10-upper-armalite": {
-      "oz": 10.0,
-      "basis": "estimate",
-      "src": null
-    },
     "a10-upper-psa": {
       "oz": 9.5,
-      "basis": "estimate",
-      "src": null
-    },
-    "a10-upper-seekins": {
-      "oz": 11.0,
       "basis": "estimate",
       "src": null
     },
@@ -478,11 +443,6 @@
     },
     "a9-lpk-aero": {
       "oz": 5.5,
-      "basis": "estimate",
-      "src": null
-    },
-    "a9-lpk-bcm": {
-      "oz": 5.3,
       "basis": "estimate",
       "src": null
     },
@@ -941,11 +901,6 @@
       "basis": "estimate",
       "src": null
     },
-    "ar-lpk-bcm": {
-      "oz": 5.3,
-      "basis": "estimate",
-      "src": null
-    },
     "ar-lpk-cmmg": {
       "oz": 4.5,
       "basis": "estimate",
@@ -1201,11 +1156,6 @@
       "basis": "estimate",
       "src": null
     },
-    "g-mz-tpm": {
-      "oz": 0.3,
-      "basis": "estimate",
-      "src": null
-    },
     "g-opt-407c": {
       "oz": 1.5,
       "basis": "estimate",
@@ -1262,11 +1212,6 @@
       "src": null
     },
     "g-sight-ameriglo": {
-      "oz": 0.4,
-      "basis": "estimate",
-      "src": null
-    },
-    "g-sight-dawson": {
       "oz": 0.4,
       "basis": "estimate",
       "src": null
@@ -1426,11 +1371,6 @@
       "basis": "estimate",
       "src": null
     },
-    "g17-slide-zev": {
-      "oz": 9.4,
-      "basis": "estimate",
-      "src": null
-    },
     "g19-bbl-ba": {
       "oz": 4.0,
       "basis": "estimate",
@@ -1551,18 +1491,8 @@
       "basis": "estimate",
       "src": null
     },
-    "g19-slide-zev": {
-      "oz": 8.9,
-      "basis": "estimate",
-      "src": null
-    },
     "g19x-frame-g5": {
       "oz": 3.6,
-      "basis": "estimate",
-      "src": null
-    },
-    "g26-bbl-faxon": {
-      "oz": 2.9,
       "basis": "estimate",
       "src": null
     },
@@ -1643,11 +1573,6 @@
     },
     "g26-slide-mos": {
       "oz": 11.4,
-      "basis": "estimate",
-      "src": null
-    },
-    "g26-slide-zev": {
-      "oz": 8.4,
       "basis": "estimate",
       "src": null
     },
@@ -2281,11 +2206,6 @@
       "basis": "estimate",
       "src": null
     },
-    "hc-slide-apex": {
-      "oz": 8.0,
-      "basis": "estimate",
-      "src": null
-    },
     "hc-slide-tp": {
       "oz": 8.0,
       "basis": "estimate",
@@ -2578,11 +2498,6 @@
     },
     "p-light-x300": {
       "oz": 4.2,
-      "basis": "estimate",
-      "src": null
-    },
-    "p-mag-mecgar17": {
-      "oz": 3.2,
       "basis": "estimate",
       "src": null
     },
