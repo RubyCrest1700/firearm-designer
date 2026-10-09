@@ -1940,6 +1940,25 @@
     },
     "a9-irons-troy": {
       "PA": "https://www.primaryarms.com/troy-industries-m4-style-folding-battle-sight-set"
+    },
+    "p-slide-zev-xfull": {
+      "FORGE": "https://forged-armory.odoo.com/shop/zt-sld-z320-xfu-oc-r-d-zev-strppd-xfull-octane-z320-rmr-dlc-48554"
+    },
+    "p-slide-zev-xcarry": {
+      "FORGE": "https://forged-armory.odoo.com/shop/zt-sld-z320-xcr-oc-r-d-zev-strppd-xcry-octane-z320-rmr-dlc-48550",
+      "RSUP": "https://riflesupply.com/ZEV-Technologies-Z320-XCarry-Octane-Stripped-Slide-w-RMR-Cut-Slide-For-Sig-Sauer-P320-Black-SLD-Z320-XCARRY-OCTANE-RMR-DLC_p_7719.html"
+    },
+    "p-slide-zev-xcompact": {
+      "FORGE": "https://forged-armory.odoo.com/shop/zt-sld-z320-xcm-oc-r-d-zev-strppd-xcmp-octane-z320-rmr-dlc-48548"
+    },
+    "p365-slide-zev": {
+      "RA": "https://www.rainierarms.com/zev-technologies-z365-octane-slide-w-rmsc-optic-cut-dlc/",
+      "ABIDE": "https://www.abidearmory.com/zev-technologies-slide-octane-sld-z365-octane-rmsc-d/",
+      "FORGE": "https://forged-armory.odoo.com/shop/zt-sld-z365-oct-rmsc-d-zev-strppd-octane-z365-rmsc-dlc-48556"
+    },
+    "p365-slide-zevxl": {
+      "RA": "https://rainierarms.com/zev-technologies-z365xl-octane-slide-w-rmr-optic-cut-dlc",
+      "FORGE": "https://forged-armory.odoo.com/shop/zt-sld-z365xl-oc-rms-d-zev-strppd-octane-z365xl-rmsc-dlc-48558"
     }
   }
 }

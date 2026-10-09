@@ -2591,6 +2591,21 @@
       "basis": "estimate",
       "src": null
     },
+    "p-slide-zev-xcarry": {
+      "oz": 10.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-slide-zev-xcompact": {
+      "oz": 10.0,
+      "basis": "estimate",
+      "src": null
+    },
+    "p-slide-zev-xfull": {
+      "oz": 11.5,
+      "basis": "estimate",
+      "src": null
+    },
     "p-spr-c": {
       "oz": 0.8,
       "basis": "estimate",
@@ -2783,6 +2798,16 @@
     },
     "p365-slide-xl": {
       "oz": 9.8,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-slide-zev": {
+      "oz": 6.5,
+      "basis": "estimate",
+      "src": null
+    },
+    "p365-slide-zevxl": {
+      "oz": 7.5,
       "basis": "estimate",
       "src": null
     },

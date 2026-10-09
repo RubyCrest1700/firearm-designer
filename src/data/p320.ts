@@ -63,6 +63,13 @@ const allParts = [
       offers: [['SIG', 259.99]] },
     { id: 'p-slide-45', brand: 'Sig Sauer', name: 'P320 Full Slide Assembly, .45 ACP', specs: ['Full 4.7"', '.45 ACP', 'No optic cut'], attrs: { length: 'full', caliber: '.45 ACP', cut: 'none' },
       offers: [['SIG', 279.99]] },
+    // ZEV's Octane slides come stripped (no striker, extractor or sights), cut for RMR-footprint optics. The XFive's 5" barrel has no P320 size here.
+    { id: 'p-slide-zev-xfull', brand: 'ZEV', name: 'Z320 XFull Octane Stripped Slide, RMR Cut', specs: ['Full 4.7"', '9mm', 'RMR cut', 'Stripped', 'Black DLC'], attrs: { length: 'full', caliber: '9mm', cut: 'rmr', stripped: true },
+      offers: [['FORGE', 418.95, false]] },
+    { id: 'p-slide-zev-xcarry', brand: 'ZEV', name: 'Z320 XCarry Octane Stripped Slide, RMR Cut', specs: ['Compact 3.9"', '9mm', 'RMR cut', 'Stripped', 'Black DLC'], attrs: { length: 'compact', caliber: '9mm', cut: 'rmr', stripped: true },
+      offers: [['FORGE', 432.18, false], ['RSUP', 466.99, false]] },
+    { id: 'p-slide-zev-xcompact', brand: 'ZEV', name: 'Z320 XCompact Octane Stripped Slide, RMR Cut', specs: ['Subcompact 3.6"', '9mm', 'RMR cut', 'Stripped', 'Black DLC'], attrs: { length: 'subcompact', caliber: '9mm', cut: 'rmr', stripped: true },
+      offers: [['FORGE', 432.18, false]] },
   ]),
   ...parts('barrel', [
     { id: 'p-bbl-c9', brand: 'Sig Sauer', name: 'P320 Barrel, Compact 3.9", 9mm', specs: ['Compact 3.9"', '9mm'], attrs: { length: 'compact', caliber: '9mm' },
@@ -116,6 +123,8 @@ const allParts = [
   ]),
 ];
 
+const STRIPPED_NOTE: Issue = { severity: 'info', slots: ['slide'], message: 'This slide comes stripped. Move the striker, extractor and other slide parts over from a factory slide, and add sights.' };
+
 function rules(b: Build): Issue[] {
   const out: Issue[] = [];
   const { grip, slide, barrel, spring, optic, mag } = b;
@@ -143,9 +152,12 @@ function rules(b: Build): Issue[] {
   if (slide && optic) {
     if (slide.attrs.cut === 'none')
       out.push({ severity: 'error', slots: ['slide', 'optic'], message: 'This slide has no optic cut. Choose an optic-ready slide or skip the optic.' });
+    else if (slide.attrs.cut === 'rmr' && optic.attrs.footprint !== 'rmr')
+      out.push({ severity: 'error', slots: ['slide', 'optic'], message: 'This slide is cut for RMR-footprint optics. Choose an RMR-footprint optic.' });
     else if (slide.attrs.cut !== optic.attrs.footprint)
       out.push({ severity: 'warn', slots: ['slide', 'optic'], message: 'This optic uses the RMR footprint. Sig optic-ready slides need an RMR adapter plate (about $40).' });
   }
+  if (slide?.attrs.stripped) out.push(STRIPPED_NOTE);
   if (mag && slide && mag.attrs.caliber !== slide.attrs.caliber)
     out.push({ severity: 'error', slots: ['mag', 'slide'], message: `${mag.attrs.caliber} magazines won't feed a ${slide.attrs.caliber} slide.` });
   if (mag && grip) {
