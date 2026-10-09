@@ -1,0 +1,65 @@
+# One-click cleanup of old branches. Run it from the Actions tab ("Delete Merged Branches" > Run workflow).
+# Deletes only branches whose latest commit is already in main. Always keeps main, archive/* and any
+# branch with an open PR. Dry run (on by default) only lists what would be deleted in the run summary.
+name: Delete Merged Branches
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry Run (only list what would be deleted)'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      DRY_RUN: ${{ inputs.dry_run }}
+    steps:
+      - name: Delete merged branches
+        run: |
+          set -euo pipefail
+          open_pr_heads=$(gh api --paginate "repos/$REPO/pulls?state=open&per_page=100" --jq '.[] | select(.head.repo.full_name == env.REPO) | .head.ref')
+          deleted=(); kept=()
+          while IFS= read -r branch; do
+            case "$branch" in
+              main|archive/*) continue ;;
+            esac
+            if grep -qxF -- "$branch" <<<"$open_pr_heads"; then
+              kept+=("$branch (open PR)"); continue
+            fi
+            enc=$(jq -rn --arg b "$branch" '$b|@uri|gsub("%2F";"/")')
+            status=$(gh api "repos/$REPO/compare/main...$enc" --jq '.status' 2>/dev/null || echo unrelated)
+            if [ "$status" = "behind" ] || [ "$status" = "identical" ]; then
+              if [ "$DRY_RUN" != "true" ]; then
+                gh api -X DELETE "repos/$REPO/git/refs/heads/$enc" >/dev/null
+              fi
+              deleted+=("$branch")
+            else
+              kept+=("$branch (has commits not in main)")
+            fi
+          done < <(gh api --paginate "repos/$REPO/branches?per_page=100" --jq '.[].name')
+
+          {
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "## Dry Run: ${#deleted[@]} Branches Would Be Deleted"
+              echo "Nothing was deleted. Run again with Dry Run unchecked to delete these."
+            else
+              echo "## Deleted ${#deleted[@]} Branches"
+            fi
+            echo
+            for b in "${deleted[@]}"; do echo "- $b"; done
+            echo
+            echo "## Kept ${#kept[@]} Branches"
+            echo "Main and archive branches are always kept and not listed."
+            echo
+            for b in "${kept[@]}"; do echo "- $b"; done
+          } >> "$GITHUB_STEP_SUMMARY"
