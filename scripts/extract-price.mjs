@@ -129,6 +129,9 @@ function toOunces(value, unit) {
   return oz && oz > 0 && oz < 1000 ? Math.round(oz * 10) / 10 : null;
 }
 
+/** Prices stores show in place of a real one. Bud's Gun Shop lists sold-out items at $6,543.21. */
+const PLACEHOLDER_PRICES = [6543.21];
+
 /**
  * Sanity check for a freshly read price. A read far from what the same store charged last time (or, for a
  * store we haven't read before, from what the other stores charge) is far more likely a misread, such as a
@@ -139,6 +142,7 @@ function toOunces(value, unit) {
 export const MAX_PRICE_MOVE = 2.5;
 export function implausiblePrice(price, { last, others = [] } = {}) {
   if (!(price >= 1)) return `price $${price} is under $1`;
+  if (PLACEHOLDER_PRICES.includes(price)) return `$${price} is a store's stand-in for a sold-out item`;
   const sorted = others.filter((n) => n > 0).sort((a, b) => a - b);
   const ref = last ?? (sorted.length ? sorted[Math.floor(sorted.length / 2)] : null);
   if (!ref) return null;

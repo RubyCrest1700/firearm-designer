@@ -30,6 +30,17 @@ export const RETAILERS: Record<string, Retailer> = {
   WING: { id: 'WING', name: 'Wing Tactical', search: 'https://www.wingtactical.com/search.php?search_query=' },
   NF: { id: 'NF', name: 'Night Fision', search: 'https://www.nightfision.com/?post_type=product&s=' },
   SI: { id: 'SI', name: 'Strike Industries', search: 'https://www.strikeindustries.com/catalogsearch/result/?q=' },
+  // More readable stores, added 2026-10-09 for the catalog price pass.
+  AA: { id: 'AA', name: 'Aerospace Arms', search: 'https://aerospacearms.com/search.php?search_query=' },
+  BUDS: { id: 'BUDS', name: "Bud's Gun Shop", search: 'https://www.budsgunshop.com/search.php?q=' },
+  CMC: { id: 'CMC', name: 'CMC Triggers', search: 'https://cmctriggers.com/?post_type=product&s=' },
+  CTD: { id: 'CTD', name: 'Cheaper Than Dirt', search: 'https://www.cheaperthandirt.com/search?q=' },
+  EB: { id: 'EB', name: 'Ed Brown', search: 'https://www.edbrown.com/?post_type=product&s=' },
+  GRITR: { id: 'GRITR', name: 'Gritr Sports', search: 'https://gritrsports.com/search.php?search_query=' },
+  KAK: { id: 'KAK', name: 'KAK Industry', search: 'https://kakindustry.com/search.php?search_query=' },
+  MI: { id: 'MI', name: 'Midwest Industries', search: 'https://midwestindustriesinc.com/search.php?search_query=' },
+  SPW: { id: 'SPW', name: "Sportsman's Warehouse", search: 'https://www.sportsmans.com/search?text=' },
+  WC: { id: 'WC', name: 'Wilson Combat', search: 'https://wilsoncombat.com/catalogsearch/result/?q=' },
 };
 
 export function offerUrl(retailerId: string, query: string): string {

@@ -60,4 +60,5 @@ test('flags prices that are probably misreads', () => {
   assert.match(implausiblePrice(0, {}), /under \$1/);
   assert.match(implausiblePrice(15, { others: [140, 150, 160] }), /too far/); // new store, compared with the rest
   assert.equal(implausiblePrice(15, {}), null); // nothing to compare with
+  assert.match(implausiblePrice(6543.21, {}), /sold-out/); // Bud's stand-in price
 });

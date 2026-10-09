@@ -14,14 +14,17 @@ const WEIGHTS = (weights as unknown as { parts: Record<string, { oz: number; bas
 
 /**
  * Builds parts from inline sample offers, then overlays any live prices from data/prices.json.
- * A live price replaces the sample price for the same retailer; new retailers are added.
+ * A live price replaces the sample price for the same retailer; new retailers are added. Once a part has any live
+ * price, its remaining sample prices are dropped, so a made-up figure never undercuts a real one.
  */
 export function parts(slot: string, list: Omit<PartInput, 'slot'>[]): Part[] {
   return list.map((p) => {
     const byRetailer = new Map<string, Offer>(
       p.offers.map(([retailer, price, inStock]) => [retailer, { retailer, price, inStock: inStock ?? true, url: URLS[p.id]?.[retailer] }]),
     );
-    for (const [retailer, live] of Object.entries(LIVE[p.id] ?? {})) byRetailer.set(retailer, { ...live, retailer });
+    const live = Object.entries(LIVE[p.id] ?? {});
+    if (live.length) byRetailer.clear();
+    for (const [retailer, offer] of live) byRetailer.set(retailer, { ...offer, retailer });
     const w = WEIGHTS[p.id];
     return { ...p, slot, offers: [...byRetailer.values()], ...(w ? { weight: { oz: w.oz, published: w.basis === 'published', src: w.src ?? undefined } } : {}) };
   });
