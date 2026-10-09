@@ -1613,7 +1613,10 @@ function glockPhotoFrame(ph: GlockPhoto, o: { dust: number; yRail: number; rail:
   const dust = Math.max(...xs); // the photo's own dust cover front
   const front = xs.map((x, i) => (x > dust - 1.2 && x < dust - 0.2 ? ys[i] : 0));
   const yDust = Math.max(...front);
-  const rail = o.rail ? ` M${f(dust - 0.58)},${f(yDust - 0.14)} L${f(dust - 0.58)},${f(yDust)} M${f(dust - 0.42)},${f(yDust - 0.14)} L${f(dust - 0.42)},${f(yDust)} M${f(dust - 1.6)},${f(yDust - 0.14)} L${f(dust - 0.12)},${f(yDust - 0.14)}` : '';
+  // The Timberwolf rail is recessed from a step at its rear, with two grooves running to the front (RSR's photos).
+  const rg = ph.railGroove;
+  const rail = rg ? ` M${f(rg[0])},${f(rg[1] - 0.06)} L${f(rg[0])},${f(rg[2] + 0.04)} M${f(rg[0])},${f(rg[1])} L${f(dust - 0.04)},${f(rg[1])} M${f(rg[0])},${f(rg[2])} L${f(dust - 0.04)},${f(rg[2])}`
+    : o.rail ? ` M${f(dust - 0.58)},${f(yDust - 0.14)} L${f(dust - 0.58)},${f(yDust)} M${f(dust - 0.42)},${f(yDust - 0.14)} L${f(dust - 0.42)},${f(yDust)} M${f(dust - 1.6)},${f(yDust - 0.14)} L${f(dust - 0.12)},${f(yDust - 0.14)}` : '';
   const [s0, s1, s2, s3] = ph.slideStop, [t0, t1, t2, t3] = ph.takedown, [c0, c1, c2, c3] = ph.magCatch;
   // Measured on RSR's flat left-side G19 Gen5 photo and carried to every Glock (the parts are shared):
   // - the slide stop sits over a molded relief whose rounded floor runs a little past both ends of the lever;
@@ -2369,7 +2372,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     trigLine: photoTrig?.line ?? reachP320(scD(typeof trigLine === 'string' ? trigLine : trigLine(t0 - dy))),
     gF, dust, railY: mk.railBottom, fcuX0,
     heel, toe, yGB, yMB: photoTrig ? photoTrig.yMB + ext : yGB + ext + BASE, ext, plateD: photoTrig?.plate ?? (modPh?.lip ? polyPath(modPh.lip, same, true) : undefined), lipDet: modPh?.lip ? lipEdge(modPh.lip) : undefined, well: modPh?.well, magHeel: modPh?.plate ? heelF : undefined, magToe: modPh?.plate ? toeF : undefined,
-    wellCut: glock && spec.photo?.startsWith('tw') ? polyPath(GLOCK_PHOTOS[spec.photo].plate, same, true) : undefined,
+    wellCut: glock && spec.photo && GLOCK_PHOTOS[spec.photo]?.cut ? polyPath(GLOCK_PHOTOS[spec.photo].cut!, same, true) : undefined,
     frameD: (glock ? polyPath(smoothPoly(mapped), (x, y) => [x, y], true) : modOl ? polyPath(smoothPoly(modOl), same, true) : outlines.map((ol) => polyPath(ol, frameMap, true)).join(' ')) + ' ' + hole,
     frameDetail, stipple,
     slideD: face && modPh?.nose ? photoSlide(face[0], modPh.nose[0]) : pr.slide.outline.map((ol) => polyPath(noNose ? swapXY(clipFront(swapXY(scS(ol)), mk.sh)) : scS(ol), slideMap, true)).join(' ') + slideNose,
