@@ -2,6 +2,7 @@ import { useRef, useState, type ReactNode } from 'react';
 import { mountsFor } from './data/addons';
 import { AR_PROFILES, type ArPiece } from './data/arProfiles';
 import { OPTIC_PROFILES } from './data/opticProfiles';
+import { IRON_PROFILES } from './data/ironProfiles';
 import { GLOCK_PHOTOS, type GlockPhoto } from './data/glockPhotos';
 import { OPTIC_PHOTOS } from './data/opticPhotos';
 import { SIG_MODULE_PHOTOS, MODULE_PANEL, MODULE_STRIPS, MODULE_LOGO, MODULE_CATCH, AXG_PANEL, AXG_FIELD, AXG_SCREWS, AXG_SERRATIONS } from './data/sigModulePhotos';
@@ -877,25 +878,27 @@ function rifle(platform: Platform, b: Build, place: Placement): Scene {
     el: <><path fillRule="evenodd" d={T(movePath(od, 0, RAIL + 1.1))} /><path className="detail" d={T(movePath(odet, 0, RAIL + 1.1))} /></> });
 
   // Iron sights: the rear at the back of the receiver rail, the front at the front of the handguard rail (an A2 front
-  // sight base already is the front sight). Flip-up sights stand at the AR's 1.41" sight line above the rail with no
-  // optic, and lie folded under one. Side profiles follow Magpul's MBUS photos.
+  // sight base already is the front sight). Flip-up sights stand with no optic and lie folded under one. Side
+  // profiles are traced from Magpul's photos (src/data/ironProfiles.ts); sets without photos use the MBUS 3.
   const irons = b.irons;
   if (irons) {
     const up = !opt;
-    const sightAt = (x0: number, rail: number, q: number[]) => polyPath(roundCorners(q.map((v, i) => (i % 2 ? rail - v : x0 + v)), 0.035), same, true);
-    const rearQ = up ? [0, 0, 1.35, 0, 1.35, 0.22, 1.2, 0.32, 0.78, 0.32, 0.64, 1.62, 0.4, 1.62, 0.3, 0.32, 0.15, 0.32, 0, 0.2]
-      : [0, 0, 1.35, 0, 1.35, 0.22, 1.2, 0.48, 0.3, 0.48, 0.15, 0.32, 0, 0.2];
-    const frontQ = up ? [0, 0, 1.1, 0, 1.1, 0.2, 0.98, 0.32, 0.94, 0.32, 0.84, 1.62, 0.75, 1.62, 0.73, 1.4, 0.63, 1.4, 0.61, 1.62, 0.52, 1.62, 0.42, 0.32, 0.15, 0.32, 0, 0.2]
-      : [0, 0, 1.1, 0, 1.1, 0.2, 0.95, 0.46, 0.2, 0.46, 0.1, 0.3, 0, 0.2];
-    const rx = 0.3 * kx, fx0 = HX - 1.5, showFront = !!irons.attrs.front && !fsb && freeFloat;
-    const rearD = irons.attrs.rear ? sightAt(rx, RAIL, rearQ) : '';
-    const frontD = showFront ? sightAt(fx0, RAIL, frontQ) : '';
-    const det = (irons.attrs.rear ? (up ? `${OC(rx + 0.52, RAIL - 1.41, 0.07)} M${f(rx + 0.15)},${f(RAIL - 0.12)} L${f(rx + 1.2)},${f(RAIL - 0.12)}`
-      : `M${f(rx + 0.3)},${f(RAIL - 0.32)} L${f(rx + 1.2)},${f(RAIL - 0.32)} M${f(rx + 0.15)},${f(RAIL - 0.12)} L${f(rx + 1.2)},${f(RAIL - 0.12)}`) : '')
-      + (showFront ? (up ? ` M${f(fx0 + 0.655)},${f(RAIL - 1.4)} L${f(fx0 + 0.655)},${f(RAIL - 1.52)} L${f(fx0 + 0.705)},${f(RAIL - 1.52)} L${f(fx0 + 0.705)},${f(RAIL - 1.4)} M${f(fx0 + 0.15)},${f(RAIL - 0.12)} L${f(fx0 + 0.95)},${f(RAIL - 0.12)}`
-        : ` M${f(fx0 + 0.2)},${f(RAIL - 0.3)} L${f(fx0 + 0.95)},${f(RAIL - 0.3)} M${f(fx0 + 0.15)},${f(RAIL - 0.12)} L${f(fx0 + 0.95)},${f(RAIL - 0.12)}`) : '');
-    P.push({ slot: 'irons', z: 13, row: 'top', target: px(irons.attrs.rear ? rx + 0.5 : fx0 + 0.6, RAIL - (up ? 1.62 : 0.48)),
-      el: <><path d={T(`${rearD} ${frontD}`)} /><path className="detail" d={T(det)} /></> });
+    const prof = IRON_PROFILES[matches(irons, /MBUS Pro/) ? 'pro' : 'mbus3'];
+    const showFront = !!irons.attrs.front && !fsb && freeFloat;
+    const maxX = (q: number[]) => Math.max(...q.filter((_, i) => i % 2 === 0));
+    const minX = (q: number[]) => Math.min(...q.filter((_, i) => i % 2 === 0));
+    // The rear's folded leaf ends at the back of the receiver rail; the front's base ends at the front of the handguard.
+    const rx = 0.15 * kx - minX(prof.rear.down), fx = HX - 0.4 - maxX(prof.front.down);
+    const sight = (x0: number, q: number[]) => polyPath(smoothPoly(q.map((v, i) => (i % 2 ? RAIL - v : x0 + v)), 65, 2), same, true);
+    const circles = (x0: number, cs: number[][]) => cs.map(([x, y, r]) => OC(x0 + x, RAIL - y, r)).join(' ');
+    const rear = irons.attrs.rear ? prof.rear : undefined, front = showFront ? prof.front : undefined;
+    const d = [rear && sight(rx, up ? rear.up : rear.down), front && sight(fx, up ? front.up : front.down)].filter(Boolean).join(' ');
+    const det = [rear && circles(rx, up ? rear.upDetail : rear.downDetail), front && circles(fx, up ? front.upDetail : front.downDetail)].filter(Boolean).join(' ');
+    // Callout on the top of the rear sight (or the front, when there is no rear).
+    const tq = (rear ?? front!)[up ? 'up' : 'down'];
+    const top = tq.reduce((m, v, i) => (i % 2 && v > tq[m + 1] ? i - 1 : m), 0);
+    P.push({ slot: 'irons', z: 13, row: 'top', target: px((rear ? rx : fx) + tq[top], RAIL - tq[top + 1]),
+      el: <><path d={T(d)} />{det && <path className="detail" d={T(det)} />}</> });
   }
 
   // Add-ons, drawn only once chosen. Sizes are the makers' published lengths, rounded.
@@ -2931,11 +2934,14 @@ export function Blueprint({ platform, build, place, states, active, onPick, onHo
   };
   const slotIds = new Set(platform.slots.map((s) => s.id));
   const numberOf = new Map(platform.slots.map((s, i) => [s.id, i + 1]));
+  const optional = new Set(platform.slots.filter((s) => !s.required).map((s) => s.id));
+  // Every build starts as a plain gun: an empty add-on spot (red dot, muzzle device, irons) is drawn only while its slot is picked or hovered.
   const pieces = scene.pieces
     .map((p) => (p.slot && !slotIds.has(p.slot) ? { ...p, slot: undefined } : p))
+    .filter((p) => !(p.slot && optional.has(p.slot) && !build[p.slot] && !p.factoryOf && p.slot !== active))
     .sort((a, b) => a.z - b.z);
   // One callout per slot: when a part is drawn in several pieces (a base gun with factory parts), the first gets it.
-  const labeled = pieces.filter((p, i) => p.slot && pieces.findIndex((q) => q.slot === p.slot) === i);
+  const labeled = pieces.filter((p, i) => p.slot && (build[p.slot] || p.factoryOf || !optional.has(p.slot)) && pieces.findIndex((q) => q.slot === p.slot) === i);
   const labels = compact ? [] : placeLabels(labeled, 24, scene.width - 24, scene.rows);
   const [cx0, cx1, cy] = scene.center;
   // Thumbnails crop to the drawing itself.

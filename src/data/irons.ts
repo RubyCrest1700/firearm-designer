@@ -31,7 +31,7 @@ export function ironRules(b: Build, gasblock?: Part): Issue[] {
   if (!optic && !irons?.attrs.rear)
     out.push(fsb
       ? { severity: 'warn', slots: ['gasblock', 'irons'], message: 'The A2 front sight base has no rear sight to line up with. Add a rear iron sight or an optic.' }
-      : { severity: 'warn', slots: ['irons', 'optic'], message: 'A flat-top upper has no sights of its own, so this build has nothing to aim with. Add iron sights or an optic.' });
+      : { severity: 'info', slots: ['irons', 'optic'], message: 'A flat-top upper has no sights of its own. Add iron sights or an optic to aim with.' });
   if (irons?.attrs.rear && !irons.attrs.front && !fsb && !optic)
     out.push({ severity: 'warn', slots: ['irons', 'gasblock'], message: 'This is a rear sight only. Add a front sight, or an A2 front sight base gas block.' });
   if (irons?.attrs.front && fsb)

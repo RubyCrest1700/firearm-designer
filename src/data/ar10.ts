@@ -247,6 +247,8 @@ export const ar10: Platform = {
   slots,
   parts: [...allParts, ...ironParts('a10'), ...rifleAddonParts],
   rules,
+  // Plain: the budget parts with no sights or optic (a flat-top upper has none of its own).
+  base: ['a10-lower-psa', 'a10-lpk-dpms', 'a10-trig-psa', 'a10-buf-psa', 'a10-stock-psa', 'a10-grip-moe', 'a10-upper-psa', 'a10-bbl-psa18', 'a10-gb-750', 'a10-gt-mid', 'a10-hg-psa', 'a10-bcg-psa', 'a10-ch-dpms', 'a10-mz-a2', 'a10-mag-pmag'],
   presets: {
     budget: ['a10-lower-psa', 'a10-lpk-dpms', 'a10-trig-psa', 'a10-buf-psa', 'a10-stock-psa', 'a10-grip-moe', 'a10-upper-psa', 'a10-bbl-psa18', 'a10-gb-750', 'a10-gt-mid', 'a10-hg-psa', 'a10-bcg-psa', 'a10-ch-dpms', 'a10-mz-a2', 'a10-mag-pmag', 'a10-irons-mbus'],
     value: ['a10-lower-aero', 'a10-lpk-dpms', 'a10-trig-alg', 'a10-buf-aero', 'a10-stock-moesl', 'a10-grip-bcm', 'a10-upper-aero', 'a10-bbl-ba18', 'a10-gb-750', 'a10-gt-rifle', 'a10-hg-atlas', 'a10-bcg-toolcraft', 'a10-ch-radian', 'a10-mz-pa', 'a10-mag-pmag', 'a10-opt-vortex'],
