@@ -44,8 +44,6 @@ const allParts = [
       offers: [['PSA', 29.99]], pick: pick('budget', 'Covers everything you need besides trigger and grip.') },
     { id: 'ar-lpk-aero', brand: 'Aero Precision', name: 'AR15 Lower Parts Kit, Minus FCG/Grip', specs: ['Mil-spec'], attrs: {},
       offers: [['AERO', 39.99], ['PA', 37.99], ['BRN', 42.99]], pick: pick('value', 'Consistent springs and detents; pairs with the Aero lower.') },
-    { id: 'ar-lpk-bcm', brand: 'Bravo Company', name: 'Enhanced Lower Parts Kit, Minus FCG/Grip', specs: ['Mil-spec', 'Ambi safety'], attrs: {},
-      offers: [['BRN', 74.99], ['MID', 76.99]], pick: pick('premium', 'Adds an ambidextrous safety selector.') },
     { id: 'ar-lpk-cmmg', brand: 'CMMG', name: 'AR-15 Lower Parts Kit, Minus FCG/Grip', specs: ['Mil-spec'], attrs: {},
       offers: [['PA', 34.95], ['BRN', 36.99]] },
   ]),
@@ -325,6 +323,6 @@ export const ar15: Platform = {
   presets: {
     budget: ['ar-lower-anderson', 'ar-lpk-psa', 'ar-trig-psa', 'ar-buf-psa', 'ar-stock-psa', 'ar-grip-moe', 'ar-upper-psa', 'ar-bbl-psa16', 'ar-gb-aero750', 'ar-gt-carbine', 'ar-hg-psa', 'ar-bcg-psa', 'ar-ch-aero', 'ar-mz-a2', 'ar-irons-mbus'],
     value: ['ar-lower-aero', 'ar-lpk-aero', 'ar-trig-alg', 'ar-buf-aero', 'ar-stock-moesl', 'ar-grip-bcm', 'ar-upper-aero', 'ar-bbl-ba16', 'ar-gb-aero750', 'ar-gt-mid', 'ar-hg-mi', 'ar-bcg-toolcraft', 'ar-ch-bcm', 'ar-mz-a2', 'ar-opt-vortex'],
-    premium: ['ar-lower-seekins', 'ar-lpk-bcm', 'ar-trig-geissele', 'ar-buf-vltor', 'ar-stock-bcm', 'ar-grip-k2', 'ar-upper-bcm', 'ar-bbl-bcm', 'ar-gb-sa750', 'ar-gt-mid', 'ar-hg-bcm', 'ar-bcg-bcm', 'ar-ch-radian', 'ar-mz-warcomp', 'ar-opt-aimpoint'],
+    premium: ['ar-lower-seekins', 'ar-lpk-aero', 'ar-trig-geissele', 'ar-buf-vltor', 'ar-stock-bcm', 'ar-grip-k2', 'ar-upper-bcm', 'ar-bbl-bcm', 'ar-gb-sa750', 'ar-gt-mid', 'ar-hg-bcm', 'ar-bcg-bcm', 'ar-ch-radian', 'ar-mz-warcomp', 'ar-opt-aimpoint'],
   },
 };

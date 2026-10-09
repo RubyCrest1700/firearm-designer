@@ -1,0 +1,142 @@
+{
+  "_comment": "Prices no store page gives us directly. 'from' lists holsters whose live price is the base LightTuck page, shown as From $X because the light option costs extra. 'factory' lists Glock factory parts no tracked store sells, so their estimated price is marked Factory Part. 'parts' holds hand-checked prices for parts no tracked store sells: basis 'list' is the maker's or a store's list price, 'factory' a factory part; each shows its label and the day it was checked (asOf).",
+  "from": [
+    "g17-hol-g17-tlr7a",
+    "g17-hol-g17-x300",
+    "g19-hol-g19-tlr7a",
+    "g19-hol-g19-x300",
+    "g26-hol-g26-tlr7a",
+    "g26-hol-g26-x300",
+    "g34-hol-g34-tlr7a",
+    "g34-hol-g34-x300",
+    "gl-hol-g20-tlr7a",
+    "gl-hol-g20-x300",
+    "gl-hol-g21-tlr7a",
+    "gl-hol-g21-x300",
+    "p320-hol-subcompact-tlr7a",
+    "p320-hol-subcompact-x300",
+    "p320-hol-compact-tlr7a",
+    "p320-hol-compact-x300",
+    "p320-hol-full-tlr7a",
+    "p320-hol-full-x300",
+    "p365-hol-std-tlr7sub",
+    "p365-hol-xl-tlr7sub",
+    "mp-hol-fs-tlr7a",
+    "mp-hol-fs-x300",
+    "mp-hol-c-tlr7a",
+    "mp-hol-c-x300",
+    "hc-hol-3-tlr7sub",
+    "hc-hol-pro-tlr7sub"
+  ],
+  "factory": [
+    "g17-frame-g4",
+    "g17-slide-g4",
+    "g19-frame-g3",
+    "g19-frame-g4",
+    "g19-frame-g5",
+    "g26-frame-g4",
+    "g26-slide-mos",
+    "g26-slide-g4",
+    "g26-slide-g5",
+    "g26-bbl-oem5",
+    "g34-slide-mos4",
+    "g34-slide-mos",
+    "g45-frame-g5",
+    "g19x-frame-g5",
+    "gs-frame-43x",
+    "gs-frame-48",
+    "gs-slide-43x",
+    "gs-slide-48mos",
+    "gs-bbl-43x",
+    "gs-bbl-48",
+    "gl-frame-g3",
+    "gl-frame-sf",
+    "gl-frame-g4",
+    "gl-slide-20g3",
+    "gl-slide-20g4",
+    "gl-slide-20mos",
+    "gl-slide-21g3",
+    "gl-slide-21g4",
+    "gl-slide-21mos",
+    "gl-bbl-20oem"
+  ],
+  "parts": {
+    "g17-frame-g5": {
+      "basis": "factory",
+      "retailer": "GS",
+      "price": 299.99,
+      "url": "https://www.glockstore.com/G17-Gen5-Frame",
+      "asOf": "2026-10-09"
+    },
+    "gs-frame-43xr": {
+      "basis": "factory",
+      "retailer": "GS",
+      "price": 149.99,
+      "url": "https://www.glockstore.com/Glock-43X-Frame-Black",
+      "asOf": "2026-10-09"
+    },
+    "g-fcg-oem5": {
+      "basis": "factory",
+      "retailer": "GS",
+      "price": 119.99,
+      "url": "https://www.glockstore.com/Glock-Factory-Gen-5-Full-Size-Lower-Parts-Kit",
+      "asOf": "2026-10-09"
+    },
+    "gl-fcg-oem": {
+      "basis": "factory",
+      "retailer": "GS",
+      "price": 89.99,
+      "url": "https://www.glockstore.com/Glock-Factory-Large-Frame-Gen-Lower-Parts-Kit",
+      "asOf": "2026-10-09"
+    },
+    "g-sight-oem": {
+      "basis": "factory",
+      "retailer": "GS",
+      "price": 15.98,
+      "url": "https://www.glockstore.com/glock-factory-parts/glock-factory-sights",
+      "asOf": "2026-10-09"
+    },
+    "gs-sight-oem": {
+      "basis": "factory",
+      "retailer": "GS",
+      "price": 14.99,
+      "url": "https://www.glockstore.com/glock-factory-parts/glock-factory-sights",
+      "asOf": "2026-10-09"
+    },
+    "gl-sight-oem": {
+      "basis": "factory",
+      "retailer": "GS",
+      "price": 15.98,
+      "url": "https://www.glockstore.com/glock-factory-parts/glock-factory-sights",
+      "asOf": "2026-10-09"
+    },
+    "gs-sight-ameriglo": {
+      "basis": "list",
+      "retailer": "AG",
+      "price": 102,
+      "url": "https://www.ameriglo.com/products/details/gl-806",
+      "asOf": "2026-10-09"
+    },
+    "hc-sight-trooper": {
+      "basis": "list",
+      "retailer": "AG",
+      "price": 123,
+      "url": "https://www.ameriglo.com/products/details/sa-816",
+      "asOf": "2026-10-09"
+    },
+    "hc-sight-ag": {
+      "basis": "list",
+      "retailer": "AG",
+      "price": 47,
+      "url": "https://www.ameriglo.com/products/details/sa-504",
+      "asOf": "2026-10-09"
+    },
+    "a10-lpk-armalite": {
+      "basis": "list",
+      "retailer": "EO",
+      "price": 68,
+      "url": "https://www.eurooptic.com/armalite-ar-10-a-lower-parts-kit",
+      "asOf": "2026-10-09"
+    }
+  }
+}

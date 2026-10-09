@@ -105,8 +105,6 @@ const allParts = [
       offers: [['PA', 299.99], ['OP', 309.99]] },
   ]),
   ...parts('mag', [
-    { id: 'p-mag-mecgar17', brand: 'Mec-Gar', name: 'P320 17-Round, 9mm', specs: ['Full', '17 rd', '9mm'], attrs: { size: 'full', caliber: '9mm' },
-      offers: [['MID', 29.99], ['PA', 31.99], ['BRN', 32.99]], pick: pick('value', 'Mec-Gar makes Sig\'s factory mags. Same mag, lower price.') },
     { id: 'p-mag-sig17', brand: 'Sig Sauer', name: 'P320 17-Round, 9mm (OEM)', specs: ['Full', '17 rd', '9mm'], attrs: { size: 'full', caliber: '9mm' },
       offers: [['SIG', 41.99], ['BRN', 44.99]], pick: pick('premium', 'Factory magazine.') },
     { id: 'p-mag-sig15', brand: 'Sig Sauer', name: 'P320 15-Round Compact, 9mm (OEM)', specs: ['Compact', '15 rd', '9mm'], attrs: { size: 'compact', caliber: '9mm' },
@@ -176,7 +174,7 @@ export const p320: Platform = {
   rules,
   presets: {
     budget: ['p-fcu-std', 'p-grip-compact', 'p-slide-compact', 'p-bbl-c9', 'p-spr-c', 'p-mag-sig15'],
-    value: ['p-fcu-std', 'p-grip-xcarry', 'p-slide-m18', 'p-bbl-faxonc', 'p-spr-c', 'p-opt-r1p', 'p-mag-mecgar17'],
+    value: ['p-fcu-std', 'p-grip-xcarry', 'p-slide-m18', 'p-bbl-faxonc', 'p-spr-c', 'p-opt-r1p', 'p-mag-sig17'],
     premium: ['p-fcu-x', 'p-grip-xfull', 'p-slide-xfull', 'p-bbl-f9', 'p-spr-f', 'p-opt-romeox', 'p-mag-sig17'],
   },
 };

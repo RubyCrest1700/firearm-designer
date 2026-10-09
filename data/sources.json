@@ -147,10 +147,6 @@
     "ar-lpk-aero": {
       "AERO": "https://www.aeroprecisionusa.com/ar15-lpk-minus"
     },
-    "ar-lpk-bcm": {
-      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-upper-lower-parts-kits/ar-15-bcmgunfighter-enhanced-lower-parts-kits/?sku=100018636",
-      "MID": "https://www.midwayusa.com/product/1025634882"
-    },
     "ar-mz-warcomp": {
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-muzzle-devices/ar-15-warcomp-flash-hider-22-cal/",
       "OP": "https://www.opticsplanet.com/v/warcomp-556-1-2-28-surefire-warcomp-flash-hider-adapter.html",
@@ -226,24 +222,31 @@
       "ARD": "https://ar15discounts.com/products/ameriglo-suppressor-tritium-night-sights-set-glock-green-orange-front-black-rear/"
     },
     "g-spk-lw": {
-      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-slides-parts/slide-completion-kits-for-glock/"
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-slides-parts/slide-completion-kits-for-glock/",
+      "LW": "https://lonewolfdist.com/parts/frame-and-slide-parts-kits/completion-kit-for-9mm-slides/"
     },
     "g-spk-oem34": {
-      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-slides-parts/slide-completion-kits-for-glock-gen-3-handgun/"
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-slides-parts/slide-completion-kits-for-glock-gen-3-handgun/",
+      "GS": "https://www.glockstore.com/Glock-Factory-Compact-Gen-4-Upper-Parts-Kit"
     },
     "g17-bbl-faxon": {
       "OP": "https://www.opticsplanet.com/faxon-firearms-g17-barrel-full-size-gen-1-4-9mm-saami-4150-qpq-threaded-barrel.html",
       "GRITR": "https://gritrsports.com/faxon-duty-9mm-barrel-for-glock-g17-ga910n17ngq-t"
     },
     "g17-bbl-oem34": {
-      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-barrels-parts/barrel-g17/"
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-barrels-parts/barrel-g17/",
+      "TGS": "https://www.topgunsupply.com/glock-factory-barrel-g17.html",
+      "CP": "https://copsplus.com/gun-parts-accessories/handgun-parts/handgun-barrels/glock-sp32001-oem-factory-4-49-barrel-9mm-for-glock-17-gen-1-3-matte-black/",
+      "BRD": "https://blackrifledepot.com/glock-17-oem-barrel/"
     },
     "g17-frame-lw": {
       "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-frames-parts/twf-textured-frame-fits-glock-gen34-g1717l222431343537/",
       "ARD": "https://ar15discounts.com/products/lone-wolf-arms-twf-full-full-textured-assembled-frame-for-glock-17-gen-3-4/"
     },
     "g17-rsa-g3": {
-      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-recoil-parts/recoil-spring-assembly/?sku=100002704"
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-recoil-parts/recoil-spring-assembly/?sku=100002704",
+      "TGS": "https://www.topgunsupply.com/glock-recoil-spring-assembly-g17-g17l-g22-g24-g31-g34-g35.html",
+      "IMP": "https://www.impactguns.com/glock-oem-recoil-spring-for-glock-17-22-24-31-764503055676"
     },
     "g17-rsa-ismi": {
       "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-recoil-parts/recoil-spring-for-glock/?sku=445000008"
@@ -261,10 +264,15 @@
       "GRITR": "https://gritrsports.com/lone-wolf-twc-9mm-40-s-w-357-sig-compact-textured-pistol-frame-built-f-gen3-gen4-glock-19-23-32-38-slides-lwd-twc3-built"
     },
     "g19-rsa-g3": {
-      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-recoil-parts/recoil-spring-assembly/?sku=100002722"
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-recoil-parts/recoil-spring-assembly/?sku=100002722",
+      "CP": "https://copsplus.com/handgun-internals/glock-sp02457-oem-factory-guide-rod-recoil-spring-19-23-25-32-gen-1-3/",
+      "TGS": "https://www.topgunsupply.com/glock-recoil-spring-assembly-g19-g23-g32.html"
     },
     "g19-rsa-g45": {
-      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-recoil-parts/rec-spring-assembly-dual-g19-gen-4/"
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-recoil-parts/rec-spring-assembly-dual-g19-gen-4/",
+      "CP": "https://copsplus.com/handgun-internals/glock-sp39310-oem-factory-guide-rod-recoil-spring-assembly-dual-for-19-g19-gen5/",
+      "RYG": "https://rockyourglock.com/glock-oem-recoil-spring-assembly-g19-gen5",
+      "TGS": "https://www.topgunsupply.com/glock-recoil-spring-assembly-g19-gen5-models-only.html"
     },
     "g19-slide-brn": {
       "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-slides-parts/slides-with-rmr-cut-for-glock-19/?sku=430111306"
@@ -273,7 +281,10 @@
       "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-slides-parts/rmr-slide-window-for-glock--26-gen-1-4-ss-nitride/"
     },
     "gs-fcg-apex": {
-      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-triggers-parts/action-enhancement-trigger-kit-for-slim-frame-glocks/"
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-triggers-parts/action-enhancement-trigger-kit-for-slim-frame-glocks/",
+      "RA": "https://www.rainierarms.com/apex-tactical-action-enhancement-trigger-kit-for-glock-43-43x-48/",
+      "WING": "https://www.wingtactical.com/firearm-parts/handgun/pistol-trigger-parts/apex-action-enhancement-trigger-kit-for-glock-43-43x-48/",
+      "CTD": "https://www.cheaperthandirt.com/apex-action-enhancement-kit-fits-glock-g43-g43x-g48--black-and-red/fc-854263007999.html"
     },
     "gs-mag-oem10": {
       "BRN": "https://www.brownells.com/gun-parts/magazines/handgun-magazines-parts/factory-magazine-43x48/?sku=100033567",
@@ -292,7 +303,9 @@
       "OP": "https://www.opticsplanet.com/holosun-sub-compact-hs507k-x2-red-dot-sights.html"
     },
     "gs-rsa-48": {
-      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-recoil-parts/recoil-spring-assembly/?sku=100700158"
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-recoil-parts/recoil-spring-assembly/?sku=100700158",
+      "CP": "https://copsplus.com/handgun-internals/glock-sp33379-oem-factory-guide-rod-recoil-spring-assembly-dual-for-43-g43-slim/",
+      "TGS": "https://www.topgunsupply.com/glock-recoil-spring-assembly-g43.html"
     },
     "p-bbl-c9": {
       "SIG": "https://www.sigsauer.com/barrel-p320-p250-9mm-compact.html",
@@ -301,7 +314,12 @@
     },
     "p-bbl-f9": {
       "SIG": "https://www.sigsauer.com/barrel-p320-p250-9mm-full.html",
-      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-barrels-parts/9mm-luger-barrel-with-lci-for-sig-sauer-p320-full-size/"
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-barrels-parts/9mm-luger-barrel-with-lci-for-sig-sauer-p320-full-size/",
+      "GRITR": "https://gritrsports.com/sig-sauer-p250-p320-4-7in-9mm-barrel-bbl-mod-f-9",
+      "BUDS": "https://www.budsgunshop.com/products/gun-parts-barrels/sig-sauer-p250-p320-9mm-full-size-4-7in-barrel-black-55975",
+      "CTD": "https://www.cheaperthandirt.com/sig-sauer-p250p320-full-size-factory-replacement-barrel-9mm-luger-steel-matte-black/fc-798681538324.html",
+      "CF": "https://www.classicfirearms.com/sig-sauer-bblmodf9-p320-full-size-barrel/",
+      "TGS": "https://www.topgunsupply.com/sig-sauer-p320-full-size-replacement-barrel-9mm.html"
     },
     "p-bbl-faxonc": {
       "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-barrels-parts/sig-sauer-p320-compact-9mm-luger-flame-fluted-barrel/",
@@ -317,10 +335,18 @@
     },
     "p-grip-xcarry": {
       "SIG": "https://www.sigsauer.com/p320-carry-x-series-grip-module-coyote.html",
-      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-grips-parts/p320-250-x-series-carry-940357-medium-grip-module/"
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-grips-parts/p320-250-x-series-carry-940357-medium-grip-module/",
+      "BUDS": "https://www.budsgunshop.com/products/handgun-frames/sig-sauer-p320-x-series-carry-grip-module-assembly-9mm-black-157396",
+      "KYG": "https://www.kygunco.com/product/sig-sauer-grip-modx-ca-943-m-blk-320x-carry-grip-module-assembly-black",
+      "CTD": "https://www.cheaperthandirt.com/sig-sauer-p320-xseries-carry-grip-module-940357-medium-black/fc-798681583553.html",
+      "SPW": "https://www.sportsmans.com/shooting-gear-gun-supplies/gun-parts-accessories/gun-parts-magazines/handgun-parts/handgun-grips-frames/sig-sauer-p320-xseries-carry-medium-grip-module-black/p/1695113"
     },
     "p-grip-xfull": {
-      "SIG": "https://www.sigsauer.com/p320-x-series-grip-module-9mm-40-auto-357sig.html"
+      "SIG": "https://www.sigsauer.com/p320-x-series-grip-module-9mm-40-auto-357sig.html",
+      "BUDS": "https://www.budsgunshop.com/products/handgun-frames/sig-sauer-p320-x-series-medium-grip-module-9mm-40-sw-357-sig-black-157404",
+      "KYG": "https://www.kygunco.com/product/sig-sauer-grip-modx-f-943-m-blk-320x-full-size-grip-module-assembly-medium",
+      "CTD": "https://www.cheaperthandirt.com/sig-sauer-p320-xseries-full-size-grip-module-medium-black-940357/fc-798681583577.html",
+      "SPW": "https://www.sportsmans.com/shooting-gear-gun-supplies/gun-parts-accessories/gun-parts-magazines/handgun-parts/handgun-grips-frames/sig-sauer-p320-xseries-full-size-medium-grip-module-black/p/1695121"
     },
     "p-mag-sig15": {
       "SIG": "https://www.sigsauer.com/p250-p320-compact-15rd-9mm-magazine.html",
@@ -342,18 +368,26 @@
       "WC": "https://wilsoncombat.com/optic-sig-sauer-romeo-x-pro-6-moa.html"
     },
     "p-slide-compact": {
-      "SIG": "https://www.sigsauer.com/p320-carry-compact-9mm-3-9-slide-assembly-sig-loc-ready-black.html"
+      "SIG": "https://www.sigsauer.com/p320-carry-compact-9mm-3-9-slide-assembly-sig-loc-ready-black.html",
+      "KYG": "https://www.kygunco.com/product/sig-sauer-8900276-p320-9mm-3.6-slide-assembly-coyote-brown",
+      "GRITR": "https://gritrsports.com/sig-sauer-x-series-p320-slide-assembly-8900141"
     },
     "p-slide-m18": {
       "SIG": "https://www.sigsauer.com/p320-m18-9mm-3-9-slide-assembly-romeo-m17-coyote.html"
     },
     "p-spr-c": {
       "SIG": "https://www.sigsauer.com/p320-recoil-spring-assembly.html",
-      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-recoil-parts/p320-compact-xcarry-recoil-spring-assembly/"
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-recoil-parts/p320-compact-xcarry-recoil-spring-assembly/",
+      "BUDS": "https://www.budsgunshop.com/products/gun-parts-miscellaneous/sig-sauer-p320-compact-recoil-spring-assembly-9mm-722162975",
+      "IMP": "https://www.impactguns.com/handgun-parts/sig-p320-9mm-recoil-spring-fits-compact-models-798681594702-kit-320c-9-recoil-spring",
+      "TGS": "https://www.topgunsupply.com/sig-sauer-recoil-spring-p320-compact-carry-9mm.html"
     },
     "p-spr-f": {
       "SIG": "https://www.sigsauer.com/recoil-spring-assembly-p320-9mm-full-size.html",
-      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-slides-parts/p320-full-size-9mm-luger-recoil-spring-assembly/"
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-slides-parts/p320-full-size-9mm-luger-recoil-spring-assembly/",
+      "BUDS": "https://www.budsgunshop.com/products/gun-parts-miscellaneous/sig-sauer-p320-full-size-9mm-luger-recoil-spring-assembly-718017034",
+      "IMP": "https://www.impactguns.com/handgun-parts/sig-p320-full-size-recoil-spring-assembly-9mm-798681559558-rsa-320f-9",
+      "TGS": "https://www.topgunsupply.com/sig-sauer-recoil-spring-assembly-p320-full-size-9mm.html"
     },
     "p365-bbl-std": {
       "SIG": "https://www.sigsauer.com/barrel-365-9mm.html",
@@ -396,7 +430,9 @@
       "PA": "https://www.primaryarms.com/holosun-eps-carry-mrs-enclosed-pistol-sight-multiple-reticle-red-reticle"
     },
     "p365-slide-std": {
-      "SIG": "https://www.sigsauer.com/p365x-9mm-3-1-slide-assembly-sig-loctm-optic-ready-black.html"
+      "SIG": "https://www.sigsauer.com/p365x-9mm-3-1-slide-assembly-sig-loctm-optic-ready-black.html",
+      "GRITR": "https://gritrsports.com/sig-sauer-p365x-9mm-slide-assembly-8900983",
+      "KYG": "https://www.kygunco.com/product/sig-sauer-p365x-9mm-3.1-slide-assembly-sig-loc-optic-ready-black"
     },
     "p365-slide-xl": {
       "SIG": "https://www.sigsauer.com/p365-xl-9mm-3-7-slide-assembly-sig-loctm-optic-ready-black.html",
@@ -1476,6 +1512,434 @@
       "WING": "https://www.wingtactical.com/firearm-parts/ar-15/muzzle-devices/aero-precision-a2-birdcage-flash-hider-5-56-223/",
       "WC": "https://wilsoncombat.com/flash-hider-a2-birdcage-5-56-nato.html",
       "AA": "https://aerospacearms.com/aero-precision-ar-15-a2-birdcage-flash-hider-1-2x28/"
+    },
+    "g17-rsa-g4": {
+      "CP": "https://copsplus.com/handgun-internals/glock-sp08284-oem-factory-guide-rod-recoil-spring-assembly-for-glock-17-34-gen4/",
+      "TGS": "https://www.topgunsupply.com/glock-recoil-spring-assembly-g17-g34-gen4-models-only.html",
+      "IMP": "https://www.impactguns.com/glock-oem-recoil-spring-assembly-gen-4-for-764503055683"
+    },
+    "g17-rsa-g45": {
+      "CP": "https://copsplus.com/handgun-internals/glock-sp33786-oem-factory-guide-rod-recoil-spring-assembly-for-glock-17-g17-gen5/",
+      "RYG": "https://rockyourglock.com/glock-oem-recoil-spring-for-g17-gen5",
+      "TGS": "https://www.topgunsupply.com/glock-recoil-spring-assembly-g17-gen5-models-only.html"
+    },
+    "g19-rsa-g4": {
+      "CP": "https://copsplus.com/handgun-internals/glock-sp08703-oem-factory-guide-rod-recoil-spring-assembly-for-glock-19-23-gen4/",
+      "TGS": "https://www.topgunsupply.com/glock-recoil-spring-assembly-g19-gen4-models-only.html"
+    },
+    "g26-rsa-g45": {
+      "CP": "https://copsplus.com/handgun-internals/glock-sp02211-oem-guide-rod-recoil-spring-assembly-for-glock-26-27-33-39-gen-1-4/",
+      "TGS": "https://www.topgunsupply.com/glock-recoil-spring-assembly-g26-g27-g33.html"
+    },
+    "gs-rsa-43x": {
+      "CP": "https://copsplus.com/handgun-internals/glock-sp33379-oem-factory-guide-rod-recoil-spring-assembly-dual-for-43-g43-slim/",
+      "TGS": "https://www.topgunsupply.com/glock-recoil-spring-assembly-g43.html"
+    },
+    "gl-rsa-g3": {
+      "CP": "https://copsplus.com/handgun-internals/glock-sp05586-oem-factory-guide-rod-recoil-spring-for-20-20sf-21-21sf-gen-1-3/",
+      "TGS": "https://www.topgunsupply.com/glock-recoil-spring-assembly-g20-g21.html"
+    },
+    "gl-rsa-g4": {
+      "CP": "https://copsplus.com/handgun-internals/glock-sp30077-oem-guide-rod-recoil-spring-assembly-for-glock-21-g21-gen4/"
+    },
+    "g17-bbl-oem5": {
+      "TGS": "https://www.topgunsupply.com/glock-factory-barrel-g17-gen-5.html"
+    },
+    "g19-bbl-oem34": {
+      "TGS": "https://www.topgunsupply.com/glock-factory-barrel-g19.html",
+      "BRD": "https://blackrifledepot.com/glock-oem-barrel-g19-9mm/"
+    },
+    "g26-bbl-oem34": {
+      "TGS": "https://www.topgunsupply.com/glock-factory-barrel-g26.html",
+      "CP": "https://copsplus.com/handgun-barrels/glock-sp06012-oem-factory-3-46-barrel-9mm-for-glock-26-except-43/"
+    },
+    "g34-bbl-oem34": {
+      "TGS": "https://www.topgunsupply.com/glock-factory-barrel-g34.html",
+      "GRITR": "https://gritrsports.com/glock-g34-9mm-black-barrel-sp07186"
+    },
+    "gl-bbl-21oem": {
+      "TGS": "https://www.topgunsupply.com/glock-factory-barrel-g21.html"
+    },
+    "g17-slide-ggp": {
+      "GGP": "https://greyghostprecision.com/ggp-17-stripped-slide-fits-glock-17-gen-3/",
+      "KYG": "https://www.kygunco.com/product/271039-grey-ghost-precision-stripped-slide-for-glock-17-gen-3-black-nitride"
+    },
+    "g19-slide-ggp": {
+      "GGP": "https://greyghostprecision.com/ggp-19-stripped-slide-fits-glock-19-gen-3/",
+      "KYG": "https://www.kygunco.com/product/grey-ghost-precision-stripped-slide-for-glock-19-gen-3-black-nitride"
+    },
+    "g-fcg-apex34": {
+      "BUDS": "https://www.budsgunshop.com/products/gun-parts-triggers/apex-action-enhancement-trigger-kit-glock-gen-3-4-black-117839",
+      "KYG": "https://www.kygunco.com/product/apex-tactical-102-115-apex-action-enhancement-kit-for-glock-pistols",
+      "IMP": "https://www.impactguns.com/glock-parts/apex-tactical-specialties-action-enhancement-trigger-kit-glock-gen-3-4-gen-3-glock-factory-trig-bar-action-enhancement-trig-ultimate-safety-plunger-performance-connector-g17-g19-g22-g23-g24-g26-g27-g31-g32-g33-g34-g35-856008005826-102115"
+    },
+    "g-fcg-apex5": {
+      "BUDS": "https://www.budsgunshop.com/products/gun-parts-triggers/apex-action-enhancement-trigger-kit-glock-gen5-black-117845",
+      "KYG": "https://www.kygunco.com/product/apex-tactical-102-116-apex-action-enhancement-kit-for-gen-5-glock-pistol",
+      "RA": "https://www.rainierarms.com/apex-tactical-action-enhancement-kit-for-glock-gen-5-pistols-black/",
+      "CTD": "https://www.cheaperthandirt.com/apex-tactical-apex-action-enhancement-kit-fits-glock-gen-5-pistol-models-only-matte-black/fc-854263007371.html"
+    },
+    "g-fcg-timney": {
+      "TIM": "https://timneytriggers.com/alpha-competition-series-for-glock-gen-3-4/",
+      "RA": "https://www.rainierarms.com/timney-triggers-alpha-competition-series-for-glock-trigger-gen-3-4-black/",
+      "AT3": "https://www.at3tactical.com/products/timney-alpha-competition-trigger-for-glock-gen-3-and-gen-4",
+      "KYG": "https://www.kygunco.com/product/timney-triggers-alpha-glock-3-4-alpha-glock-3-4",
+      "BUDS": "https://www.budsgunshop.com/products/gun-parts-triggers/timney-alpha3-4-competition-straight-trigger-glock-gen3-4-133425",
+      "CTD": "https://www.cheaperthandirt.com/timney-triggers-alpha-competition-series-for-glock-gen-3---4-3-lb-pull-weight-straight-trigger-red/fc-081950613403.html"
+    },
+    "g-mz-tp12": {
+      "LW": "https://lonewolfdist.com/accessories/barrel-accessories/lwd-thread-protector-1-2-x-28-black-9mm-357sig/"
+    },
+    "g34-bbl-lw": {
+      "LW": "https://lonewolfdist.com/barrels/glock-compatible-barrels/g34-35-tactical-length/alphawolf-barrel-for-m-34-9mm-threaded-1-2-x-28/"
+    },
+    "gl-bbl-21lwt": {
+      "LW": "https://lonewolfdist.com/barrels/glock-compatible-barrels/g20-21-40-41-full-size/alphawolf-barrel-for-m-21-45-acp-threaded-578-x-28/"
+    },
+    "gl-bbl-21lwdt": {
+      "LW": "https://lonewolfdist.com/barrels/glock-compatible-barrels/g20-21-40-41-full-size/lwd-barrel-m-21-45-acp-threaded-578-x-28/"
+    },
+    "gl-spk-lw": {
+      "LW": "https://lonewolfdist.com/parts/frame-and-slide-parts-kits/completion-kit-for-10mm-slides/"
+    },
+    "gl-bbl-20lw": {
+      "LW": "https://lonewolfdist.com/barrels/glock-compatible-barrels/g20-21-40-41-full-size/alphawolf-barrel-for-m-20-10mm-stock-length/"
+    },
+    "gl-bbl-20lwd": {
+      "LW": "https://lonewolfdist.com/barrels/glock-compatible-barrels/g20-21-40-41-full-size/lwd-barrel-m-20-10mm-stock-length/"
+    },
+    "gl-bbl-20to40": {
+      "LW": "https://lonewolfdist.com/barrel-promotion/alphawolf-barrel-for-m-20-conversion-to-40s-w-stock-length/"
+    },
+    "gl-bbl-21lw": {
+      "LW": "https://lonewolfdist.com/barrel-promotion/alphawolf-barrel-for-m-21-45-acp-stock-length/"
+    },
+    "gs-bbl-43xtp": {
+      "BUDS": "https://www.budsgunshop.com/products/gun-parts-barrels/true-precision-g43-non-threaded-9mm-black-nitride-barrel-163513",
+      "CTD": "https://www.cheaperthandirt.com/true-precision-non-threaded-drop-in-replacement-barrel-for-glock-43-9mm-luger-black-nitride-finish/fc-719104534549.html",
+      "GRITR": "https://gritrsports.com/true-precision-glock-43-non-threaded-barrel-tp-g43b-xbl"
+    },
+    "p-bbl-tpc": {
+      "BUDS": "https://www.budsgunshop.com/products/gun-parts-barrels/true-precision-9mm-p320-compact-black-nitride-barrel-163507"
+    },
+    "p365-bbl-tpstd": {
+      "BUDS": "https://www.budsgunshop.com/products/gun-parts-barrels/true-precision-tp-p365b-xbl-9mm-black-nitride-barrel-163499",
+      "GRITR": "https://gritrsports.com/true-precision-non-threaded-barrel-tp-p365b-xbl",
+      "AT3": "https://www.at3tactical.com/products/true-precision-p365-non-threaded-barrel"
+    },
+    "p365-bbl-tp": {
+      "GRITR": "https://gritrsports.com/true-precision-sig-p365-xl-9mm-barrel-tp-p365xlb-xbl",
+      "AT3": "https://www.at3tactical.com/products/true-precision-sig-sauer-p365xl-non-threaded-barrel-9mm"
+    },
+    "gl-mag-20ets": {
+      "BUDS": "https://www.budsgunshop.com/products/magazines/ets-glk-20-10mm-auto-15rd-glock-compatible-clear-117695",
+      "KYG": "https://www.kygunco.com/product/elite-tactical-glk-20-glock-20-29-40-15rd-10mm-magazine",
+      "CTD": "https://www.cheaperthandirt.com/elite-tactical-systems-magazine-10mm-15-rounds-translucent-body-for-glock-202940/fc-854094005683.html",
+      "IMP": "https://www.impactguns.com/handgun-high-cap-mag/elite-tactical-magazine-glock-20-29-40-10mm-clear-15rd-854094005683-glk-20",
+      "CP": "https://copsplus.com/gun-parts-accessories/handgun-parts/handgun-magazines/elite-tactical-systems-glk-20-standard-15-round-mag-10mm-luger-magazine-for-glock-20-29-40-clear-polymer/",
+      "CF": "https://www.classicfirearms.com/ets-group-glk-20-glock-compatible-10mm-auto/"
+    },
+    "p-case-savior": {
+      "SAV": "https://www.saviorequipment.com/products/specialist-pistol-case",
+      "TGS": "https://www.topgunsupply.com/savior-specialist-pistol-case-black.html",
+      "GRITR": "https://gritrsports.com/savior-equipment-specialist-pistol-bag-hc-dgsport-ws-bk"
+    },
+    "ar-stock-a2": {
+      "ARD": "https://ar15discounts.com/products/aero-precision-a2-fixed-stock-black/",
+      "BRD": "https://blackrifledepot.com/aero-precision-a2-fixed-stock-black/",
+      "KYG": "https://www.kygunco.com/product/luth-ar-a2-fixed-stock-rifle-length-fits-ar-15-black",
+      "BUDS": "https://www.budsgunshop.com/products/gun-parts-furniture/luth-ar-bs-a2-a2-fixed-stock-black-196346"
+    },
+    "ar-bbl-faxon": {
+      "BUDS": "https://www.budsgunshop.com/products/gun-parts-barrels/faxon-ar15-16-5-56mm-gunner-mid-length-integral-muzzle-718010262"
+    },
+    "ar-gb-fsb": {
+      "RA": "https://www.rainierarms.com/milspec-gi-f-marked-front-sight-kit/",
+      "KYG": "https://www.kygunco.com/product/lbe-unlimited-complete-f-marked-front-sight-base",
+      "WING": "https://www.wingtactical.com/firearm-parts-accessories/cmmg-a2-front-sight-base-assembly/"
+    },
+    "r-case-sav36": {
+      "KYG": "https://www.kygunco.com/product/savior-equipment-american-classic-dbl-rfl-bag-36-long-obsidian-blk",
+      "GRITR": "https://gritrsports.com/savior-equipment-american-classic-36in-black-double-rifle-case-rb-3612dg-v1-bk"
+    },
+    "r-case-sav42": {
+      "KYG": "https://www.kygunco.com/product/savior-equipment-american-classic-dbl-rfl-bag-42-long-obsidian-blk"
+    },
+    "a10-gt-mid": {
+      "IMP": "https://www.impactguns.com/ar-15-upper-receiver-parts/aero-precision-gas-tube-mid-length-black-for-ar-15-ar-10-815421021400-aprh100282c"
+    },
+    "a10-gt-rifle": {
+      "CF": "https://www.classicfirearms.com/aero-precision-ar-15-ar-10-rifle-length-gas-tube-melonite-aprh100283c/",
+      "IMP": "https://www.impactguns.com/ar-15-upper-receiver-parts/aero-precision-gas-tube-rifle-length-black-for-ar15-ar10-815421021417-aprh100283c"
+    },
+    "a10-mz-a2": {
+      "BUDS": "https://www.budsgunshop.com/products/uncategorized/noveske-a2-flash-hider-ar10-5-8x24-714037954",
+      "KYG": "https://www.kygunco.com/product/one-horse-.30-cal-a2-flash-hider-and-crush-washer-5-8x24",
+      "RA": "https://www.rainierarms.com/milspec-gi-a2-flash-hider-5-8x24/",
+      "AA": "https://aerospacearms.com/aero-precision-ar-308-a2-birdcage-flash-hider-5-8x24-tpi/"
+    },
+    "a10-opt-venom": {
+      "GRITR": "https://gritrsports.com/vortex-venom-5-25x56-ffp-ebr-7c-riflescope-ven-52501",
+      "SPW": "https://www.sportsmans.com/hunting-gear-supplies/optics-binoculars-scopes-rangefinders/rifle-scopes-red-dots/vortex-venom-5-25x-56mm-rifle-scope-ebr-7c/p/p244913",
+      "KYG": "https://www.kygunco.com/product/vortex-ven-52501-venom-5-25x56-ffp-ebr-7c-moa",
+      "TGS": "https://www.topgunsupply.com/vortex-venom-5-25x56-ffp-ebr-7c-moa-riflescope.html"
+    },
+    "a9-lower-nfa": {
+      "NFA": "https://www.newfrontierarmory.com/c-9-stripped-billet-lower-receiver"
+    },
+    "a9-hg-aero15": {
+      "TGS": "https://www.topgunsupply.com/aero-precision-ar-15-atlas-s-one-m-lok-handguard-blk-15.html"
+    },
+    "a9-bcg-jp": {
+      "BUDS": "https://www.budsgunshop.com/products/gun-parts-ar15/jp-rifles-enhanced-9mm-ar-bolt-bc9mma-712017727",
+      "AT3": "https://www.at3tactical.com/products/jp-enterprises-9mm-ar-15-enhancedbolt-assembly-short-stroke-version",
+      "ARD": "https://ar15discounts.com/products/jp-enterprises-9mm-bolt-carrier-group/"
+    },
+    "a9-ch-aero": {
+      "AA": "https://aerospacearms.com/aero-precision-ar15-m4-5-56-charging-handle/",
+      "BRD": "https://blackrifledepot.com/aero-precision-ar15-m4-5-56-charging-handle/",
+      "GRITR": "https://gritrsports.com/aero-precision-ar15-m4-556-charging-handle-aprh100000c",
+      "CF": "https://www.classicfirearms.com/aero-precision-ar15-m4-5-56-charging-handle-aprh100000c/",
+      "KYG": "https://www.kygunco.com/product/aero-precision-llc-aprh100000c-ar15-m4-5.56-charging-handle",
+      "TGS": "https://www.topgunsupply.com/aero-precision-ar15-m4-5.56-charging-handle.html"
+    },
+    "p-slide-xfull": {
+      "KYG": "https://www.kygunco.com/product/sig-sauer-8900987-p365xl-slide-assembly-9mm-3.7-microoptics-cut-coy",
+      "GRITR": "https://gritrsports.com/sig-sauer-x-series-slide-assembly-for-p320-8900959"
+    },
+    "p-mag-sig12": {
+      "ARD": "https://ar15discounts.com/products/sig-sauer-p250-p320-sub-compact-9mm-magazine-12rd/",
+      "DK": "https://dkfirearms.com/product/sig-sauer-p320-p250-9mm-subcompact-12-round-magazine/",
+      "GRITR": "https://gritrsports.com/sig-sauer-p250-9mm-12rd-blued-magazine-mag-mod-sc-9-12",
+      "CTD": "https://www.cheaperthandirt.com/sig-sauer-p250p320-subcompact-magazine-9mm-luger-12-rounds-steel-black-magmodsc912/fc-798681505050.html",
+      "CF": "https://www.classicfirearms.com/sig-sauer-magmodsc912-p250-p320-9mm-12rd-replacement/",
+      "KYG": "https://www.kygunco.com/product/sig-sauer-p250-p320-subcompact-9mm-12rd-magazine-black",
+      "TGS": "https://www.topgunsupply.com/sig-sauer-p250-p320-sub-compact-9mm-12rd-magazine.html"
+    },
+    "p365-slide-spectre": {
+      "GRITR": "https://gritrsports.com/sig-sauer-p365-compensator-slide-assembly-8901047",
+      "CTD": "https://www.cheaperthandirt.com/sig-sauer-p365-spectre-comp-optics-ready-pistol-slide/fc-798681667130.html"
+    },
+    "mp-c4": {
+      "IMP": "https://www.impactguns.com/semi-auto-handguns/smith-wesson-m-p-2-0-compact-9mm-4-barrel-armornite-black-optics-ready-no-manual-safety-flat-face-trigger-integr-trigger-safety-2x15rd-mags-022188889628-13563"
+    },
+    "mp-fst": {
+      "DK": "https://dkfirearms.com/product/smith-wesson-mp-m2-0-9mm-4-625-threaded-barrel-optics-ready/",
+      "AT3": "https://www.at3tactical.com/products/smith-wesson-mp-m2-0-full-size-4-62%e2%80%b3-9mm-threaded-barrel-optic-ready-pistol-17-rounds",
+      "CF": "https://www.classicfirearms.com/smith-wesson-13585-mp9-m20-4625-optic-ready17rdthreaded/",
+      "KYG": "https://www.kygunco.com/product/smith-wesson-13585-mp9-m2.0-or-9mm-4.6-tb-17rd-no-thumb-safety"
+    },
+    "mp-bbl-faxc": {
+      "GRITR": "https://gritrsports.com/faxon-match-series-m-p-pistol-barrel-m-pb910nc2loq-t"
+    },
+    "mp-mag-17": {
+      "DK": "https://dkfirearms.com/product/smith-wesson-mp9-mp9-m2-0-9mm-17-round-magazine/",
+      "GRITR": "https://gritrsports.com/smith-wesson-mp-9mm-17rd-black-magazine-19440",
+      "BUDS": "https://www.budsgunshop.com/products/magazines/smith-wesson-mp-9mm-17-round-magazine-black-19440-32913",
+      "CF": "https://www.classicfirearms.com/smith-wesson-194400000-mp-9mm-17-rd-black/",
+      "IMP": "https://www.impactguns.com/handgun-high-cap-mag/smith-wesson-m-p-9mm-magazine-17rd-022188127942-19440",
+      "SPW": "https://www.sportsmans.com/shooting-gear-gun-supplies/gun-parts-accessories/gun-parts-magazines/magazines-clips/handgun-magazines/smith-wesson-mp-9-9mm-luger-handgun-magazine-17-rounds/p/1296540"
+    },
+    "a10-bbl-ba18": {
+      "BUDS": "https://www.budsgunshop.com/products/gun-parts-barrels/ballistic-advantage-babl308005p-premium-308-18-bead-blasted-714027427",
+      "KYG": "https://www.kygunco.com/product/ballistic-advantage-babl308005p-premium-series-barrel-308-winchester-18-bead",
+      "CF": "https://www.classicfirearms.com/ballistic-advantage-premium-series-ar-10-18-308-heavy-barrel-rifle-length-gas-system-1-10-twist-babl308005p/",
+      "AT3": "https://www.at3tactical.com/products/ballistic-advantage-18%e2%80%b3-308-premium-stainless-ar10-barrel-rifle-length-heavy-profile",
+      "CTD": "https://www.cheaperthandirt.com/ballistic-advantage-ar-308-18-heavy-barrel-.308-win-rifle-length/fc-819747024220.html"
+    },
+    "g19-bbl-oem5": {
+      "RYG": "https://rockyourglock.com/glock-oem-barrel-fits-gen-5-g19-19x-and-45/",
+      "GS": "https://www.glockstore.com/Glock-Factory-Gen5-Barrel"
+    },
+    "g34-bbl-oem5": {
+      "RYG": "https://rockyourglock.com/glock-oem-barrel-fits-g34-gen-5/",
+      "GS": "https://www.glockstore.com/Glock-Factory-Gen5-Barrel"
+    },
+    "g17-hol-g17-tlr7a": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/glock-17-gen-3-4-5-iwb-holster/"
+    },
+    "g17-hol-g17-x300": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/glock-17-gen-3-4-5-iwb-holster/"
+    },
+    "g19-hol-g19-tlr7a": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/glock-19-gen-3-4-5-iwb-holster/"
+    },
+    "g19-hol-g19-x300": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/glock-19-gen-3-4-5-iwb-holster/"
+    },
+    "g26-hol-g26-tlr7a": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/glock-26-gen-3-4-5-iwb-holster/"
+    },
+    "g26-hol-g26-x300": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/glock-26-gen-3-4-5-iwb-holster/"
+    },
+    "g34-hol-g34": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/glock-34-gen-3-4-5-iwb-holster/"
+    },
+    "g34-hol-g34-tlr7a": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/glock-34-gen-3-4-5-iwb-holster/"
+    },
+    "g34-hol-g34-x300": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/glock-34-gen-3-4-5-iwb-holster/"
+    },
+    "gl-hol-g20-tlr7a": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/glock-20-gen-3-4-iwb-holster/"
+    },
+    "gl-hol-g20-x300": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/glock-20-gen-3-4-iwb-holster/"
+    },
+    "gl-hol-g21-tlr7a": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/glock-21-gen-3-4-iwb-holster/"
+    },
+    "gl-hol-g21-x300": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/glock-21-gen-3-4-iwb-holster/"
+    },
+    "p320-hol-subcompact-tlr7a": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/sig-sauer-p320-subcompact-with-rail-rounded-trigger-guard-iwb-holster/"
+    },
+    "p320-hol-subcompact-x300": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/sig-sauer-p320-subcompact-with-rail-rounded-trigger-guard-iwb-holster/"
+    },
+    "p320-hol-compact-tlr7a": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/sig-sauer-p320-compact-9mm-iwb-holster/"
+    },
+    "p320-hol-compact-x300": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/sig-sauer-p320-compact-9mm-iwb-holster/"
+    },
+    "p320-hol-full-tlr7a": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/sig-sauer-p320-full-size-9mm-iwb-holster/"
+    },
+    "p320-hol-full-x300": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/sig-sauer-p320-full-size-9mm-iwb-holster/"
+    },
+    "p365-hol-std-tlr7sub": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/sig-sauer-p365-without-thumb-safety-iwb-holster/"
+    },
+    "p365-hol-xl-tlr7sub": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/sig-sauer-p365-xl-without-thumb-safety-iwb-holster/"
+    },
+    "mp-hol-fs": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/s-w-m-p-m2-0-4-25in-9mm-without-thumb-safety-iwb-holster/"
+    },
+    "mp-hol-fs-tlr7a": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/s-w-m-p-m2-0-4-25in-9mm-without-thumb-safety-iwb-holster/"
+    },
+    "mp-hol-fs-x300": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/s-w-m-p-m2-0-4-25in-9mm-without-thumb-safety-iwb-holster/"
+    },
+    "mp-hol-c": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/s-w-m-p-m2-0-compact-4in-9mm-without-thumb-safety-iwb-holster/"
+    },
+    "mp-hol-c-tlr7a": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/s-w-m-p-m2-0-compact-4in-9mm-without-thumb-safety-iwb-holster/"
+    },
+    "mp-hol-c-x300": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/s-w-m-p-m2-0-compact-4in-9mm-without-thumb-safety-iwb-holster/"
+    },
+    "hc-hol-3": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/springfield-armory-hellcat-without-thumb-safety-iwb-holster/"
+    },
+    "hc-hol-3-tlr7sub": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/springfield-armory-hellcat-without-thumb-safety-iwb-holster/"
+    },
+    "hc-hol-pro-tlr7sub": {
+      "VED": "https://www.vedderholsters.com/holsters/lighttuck/springfield-armory-hellcat-pro-9mm-iwb-holster/"
+    },
+    "gs-spk-oem": {
+      "GS": "https://www.glockstore.com/Complete-Upper-Parts-Kit-for-Glock-43"
+    },
+    "g26-frame-g5": {
+      "GS": "https://www.glockstore.com/G26-Gen5-Frame"
+    },
+    "g26-frame-g3": {
+      "GS": "https://www.glockstore.com/Gen3-Sub-compact-Factory-Frame-Stripped"
+    },
+    "gl-spk-oem": {
+      "GS": "https://www.glockstore.com/Glock-Factory-Large-Frame-Upper-Parts-Kit-20SF-21SF-Fits-PF45"
+    },
+    "gs-fcg-oem": {
+      "GS": "https://www.glockstore.com/Glock-Factory-Lower-Parts-Kit-for-Glock-43X-48"
+    },
+    "g-spk-oem5": {
+      "GS": "https://www.glockstore.com/Glock-Factory-Upper-Parts-Kits-for-Gen5-Glocks"
+    },
+    "g-fcg-oem34": {
+      "GS": "https://www.glockstore.com/Lower-Parts-Kit-Gen4-Glocks"
+    },
+    "g17-slide-g3": {
+      "BPC": "https://blackphoenixcustoms.com/glock-17-gen-3-oem-slide-stripped.html"
+    },
+    "g17-slide-mos": {
+      "BPC": "https://blackphoenixcustoms.com/glock-17-gen-5-mos-oem-slide-stripped.html"
+    },
+    "g17-slide-g5": {
+      "BPC": "https://blackphoenixcustoms.com/glock-17-gen-5-oem-slide-stripped.html"
+    },
+    "g19-slide-g3": {
+      "BPC": "https://blackphoenixcustoms.com/glock19gen3slidestripped"
+    },
+    "g19-slide-g4": {
+      "BPC": "https://blackphoenixcustoms.com/glock-19-gen-4-oem-slide-stripped.html"
+    },
+    "g19-slide-mos": {
+      "BPC": "https://blackphoenixcustoms.com/glock-19-gen-5-mos-oem-slide-stripped.html"
+    },
+    "g19-slide-g5": {
+      "BPC": "https://blackphoenixcustoms.com/glock-19-gen-5-oem-slide-stripped.html"
+    },
+    "g26-slide-g3": {
+      "BPC": "https://blackphoenixcustoms.com/glock-26-gen-3-oem-slide-stripped.html"
+    },
+    "g34-slide-g3": {
+      "BPC": "https://blackphoenixcustoms.com/glock-34-gen-3-oem-slide-stripped.html"
+    },
+    "gs-slide-43xmos": {
+      "BPC": "https://blackphoenixcustoms.com/glock-43x-mos-oem-slide-stripped.html"
+    },
+    "gs-slide-48": {
+      "BPC": "https://blackphoenixcustoms.com/glock-48-oem-slide-stripped.html"
+    },
+    "g47-slide-mos": {
+      "BPC": "https://blackphoenixcustoms.com/glock-47-mos-oem-slide-stripped.html"
+    },
+    "ar-bbl-bcm": {
+      "BCM": "https://bravocompanyusa.com/bcm-standard-16-mid-length-barrel-stripped/"
+    },
+    "gl-fcg-ow": {
+      "OW": "https://overwatchprecision.com/tac-trigger-for-glock/"
+    },
+    "hc-bbl-3": {
+      "SA": "https://store.springfield-armory.com/hellcat-3-0-factory-barrel-9mm/"
+    },
+    "hc-bbl-pro": {
+      "SA": "https://store.springfield-armory.com/hellcat-pro-3-7-factory-barrel-9mm/"
+    },
+    "mp-slide-fs": {
+      "SW": "https://shop.smith-wesson.com/mp9-optic-ready-slide-for-4-25in-barrel"
+    },
+    "mp-slide-c": {
+      "SW": "https://shop.smith-wesson.com/mp9-optic-ready-slide-for-4in-barrel"
+    },
+    "a9-bbl-aero55": {
+      "AERO": "https://www.aeroprecisionusa.com/5pt5-9mm-cmv-barrel"
+    },
+    "a9-hg-aero9": {
+      "AERO": "https://www.aeroprecisionusa.com/ar15-9-atlas-s-one-m-lok-handguard-anodized-black"
+    },
+    "g34-bbl-faxon": {
+      "FAX": "https://faxonfirearms.com/GA910N34NGQ-N"
+    },
+    "mp-bbl-faxfs": {
+      "FAX": "https://faxonfirearms.com/MPB910NFLOQ-T"
+    },
+    "ar-irons-troy": {
+      "PA": "https://www.primaryarms.com/troy-industries-m4-style-folding-battle-sight-set"
+    },
+    "a10-irons-troy": {
+      "PA": "https://www.primaryarms.com/troy-industries-m4-style-folding-battle-sight-set"
+    },
+    "a9-irons-troy": {
+      "PA": "https://www.primaryarms.com/troy-industries-m4-style-folding-battle-sight-set"
     }
   }
 }

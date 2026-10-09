@@ -41,6 +41,23 @@ export const RETAILERS: Record<string, Retailer> = {
   MI: { id: 'MI', name: 'Midwest Industries', search: 'https://midwestindustriesinc.com/search.php?search_query=' },
   SPW: { id: 'SPW', name: "Sportsman's Warehouse", search: 'https://www.sportsmans.com/search?text=' },
   WC: { id: 'WC', name: 'Wilson Combat', search: 'https://wilsoncombat.com/catalogsearch/result/?q=' },
+  // Added in the second catalog pass (factory and odd parts).
+  AG: { id: 'AG', name: 'AmeriGlo', search: 'https://www.ameriglo.com/products?search=' },
+  BCM: { id: 'BCM', name: 'Bravo Company', search: 'https://bravocompanyusa.com/search.php?search_query=' },
+  BPC: { id: 'BPC', name: 'Black Phoenix Customs', search: 'https://blackphoenixcustoms.com/search.php?search_query=' },
+  CP: { id: 'CP', name: 'CopsPlus', search: 'https://copsplus.com/search.php?search_query=' },
+  DK: { id: 'DK', name: 'DK Firearms', search: 'https://dkfirearms.com/?post_type=product&s=' },
+  EO: { id: 'EO', name: 'EuroOptic', search: 'https://www.eurooptic.com/search?q=' },
+  GGP: { id: 'GGP', name: 'Grey Ghost Precision', search: 'https://greyghostprecision.com/search.php?search_query=' },
+  IMP: { id: 'IMP', name: 'Impact Guns', search: 'https://www.impactguns.com/search.php?search_query=' },
+  NFA: { id: 'NFA', name: 'New Frontier Armory', search: 'https://www.newfrontierarmory.com/search.php?search_query=' },
+  OW: { id: 'OW', name: 'Overwatch Precision', search: 'https://overwatchprecision.com/?post_type=product&s=' },
+  RYG: { id: 'RYG', name: 'Rock Your Glock', search: 'https://rockyourglock.com/search.php?search_query=' },
+  SA: { id: 'SA', name: 'Springfield Armory', search: 'https://store.springfield-armory.com/search.php?search_query=' },
+  SAV: { id: 'SAV', name: 'Savior Equipment', search: 'https://www.saviorequipment.com/search?q=' },
+  SW: { id: 'SW', name: 'Smith & Wesson', search: 'https://shop.smith-wesson.com/search.php?search_query=' },
+  TGS: { id: 'TGS', name: 'Top Gun Supply', search: 'https://www.topgunsupply.com/search.php?mode=search&substring=' },
+  TIM: { id: 'TIM', name: 'Timney Triggers', search: 'https://timneytriggers.com/?post_type=product&s=' },
 };
 
 export function offerUrl(retailerId: string, query: string): string {

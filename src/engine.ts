@@ -95,6 +95,16 @@ export function bestOffer(part: Part): Offer | undefined {
   return pool.reduce<Offer | undefined>((m, o) => (!m || o.price < m.price ? o : m), undefined);
 }
 
+/** The small label beside a price that isn't a live store price: Sample, List Price or Factory Part. */
+export function priceLabel(o: Offer): string {
+  if (o.basis === 'list') return 'List Price';
+  if (o.basis === 'factory') return 'Factory Part';
+  return o.checkedAt ? '' : 'Sample';
+}
+
+/** A price as shown: "From" in front when it's a holster's base price before the light option. */
+export const priceText = (o: Offer) => (o.basis === 'from' ? 'From ' : '') + money(o.price);
+
 export function priceRange(part: Part): [number, number] {
   const ps = part.offers.map((o) => o.price);
   return [Math.min(...ps), Math.max(...ps)];

@@ -47,10 +47,6 @@ const allParts = [
       offers: [['AERO', 149.99], ['PA', 154.99], ['BRN', 159.99]], pick: pick('value', 'The most common AR-10 lower; huge parts support.') },
     { id: 'a10-lower-psa', brand: 'Palmetto State Armory', name: 'PA-10 Stripped Lower', specs: ['DPMS low-profile pattern'], attrs: { pattern: 'dpms-low' }, serialized: true,
       offers: [['PSA', 99.99]], pick: pick('budget', 'Cheapest way into a .308 AR.') },
-    { id: 'a10-lower-armalite', brand: 'Armalite', name: 'AR-10 Stripped Lower', specs: ['Armalite pattern'], attrs: { pattern: 'armalite' }, serialized: true,
-      offers: [['BRN', 229.99], ['MID', 234.99]] },
-    { id: 'a10-lower-seekins', brand: 'Seekins Precision', name: 'SP10 Billet Lower', specs: ['DPMS high-profile pattern', 'Billet', 'Ambi bolt release'], attrs: { pattern: 'dpms-high' }, serialized: true,
-      offers: [['BRN', 349.99], ['OP', 339.0]], pick: pick('premium', 'Billet, ambidextrous, takes PMAG LR mags.') },
   ]),
   ...parts('lpk', [
     { id: 'a10-lpk-dpms', brand: 'Aero Precision', name: 'AR-10/M5 Lower Parts Kit, Minus FCG/Grip', specs: ['DPMS pattern'], attrs: { family: 'DPMS' },
@@ -95,10 +91,6 @@ const allParts = [
       offers: [['AERO', 129.99], ['PA', 134.99]], pick: pick('value', 'Pairs with the M5 lower; Aero and Seekins rails fit it.') },
     { id: 'a10-upper-psa', brand: 'Palmetto State Armory', name: 'PA-10 Stripped Upper', specs: ['DPMS low-profile pattern'], attrs: { pattern: 'dpms-low' },
       offers: [['PSA', 89.99]], pick: pick('budget', 'Matches the PA-10 lower.') },
-    { id: 'a10-upper-armalite', brand: 'Armalite', name: 'AR-10 Stripped Upper', specs: ['Armalite pattern'], attrs: { pattern: 'armalite' },
-      offers: [['BRN', 179.99]] },
-    { id: 'a10-upper-seekins', brand: 'Seekins Precision', name: 'SP10 Billet Upper', specs: ['DPMS high-profile pattern', 'Billet'], attrs: { pattern: 'dpms-high' },
-      offers: [['BRN', 299.99], ['OP', 289.0]], pick: pick('premium', 'Matched billet set with the SP10 lower.') },
   ]),
   ...parts('barrel', [
     { id: 'a10-bbl-psa18', brand: 'Palmetto State Armory', name: '18" .308 Win Midlength, Nitride', specs: ['18"', '.308 Win', 'Midlength gas', '.750 journal', '5/8x24'],
@@ -134,10 +126,6 @@ const allParts = [
       offers: [['AERO', 189.99], ['PA', 184.99]], pick: pick('value', 'Built for the M5 upper.') },
     { id: 'a10-hg-psa', brand: 'Palmetto State Armory', name: 'PA-10 15" M-LOK Rail', specs: ['15"', 'DPMS low-profile', 'M-LOK'], attrs: { pattern: 'dpms-low', length: 15 },
       offers: [['PSA', 79.99]], pick: pick('budget', 'Made for the PA-10 upper.') },
-    { id: 'a10-hg-seekins', brand: 'Seekins Precision', name: 'SP3R V3 15" Rail', specs: ['15"', 'DPMS high-profile', 'M-LOK'], attrs: { pattern: 'dpms-high', length: 15 },
-      offers: [['BRN', 239.99], ['OP', 235.0]], pick: pick('premium', 'Stiff precision rail, ARCA-friendly.') },
-    { id: 'a10-hg-armalite', brand: 'Armalite', name: 'AR-10 Tactical 15" Handguard', specs: ['15"', 'Armalite pattern'], attrs: { pattern: 'armalite', length: 15 },
-      offers: [['BRN', 199.99]] },
   ]),
   ...parts('bcg', [
     { id: 'a10-bcg-psa', brand: 'Palmetto State Armory', name: 'PA-10 .308 Nitride BCG', specs: ['.308 / 6.5 CM', 'Nitride'], attrs: { family: 'DPMS' },
@@ -154,8 +142,6 @@ const allParts = [
       offers: [['AERO', 29.99], ['PSA', 24.99]], pick: pick('budget', 'Standard DPMS-pattern handle.') },
     { id: 'a10-ch-radian', brand: 'Radian', name: 'Raptor .308 Ambi Charging Handle', specs: ['DPMS pattern', 'Ambidextrous'], attrs: { family: 'DPMS' },
       offers: [['BRN', 99.95], ['PA', 99.99]], pick: pick('value', 'Ambi, and easy to grab with a big scope.') },
-    { id: 'a10-ch-armalite', brand: 'Armalite', name: 'AR-10 Charging Handle', specs: ['Armalite pattern'], attrs: { family: 'Armalite' },
-      offers: [['BRN', 49.99]] },
   ]),
   ...parts('muzzle', [
     { id: 'a10-mz-pa', brand: 'Precision Armament', name: 'M4-72 Severe Duty Brake (5/8x24)', specs: ['5/8x24', 'Brake'], attrs: { thread: '5/8x24', kind: 'brake', bore: .308 },
@@ -252,6 +238,6 @@ export const ar10: Platform = {
   presets: {
     budget: ['a10-lower-psa', 'a10-lpk-dpms', 'a10-trig-psa', 'a10-buf-psa', 'a10-stock-psa', 'a10-grip-moe', 'a10-upper-psa', 'a10-bbl-psa18', 'a10-gb-750', 'a10-gt-mid', 'a10-hg-psa', 'a10-bcg-psa', 'a10-ch-dpms', 'a10-mz-a2', 'a10-mag-pmag', 'a10-irons-mbus'],
     value: ['a10-lower-aero', 'a10-lpk-dpms', 'a10-trig-alg', 'a10-buf-aero', 'a10-stock-moesl', 'a10-grip-bcm', 'a10-upper-aero', 'a10-bbl-ba18', 'a10-gb-750', 'a10-gt-rifle', 'a10-hg-atlas', 'a10-bcg-toolcraft', 'a10-ch-radian', 'a10-mz-pa', 'a10-mag-pmag', 'a10-opt-vortex'],
-    premium: ['a10-lower-seekins', 'a10-lpk-dpms', 'a10-trig-geissele', 'a10-buf-aero', 'a10-stock-ubr', 'a10-grip-bcm', 'a10-upper-seekins', 'a10-bbl-criterion', 'a10-gb-875', 'a10-gt-rifle', 'a10-hg-seekins', 'a10-bcg-jp', 'a10-ch-radian', 'a10-mz-pa', 'a10-mag-pmag', 'a10-opt-venom'],
+    premium: ['a10-lower-aero', 'a10-lpk-dpms', 'a10-trig-geissele', 'a10-buf-aero', 'a10-stock-ubr', 'a10-grip-bcm', 'a10-upper-aero', 'a10-bbl-criterion', 'a10-gb-875', 'a10-gt-rifle', 'a10-hg-atlas', 'a10-bcg-jp', 'a10-ch-radian', 'a10-mz-pa', 'a10-mag-pmag', 'a10-opt-venom'],
   },
 };

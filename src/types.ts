@@ -12,6 +12,14 @@ export interface Offer {
   url?: string;
   /** ISO time the price was read by the nightly job; absent for sample prices */
   checkedAt?: string;
+  /**
+   * How to read a price that isn't a plain store price: 'from' is the holster's base price before a light option,
+   * 'list' a list price we checked by hand, 'factory' a factory part no tracked store sells, priced by hand when it
+   * has a date and estimated when it doesn't (data/list-prices.json).
+   */
+  basis?: 'from' | 'list' | 'factory';
+  /** Day (YYYY-MM-DD) a 'list' or 'factory' price was checked by hand */
+  asOf?: string;
 }
 
 export interface Part {

@@ -99,8 +99,6 @@ function modelParts(M: Model): Part[] {
         offers: [['GS', 169.99 + d]], pick: pick('budget', 'Plain factory slide, no optic cut.') },
       { id: `g${n}-slide-brn`, brand: 'Brownells', name: t('{M} Slide, RMR Cut, Iron Sight Window'), specs: ['Gen3 pattern', 'RMR footprint', 'Front serrations'], attrs: { len: M, bbl: M, family: 'Gen3/4', gen: 'gen3', rsa: rsaFor(M, 'gen3'), cut: 'rmr' },
         offers: [['BRN', 179.99 + d]], pick: pick('value', 'Optic-ready slide for close to the price of a stock one.') },
-      { id: `g${n}-slide-zev`, brand: 'ZEV', name: t('Z{m} Octane Slide, RMR Cut'), specs: ['Gen3 pattern', 'RMR footprint', 'Lightening cuts'], attrs: { len: M, bbl: M, family: 'Gen3/4', gen: 'gen3', rsa: rsaFor(M, 'gen3'), cut: 'rmr' },
-        offers: [['BRN', 389.99 + d], ['GS', 379.99 + d]] },
       { id: `g${n}-slide-mos`, brand: 'Glock', name: t('{M} Gen5 MOS Slide (OEM, stripped)'), specs: ['Gen5', 'MOS plate system'], attrs: { len: M, bbl: M, family: 'Gen5', gen: 'gen5', rsa: rsaFor(M, 'gen5'), cut: 'mos' },
         offers: [['GS', 249.99 + d], ['BRN', 259.99 + d]], pick: pick('premium', 'Takes most pistol dots with the matching plate.') },
       { id: `g${n}-slide-g4`, brand: 'Glock', name: t('{M} Gen4 Slide (OEM, stripped)'), specs: ['Gen4', 'No optic cut', 'Dual-spring recoil'], attrs: { len: M, bbl: M, family: 'Gen3/4', gen: 'gen4', rsa: rsaFor(M, 'gen4'), cut: 'none' },
@@ -117,9 +115,9 @@ function modelParts(M: Model): Part[] {
         offers: [['BRN', 124.99 + d], ['MID', 129.99 + d]] },
       { id: `g${n}-bbl-lwm`, brand: 'Lone Wolf', name: t('AlphaWolf {M} Barrel, Threaded M13.5x1 LH'), specs: ['Gen3/4', 'Threaded M13.5x1 LH', 'Metric, left-hand'], attrs: { len: M, bbl: M, family: 'Gen3/4', threaded: true, thread: 'M13.5x1 LH' },
         offers: [['BRN', 129.99 + d]] },
-      { id: `g${n}-bbl-faxon`, brand: 'Faxon', name: t('{M} Duty Series Barrel'), specs: ['Gen3/4', 'Match grade', 'Nitride'], attrs: { len: M, bbl: M, family: 'Gen3/4', threaded: false },
-        offers: [['BRN', 169.99 + d], ['OP', 164.99 + d]], pick: pick('value', 'Match-grade accuracy for less than most aftermarket barrels.') },
       ...(M !== 'G26' ? [
+        { id: `g${n}-bbl-faxon`, brand: 'Faxon', name: t('{M} Duty Series Barrel'), specs: ['Gen3/4', 'Match grade', 'Nitride'], attrs: { len: M, bbl: M, family: 'Gen3/4', threaded: false },
+          offers: [['BRN', 169.99 + d], ['OP', 164.99 + d]] as [string, number][], pick: pick('value', 'Match-grade accuracy for less than most aftermarket barrels.') },
         { id: `g${n}-bbl-faxont`, brand: 'Faxon', name: t('{M} Duty Series Barrel, Threaded 1/2x28'), specs: ['Gen3/4', 'Threaded 1/2x28', 'Match grade'], attrs: { len: M, bbl: M, family: 'Gen3/4', threaded: true, thread: '1/2x28' },
           offers: [['BRN', 189.99 + d], ['OP', 184.99 + d]] as [string, number][] },
         { id: `g${n}-bbl-ba`, brand: 'Ballistic Advantage', name: t('Premium Series {M} Barrel, Threaded 1/2x28'), specs: ['Gen3/4', 'Threaded 1/2x28', 'Stainless'], attrs: { len: M, bbl: M, family: 'Gen3/4', threaded: true, thread: '1/2x28' },
@@ -222,8 +220,6 @@ const shared: Part[] = [
       offers: [['BRN', 99.99], ['OP', 94.99]], pick: pick('value', 'Co-witnesses with most dots and glows at night.') },
     { id: 'g-sight-trijicon', brand: 'Trijicon', name: 'HD XR Night Sights', specs: ['Standard height', 'Tritium', 'Bright front'], attrs: { height: 'standard' },
       offers: [['BRN', 139.99], ['OP', 134.99], ['MID', 144.99]] },
-    { id: 'g-sight-dawson', brand: 'Dawson Precision', name: 'Charger Suppressor Height Sights', specs: ['Suppressor height', 'Fiber front'], attrs: { height: 'suppressor' },
-      offers: [['BRN', 104.99]], pick: pick('premium', 'Crisp blacked-out rear with a fiber front for fast pickup.') },
     { id: 'g-sight-nf', brand: 'Night Fision', name: 'Perfect Dot Suppressor Height Night Sights', specs: ['Suppressor height', 'Tritium'], attrs: { height: 'suppressor' },
       offers: [['BRN', 129.99], ['OP', 124.99]] },
     { id: 'g-sight-truglo', brand: 'TruGlo', name: 'TFX Pro Day/Night Sights', specs: ['Standard height', 'Tritium + fiber'], attrs: { height: 'standard' },
@@ -257,8 +253,6 @@ const shared: Part[] = [
   ]),
   ...parts('muzzle', [
     { id: 'g-mz-tp12', brand: 'Lone Wolf', name: 'Thread Protector, 1/2x28', specs: ['1/2x28', 'Thread protector'], attrs: { thread: '1/2x28', kind: 'protector' },
-      offers: [['BRN', 14.99]] },
-    { id: 'g-mz-tpm', brand: 'Lone Wolf', name: 'Thread Protector, M13.5x1 LH', specs: ['M13.5x1 LH', 'Thread protector'], attrs: { thread: 'M13.5x1 LH', kind: 'protector' },
       offers: [['BRN', 14.99]] },
     { id: 'g-mz-tcomp', brand: 'Tyrant Designs', name: 'T-Comp Compensator, 1/2x28', specs: ['1/2x28', 'Compensator'], attrs: { thread: '1/2x28', kind: 'comp' },
       offers: [['BRN', 119.99], ['OP', 114.99]] },
@@ -394,40 +388,40 @@ const MODEL_PRESETS: Record<Named, Record<Tier, string[]>> = {
   G17: {
     budget: P('17', ['g#-frame-g3', 'g-fcg-oem34', 'g#-slide-g3', 'g-spk-lw', 'g#-bbl-oem34', 'g#-rsa-g3', 'g-sight-oem', 'g-mag-pmag17']),
     value: P('17', ['g#-frame-lw', 'g-fcg-zev', 'g#-slide-brn', 'g-spk-oem34', 'g#-bbl-faxon', 'g#-rsa-ismi', 'g-sight-ameriglo', 'g-opt-507c', 'g-mag-oem17']),
-    premium: P('17', ['g#-frame-g5', 'g-fcg-apex5', 'g#-slide-mos', 'g-spk-oem5', 'g#-bbl-oem5', 'g#-rsa-g45', 'g-sight-dawson', 'g-opt-rmr', 'g-plate-rmr', 'g-mag-oem17']),
+    premium: P('17', ['g#-frame-g5', 'g-fcg-apex5', 'g#-slide-mos', 'g-spk-oem5', 'g#-bbl-oem5', 'g#-rsa-g45', 'g-sight-nf', 'g-opt-rmr', 'g-plate-rmr', 'g-mag-oem17']),
   },
   G19: {
     budget: P('19', ['g#-frame-g3', 'g-fcg-oem34', 'g#-slide-g3', 'g-spk-lw', 'g#-bbl-oem34', 'g#-rsa-g3', 'g-sight-oem', 'g-mag-pmag15']),
     value: P('19', ['g#-frame-lw', 'g-fcg-zev', 'g#-slide-brn', 'g-spk-oem34', 'g#-bbl-faxon', 'g#-rsa-ismi', 'g-sight-ameriglo', 'g-opt-507c', 'g-mag-oem15']),
-    premium: P('19', ['g#-frame-g5', 'g-fcg-apex5', 'g#-slide-mos', 'g-spk-oem5', 'g#-bbl-oem5', 'g#-rsa-g45', 'g-sight-dawson', 'g-opt-rmr', 'g-plate-rmr', 'g-mag-oem15']),
+    premium: P('19', ['g#-frame-g5', 'g-fcg-apex5', 'g#-slide-mos', 'g-spk-oem5', 'g#-bbl-oem5', 'g#-rsa-g45', 'g-sight-nf', 'g-opt-rmr', 'g-plate-rmr', 'g-mag-oem15']),
   },
   G26: {
     budget: P('26', ['g#-frame-g3', 'g-fcg-oem34', 'g#-slide-g3', 'g-spk-lw', 'g#-bbl-oem34', 'g#-rsa-g45', 'g-sight-oem', 'g-mag-oem10']),
-    value: P('26', ['g#-frame-g4', 'g-fcg-zev', 'g#-slide-brn', 'g-spk-oem34', 'g#-bbl-faxon', 'g#-rsa-g45', 'g-sight-ameriglo', 'g-opt-507c', 'g-mag-pmag12']),
-    premium: P('26', ['g#-frame-g5', 'g-fcg-apex5', 'g#-slide-mos', 'g-spk-oem5', 'g#-bbl-oem5', 'g#-rsa-g45', 'g-sight-dawson', 'g-opt-rmr', 'g-plate-rmr', 'g-mag-oem10']),
+    value: P('26', ['g#-frame-g4', 'g-fcg-zev', 'g#-slide-brn', 'g-spk-oem34', 'g#-bbl-oem34', 'g#-rsa-g45', 'g-sight-ameriglo', 'g-opt-507c', 'g-mag-pmag12']),
+    premium: P('26', ['g#-frame-g5', 'g-fcg-apex5', 'g#-slide-mos', 'g-spk-oem5', 'g#-bbl-oem5', 'g#-rsa-g45', 'g-sight-nf', 'g-opt-rmr', 'g-plate-rmr', 'g-mag-oem10']),
   },
   // The G34 is a G17 frame with a long slide and the G17's recoil spring.
   G34: {
     budget: ['g17-frame-g3', 'g-fcg-oem34', 'g34-slide-g3', 'g-spk-lw', 'g34-bbl-oem34', 'g17-rsa-g3', 'g-sight-oem', 'g-mag-pmag17'],
     value: ['g17-frame-lw', 'g-fcg-zev', 'g34-slide-brn', 'g-spk-oem34', 'g34-bbl-faxon', 'g17-rsa-ismi', 'g-sight-ameriglo', 'g-opt-507c', 'g-mag-oem17'],
-    premium: ['g17-frame-g5', 'g-fcg-apex5', 'g34-slide-mos', 'g-spk-oem5', 'g34-bbl-oem5', 'g17-rsa-g45', 'g-sight-dawson', 'g-opt-rmr', 'g-plate-rmr', 'g-mag-oem17'],
+    premium: ['g17-frame-g5', 'g-fcg-apex5', 'g34-slide-mos', 'g-spk-oem5', 'g34-bbl-oem5', 'g17-rsa-g45', 'g-sight-nf', 'g-opt-rmr', 'g-plate-rmr', 'g-mag-oem17'],
   },
   // The G45 frame is Gen5 only, so its builds differ in trigger, sights, optic and magazine.
   G45: {
     budget: ['g45-frame-g5', 'g-fcg-oem5', 'g19-slide-g5', 'g-spk-oem5', 'g19-bbl-oem5', 'g19-rsa-g45', 'g-sight-oem', 'g-mag-pmag17'],
     value: ['g45-frame-g5', 'g-fcg-oem5', 'g19-slide-mos', 'g-spk-oem5', 'g19-bbl-oem5', 'g19-rsa-g45', 'g-sight-ameriglo', 'g-opt-507c', 'g-plate-rmr', 'g-mag-oem17'],
-    premium: ['g45-frame-g5', 'g-fcg-apex5', 'g19-slide-mos', 'g-spk-oem5', 'g19-bbl-oem5', 'g19-rsa-g45', 'g-sight-dawson', 'g-opt-rmr', 'g-plate-rmr', 'g-mag-oem17'],
+    premium: ['g45-frame-g5', 'g-fcg-apex5', 'g19-slide-mos', 'g-spk-oem5', 'g19-bbl-oem5', 'g19-rsa-g45', 'g-sight-nf', 'g-opt-rmr', 'g-plate-rmr', 'g-mag-oem17'],
   },
   G19X: {
     budget: ['g19x-frame-g5', 'g-fcg-oem5', 'g19-slide-g5', 'g-spk-oem5', 'g19-bbl-oem5', 'g19-rsa-g45', 'g-sight-oem', 'g-mag-pmag17'],
     value: ['g19x-frame-g5', 'g-fcg-oem5', 'g19-slide-mos', 'g-spk-oem5', 'g19-bbl-oem5', 'g19-rsa-g45', 'g-sight-ameriglo', 'g-opt-507c', 'g-plate-rmr', 'g-mag-oem17'],
-    premium: ['g19x-frame-g5', 'g-fcg-apex5', 'g19-slide-mos', 'g-spk-oem5', 'g19-bbl-oem5', 'g19-rsa-g45', 'g-sight-dawson', 'g-opt-rmr', 'g-plate-rmr', 'g-mag-oem17'],
+    premium: ['g19x-frame-g5', 'g-fcg-apex5', 'g19-slide-mos', 'g-spk-oem5', 'g19-bbl-oem5', 'g19-rsa-g45', 'g-sight-nf', 'g-opt-rmr', 'g-plate-rmr', 'g-mag-oem17'],
   },
   // The G47: G17-length slide and G17 barrel, G19 recoil spring.
   G47: {
     budget: ['g45-frame-g5', 'g-fcg-oem5', 'g47-slide-mos', 'g-spk-oem5', 'g17-bbl-oem5', 'g19-rsa-g45', 'g-sight-oem', 'g-mag-pmag17'],
     value: ['g45-frame-g5', 'g-fcg-oem5', 'g47-slide-mos', 'g-spk-oem5', 'g17-bbl-oem5', 'g19-rsa-g45', 'g-sight-ameriglo', 'g-opt-507c', 'g-plate-rmr', 'g-mag-oem17'],
-    premium: ['g45-frame-g5', 'g-fcg-apex5', 'g47-slide-mos', 'g-spk-oem5', 'g17-bbl-oem5', 'g19-rsa-g45', 'g-sight-dawson', 'g-opt-rmr', 'g-plate-rmr', 'g-mag-oem17'],
+    premium: ['g45-frame-g5', 'g-fcg-apex5', 'g47-slide-mos', 'g-spk-oem5', 'g17-bbl-oem5', 'g19-rsa-g45', 'g-sight-nf', 'g-opt-rmr', 'g-plate-rmr', 'g-mag-oem17'],
   },
 };
 

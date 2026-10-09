@@ -2,6 +2,7 @@ import type { Issue, Offer, OfferTuple, Part, Tier } from '../types';
 import prices from '../../data/prices.json';
 import sources from '../../data/sources.json';
 import weights from '../../data/weights.json';
+import listPrices from '../../data/list-prices.json';
 
 type PartInput = Omit<Part, 'offers'> & { offers: OfferTuple[] };
 
@@ -9,13 +10,25 @@ type PartInput = Omit<Part, 'offers'> & { offers: OfferTuple[] };
 const LIVE = (prices as unknown as { offers: Record<string, Record<string, Offer>> }).offers;
 /** Known product page URLs, so "View" links go to the product even before a live price exists. */
 const URLS = (sources as unknown as { parts: Record<string, Record<string, string>> }).parts;
+/**
+ * Parts no tracked store sells or prices: holsters whose live price is the base page's ("From"), Glock factory parts
+ * with only an estimate ("Factory Part"), and hand-checked list prices, each shown with its label and the day it was checked.
+ */
+const LISTED = listPrices as unknown as {
+  from: string[];
+  factory: string[];
+  parts: Record<string, { basis: 'list' | 'factory'; retailer: string; price: number; url?: string; asOf: string }>;
+};
+const FROM = new Set(LISTED.from);
+const FACTORY = new Set(LISTED.factory);
 /** Part weights in ounces: the maker's or a retailer's listed figure where found, otherwise a typical-figure estimate. */
 const WEIGHTS = (weights as unknown as { parts: Record<string, { oz: number; basis: 'published' | 'estimate'; src: string | null }> }).parts;
 
 /**
  * Builds parts from inline sample offers, then overlays any live prices from data/prices.json.
  * A live price replaces the sample price for the same retailer; new retailers are added. Once a part has any live
- * price, its remaining sample prices are dropped, so a made-up figure never undercuts a real one.
+ * price, its remaining sample prices are dropped, so a made-up figure never undercuts a real one. A part with no live
+ * price but a hand-checked list price (data/list-prices.json) shows that instead of its samples.
  */
 export function parts(slot: string, list: Omit<PartInput, 'slot'>[]): Part[] {
   return list.map((p) => {
@@ -23,8 +36,11 @@ export function parts(slot: string, list: Omit<PartInput, 'slot'>[]): Part[] {
       p.offers.map(([retailer, price, inStock]) => [retailer, { retailer, price, inStock: inStock ?? true, url: URLS[p.id]?.[retailer] }]),
     );
     const live = Object.entries(LIVE[p.id] ?? {});
-    if (live.length) byRetailer.clear();
-    for (const [retailer, offer] of live) byRetailer.set(retailer, { ...offer, retailer });
+    const listed = LISTED.parts[p.id];
+    if (live.length || listed) byRetailer.clear();
+    for (const [retailer, offer] of live) byRetailer.set(retailer, { ...offer, retailer, ...(FROM.has(p.id) ? { basis: 'from' as const } : {}) });
+    if (!live.length && listed) byRetailer.set(listed.retailer, { retailer: listed.retailer, price: listed.price, inStock: true, url: listed.url, basis: listed.basis, asOf: listed.asOf });
+    else if (!live.length && FACTORY.has(p.id)) for (const o of byRetailer.values()) o.basis = 'factory';
     const w = WEIGHTS[p.id];
     return { ...p, slot, offers: [...byRetailer.values()], ...(w ? { weight: { oz: w.oz, published: w.basis === 'published', src: w.src ?? undefined } } : {}) };
   });

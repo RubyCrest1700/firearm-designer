@@ -55,8 +55,6 @@ const allParts = [
       offers: [['AERO', 59.99], ['PA', 62.99]], pick: pick('value', 'Has the EPC-9\'s own mag catch and bolt catch.') },
     { id: 'a9-lpk-psa', brand: 'Palmetto State Armory', name: 'Lower Parts Kit, Minus FCG/Grip', specs: ['Mil-spec AR-15'], attrs: { epc: false },
       offers: [['PSA', 39.99]], pick: pick('budget', 'Pins, springs and safety; the PX-9 brings its own mag catch.') },
-    { id: 'a9-lpk-bcm', brand: 'Bravo Company', name: 'Enhanced Lower Parts Kit, Minus FCG/Grip', specs: ['Mil-spec AR-15', 'Ambi safety'], attrs: { epc: false },
-      offers: [['BRN', 64.95]], pick: pick('premium', 'Better springs and an ambi safety.') },
   ]),
   ...parts('trigger', [
     { id: 'a9-trig-psa', brand: 'Palmetto State Armory', name: 'EPT Enhanced Polished Trigger', specs: ['Single stage', '~6 lb', 'Polished'], attrs: {},
@@ -243,6 +241,6 @@ export const ar9: Platform = {
   presets: {
     budget: ['a9-lower-psa', 'a9-lpk-psa', 'a9-trig-psa', 'a9-buf-kak', 'a9-stock-psa', 'a9-grip-moe', 'a9-upper-psa', 'a9-bbl-aero16', 'a9-hg-psa', 'a9-bcg-psa', 'a9-ch-aero', 'a9-mz-kak', 'a9-mag-gl9', 'a9-opt-romeo5x'],
     value: ['a9-lower-aero', 'a9-lpk-aero', 'a9-trig-angstadt', 'a9-buf-aero', 'a9-brace-sba3', 'a9-grip-bcm', 'a9-upper-aero', 'a9-bbl-faxon85', 'a9-hg-aero9', 'a9-bcg-aero', 'a9-ch-bcm', 'a9-mz-psa', 'a9-mag-gl9', 'a9-opt-holosun'],
-    premium: ['a9-lower-jp', 'a9-lpk-bcm', 'a9-trig-cmc', 'a9-buf-spikes', 'a9-stock-b5', 'a9-grip-k2', 'a9-upper-m4e1', 'a9-bbl-faxon16', 'a9-hg-bcm13', 'a9-bcg-jp', 'a9-ch-radian', 'a9-mz-odin', 'a9-mag-g17', 'a9-opt-aimpoint'],
+    premium: ['a9-lower-jp', 'a9-lpk-psa', 'a9-trig-cmc', 'a9-buf-spikes', 'a9-stock-b5', 'a9-grip-k2', 'a9-upper-m4e1', 'a9-bbl-faxon16', 'a9-hg-bcm13', 'a9-bcg-jp', 'a9-ch-radian', 'a9-mz-odin', 'a9-mag-g17', 'a9-opt-aimpoint'],
   },
 };
