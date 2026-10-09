@@ -771,6 +771,76 @@
     },
     "g-plate-acro": {
       "PA": "https://www.primaryarms.com/aimpoint-acro-mount-plate-fits-glock-mos"
+    },
+    "a10-irons-mbus": {
+      "ARD": "https://ar15discounts.com/products/6421158/",
+      "AT3": "https://www.at3tactical.com/products/magpul-mbus-gen-3-front-and-rear-back-up-sight-kit",
+      "PA": "https://www.primaryarms.com/magpul-mbus-3-sight-set-black",
+      "BRD": "https://blackrifledepot.com/magpul-mbus-gen-3-sight-set-black/"
+    },
+    "a10-irons-mbuspro": {
+      "PA": "https://www.primaryarms.com/magpul-mbus-pro-flip-up-sight-set-black",
+      "ARD": "https://ar15discounts.com/products/magpul-mbus-pro-flip-up-sight-set/",
+      "AT3": "https://www.at3tactical.com/products/magpul-mbus-pro-front-and-rear-back-up-sight-kit",
+      "BRD": "https://blackrifledepot.com/magpul-mbus-pro-sight-set/"
+    },
+    "a10-irons-mbusr": {
+      "MAGPUL": "https://magpul.com/mbus-3-sight-rear.html",
+      "AT3": "https://www.at3tactical.com/products/magpul-mbus-gen-3-rear-back-up-sight-mag1167",
+      "PA": "https://www.primaryarms.com/magpul-mbus-3-rear-sight-black",
+      "BRD": "https://blackrifledepot.com/magpul-mbus-3-rear-sight-black/",
+      "KYG": "https://www.kygunco.com/product/magpul-mag1167-blk-mbus-3-sight-rear"
+    },
+    "a9-irons-mbus": {
+      "ARD": "https://ar15discounts.com/products/6421158/",
+      "AT3": "https://www.at3tactical.com/products/magpul-mbus-gen-3-front-and-rear-back-up-sight-kit",
+      "PA": "https://www.primaryarms.com/magpul-mbus-3-sight-set-black",
+      "BRD": "https://blackrifledepot.com/magpul-mbus-gen-3-sight-set-black/"
+    },
+    "a9-irons-mbuspro": {
+      "PA": "https://www.primaryarms.com/magpul-mbus-pro-flip-up-sight-set-black",
+      "ARD": "https://ar15discounts.com/products/magpul-mbus-pro-flip-up-sight-set/",
+      "AT3": "https://www.at3tactical.com/products/magpul-mbus-pro-front-and-rear-back-up-sight-kit",
+      "BRD": "https://blackrifledepot.com/magpul-mbus-pro-sight-set/"
+    },
+    "ar-irons-mbus": {
+      "ARD": "https://ar15discounts.com/products/6421158/",
+      "AT3": "https://www.at3tactical.com/products/magpul-mbus-gen-3-front-and-rear-back-up-sight-kit",
+      "PA": "https://www.primaryarms.com/magpul-mbus-3-sight-set-black",
+      "BRD": "https://blackrifledepot.com/magpul-mbus-gen-3-sight-set-black/"
+    },
+    "ar-irons-mbuspro": {
+      "PA": "https://www.primaryarms.com/magpul-mbus-pro-flip-up-sight-set-black",
+      "ARD": "https://ar15discounts.com/products/magpul-mbus-pro-flip-up-sight-set/",
+      "AT3": "https://www.at3tactical.com/products/magpul-mbus-pro-front-and-rear-back-up-sight-kit",
+      "BRD": "https://blackrifledepot.com/magpul-mbus-pro-sight-set/"
+    },
+    "ar-irons-mbusr": {
+      "MAGPUL": "https://magpul.com/mbus-3-sight-rear.html",
+      "AT3": "https://www.at3tactical.com/products/magpul-mbus-gen-3-rear-back-up-sight-mag1167",
+      "PA": "https://www.primaryarms.com/magpul-mbus-3-rear-sight-black",
+      "BRD": "https://blackrifledepot.com/magpul-mbus-3-rear-sight-black/",
+      "KYG": "https://www.kygunco.com/product/magpul-mag1167-blk-mbus-3-sight-rear"
+    },
+    "p-sight-nf": {
+      "NF": "https://www.nightfision.com/product/night-fision-suppressor-height-sights-for-sig-sauer",
+      "RA": "https://www.rainierarms.com/night-fision-suppressor-height-sig-sauer-tritium-sight-set-square-rear/"
+    },
+    "p-sight-si": {
+      "SI": "https://www.strikeindustries.com/si-p320-sights-sh.html",
+      "WING": "https://www.wingtactical.com/firearm-parts/handgun/handgun-sights/strike-industries-suppressor-height-iron-sight-set-for-sig-sauer-p320/",
+      "RA": "https://www.rainierarms.com/strike-industries-strike-iron-front-rear-sights-for-sig-sauer-p320-suppressor-height/"
+    },
+    "p-sight-xray3": {
+      "KYG": "https://www.kygunco.com/product/sig-sauer-sox10003-xray3-set-day-night-no-8-grn-no-8-rear-sq-notch"
+    },
+    "p-sight-xray3s": {
+      "KYG": "https://www.kygunco.com/product/sig-sauer-sox10009-xray3-sight-set-day-night-super-tall",
+      "RA": "https://www.rainierarms.com/sig-sauer-xray3-day-night-super-tall-sight-set/"
+    },
+    "p365-sight-nf": {
+      "NF": "https://www.nightfision.com/product/night-fision-suppressor-height-sights-for-sig-sauer",
+      "RA": "https://www.rainierarms.com/night-fision-suppressor-height-sig-sauer-tritium-sight-set-square-rear/"
     }
   }
 }
