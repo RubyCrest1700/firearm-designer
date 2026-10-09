@@ -43,6 +43,11 @@ const allParts = [
       // Sig: 3.1" barrel length; fits P365 models with a 3.1" barrel and a P365XL recoil spring assembly.
       attrs: { len: 'xl', barrelLen: 'std', springLen: 'xl', cut: 'rmsc', comp: true },
       offers: [['SIG', 449.99]], pick: pick('premium', 'Built-in compensator noticeably flattens recoil.') },
+    // ZEV's Octane slides come stripped (no striker, extractor or sights).
+    { id: 'p365-slide-zev', brand: 'ZEV', name: 'Z365 Octane Stripped Slide, RMSc Cut', specs: ['3.1"', 'RMSc cut', 'Stripped', 'Black DLC'], attrs: { len: 'std', barrelLen: 'std', springLen: 'std', cut: 'rmsc', stripped: true },
+      offers: [['RA', 432.18, false], ['ABIDE', 432.18, false], ['FORGE', 432.18, false]] },
+    { id: 'p365-slide-zevxl', brand: 'ZEV', name: 'Z365XL Octane Stripped Slide, RMSc Cut', specs: ['3.7"', 'RMSc cut', 'Stripped', 'Black DLC'], attrs: { len: 'xl', barrelLen: 'xl', springLen: 'xl', cut: 'rmsc', stripped: true },
+      offers: [['RA', 289.92, false], ['FORGE', 432.18, false]] },
   ]),
   ...parts('barrel', [
     { id: 'p365-bbl-std', brand: 'Sig Sauer', name: 'P365 Barrel, 3.1"', specs: ['3.1"'], attrs: { len: 'std' },
@@ -103,6 +108,8 @@ function rules(b: Build): Issue[] {
     out.push({ severity: 'info', slots: ['slide', 'optic'], message: 'Holosun K optics mount directly. Some P365 slides need M3 screws instead of the M4s in the box.' });
   else if (slide && optic && slide.attrs.cut !== optic.attrs.footprint)
     out.push({ severity: 'warn', slots: ['slide', 'optic'], message: `The slide is cut for ${String(slide.attrs.cut).toUpperCase()} and this optic uses the ${String(optic.attrs.footprint).toUpperCase()} footprint. You need an adapter plate.` });
+  if (slide?.attrs.stripped)
+    out.push({ severity: 'info', slots: ['slide'], message: 'This slide comes stripped. Move the striker, extractor and other slide parts over from a factory slide, and add sights.' });
   if (grip && slide && grip.attrs.len === 'xl' && slide.attrs.len === 'std')
     out.push({ severity: 'info', slots: ['grip', 'slide'], message: 'XL grip with the short slide is the P365X layout: full grip, shorter slide.' });
   if (mag && grip) {

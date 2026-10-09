@@ -58,6 +58,9 @@ export const RETAILERS: Record<string, Retailer> = {
   SW: { id: 'SW', name: 'Smith & Wesson', search: 'https://shop.smith-wesson.com/search.php?search_query=' },
   TGS: { id: 'TGS', name: 'Top Gun Supply', search: 'https://www.topgunsupply.com/search.php?mode=search&substring=' },
   TIM: { id: 'TIM', name: 'Timney Triggers', search: 'https://timneytriggers.com/?post_type=product&s=' },
+  ABIDE: { id: 'ABIDE', name: 'Abide Armory', search: 'https://www.abidearmory.com/search.php?search_query=' },
+  FORGE: { id: 'FORGE', name: 'Forged Armory', search: 'https://forged-armory.odoo.com/shop?search=' },
+  RSUP: { id: 'RSUP', name: 'Rifle Supply', search: 'https://riflesupply.com/search.php?search_query=' },
 };
 
 export function offerUrl(retailerId: string, query: string): string {

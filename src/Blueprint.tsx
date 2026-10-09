@@ -1999,6 +1999,14 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   const inNose = (ol: number[]) => noNose && scS(ol).every((c, i) => (i % 2 ? c > mk.sh - 0.01 : true));
   let slideDetail = pr.slide.detail.filter((ol) => !inPort(ol) && !inNose(ol)).map((ol) => polyPath(glock ? scS(ol) : smoothJitter(scS(ol), 0.02, false), slideMap, false)).join(' ');
   let slideCuts: { erase: string; edge: string } | undefined, pocket: [number, number, number] | undefined;
+  if (key !== 'glock' && v.slide === 'zev') {
+    // ZEV's Octane slides replace the patent's slide details, and pocket the optic (RMR on the Z320, RMSc on the Z365)
+    // between the rear sight's dovetail and the port, as on the flat Z365XL and Z320 XCompact photos.
+    slideDetail = octaneSlide(key, SL, mk.sh, port0, port1);
+    const pk0 = 0.62, pk1 = port0 - 0.27;
+    pocket = [pk0, pk1, 0.1];
+    slideCuts = { erase: `M${pk0},-0.03 L${pk0},0.1 L${f(pk1)},0.1 L${f(pk1)},-0.03 Z`, edge: `M${pk0},0 L${pk0},0.1 L${f(pk1)},0.1 L${f(pk1)},0` };
+  }
   let stipple = '';
   let tang = -mk.tang;
   let fcuX0 = -Infinity;
@@ -2496,7 +2504,7 @@ function profilePieces(P: Piece[], g: ProfileGeo, o: {
   const lightCuts = o.lighten ? repeat(g.port1 + 0.35, SL - 1.6, 0.42, (x) => `M${x},0.06 L${f(x + 0.26)},0.06 L${f(x + 0.2)},0.3 L${f(x - 0.06)},0.3 Z`) : '';
   const ports = o.comp ? repeat(SL - 0.95, SL - 0.35, 0.22, (x) => `M${x},0 L${x},0.13 Q${f(x + 0.07)},0.22 ${f(x + 0.14)},0.13 L${f(x + 0.14)},0`) : '';
   const plate = o.cut !== 'none' ? `M0.86,0 L0.86,0.12 L2.66,0.12 L2.66,0` : '';
-  const extractor = g.key === 'p365' ? `M${f(g.port0 - 0.3)},0.24 L${f(g.port0 - 0.04)},0.24 L${f(g.port0 - 0.04)},0.34 L${f(g.port0 - 0.3)},0.34 Z` : '';
+  const extractor = g.key === 'p365' && !g.slideCuts ? `M${f(g.port0 - 0.3)},0.24 L${f(g.port0 - 0.04)},0.24 L${f(g.port0 - 0.04)},0.34 L${f(g.port0 - 0.3)},0.34 Z` : '';
   P.push({ slot: o.own('slide'), z: 8, row: 'top', target: px(SL - 1.0, g.sh * 0.5),
     el: <>
       <path fillRule="evenodd" d={T(`${g.slideD} ${port}`)} />
@@ -2535,6 +2543,41 @@ function zevSlide(SL: number, SH: number, port0: number, port1: number) {
   // The panel's lower edge is a bevel, so it shows a second line; its top steps down from the chamfered upper slide.
   const step = `M${f(x0 + 0.07)},${f(SH * 0.9 - 0.045)} L${f(x1 - 0.07)},${f(SH * 0.9 - 0.045)} M${f(port0 - 0.69)},${f(SH * 0.5 + 0.035)} L${f(port1)},${f(SH * 0.5 + 0.035)}`;
   return `${rear} ${under} ${win} ${step} M${f(port1)},0.28 L${f(SL - 0.12)},0.28`;
+}
+
+/** ZEV Octane slides for the P320 and P365, measured on Rainier Arms' flat left-side photo of the Z365XL (1355 px from the
+ *  slide's top rear corner to its face, 182 px tall) and ar15.build's flat photo of a Z320 XCompact pistol (595 px, 93 px):
+ *  wide grooves at the rear leaning back with the rear face, a long round-ended window behind the port, the recessed
+ *  "ZEV / Centralia, WA" panel under the port, and long grooves ahead of the port leaning forward under a flat top band.
+ *  The Z365 adds two small scallops over the window and two round-topped lands under it; the Z320 adds a slot in the
+ *  top of the nose. Each groove is drawn as its two walls. */
+function octaneSlide(key: ProfileKey, SL: number, SH: number, port0: number, port1: number) {
+  const same: Map2 = (x, y) => [x, y];
+  const z365 = key === 'p365';
+  const P = z365
+    ? { r0: 0.23, rStep: 0.279, rN: 5, rTop: 0.17, win0: 1.4, winY: [0.4, 0.67], logo0: 1.85, band: 0.37, fStep: 0.263, fGap: 0.3 }
+    : { r0: 0.2, rStep: 0.26, rN: 7, rTop: 0.27, win0: port0 - 1.1, winY: [0.36, 0.55], logo0: 2.0, band: 0.47, fStep: 0.236, fGap: 0.2 };
+  const groove = (x: number, ym: number, y0: number, y1: number, lean: number, w: number) =>
+    [0, w].map((d) => `M${f(x + d - lean * (y0 - ym))},${f(y0)} L${f(x + d - lean * (y1 - ym))},${f(y1)}`).join(' ');
+  // Rear grooves lean back toward the bottom like the rear face (0.27" per inch of height).
+  let d = '';
+  for (let k = 0; k < P.rN; k++) d += groove(P.r0 + k * P.rStep, 0.4 * SH, P.rTop * SH, 0.97 * SH, 0.27, 0.064) + ' ';
+  // The window behind the port, its rear end round, its front open into the port.
+  const [wy0, wy1] = P.winY.map((t) => t * SH), wr = (wy1 - wy0) / 2;
+  d += `M${f(port0)},${f(wy0)} L${f(P.win0 + wr)},${f(wy0)} Q${f(P.win0)},${f(wy0)} ${f(P.win0)},${f(wy0 + wr)} Q${f(P.win0)},${f(wy1)} ${f(P.win0 + wr)},${f(wy1)} L${f(port0)},${f(wy1)} `;
+  if (z365) {
+    d += [[1.45, 1.63], [1.73, 1.94]].map(([a, b]) => polyPath(roundCorners([a, 0.23 * SH, b, 0.23 * SH, b, 0.34 * SH, a, 0.34 * SH], 0.04), same, true)).join(' ') + ' ';
+    d += [[1.37, 1.56], [1.65, 1.83]].map(([a, b]) => `M${f(a)},${f(SH - 0.01)} L${f(a)},${f(0.7 * SH + 0.06)} Q${f(a)},${f(0.7 * SH)} ${f(a + 0.06)},${f(0.7 * SH)} L${f(b - 0.06)},${f(0.7 * SH)} Q${f(b)},${f(0.7 * SH)} ${f(b)},${f(0.7 * SH + 0.06)} L${f(b)},${f(SH - 0.01)}`).join(' ') + ' ';
+  } else {
+    d += polyPath(roundCorners([SL - 1.1, 0.07 * SH, SL - 0.42, 0.07 * SH, SL - 0.42, 0.27 * SH, SL - 1.1, 0.27 * SH], 0.06), same, true) + ' ';
+  }
+  // The recessed maker's panel.
+  d += polyPath(roundCorners([P.logo0, 0.72 * SH, port1 - 0.08, 0.72 * SH, port1 - 0.08, 0.95 * SH, P.logo0, 0.95 * SH], 0.05), same, true) + ' ';
+  // Front grooves lean forward toward the top (0.67" per inch of height), under the flat band along the top.
+  d += `M${f(port1)},${f(P.band * SH)} L${f(SL - 0.03)},${f(P.band * SH)} `;
+  const ym = 0.62 * SH;
+  for (let x = port1 + P.fGap; x <= SL - 0.16 + 1e-6; x += P.fStep) d += groove(x, ym, P.band * SH, 0.98 * SH, 0.67, 0.06) + ' ';
+  return d;
 }
 
 /** A window cut through the slide wall: its rim, the wall's inner edge just inside it (the wall's thickness, so the
@@ -2729,7 +2772,7 @@ function pistol(platform: Platform, build: Build): Scene {
   const px = (x: number, y: number): [number, number] => [f(ox + x * S), f(oy + y * S)];
   const P: Piece[] = [];
 
-  const comp = matches(b.slide, /Comp|Spectre/);
+  const comp = matches(b.slide, /\bComp\b|Spectre/);
   const cut = (b.slide?.attrs.cut as string | undefined) ?? 'none';
   const lighten = matches(b.slide, /Lightening/) && b.slide?.brand !== 'ZEV';
   const frameSlot = has('frame') ? 'frame' : base ? 'pistol' : 'grip';
