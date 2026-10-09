@@ -1704,6 +1704,8 @@ interface ProfileGeo {
   slideCuts?: { erase: string; edge: string };
   /** An aftermarket slide's optic pocket, as [rear x, front x, depth]; its rear sight sits behind it. */
   pocket?: [number, number, number];
+  /** The cover plate an optic-cut slide ships with, drawn in its pocket while no optic is chosen. */
+  coverPlate?: { d: string; det: string };
   /** Floor plate measured from a photo (flush OEM magazine). */
   plateD?: string;
   /** The floor plate's top face and the gap above it, for a flush magazine in a flared mag well's cut. */
@@ -1999,13 +2001,17 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
   const inNose = (ol: number[]) => noNose && scS(ol).every((c, i) => (i % 2 ? c > mk.sh - 0.01 : true));
   let slideDetail = pr.slide.detail.filter((ol) => !inPort(ol) && !inNose(ol)).map((ol) => polyPath(glock ? scS(ol) : smoothJitter(scS(ol), 0.02, false), slideMap, false)).join(' ');
   let slideCuts: { erase: string; edge: string } | undefined, pocket: [number, number, number] | undefined;
+  let coverPlate: { d: string; det: string } | undefined;
   if (key !== 'glock' && v.slide === 'zev') {
     // ZEV's Octane slides replace the patent's slide details, and pocket the optic (RMR on the Z320, RMSc on the Z365)
-    // between the rear sight's dovetail and the port, as on the flat Z365XL and Z320 XCompact photos.
+    // between the rear sight's dovetail and the port, as on the flat Z365XL and Z320 XCompact photos: 0.62" from the
+    // slide's rear to 0.27" short of the port, 0.17" deep on the Z320 and 0.12" on the Z365. With no optic, ZEV's cover
+    // plate fills it.
     slideDetail = octaneSlide(key, SL, mk.sh, port0, port1);
-    const pk0 = 0.62, pk1 = port0 - 0.27;
-    pocket = [pk0, pk1, 0.1];
-    slideCuts = { erase: `M${pk0},-0.03 L${pk0},0.1 L${f(pk1)},0.1 L${f(pk1)},-0.03 Z`, edge: `M${pk0},0 L${pk0},0.1 L${f(pk1)},0.1 L${f(pk1)},0` };
+    const pk0 = 0.62, pk1 = port0 - 0.27, dp = key === 'p320' ? 0.17 : 0.12;
+    pocket = [pk0, pk1, dp];
+    slideCuts = { erase: `M${pk0},-0.03 L${pk0},${dp} L${f(pk1)},${dp} L${f(pk1)},-0.03 Z`, edge: `M${pk0},0 L${pk0},${dp} L${f(pk1)},${dp} L${f(pk1)},0` };
+    coverPlate = octanePlate(key, pk0, pk1, dp);
   }
   let stipple = '';
   let tang = -mk.tang;
@@ -2387,7 +2393,7 @@ function profileGeometry(key: ProfileKey, spec: PistolSpec, o: { slim: boolean; 
     frameD: (glock ? polyPath(smoothPoly(mapped), (x, y) => [x, y], true) : modOl ? polyPath(smoothPoly(modOl), same, true) : outlines.map((ol) => polyPath(ol, frameMap, true)).join(' ')) + ' ' + hole,
     frameDetail, stipple,
     slideD: face && modPh?.nose ? photoSlide(face[0], modPh.nose[0]) : pr.slide.outline.map((ol) => polyPath(noNose ? swapXY(clipFront(swapXY(scS(ol)), mk.sh)) : scS(ol), slideMap, true)).join(' ') + slideNose,
-    slideDetail, slideCuts, pocket,
+    slideDetail, slideCuts, pocket, coverPlate,
     // A photo-traced module closes its own grip bottom, so the factory mag window doesn't show.
     windowD: win && !modPh && key !== 'hellcat' ? polyPath(key === 'p365' ? roundCorners(win, 0.06) : smoothJitter(win), grip, true) : '',
     windowEdge: key !== 'p365',
@@ -2549,8 +2555,8 @@ function zevSlide(SL: number, SH: number, port0: number, port1: number) {
  *  slide's top rear corner to its face, 182 px tall) and ar15.build's flat photo of a Z320 XCompact pistol (595 px, 93 px):
  *  wide grooves at the rear leaning back with the rear face, a long round-ended window behind the port, the recessed
  *  "ZEV / Centralia, WA" panel under the port, and long grooves ahead of the port leaning forward under a flat top band.
- *  The Z365 adds two small scallops over the window and two round-topped lands under it; the Z320 adds a slot in the
- *  top of the nose. Each groove is drawn as its two walls. */
+ *  The Z365 adds two small scallops over the window and two round-topped lands under it; the Z320 adds a slot through
+ *  the top of the nose. Each groove is drawn as its two walls. */
 function octaneSlide(key: ProfileKey, SL: number, SH: number, port0: number, port1: number) {
   const same: Map2 = (x, y) => [x, y];
   const z365 = key === 'p365';
@@ -2569,7 +2575,8 @@ function octaneSlide(key: ProfileKey, SL: number, SH: number, port0: number, por
     d += [[1.45, 1.63], [1.73, 1.94]].map(([a, b]) => polyPath(roundCorners([a, 0.23 * SH, b, 0.23 * SH, b, 0.34 * SH, a, 0.34 * SH], 0.04), same, true)).join(' ') + ' ';
     d += [[1.37, 1.56], [1.65, 1.83]].map(([a, b]) => `M${f(a)},${f(SH - 0.01)} L${f(a)},${f(0.7 * SH + 0.06)} Q${f(a)},${f(0.7 * SH)} ${f(a + 0.06)},${f(0.7 * SH)} L${f(b - 0.06)},${f(0.7 * SH)} Q${f(b)},${f(0.7 * SH)} ${f(b)},${f(0.7 * SH + 0.06)} L${f(b)},${f(SH - 0.01)}`).join(' ') + ' ';
   } else {
-    d += polyPath(roundCorners([SL - 1.1, 0.07 * SH, SL - 0.42, 0.07 * SH, SL - 0.42, 0.27 * SH, SL - 1.1, 0.27 * SH], 0.06), same, true) + ' ';
+    // The nose slot ends 0.6" behind the face, just short of the front sight; it is cut through, so its far wall shows.
+    d += throughWindow(SL - 1.13, 0.05 * SH, SL - 0.6, 0.27 * SH) + ' ';
   }
   // The recessed maker's panel.
   d += polyPath(roundCorners([P.logo0, 0.72 * SH, port1 - 0.08, 0.72 * SH, port1 - 0.08, 0.95 * SH, P.logo0, 0.95 * SH], 0.05), same, true) + ' ';
@@ -2578,6 +2585,19 @@ function octaneSlide(key: ProfileKey, SL: number, SH: number, port0: number, por
   const ym = 0.62 * SH;
   for (let x = port1 + P.fGap; x <= SL - 0.16 + 1e-6; x += P.fStep) d += groove(x, ym, P.band * SH, 0.98 * SH, 0.67, 0.06) + ' ';
   return d;
+}
+
+/** ZEV's optic cover plates, side profile from the same flat photos. The Z365's sits flush with the slide top and
+ *  rises 0.025" over a hump at its middle, with a small lip at its front; the Z320's stands 0.03" proud, rises another
+ *  0.05" over the ZEV logo boss and rounds down at its front, with a chamfer line along its upper edge. */
+function octanePlate(key: ProfileKey, x0: number, x1: number, dp: number) {
+  const same: Map2 = (x, y) => [x, y];
+  if (key === 'p365')
+    return { d: polyPath([x0, dp, x0, -0.01, 0.87, -0.01, 0.93, -0.035, 1.16, -0.035, 1.4, -0.01, x1 - 0.08, -0.01, x1 - 0.06, -0.03, x1, -0.03, x1, dp], same, true), det: '' };
+  return {
+    d: polyPath(roundCorners([x0, dp, x0, -0.03, 1.18, -0.03, 1.25, -0.08, 1.52, -0.08, 1.6, -0.03, x1 - 0.1, -0.03, x1, 0.04, x1, dp], 0.04), same, true),
+    det: `M${f(x0 + 0.05)},0.03 L${f(x1 - 0.08)},0.03`,
+  };
 }
 
 /** A window cut through the slide wall: its rim, the wall's inner edge just inside it (the wall's thickness, so the
@@ -2905,6 +2925,10 @@ function pistol(platform: Platform, build: Build): Scene {
   // An optional Sights slot left empty means the slide's own factory sights, drawn with the slide.
   const sightsFactory = !base && !b.sights && platform.slots.some((s) => s.id === 'sights' && !s.required) ? 'slide' : undefined;
   P.push({ slot: sightSlot, factoryOf: sightsFactory, z: 10, row: 'top', target: px((r0 + r1) / 2, -sh), el: <><path d={T(sightsD)} /><path className="detail" d={T(sightDet)} /></> });
+
+  /* The slide's own optic cover plate, while no optic is chosen */
+  if (!b.optic && geo.coverPlate) P.push({ slot: own('slide'), z: 9, row: 'top', target: px((geo.pocket![0] + geo.pocket![1]) / 2, 0),
+    el: <><path d={T(geo.coverPlate.d)} /><path className="detail" d={T(geo.coverPlate.det)} /></> });
 
   /* Optic */
   P.push({ slot: 'optic', z: 11, row: 'top', target: px(ox0 + po.len / 2, oy0 - po.h),
