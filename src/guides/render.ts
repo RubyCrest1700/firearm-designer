@@ -259,8 +259,8 @@ export function guidePage(g: Guide, builtAt: string) {
       <div class="starters">${startersHtml(platform)}</div>
     </section>
     <section class="sources">
-      <h2>Sources</h2>
-      <ul>${g.sources.map((s) => `<li><a href="${esc(s.url)}" rel="noopener" target="_blank">${esc(s.label)}</a></li>`).join('')}</ul>
+      ${g.sources.length ? `<h2>Sources</h2>
+      <ul>${g.sources.map((s) => `<li><a href="${esc(s.url)}" rel="noopener" target="_blank">${esc(s.label)}</a></li>`).join('')}</ul>` : ''}
       <p class="muted">Updated ${shortDate(builtAt)}.</p>
     </section>
     ${relatedHtml(g)}
@@ -283,7 +283,8 @@ export function guidePage(g: Guide, builtAt: string) {
 
 function relatedHtml(g: Guide) {
   const maker = platformOf(g.platform).maker;
-  const same = (x: Guide) => Number(platformOf(x.platform).maker === maker);
+  // Same platform first, then the same maker's other platforms.
+  const same = (x: Guide) => 2 * Number(x.platform === g.platform) + Number(platformOf(x.platform).maker === maker);
   const others = GUIDES.filter((x) => x !== g).sort((x, y) => same(y) - same(x)).slice(0, 4);
   return `<section><h2>More Fit Questions</h2><ul class="guide-list">${others.map((x) => `<li><a href="/faq/${x.slug}/">${esc(x.h1)}</a></li>`).join('')}</ul></section>`;
 }
