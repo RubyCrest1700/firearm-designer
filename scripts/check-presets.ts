@@ -2,6 +2,8 @@
 import { awarenessFor } from '../src/awareness';
 import { PLATFORMS, canonicalPlatform } from '../src/data/index';
 import { baseSelection, issuesFor, ownedOf, placementOf, presetSelection, selectionTokens, toBuild, toBuyIds } from '../src/engine';
+import { GUIDES } from '../src/guides/content';
+import { FAQ_PICKS } from '../src/guides/picks';
 import { selectionFromParts } from '../src/store';
 import { buildWeight, formatWeight } from '../src/weight';
 
@@ -266,6 +268,11 @@ for (const p of PLATFORMS) {
     const sel = selectionFromParts(old, [`g${n}-frame-g5`, `g${n}-slide-mos`, 'g-mag-oem17']);
     if (canonicalPlatform(old) !== 'glock9' || sel.frame !== `g${n}-frame-g5` || sel.slide !== `g${n}-slide-mos` || sel.mag !== 'g-mag-oem17') { console.log(`old ${old} link did not open in the double-stack 9mm Glock builder`, sel); bad++; }
   }
+}
+// The home page's FAQ links keep their own copy of each guide's question.
+for (const pick of FAQ_PICKS) {
+  const g = GUIDES.find((x) => x.slug === pick.slug);
+  if (g?.h1 !== pick.h1) { console.log(`home FAQ link ${pick.slug}: ${g ? `guide question is now "${g.h1}"` : 'no such guide'} (src/guides/picks.ts)`); bad++; }
 }
 console.log(`Interface audit: ${combos} part combinations checked across ${IFACES.length} measured interfaces.`);
 process.exit(bad ? 1 : 0);

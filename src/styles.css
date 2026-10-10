@@ -36,8 +36,8 @@
   --bp-hi: #ffc35c;
   --bp-err: #ff8b7b;
 
-  --f-sans: 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --f-head: 'Archivo Narrow', 'Archivo', system-ui, sans-serif;
+  --f-sans: 'Archivo', 'Archivo Arial', 'Archivo Roboto', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --f-head: 'Archivo Narrow', 'Archivo Narrow Arial', 'Archivo Narrow Roboto', 'Archivo', system-ui, sans-serif;
   --f-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
   color-scheme: light;
@@ -72,6 +72,8 @@ a { color: var(--blue); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 .site { min-height: 100vh; display: flex; flex-direction: column; }
+/* The pre-built home page (scripts/prerender-home.tsx) stays hidden when the address opens another page. */
+.app-route .site[data-prebuilt] { display: none; }
 .site-main { flex: 1; padding-bottom: 48px; }
 .wrap { width: 100%; max-width: 1240px; margin: 0 auto; padding: 0 16px; }
 @media (min-width: 720px) { .wrap { padding: 0 28px; } }

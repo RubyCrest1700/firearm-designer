@@ -5,12 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build && npm run guides && npm run og",
+    "build": "tsc --noEmit && vite build && npm run prerender && npm run guides && npm run og",
     "check-data": "esbuild scripts/check-presets.ts --bundle --platform=node --log-level=warning --outfile=node_modules/.cache/check.cjs && node node_modules/.cache/check.cjs",
     "artifact": "vite build --mode artifact && node scripts/make-artifact.mjs",
     "test": "node --test 'scripts/*.test.mjs' worker/api.test.mjs && esbuild scripts/unit.test.ts --bundle --platform=node --log-level=warning --outfile=node_modules/.cache/unit.test.cjs && node node_modules/.cache/unit.test.cjs",
     "update-prices": "node scripts/update-prices.mjs",
     "guides": "esbuild scripts/build-guides.ts --bundle --platform=node --log-level=warning --outfile=node_modules/.cache/guides.cjs && node node_modules/.cache/guides.cjs",
+    "prerender": "esbuild scripts/prerender-home.tsx --bundle --platform=node --format=esm --packages=external --jsx=automatic --loader:.css=empty --log-level=warning --outfile=node_modules/.cache/prerender.mjs && node node_modules/.cache/prerender.mjs",
     "og": "esbuild scripts/og-cards.tsx --bundle --platform=node --format=esm --packages=external --jsx=automatic --log-level=warning --outfile=node_modules/.cache/og.mjs && node node_modules/.cache/og.mjs"
   },
   "dependencies": {

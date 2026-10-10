@@ -25,7 +25,7 @@ import { biggestDrops, daysAgo, hasHistory, partSeries, recentChange, totalSerie
 import { PriceChart } from './PriceChart';
 import { alertsAvailable, checkAlertSignup, loadAlertSignup, signUpForAlerts, stopAlerts, storeAlertSignup, syncAlertBuilds, type AlertSignup } from './alerts';
 import { MOVABLE, SIDE_LABEL, mountsFor, railLength, type Resolved } from './data/addons';
-import { GUIDES } from './guides/content';
+import { FAQ_PICKS } from './guides/picks';
 import { isPlural, titleCase, withArticle } from './text';
 import type { Build, Issue, Part, Placement, Platform, PlatformModel, Severity, Side, Slot, Tier } from './types';
 
@@ -406,14 +406,11 @@ function Mark() {
 
 /* ===================================================================== home */
 
-const FAQ_PICKS = ['glock-19-slide-compatibility', 'glock-red-dot-footprints', 'sig-p365-slide-grip-compatibility', 'ar-15-barrel-compatibility'];
-
 function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string, part?: Part) => void; onStart: () => void; onBrowse: () => void }) {
   // Shared add-ons (lights, cases) are listed under several platforms; count each once.
   const partCount = new Set(PLATFORMS.flatMap((p) => p.parts.map((x) => x.id))).size;
   const drops = biggestDrops(PLATFORMS.flatMap((p) => p.parts));
   const hero = buildOf('ar15', baseSelection(PLATFORMS.find((p) => p.id === 'ar15')!));
-  const faqs = FAQ_PICKS.map((slug) => GUIDES.find((g) => g.slug === slug)).filter((g): g is (typeof GUIDES)[number] => !!g);
   return (
     <div className="home">
       <section className="hero">
@@ -505,7 +502,7 @@ function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string, part?: P
           <div className="card home-panel">
             <h2 className="home-h2">Common Questions</h2>
             <ul className="faq-links">
-              {faqs.map((g) => <li key={g.slug}><a href={`./faq/${g.slug}/`}>{g.h1}</a></li>)}
+              {FAQ_PICKS.map((g) => <li key={g.slug}><a href={`./faq/${g.slug}/`}>{g.h1}</a></li>)}
             </ul>
             <a className="link" href="./faq/">See All Questions</a>
           </div>
