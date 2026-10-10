@@ -1,5 +1,5 @@
 // Community builds API. Runs as a Cloudflare Worker with a D1 database bound as `DB`.
-// Everything is anonymous: visitors are identified only by a salted hash of their IP address,
+// Everything is anonymous: visitors are identified only by a salted hash of their IP address (IPv6: its /64),
 // which limits each person to one vote, one report and one counted buy click per build.
 // Share links with picture cards (/c/<id> and /b/<code>) are answered by share.js.
 
@@ -66,19 +66,36 @@ export function cleanText(s, max) {
 
 async function visitorHash(request, salt) {
   const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
-  const bytes = new TextEncoder().encode(`${salt}:${ip}`);
+  const bytes = new TextEncoder().encode(`${salt}:${visitorOf(ip)}`);
   const digest = await crypto.subtle.digest('SHA-256', bytes);
   return [...new Uint8Array(digest)].slice(0, 12).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-/** The visitor's network: the first three parts of an IPv4 address, or the first 48 bits of an IPv6 one. */
-export function networkOf(ip) {
-  if (ip.includes('.')) return ip.split('.').slice(0, 3).join('.');
+/** An IPv4 address (IPv4-mapped IPv6 included) as plain IPv4, or an IPv6 address as its eight groups. */
+function parseIp(ip) {
+  const v4 = ip.match(/^(?:::ffff:)?(\d+\.\d+\.\d+\.\d+)$/i);
+  if (v4) return { v4: v4[1] };
   const [head, tail = ''] = ip.split('::');
   const h = head ? head.split(':') : [];
   const t = tail ? tail.split(':') : [];
   const groups = [...h, ...Array(Math.max(8 - h.length - t.length, 0)).fill('0'), ...t];
-  return groups.slice(0, 3).map((g) => g.toLowerCase().replace(/^0+(?=.)/, '')).join(':');
+  return { groups: groups.map((g) => g.toLowerCase().replace(/^0+(?=.)/, '')) };
+}
+
+/**
+ * Who counts as one visitor: a full IPv4 address, or an IPv6 /64 network (the first four groups). One home or
+ * phone gets a whole /64 and can switch addresses inside it freely.
+ */
+export function visitorOf(ip) {
+  const { v4, groups } = parseIp(ip);
+  return v4 ?? `${groups.slice(0, 4).join(':')}::/64`;
+}
+
+/** The visitor's network: the first three parts of an IPv4 address, or the first 48 bits of an IPv6 one. */
+export function networkOf(ip) {
+  const { v4, groups } = parseIp(ip);
+  if (v4) return v4.split('.').slice(0, 3).join('.');
+  return groups.slice(0, 3).join(':');
 }
 
 async function networkHash(request, salt) {

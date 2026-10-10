@@ -18,12 +18,42 @@ export interface SavedBuild {
 
 const SAVED_KEY = 'firearm-designer:saved:v1';
 
+const isText = (v: unknown): v is string => typeof v === 'string';
+const isRecord = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
+
+/** The stored entries as they are, or null when there's nothing stored or it can't be read at all. */
+function readStored(): unknown[] | null {
+  const raw = localStorage.getItem(SAVED_KEY);
+  if (!raw) return [];
+  try {
+    const list = JSON.parse(raw);
+    return Array.isArray(list) ? list : null;
+  } catch {
+    return null;
+  }
+}
+
+/** One stored entry as a saved build to show, or null when it's damaged or for a shelved platform. */
+function savedEntry(e: unknown): SavedBuild | null {
+  try {
+    if (!isRecord(e) || !isText(e.id) || !isText(e.name) || !isText(e.platform) || !isText(e.savedAt)) return null;
+    const { selection, prices } = e;
+    if (!isRecord(selection) || !Object.values(selection).every(isText)) return null;
+    if (prices !== undefined && (!isRecord(prices) || !Object.values(prices).every((v) => typeof v === 'number'))) return null;
+    const platform = canonicalPlatform(e.platform);
+    if (!PLATFORMS.some((p) => p.id === platform)) return null;
+    // Builds saved before price tracking start from today's prices.
+    const sel = selection as Selection;
+    return { ...(e as unknown as SavedBuild), platform, selection: sel, prices: priceSnapshot(platform, sel, prices as Record<string, number> | undefined) };
+  } catch {
+    return null;
+  }
+}
+
+/** Saved builds to show. A damaged entry is skipped on its own, so it can't hide the others. */
 export function loadSavedBuilds(): SavedBuild[] {
   try {
-    const raw = localStorage.getItem(SAVED_KEY);
-    const list = (raw ? (JSON.parse(raw) as SavedBuild[]) : []).map((s) => ({ ...s, platform: canonicalPlatform(s.platform) }));
-    // Builds saved before price tracking start from today's prices.
-    return list.filter((s) => PLATFORMS.some((p) => p.id === s.platform)).map((s) => ({ ...s, prices: priceSnapshot(s.platform, s.selection, s.prices) }));
+    return (readStored() ?? []).map(savedEntry).filter((s): s is SavedBuild => !!s);
   } catch {
     return [];
   }
@@ -31,10 +61,16 @@ export function loadSavedBuilds(): SavedBuild[] {
 
 export function storeSavedBuilds(list: SavedBuild[]) {
   try {
-    // Builds for a shelved platform aren't shown, but they stay stored so they come back if the platform does.
-    const raw = localStorage.getItem(SAVED_KEY);
-    const shelved = (raw ? (JSON.parse(raw) as SavedBuild[]) : []).filter((s) => !PLATFORMS.some((p) => p.id === canonicalPlatform(s.platform)));
-    localStorage.setItem(SAVED_KEY, JSON.stringify([...list, ...shelved]));
+    // Entries that aren't shown (a shelved platform's builds, or one that can't be read) stay stored as they
+    // are, so a platform that comes back brings its builds and a save never wipes what it couldn't read.
+    const stored = readStored();
+    if (!stored) {
+      // Not a list at all: keep a copy aside before starting a new list.
+      const backup = SAVED_KEY + ':unreadable';
+      if (!localStorage.getItem(backup)) localStorage.setItem(backup, localStorage.getItem(SAVED_KEY) ?? '');
+    }
+    const kept = (stored ?? []).filter((e) => !savedEntry(e));
+    localStorage.setItem(SAVED_KEY, JSON.stringify([...list, ...kept]));
   } catch {
     /* storage unavailable: saved builds last for this visit only */
   }
