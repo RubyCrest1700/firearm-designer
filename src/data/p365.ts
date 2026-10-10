@@ -101,7 +101,7 @@ function rules(b: Build): Issue[] {
     out.push({ severity: 'error', slots: ['slide', 'barrel'], message: `This slide takes a ${BARREL_LABEL[slide.attrs.barrelLen as string]} barrel; this one is ${BARREL_LABEL[barrel.attrs.len as string]}.` });
   if (slide && spring && spring.attrs.len !== slide.attrs.springLen)
     out.push({ severity: 'error', slots: ['slide', 'spring'], message: `This slide takes the ${SPRING_LABEL[slide.attrs.springLen as string]} recoil spring assembly.` });
-  out.push(...sightHeightIssues(b.sights, optic, !!barrel?.attrs.threaded && { slot: 'barrel' }));
+  out.push(...sightHeightIssues(b.sights, optic, !!barrel?.attrs.threaded && { slot: 'barrel' }, !!slide?.attrs.stripped));
   if (barrel?.attrs.threaded && slide?.attrs.comp)
     out.push({ severity: 'error', slots: ['slide', 'barrel'], message: 'The Spectre Comp slide has a built-in compensator. A threaded barrel won\'t clear it.' });
   if (slide?.attrs.cut === 'rmsc' && optic?.attrs.footprint === 'k')
