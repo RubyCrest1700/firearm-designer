@@ -203,7 +203,7 @@ export const glockLarge: Platform = {
   base: ['gl-frame-g4', 'gl-fcg-oem', 'gl-slide-20g4', 'gl-spk-oem', 'gl-bbl-20oem', 'gl-rsa-g4', 'gl-sight-oem', 'gl-mag-20'],
   presets: {
     budget: ['gl-frame-lw', 'gl-fcg-oem', 'gl-slide-20g3', 'gl-spk-lw', 'gl-bbl-20lwd', 'gl-rsa-g3', 'gl-sight-oem', 'gl-mag-20ets'],
-    value: ['gl-frame-sf', 'gl-fcg-ow', 'gl-slide-20brn', 'gl-spk-oem', 'gl-bbl-20lw', 'gl-rsa-ismi', 'gl-sight-bt', 'gl-opt-507c', 'gl-mag-20'],
-    premium: ['gl-frame-g4', 'gl-fcg-ow', 'gl-slide-20mos', 'gl-spk-oem', 'gl-bbl-20lwt', 'gl-rsa-g4', 'gl-sight-bt', 'gl-opt-rmr', 'gl-mz-tp916', 'gl-mag-20'],
+    value: ['gl-frame-sf', 'gl-fcg-ow', 'gl-slide-20zp', 'gl-spk-oem', 'gl-bbl-20lw', 'gl-rsa-g3', 'gl-sight-bt', 'gl-opt-507c', 'gl-mag-20'],
+    premium: ['gl-frame-g3', 'gl-fcg-ow', 'gl-slide-20zp', 'gl-spk-oem', 'gl-bbl-20lwt', 'gl-rsa-g3', 'gl-sight-bt', 'gl-opt-rmr', 'gl-mz-tp916', 'gl-mag-20'],
   },
 };

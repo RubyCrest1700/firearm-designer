@@ -321,8 +321,8 @@ export const ar15: Platform = {
   // Plain: the budget parts with no sights or optic (a flat-top upper has none of its own).
   base: ['ar-lower-anderson', 'ar-lpk-psa', 'ar-trig-psa', 'ar-buf-psa', 'ar-stock-psa', 'ar-grip-moe', 'ar-upper-psa', 'ar-bbl-psa16', 'ar-gb-aero750', 'ar-gt-carbine', 'ar-hg-psa', 'ar-bcg-psa', 'ar-ch-aero', 'ar-mz-a2'],
   presets: {
-    budget: ['ar-lower-anderson', 'ar-lpk-psa', 'ar-trig-psa', 'ar-buf-psa', 'ar-stock-psa', 'ar-grip-moe', 'ar-upper-psa', 'ar-bbl-psa16', 'ar-gb-aero750', 'ar-gt-carbine', 'ar-hg-psa', 'ar-bcg-psa', 'ar-ch-aero', 'ar-mz-a2', 'ar-irons-mbus'],
-    value: ['ar-lower-aero', 'ar-lpk-aero', 'ar-trig-alg', 'ar-buf-aero', 'ar-stock-moesl', 'ar-grip-bcm', 'ar-upper-aero', 'ar-bbl-ba16', 'ar-gb-aero750', 'ar-gt-mid', 'ar-hg-mi', 'ar-bcg-toolcraft', 'ar-ch-bcm', 'ar-mz-a2', 'ar-opt-vortex'],
-    premium: ['ar-lower-seekins', 'ar-lpk-aero', 'ar-trig-geissele', 'ar-buf-vltor', 'ar-stock-bcm', 'ar-grip-k2', 'ar-upper-bcm', 'ar-bbl-bcm', 'ar-gb-sa750', 'ar-gt-mid', 'ar-hg-bcm', 'ar-bcg-bcm', 'ar-ch-radian', 'ar-mz-warcomp', 'ar-opt-aimpoint'],
+    budget: ['ar-lower-anderson', 'ar-lpk-cmmg', 'ar-trig-alg', 'ar-buf-vltor', 'ar-stock-b5', 'ar-grip-moe', 'ar-upper-anderson', 'ar-bbl-psa16', 'ar-gb-aero750', 'ar-gt-carbine', 'ar-hg-mi9', 'ar-bcg-aero', 'ar-ch-aero', 'ar-mz-a2', 'ar-irons-mbus'],
+    value: ['ar-lower-aero', 'ar-lpk-aero', 'ar-trig-alg', 'ar-buf-vltor', 'ar-stock-moesl', 'ar-grip-bcm', 'ar-upper-aero', 'ar-bbl-ba16', 'ar-gb-aero750', 'ar-gt-mid', 'ar-hg-mi', 'ar-bcg-aero', 'ar-ch-geissele', 'ar-mz-a2', 'ar-opt-slx16'],
+    premium: ['ar-lower-seekins', 'ar-lpk-aero', 'ar-trig-geissele', 'ar-buf-vltor', 'ar-stock-bcm', 'ar-grip-k2', 'ar-upper-aero', 'ar-bbl-bcm', 'ar-gb-sa750', 'ar-gt-mid', 'ar-hg-bcm', 'ar-bcg-aero', 'ar-ch-radian', 'ar-mz-sf3p', 'ar-opt-aimpoint'],
   },
 };
