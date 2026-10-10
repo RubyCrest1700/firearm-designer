@@ -388,24 +388,24 @@ const MODEL_BASE: Record<Named, string[]> = {
  */
 const MODEL_PRESETS: Record<Named, Record<Tier, string[]>> = {
   G17: {
-    budget: P('17', ['g#-frame-g3', 'g-fcg-oem34', 'g#-slide-g3', 'g-spk-lw', 'g#-bbl-oem34', 'g#-rsa-g3', 'g-sight-oem', 'g-mag-pmag17']),
-    value: P('17', ['g#-frame-lw', 'g-fcg-zev', 'g#-slide-brn', 'g-spk-oem34', 'g#-bbl-faxon', 'g#-rsa-ismi', 'g-sight-ameriglo', 'g-opt-507c', 'g-mag-oem17']),
+    budget: P('17', ['g#-frame-g3', 'g-fcg-oem34', 'g#-slide-g3', 'g-spk-lw', 'g#-bbl-faxon', 'g#-rsa-g3', 'g-sight-oem', 'g-mag-pmag17']),
+    value: P('17', ['g#-frame-lw', 'g-fcg-apex34', 'g#-slide-brn', 'g-spk-oem34', 'g#-bbl-faxon', 'g#-rsa-g3', 'g-sight-ameriglo', 'g-opt-507c', 'g-mag-oem17']),
     premium: P('17', ['g#-frame-g5', 'g-fcg-apex5', 'g#-slide-mos', 'g-spk-oem5', 'g#-bbl-oem5', 'g#-rsa-g45', 'g-sight-nf', 'g-opt-rmr', 'g-plate-rmr', 'g-mag-oem17']),
   },
   G19: {
     budget: P('19', ['g#-frame-g3', 'g-fcg-oem34', 'g#-slide-g3', 'g-spk-lw', 'g#-bbl-oem34', 'g#-rsa-g3', 'g-sight-oem', 'g-mag-pmag15']),
-    value: P('19', ['g#-frame-lw', 'g-fcg-zev', 'g#-slide-brn', 'g-spk-oem34', 'g#-bbl-faxon', 'g#-rsa-ismi', 'g-sight-ameriglo', 'g-opt-507c', 'g-mag-oem15']),
+    value: P('19', ['g#-frame-lw', 'g-fcg-apex34', 'g#-slide-brn', 'g-spk-oem34', 'g#-bbl-faxon', 'g#-rsa-g3', 'g-sight-ameriglo', 'g-opt-507c', 'g-mag-oem15']),
     premium: P('19', ['g#-frame-g5', 'g-fcg-apex5', 'g#-slide-mos', 'g-spk-oem5', 'g#-bbl-oem5', 'g#-rsa-g45', 'g-sight-nf', 'g-opt-rmr', 'g-plate-rmr', 'g-mag-oem15']),
   },
   G26: {
     budget: P('26', ['g#-frame-g3', 'g-fcg-oem34', 'g#-slide-g3', 'g-spk-lw', 'g#-bbl-oem34', 'g#-rsa-g45', 'g-sight-oem', 'g-mag-oem10']),
-    value: P('26', ['g#-frame-g4', 'g-fcg-zev', 'g#-slide-brn', 'g-spk-oem34', 'g#-bbl-oem34', 'g#-rsa-g45', 'g-sight-ameriglo', 'g-opt-507c', 'g-mag-pmag12']),
+    value: P('26', ['g#-frame-g4', 'g-fcg-apex34', 'g#-slide-brn', 'g-spk-oem34', 'g#-bbl-oem34', 'g#-rsa-g45', 'g-sight-ameriglo', 'g-opt-507c', 'g-mag-pmag12']),
     premium: P('26', ['g#-frame-g5', 'g-fcg-apex5', 'g#-slide-mos', 'g-spk-oem5', 'g#-bbl-oem5', 'g#-rsa-g45', 'g-sight-nf', 'g-opt-rmr', 'g-plate-rmr', 'g-mag-oem10']),
   },
   // The G34 is a G17 frame with a long slide and the G17's recoil spring.
   G34: {
-    budget: ['g17-frame-g3', 'g-fcg-oem34', 'g34-slide-g3', 'g-spk-lw', 'g34-bbl-oem34', 'g17-rsa-g3', 'g-sight-oem', 'g-mag-pmag17'],
-    value: ['g17-frame-lw', 'g-fcg-zev', 'g34-slide-brn', 'g-spk-oem34', 'g34-bbl-faxon', 'g17-rsa-ismi', 'g-sight-ameriglo', 'g-opt-507c', 'g-mag-oem17'],
+    budget: ['g17-frame-g3', 'g-fcg-oem34', 'g34-slide-g3', 'g-spk-lw', 'g34-bbl-faxon', 'g17-rsa-g3', 'g-sight-oem', 'g-mag-pmag17'],
+    value: ['g17-frame-lw', 'g-fcg-apex34', 'g34-slide-brn', 'g-spk-oem34', 'g34-bbl-faxon', 'g17-rsa-g3', 'g-sight-ameriglo', 'g-opt-507c', 'g-mag-oem17'],
     premium: ['g17-frame-g5', 'g-fcg-apex5', 'g34-slide-mos', 'g-spk-oem5', 'g34-bbl-oem5', 'g17-rsa-g45', 'g-sight-nf', 'g-opt-rmr', 'g-plate-rmr', 'g-mag-oem17'],
   },
   // The G45 frame is Gen5 only, so its builds differ in trigger, sights, optic and magazine.

@@ -186,7 +186,7 @@ export const p320: Platform = {
   rules,
   presets: {
     budget: ['p-fcu-std', 'p-grip-compact', 'p-slide-compact', 'p-bbl-c9', 'p-spr-c', 'p-mag-sig15'],
-    value: ['p-fcu-std', 'p-grip-xcarry', 'p-slide-m18', 'p-bbl-faxonc', 'p-spr-c', 'p-opt-r1p', 'p-mag-sig17'],
+    value: ['p-fcu-std', 'p-grip-xcarry', 'p-slide-compor', 'p-bbl-faxonc', 'p-spr-c', 'p-sight-si', 'p-opt-r1p', 'p-mag-sig17'],
     premium: ['p-fcu-x', 'p-grip-xfull', 'p-slide-xfull', 'p-bbl-f9', 'p-spr-f', 'p-opt-romeox', 'p-mag-sig17'],
   },
 };

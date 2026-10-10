@@ -157,6 +157,6 @@ export const hellcat: Platform = {
   presets: {
     budget: ['hc-3', 'hc-mag-11'],
     value: ['hc-pro', 'hc-trig-apex', 'hc-sight-ag', 'hc-opt-rmsc', 'hc-mag-p15'],
-    premium: ['hc-procomp', 'hc-trig-apex', 'hc-sight-nf', 'hc-opt-rmsc', 'hc-mag-p15'],
+    premium: ['hc-procomp', 'hc-trig-apex', 'hc-sight-ag', 'hc-opt-rmsc', 'hc-mag-p15'],
   },
 };
