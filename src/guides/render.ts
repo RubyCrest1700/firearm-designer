@@ -10,6 +10,7 @@ import type { Part, Platform, Severity, Tier } from '../types';
 import { GUIDES, type AcrossChart, type FitChart, type Guide, type PairChart } from './content';
 import { titleCase } from '../text';
 import { COMMUNITY_API, CONTENT_SECURITY_POLICY } from '../config';
+import { fontTags } from '../fonts';
 
 export const SITE = 'https://dropinbuilds.com';
 const ANALYTICS_TOKEN = '00e0977ba6ee49a7b9a386502da1ef3f';
@@ -209,9 +210,7 @@ function layout(o: { title: string; description: string; path: string; body: str
 <meta property="og:title" content="${esc(o.title)}" />
 <meta property="og:description" content="${esc(o.description)}" />
 <meta property="og:url" content="${SITE}${o.path}" />
-${o.image ? `<meta property="og:image" content="${SITE}${o.image}" />\n<meta property="og:image:width" content="1200" />\n<meta property="og:image:height" content="630" />\n<meta name="twitter:card" content="summary_large_image" />\n` : ''}<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Narrow:wght@500;600;700&display=swap" />
+${o.image ? `<meta property="og:image" content="${SITE}${o.image}" />\n<meta property="og:image:width" content="1200" />\n<meta property="og:image:height" content="630" />\n<meta name="twitter:card" content="summary_large_image" />\n` : ''}${fontTags()}
 <style>${CSS}</style>
 ${o.jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).replace(/</g, '\\u003c')}</script>`).join('\n')}
 </head>
@@ -559,7 +558,7 @@ const MARK = `<svg class="mark" viewBox="0 0 48 48" aria-hidden="true"><path d="
 const CSS = `
 :root{--bg:#f2f3f0;--surface:#fff;--surface-2:#f7f8f6;--ink:#17212b;--muted:#56616b;--line:#dde2e0;--navy:#0e2a47;--on-navy:#e8eef5;--on-navy-muted:#a9b8c8;--blue:#1e5a91;--cta:#d4691e;--cta-ink:#fff;
 --ok:#2e7d4f;--ok-soft:#e4f2e9;--warn:#a8670a;--warn-soft:#fbefd9;--note:#1d5fa8;--note-soft:#e3eefb;--err:#b8382c;--err-soft:#fbe6e3;--shadow:0 1px 2px rgba(16,30,45,.06),0 4px 14px rgba(16,30,45,.06);
---f-sans:'Archivo',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--f-head:'Archivo Narrow','Archivo',system-ui,sans-serif;color-scheme:light}
+--f-sans:'Archivo','Archivo Arial','Archivo Roboto',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--f-head:'Archivo Narrow','Archivo Narrow Arial','Archivo Narrow Roboto','Archivo',system-ui,sans-serif;color-scheme:light}
 @media (prefers-color-scheme:dark){:root{--bg:#0e1318;--surface:#151c23;--surface-2:#1a232c;--ink:#e6ebef;--muted:#a3aeb8;--line:#2a3540;--navy:#0a1f36;--blue:#6aa6dd;--cta:#ec8a45;--cta-ink:#1a0f06;
 --ok:#5fc58a;--ok-soft:rgba(95,197,138,.12);--warn:#e7b04f;--warn-soft:rgba(231,176,79,.13);--note:#79aef0;--note-soft:rgba(121,174,240,.14);--err:#f07a6c;--err-soft:rgba(240,122,108,.13);--shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.25);color-scheme:dark}}
 *{box-sizing:border-box}
