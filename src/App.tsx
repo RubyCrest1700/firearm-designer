@@ -89,6 +89,9 @@ export default function App() {
   /** The two builds on the Compare page, kept for this tab like the build in progress. */
   const [compare, setCompare] = useState<(CompareItem | null)[]>(loadCompare);
   useEffect(() => { storeCompare(compare); }, [compare]);
+  /** Builders opened in this tab. Compare offers the build in progress only from one of these. */
+  const [opened, setOpened] = useState(() => new Set(Object.keys(selections)));
+  useEffect(() => { if (route === 'build' && !opened.has(platformId)) setOpened(new Set(opened).add(platformId)); }, [route, platformId, opened]);
 
   useEffect(() => { void checkShareLinks(); }, []);
   useEffect(() => {
@@ -280,7 +283,8 @@ export default function App() {
             items={compare}
             onSet={(i, item) => setCompare((list) => list.map((x, k) => (k === i ? item : x)))}
             saved={saved}
-            current={partIds(selOf(platformId)).length || ownsAny(selOf(platformId)) ? { platform: platformId, selection: selOf(platformId), name: openSaved?.name } : null}
+            current={opened.has(platformId) && (partIds(selOf(platformId)).length || ownsAny(selOf(platformId))) ? { platform: platformId, selection: selOf(platformId), name: openSaved?.name } : null}
+            lastPlatform={platformId}
             onOpen={(item) => openInBuilder(item.platform, item.selection)}
           />
         )}
@@ -310,23 +314,50 @@ export default function App() {
 /** One "Change platform" button next to the builder's title; its panel lists rifles and pistols side by side, grouped by maker. */
 function PlatformMenu({ current, onPick }: { current: Platform; onPick: (id: string) => void }) {
   const [open, setOpen] = useState(false);
+  /** Which item to focus once the menu opens: the current platform, or the first or last item. */
+  const [focusOn, setFocusOn] = useState<'current' | 'first' | 'last' | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const items = () => [...(ref.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? [])];
+  useEffect(() => {
+    if (!open || !focusOn) return;
+    const list = items();
+    (focusOn === 'last' ? list[list.length - 1] : focusOn === 'current' ? list.find((x) => x.classList.contains('active')) ?? list[0] : list[0])?.focus();
+    setFocusOn(null);
+  }, [open, focusOn]);
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (ref.current?.contains(document.activeElement)) btnRef.current?.focus();
+      setOpen(false);
+    };
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
     return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
   }, [open]);
   return (
     <div className="pmenu" ref={ref}>
-      <button className="pmenu-btn" aria-expanded={open} aria-haspopup="true" onClick={() => setOpen(!open)}>
+      <button ref={btnRef} className="pmenu-btn" aria-expanded={open} aria-haspopup="true" onClick={() => setOpen(!open)}
+        onKeyDown={(e) => {
+          if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+          e.preventDefault();
+          setOpen(true);
+          setFocusOn(e.key === 'ArrowUp' ? 'last' : 'current');
+        }}>
         Change Platform
         <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" /></svg>
       </button>
       {open && (
-        <div className="pmenu-panel" role="menu">
+        <div className="pmenu-panel" role="menu" aria-label="Platforms" onKeyDown={(e) => {
+          const list = items();
+          const at = list.indexOf(document.activeElement as HTMLButtonElement);
+          const next = { ArrowDown: at + 1, ArrowUp: at < 0 ? -1 : at - 1, Home: 0, End: list.length - 1 }[e.key];
+          if (next === undefined) return;
+          e.preventDefault();
+          list[(next + list.length) % list.length]?.focus();
+        }}>
           {FAMILIES.map((fam) => {
             const list = PLATFORMS.filter((p) => p.family === fam);
             return (
@@ -1251,6 +1282,8 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onCompare, o
   const [builds, setBuilds] = useState<CommunityBuild[] | null>(null);
   const [featured, setFeatured] = useState<CommunityBuild[]>([]);
   const [error, setError] = useState<string | null>(null);
+  /** Bumped by Try Again to load the list again. */
+  const [attempt, setAttempt] = useState(0);
   const [votes, setVotes] = useState(myVotes);
   const [confirmReport, setConfirmReport] = useState<string | null>(null);
   const isPlatform = PLATFORMS.some((p) => p.id === filter);
@@ -1267,7 +1300,7 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onCompare, o
       .then((list) => { if (live) setBuilds(list.filter((b) => matches(b.platform))); })
       .catch((e: Error) => { if (live) { setBuilds([]); setError(e.message); } });
     return () => { live = false; };
-  }, [filter, sort]);
+  }, [filter, sort, attempt]);
   useEffect(() => { featuredBuilds().then(setFeatured).catch(() => setFeatured([])); }, []);
 
   const replace = (b: CommunityBuild | undefined) => {
@@ -1364,8 +1397,12 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onCompare, o
             <button key={k} className={'chip' + (filter === k ? ' on' : '')} aria-pressed={filter === k} onClick={() => setFilter(k)}>{label}</button>
           ))}
         </div>
-        {error && <p className="form-error" role="alert">{error}</p>}
-        {builds === null ? <p className="dim">Loading shared builds…</p> : builds.length === 0 ? (
+        {error ? (
+          <div className="load-error">
+            <p className="form-error" role="alert">{error}</p>
+            <button className="btn" onClick={() => { setBuilds(null); setAttempt(attempt + 1); }}>Try Again</button>
+          </div>
+        ) : builds === null ? <p className="dim">Loading shared builds…</p> : builds.length === 0 ? (
           <div className="empty-state card">
             <h2>No Shared Builds Here Yet</h2>
             <p>Be the first. Put together a complete build, then press Share to Community.</p>
@@ -1429,7 +1466,12 @@ function AlertsPanel({ signup, hasBuilds, onSignUp, onRefresh, onStop }: {
           ? <>We'll email <b>{signup.email}</b> when parts in your saved builds go up or down in price, at most once a day. Builds you save here are added automatically.</>
           : <>We sent a link to <b>{signup.email}</b>. Press it to turn on price alerts.</>}</p>
       </div>
-      <button className="btn ghost" disabled={busy} onClick={async () => { setBusy(true); await onStop(); setBusy(false); }}>{signup.confirmed ? 'Turn Off' : 'Cancel'}</button>
+      <button className="btn ghost" disabled={busy} onClick={async () => {
+        setBusy(true); setError(null);
+        try { await onStop(); } catch (err) { setError((err as Error).message); }
+        setBusy(false);
+      }}>{signup.confirmed ? 'Turn Off' : 'Cancel'}</button>
+      {error && <p className="form-error" role="alert">{error}</p>}
     </section>
   );
   return (
