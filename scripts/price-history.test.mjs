@@ -19,6 +19,14 @@ test('adds a point only when the price changes, and replaces a same-day rerun', 
   assert.deepEqual(h.parts.a, [['2026-10-04', 120], ['2026-10-06', 95]]);
 });
 
+test('counts a price kept from an earlier night, so a failed read of the cheapest store is not a rise', () => {
+  const kept = { price: 559.99, inStock: true, url: 'x', checkedAt: '2026-10-04T08:30:00.000Z' };
+  let h = recordHistory(null, { a: { AERO: { ...kept }, BCM: offer(589.99) } }, at('2026-10-04'));
+  h = recordHistory(h, { a: { AERO: kept, BCM: offer(589.99) } }, at('2026-10-05'));
+  h = recordHistory(h, { a: { AERO: offer(559.99), BCM: offer(589.99) } }, at('2026-10-06'));
+  assert.deepEqual(h.parts.a, [['2026-10-04', 559.99]]);
+});
+
 test('keeps parts missing from tonight and trims old points but keeps the one in effect', () => {
   let h = { parts: { a: [['2026-01-01', 150], ['2026-02-01', 140], ['2026-09-01', 130]], b: [['2026-09-01', 10]] } };
   h = recordHistory(h, { a: { AERO: offer(125) } }, at('2026-10-04'));

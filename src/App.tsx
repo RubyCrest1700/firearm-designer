@@ -233,6 +233,7 @@ export default function App() {
             setPlatformId={(id) => { setPlatformId(id); setOpenSavedId(null); setCommunityOpen(null); }}
             selection={selOf(platformId)}
             setSelection={(sel) => { setSelections((s) => ({ ...s, [platformId]: sel })); setCommunityOpen(null); }}
+            startOver={(sel) => { setSelections((s) => ({ ...s, [platformId]: sel })); setOpenSavedId(null); setCommunityOpen(null); }}
             openSaved={openSaved}
             communityOpen={communityOpen?.platform === platformId ? communityOpen : null}
             onSave={saveBuild}
@@ -482,8 +483,10 @@ function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string, part?: P
 
 /* ================================================================== builder */
 
-function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelection, openSaved, communityOpen, onSave, onShare, onCopyLink, onBuyClick, onBrowseFeatured, onCompare }: {
+function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelection, startOver, openSaved, communityOpen, onSave, onShare, onCopyLink, onBuyClick, onBrowseFeatured, onCompare }: {
   platformId: string; startPart: Part | null; setPlatformId: (id: string) => void; selection: Selection; setSelection: (s: Selection) => void;
+  /** Replaces the whole build, leaving the saved or community build it came from: the next save is a new build. */
+  startOver: (s: Selection) => void;
   openSaved: SavedBuild | null; communityOpen: CommunityBuild | null; onSave: (name: string, asNew: boolean) => void;
   onShare: (name: string, note: string) => Promise<void>; onCopyLink: () => void; onBuyClick: () => void; onBrowseFeatured: () => void;
   onCompare: () => void;
@@ -559,7 +562,7 @@ function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelec
               <span className="tb-label">Model</span>
               {platform.models.map((m) => (
                 <button key={m.id} className={'chip' + (made?.id === m.id ? ' on' : '')} aria-pressed={made?.id === m.id} title={`${m.name}: ${m.blurb}`}
-                  onClick={() => { setModelPick({ ...modelPick, [platform.id]: m.id }); setSelection(baseSelection({ ...platform, presets: m.presets, base: m.base })); setOpenSlot(null); }}>
+                  onClick={() => { setModelPick({ ...modelPick, [platform.id]: m.id }); startOver(baseSelection({ ...platform, presets: m.presets, base: m.base })); setOpenSlot(null); }}>
                   {m.short}
                 </button>
               ))}
@@ -572,14 +575,14 @@ function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelec
           <div className="wb-center">
             <div className="bp-toolbar" role="toolbar" aria-label="Build actions">
               <span className="tb-label">{chosen === 0 ? 'Start From' : 'Start Over From'}</span>
-              <button className="chip" title={baseNote} onClick={() => { setSelection(baseSelection(starter)); setOpenSlot(null); }}>
+              <button className="chip" title={baseNote} onClick={() => { startOver(baseSelection(starter)); setOpenSlot(null); }}>
                 Base{model ? ` ${model.short}` : ''} <span className="chip-amt">{money(totalOf(platform, toBuild(platform, baseSelection(starter))))}</span>
               </button>
               {(['budget', 'value', 'premium'] as Tier[]).map((t) => {
                 const sel = presetSelection(starter, t);
                 const optic = opticTag(platform.parts.find((p) => p.id === sel.optic));
                 return (
-                  <button key={t} className="chip" onClick={() => { setSelection(sel); setOpenSlot(null); }}>
+                  <button key={t} className="chip" onClick={() => { startOver(sel); setOpenSlot(null); }}>
                     {TIER_LABEL[t]}{model ? ` ${model.short}` : ''} <span className="chip-amt">{money(totalOf(platform, toBuild(platform, sel)))}</span>
                     {optic && <> <span className="chip-tag">{optic}</span></>}
                   </button>
@@ -587,7 +590,7 @@ function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelec
               })}
               <button className="chip" onClick={onBrowseFeatured}>Community Builds</button>
               <button className="chip chip-own" onClick={() => setFinding(true)}>Parts I Own</button>
-              {chosen > 0 && <button className="chip chip-clear" onClick={() => { setSelection({}); setOpenSlot(null); }}>Clear Build</button>}
+              {chosen > 0 && <button className="chip chip-clear" onClick={() => { startOver({}); setOpenSlot(null); }}>Clear Build</button>}
               <p className="tb-note">{baseNote} Budget, Best Value and Premium are builds from our parts list.</p>
             </div>
             <figure className="blueprint">
