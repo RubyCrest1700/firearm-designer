@@ -94,7 +94,7 @@ function listHtml(rows: { part: Part; groups: Group[] }[]) {
   return rows
     .map(({ part, groups }) => `
       <div class="fit-row">
-        <h4>${esc(label(part))}</h4>
+        <h3>${esc(label(part))}</h3>
         <ul>${groups.map((g) => `
           <li class="v-${g.verdict}"><span class="verdict">${VERDICT[g.verdict].text}</span>
             <span class="parts">${g.labels.map(esc).join('<span class="sep"> · </span>')}</span>
@@ -553,13 +553,13 @@ export const robots = () => `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap
 
 /* ----------------------------------------------------------------------- style */
 
-const MARK = `<svg class="mark" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 3l18.19 10.5v21L24 45 5.81 34.5v-21z" fill="none" stroke="currentColor" stroke-width="2.5"/><g transform="translate(11.7 10.8) scale(.55)"><path d="M4 9h10a15 15 0 0 1 0 30H4z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><rect x="36" y="9" width="7" height="30" rx="1.5" fill="#d4691e"/></g></svg>`;
+const MARK = `<svg class="mark" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 3l18.19 10.5v21L24 45 5.81 34.5v-21z" fill="none" stroke="currentColor" stroke-width="2.5"/><g transform="translate(11.7 10.8) scale(.55)"><path d="M4 9h10a15 15 0 0 1 0 30H4z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><rect x="36" y="9" width="7" height="30" rx="1.5" class="fill"/></g></svg>`;
 
 const CSS = `
-:root{--bg:#f2f3f0;--surface:#fff;--surface-2:#f7f8f6;--ink:#17212b;--muted:#56616b;--line:#dde2e0;--navy:#0e2a47;--on-navy:#e8eef5;--on-navy-muted:#a9b8c8;--blue:#1e5a91;--cta:#d4691e;--cta-ink:#fff;
---ok:#2e7d4f;--ok-soft:#e4f2e9;--warn:#a8670a;--warn-soft:#fbefd9;--note:#1d5fa8;--note-soft:#e3eefb;--err:#b8382c;--err-soft:#fbe6e3;--shadow:0 1px 2px rgba(16,30,45,.06),0 4px 14px rgba(16,30,45,.06);
+:root{--bg:#f2f3f0;--surface:#fff;--surface-2:#f7f8f6;--ink:#17212b;--muted:#56616b;--line:#dde2e0;--navy:#0e2a47;--on-navy:#e8eef5;--on-navy-muted:#a9b8c8;--blue:#1e5a91;--cta:#b5520f;--cta-ink:#fff;--cta-on-navy:#e07428;
+--ok:#2a7348;--ok-soft:#e4f2e9;--warn:#965c08;--warn-soft:#fbefd9;--note:#1d5fa8;--note-soft:#e3eefb;--err:#b8382c;--err-soft:#fbe6e3;--shadow:0 1px 2px rgba(16,30,45,.06),0 4px 14px rgba(16,30,45,.06);
 --f-sans:'Archivo','Archivo Arial','Archivo Roboto',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--f-head:'Archivo Narrow','Archivo Narrow Arial','Archivo Narrow Roboto','Archivo',system-ui,sans-serif;color-scheme:light}
-@media (prefers-color-scheme:dark){:root{--bg:#0e1318;--surface:#151c23;--surface-2:#1a232c;--ink:#e6ebef;--muted:#a3aeb8;--line:#2a3540;--navy:#0a1f36;--blue:#6aa6dd;--cta:#ec8a45;--cta-ink:#1a0f06;
+@media (prefers-color-scheme:dark){:root{--bg:#0e1318;--surface:#151c23;--surface-2:#1a232c;--ink:#e6ebef;--muted:#a3aeb8;--line:#2a3540;--navy:#0a1f36;--blue:#6aa6dd;--cta:#ec8a45;--cta-ink:#1a0f06;--cta-on-navy:#ec8a45;
 --ok:#5fc58a;--ok-soft:rgba(95,197,138,.12);--warn:#e7b04f;--warn-soft:rgba(231,176,79,.13);--note:#79aef0;--note-soft:rgba(121,174,240,.14);--err:#f07a6c;--err-soft:rgba(240,122,108,.13);--shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.25);color-scheme:dark}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.6 var(--f-sans);-webkit-text-size-adjust:100%}
@@ -571,6 +571,8 @@ a{color:var(--blue)}
 .mark{width:34px;height:34px}
 .brand-name{font:500 19px/1 var(--f-head);letter-spacing:.01em;text-transform:uppercase;margin:0}
 .brand-name b{font-weight:700;color:var(--cta)}
+.site-header .brand-name b{color:var(--cta-on-navy)}
+.mark .fill{fill:var(--cta-on-navy)}
 .brand-name.small{font-size:16px;margin-bottom:8px}
 .site-header nav{display:flex;gap:4px}
 @media (max-width:560px){.header-row{gap:0}.site-header nav{width:calc(100% + 16px);margin:0 -8px 4px;justify-content:space-between;gap:0}}
@@ -584,7 +586,7 @@ main.wrap{padding-top:20px;padding-bottom:40px}
 h1{font:700 clamp(28px,5vw,40px)/1.1 var(--f-head);margin:8px 0 12px;letter-spacing:-.01em}
 h2{font:700 24px/1.2 var(--f-head);margin:36px 0 8px}
 h3{font:700 19px/1.2 var(--f-head);margin:20px 0 8px}
-h4{font-size:16px;margin:0 0 6px}
+.fit-row h3{font:700 16px/1.6 var(--f-sans);margin:0 0 6px}
 .lede{font-size:18px;color:var(--muted);margin:0 0 16px}
 .includes{font-weight:700;color:var(--blue);margin:-6px 0 16px}
 .muted{color:var(--muted);font-size:15px}
