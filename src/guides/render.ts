@@ -191,6 +191,23 @@ function shortDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 }
 
+/** Search results cut titles off past about 65 characters. Counted as written in the page (& as &amp;), the stricter way. */
+const TITLE_MAX = 65;
+const BRAND = ' | Drop-In Builds';
+const fits = (t: string) => esc(t).length <= TITLE_MAX;
+
+/**
+ * A page title: the first option that fits, with the site name after it when that fits too (search results name
+ * the site anyway). Options go from most to least descriptive.
+ */
+export function pageTitle(...options: string[]) {
+  for (const o of options) {
+    if (fits(o + BRAND)) return o + BRAND;
+    if (fits(o)) return o;
+  }
+  throw new Error(`Page title over ${TITLE_MAX} characters: ${options[options.length - 1]}`);
+}
+
 function layout(o: { title: string; description: string; path: string; body: string; jsonLd: object[]; notFound?: boolean; image?: string; current?: 'build' | 'faq' }) {
   const current = o.current ?? (o.notFound ? undefined : 'faq');
   return `<!doctype html>
@@ -265,7 +282,7 @@ export function guidePage(g: Guide, builtAt: string) {
     ${relatedHtml(g)}
   </article>`;
   return layout({
-    title: `${g.title} | Drop-In Builds`,
+    title: pageTitle(g.title),
     description: g.description,
     path,
     body,
@@ -342,7 +359,7 @@ export function indexPage(builtAt: string) {
   <p><a class="cta" href="/#build">Open the Builder</a></p>
   <p class="muted">Every fit chart is checked part against part with the same rules the builder uses. Updated ${shortDate(builtAt)}.</p>`;
   return layout({
-    title: 'FAQ: Glock, Sig, M&P, Hellcat and AR-15 Parts Compatibility | Drop-In Builds',
+    title: pageTitle('FAQ: Glock, Sig, M&P, Hellcat and AR-15 Parts Compatibility'),
     description: 'How Drop-In Builds works, plus fit charts for Glock, Sig, S&W M&P 2.0, Springfield Hellcat and AR-15 parts: slides, frames, barrels, optics and more.',
     path: '/faq/',
     body,
@@ -450,7 +467,7 @@ export function platformPage(platform: PageView) {
     <section><h2>Other Platforms</h2><ul class="guide-list cols">${others.map((p) => `<li><a href="/build/${platformSlug(p)}/">${esc(p.name)}</a></li>`).join('')}</ul></section>
   </article>`;
   return layout({
-    title: `${platform.name} Build Planner: Parts, Fit and Prices | Drop-In Builds`,
+    title: pageTitle(`${platform.name} Build Planner: Parts, Fit and Prices`, `${platform.name} Build Planner`),
     description: `Plan a ${platform.name} build part by part. ${platform.parts.length} parts checked for fit, prices compared across retailers, and starter builds from ${money(budget)}.`,
     path,
     body,
@@ -483,7 +500,7 @@ export function platformsIndexPage() {
   </section>`).join('')}
   <p><a class="cta" href="/#build">Open the Builder</a></p>`;
   return layout({
-    title: 'Firearm Build Planners: AR, Glock, Sig and More | Drop-In Builds',
+    title: pageTitle('Firearm Build Planners: AR, Glock, Sig and More'),
     description: 'Plan an AR-15, AR-10, AR-9, Glock, Sig, M&P or Hellcat build part by part. Parts checked for fit, prices compared across retailers.',
     path: '/build/',
     body,
@@ -495,7 +512,7 @@ export function platformsIndexPage() {
 /** GitHub Pages shows /404.html for any address that doesn't exist. */
 export function notFoundPage() {
   return layout({
-    title: 'Page Not Found | Drop-In Builds',
+    title: pageTitle('Page Not Found'),
     description: 'This page doesn\'t exist on Drop-In Builds.',
     path: '/404.html',
     notFound: true,
@@ -512,7 +529,7 @@ export function notFoundPage() {
  */
 export function feedbackPage() {
   return layout({
-    title: 'Send Feedback | Drop-In Builds',
+    title: pageTitle('Send Feedback'),
     description: 'Tell us what to add, fix or change on Drop-In Builds.',
     path: '/feedback/',
     notFound: true,

@@ -30,6 +30,8 @@ import { isPlural, titleCase, withArticle } from './text';
 import type { Build, Issue, Part, Placement, Platform, PlatformModel, Severity, Side, Slot, Tier } from './types';
 
 const STORE_KEY = 'firearm-designer:v2';
+/** The home page's title, the same as the <title> in index.html. */
+const HOME_TITLE = 'Drop-In Builds: Plan Your Firearm Build Part by Part';
 const SEV_LABEL: Record<Severity, string> = { error: 'Conflict', warn: 'Check', info: 'Note' };
 const FAMILIES = ['Rifle', 'Pistol'];
 type Route = 'home' | 'build' | 'community' | 'saved' | 'compare';
@@ -193,8 +195,8 @@ export default function App() {
   // Each page names itself in the browser tab, history and bookmarks.
   useEffect(() => {
     const name = PLATFORMS.find((p) => p.id === platformId)?.name ?? '';
-    const page = { home: 'Plan Your Build, Check the Fit, Pay Less', build: `Build Your ${name}`, saved: 'My Builds', community: 'Community Builds', compare: 'Compare Builds' }[route];
-    document.title = `${page} | Drop-In Builds`;
+    const page = { home: '', build: `Build Your ${name}`, saved: 'My Builds', community: 'Community Builds', compare: 'Compare Builds' }[route];
+    document.title = page ? `${page} | Drop-In Builds` : HOME_TITLE;
   }, [route, platformId]);
 
   return (
@@ -553,6 +555,7 @@ function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelec
   const made = platform.modelOf?.(build);
   const model = platform.models?.find((m) => m.id === (made?.id ?? modelPick[platform.id])) ?? platform.models?.find((m) => m.presets === platform.presets);
   const starter = model ? { ...platform, presets: model.presets, base: model.base } : platform;
+  const baseNote = rifle ? 'Base is a plain rifle: standard parts, no sights or optic.' : 'Base is the factory gun as it comes in the box.';
 
   /** Puts a part in its slot; `own` marks it as one the builder already has. */
   const choose = (slot: string, partId: string, own = false) => {
@@ -603,17 +606,23 @@ function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelec
           <div className="wb-center">
             <div className="bp-toolbar" role="toolbar" aria-label="Build actions">
               <span className="tb-label">{chosen === 0 ? 'Start From' : 'Start Over From'}</span>
-              <button className="chip" onClick={() => { startOver(baseSelection(starter)); setOpenSlot(null); }}>
+              <button className="chip" title={baseNote} onClick={() => { startOver(baseSelection(starter)); setOpenSlot(null); }}>
                 Base{model ? ` ${model.short}` : ''} <span className="chip-amt">{money(totalOf(platform, toBuild(platform, baseSelection(starter))))}</span>
               </button>
-              {(['budget', 'value', 'premium'] as Tier[]).map((t) => (
-                <button key={t} className="chip" onClick={() => { startOver(presetSelection(starter, t)); setOpenSlot(null); }}>
-                  {TIER_LABEL[t]}{model ? ` ${model.short}` : ''} <span className="chip-amt">{money(totalOf(platform, toBuild(platform, presetSelection(starter, t))))}</span>
-                </button>
-              ))}
+              {(['budget', 'value', 'premium'] as Tier[]).map((t) => {
+                const sel = presetSelection(starter, t);
+                const optic = opticTag(platform.parts.find((p) => p.id === sel.optic));
+                return (
+                  <button key={t} className="chip" onClick={() => { startOver(sel); setOpenSlot(null); }}>
+                    {TIER_LABEL[t]}{model ? ` ${model.short}` : ''} <span className="chip-amt">{money(totalOf(platform, toBuild(platform, sel)))}</span>
+                    {optic && <> <span className="chip-tag">{optic}</span></>}
+                  </button>
+                );
+              })}
               <button className="chip" onClick={onBrowseFeatured}>Community Builds</button>
               <button className="chip chip-own" onClick={() => setFinding(true)}>Parts I Own</button>
               {chosen > 0 && <button className="chip chip-clear" onClick={() => { startOver({}); setOpenSlot(null); }}>Clear Build</button>}
+              <p className="tb-note">{baseNote} Budget, Best Value and Premium are builds from our parts list.</p>
             </div>
             <figure className="blueprint">
               <div className="bp-strip">
@@ -683,6 +692,12 @@ function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelec
       )}
     </>
   );
+}
+
+/** The tag on a starter build's chip saying what optic it comes with, if any. */
+function opticTag(optic?: Part) {
+  if (!optic) return null;
+  return optic.attrs.kind === 'lpvo' || optic.attrs.kind === 'scope' ? 'Scope' : 'Red Dot';
 }
 
 function groupSlots(slots: Slot[]): [string, Slot[]][] {
