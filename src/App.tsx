@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { createPortal } from 'react-dom';
 import { PLATFORMS, PRICES_UPDATED_AT, canonicalPlatform } from './data';
 import { RETAILERS, buyUrl } from './data/retailers';
 import {
@@ -689,10 +690,10 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
                 <li key={slot.id} className={'part-row ' + (other ? 'other' : states[slot.id]) + (own ? ' owned' : '') + (hover === slot.id ? ' hover' : '')}
                   onMouseEnter={() => onHover(slot.id)} onMouseLeave={() => onHover(null)}>
                   <span className="part-no">{platform.slots.indexOf(slot) + 1}</span>
-                  <button className="part-main" onClick={() => onOpen(slot.id)} aria-label={`${slot.name}: ${part ? `${part.brand} ${part.name}. Change` : 'choose a part'}`}>
+                  <button className="part-main" onClick={() => onOpen(slot.id)}>
                     <span className="part-slot">{slot.name}{!slot.required && <span className="opt">Optional</span>}</span>
                     {part ? (
-                      <span className="part-name"><span className="brand-dim">{part.brand}</span> {part.name}{part.serialized && <span className="ffl" title="Serialized: ships to an FFL">FFL</span>}</span>
+                      <span className="part-name"><span className="brand-dim">{part.brand}</span> {part.name}{part.serialized && <span className="ffl" title="Serialized: ships to an FFL">FFL</span>}<span className="sr">. Change</span></span>
                     ) : other ? (
                       <span className="part-name">Your own {slot.name.toLowerCase()} <span className="brand-dim">(not in our list, so its fit isn't checked)</span></span>
                     ) : (
@@ -934,6 +935,32 @@ function Dock({ total, status, toBuy }: { total: number; status: { cls: string; 
 
 /* ------------------------------------------------------------------ picker */
 
+/**
+ * Shared by the side drawers. Focus starts inside the drawer and the page behind it is inert, so Tab stays
+ * in the drawer. Escape closes it, and focus goes back to the button that opened it. Drawers render into
+ * <body> (a portal) so they sit outside the inert #root.
+ */
+function useDrawer(onClose: () => void, focusRef: RefObject<HTMLElement>) {
+  const closeFn = useRef(onClose);
+  closeFn.current = onClose;
+  useEffect(() => {
+    const opener = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
+    const page = document.getElementById('root');
+    page?.setAttribute('inert', '');
+    focusRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeFn.current(); };
+    document.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+      page?.removeAttribute('inert');
+      if (opener?.isConnected) opener.focus();
+    };
+  }, []);
+}
+
 type SortKey = 'fit' | 'price' | 'picks';
 
 function Picker({ platform, slot, focusId: focusProp, number, model, build, place, selectedId, ownsSelected, onChoose, onToggleOwn, onOwnOther, onRemove, onClose, onBuyClick }: {
@@ -946,18 +973,8 @@ function Picker({ platform, slot, focusId: focusProp, number, model, build, plac
   const [focusId] = useState(focusProp);
   const [allModels, setAllModels] = useState(!!focusId && !!model?.parts && !model.parts(platform.parts.find((p) => p.id === focusId)!));
   const closeRef = useRef<HTMLButtonElement>(null);
-  const closeFn = useRef(onClose);
-  closeFn.current = onClose;
   const rank = { ok: 0, info: 0, warn: 1, error: 2 } as const;
-
-  useEffect(() => {
-    closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeFn.current(); };
-    document.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
-  }, []);
+  useDrawer(onClose, closeRef);
 
   // In a builder with models, the list starts with the current model's parts (frames, slides, barrels...).
   const inSlot = platform.parts.filter((p) => p.slot === slot.id);
@@ -976,10 +993,10 @@ function Picker({ platform, slot, focusId: focusProp, number, model, build, plac
       return rank[a.sev] - rank[b.sev] || a.price - b.price;
     });
 
-  return (
+  return createPortal(
     <div className="drawer-wrap">
       <div className="scrim" onClick={onClose} />
-      <aside className="drawer" role="dialog" aria-modal="true" aria-labelledby="picker-title">
+      <div className="drawer" role="dialog" aria-modal="true" aria-labelledby="picker-title">
         <header className="drawer-head">
           <div>
             <p className="kicker">Item {number} · {platform.name}</p>
@@ -1020,8 +1037,9 @@ function Picker({ platform, slot, focusId: focusProp, number, model, build, plac
           <p className="dim">It's left out of the total. We can't check its fit, so double-check it with the maker.</p>
         </div>
         {onRemove && <button className="btn ghost wide" onClick={onRemove}>Remove {titleCase(slot.name)} from Build</button>}
-      </aside>
-    </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -1065,7 +1083,7 @@ function Candidate({ part, open, issues, sev, selected, owned, onChoose, onBuyCl
         <div className="offers-wrap">
           {hasHistory(part) && <PriceChart points={partSeries(part, daysAgo(90))} label="Best Price, Last 90 Days" />}
           <table className="offers">
-            <thead><tr><th>Retailer</th><th className="num">Price</th><th>Stock</th><th>Checked</th><th /></tr></thead>
+            <thead><tr><th>Retailer</th><th className="num">Price</th><th>Stock</th><th>Checked</th><th><span className="sr">Link</span></th></tr></thead>
             <tbody>
               {[...part.offers].sort((a, b) => a.price - b.price).map((o) => (
                 <tr key={o.retailer} className={best && o.retailer === best.retailer ? 'best' : ''}>
@@ -1098,26 +1116,17 @@ function OwnedFinder({ platform, build, owned, onOwn, onOwnOther, onSwitch, onCl
   const [query, setQuery] = useState('');
   const [otherSlot, setOtherSlot] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-  const closeFn = useRef(onClose);
-  closeFn.current = onClose;
-  useEffect(() => {
-    inputRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeFn.current(); };
-    document.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
-  }, []);
+  useDrawer(onClose, inputRef);
   const { here, elsewhere } = useMemo(() => findParts(query, platform), [query, platform]);
   const shown = here.slice(0, 30);
   const otherPlatforms = [...new Map(elsewhere.map((f) => [f.platform.id, f.platform])).values()];
   const ownedList = platform.slots.filter((s) => owned.owned.has(s.id) || owned.other.has(s.id));
   const searched = query.trim().length > 0;
 
-  return (
+  return createPortal(
     <div className="drawer-wrap">
       <div className="scrim" onClick={onClose} />
-      <aside className="drawer finder" role="dialog" aria-modal="true" aria-labelledby="finder-title">
+      <div className="drawer finder" role="dialog" aria-modal="true" aria-labelledby="finder-title">
         <header className="drawer-head">
           <div>
             <p className="kicker">{platform.name}</p>
@@ -1174,8 +1183,9 @@ function OwnedFinder({ platform, build, owned, onOwn, onOwnOther, onSwitch, onCl
           </div>
         </section>
         <button className="btn primary wide" onClick={onClose}>Done</button>
-      </aside>
-    </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
 
