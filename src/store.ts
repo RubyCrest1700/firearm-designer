@@ -1,6 +1,6 @@
 import { SHARE_BASE } from './config';
 import { PLATFORMS, canonicalPlatform } from './data';
-import { MOUNT_CODE, bestOffer, ownedOf, placementOf, presetSelection, selectionTokens, toBuild, type Selection } from './engine';
+import { MOUNT_CODE, baseSelection, bestOffer, ownedOf, placementOf, presetSelection, selectionTokens, toBuild, type Selection } from './engine';
 import { worthShowing } from './data/history';
 import type { Build, Part, Platform, Tier } from './types';
 
@@ -143,7 +143,12 @@ export function readSharedBuild(): { platform: string; selection: Selection } | 
     if (!raw) return null;
     const [old, ids = ''] = raw.split('~');
     const pid = canonicalPlatform(old);
-    return PLATFORMS.some((p) => p.id === pid) ? { platform: pid, selection: selectionFromParts(pid, ids.split('.')) } : null;
+    const platform = PLATFORMS.find((p) => p.id === pid);
+    if (!platform) return null;
+    const selection = selectionFromParts(pid, ids.split('.'));
+    // A link with no parts opens the plain factory build, of the model it names (`glock26~`) if it names one.
+    const model = platform.models?.find((m) => m.id === old);
+    return { platform: pid, selection: Object.keys(selection).length ? selection : baseSelection(model ? { ...platform, presets: model.presets, base: model.base } : platform) };
   } catch {
     return null;
   }

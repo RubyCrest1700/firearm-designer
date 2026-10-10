@@ -5,7 +5,7 @@
  */
 import { PLATFORMS, PRICES_UPDATED_AT } from '../data';
 import { RETAILERS, buyUrl } from '../data/retailers';
-import { bestOffer, money, presetSelection, priceLabel, priceText, worst } from '../engine';
+import { baseSelection, bestOffer, money, presetSelection, priceLabel, priceText, worst } from '../engine';
 import type { Part, Platform, Severity, Tier } from '../types';
 import { GUIDES, type AcrossChart, type FitChart, type Guide, type PairChart } from './content';
 import { titleCase } from '../text';
@@ -22,8 +22,10 @@ const platformOf = (id: string): PageView => {
   if (!p) throw new Error(`Guide platform ${id} is not in the catalog`);
   return p;
 };
-/** Opens the builder on a platform, optionally with parts already chosen. */
-const builderUrl = (platform: string, ids: string[] = []) => `/?b=${encodeURIComponent(`${platform}~${ids.join('.')}`)}`;
+/** Opens the builder on a platform with these parts chosen. */
+const builderUrl = (platform: string, ids: string[]) => `/?b=${encodeURIComponent(`${platform}~${ids.join('.')}`)}`;
+/** Opens the builder on a page's plain factory build, so a model's page opens that model. */
+const baseUrl = (platform: Platform) => builderUrl(platform.id, Object.values(baseSelection(platform)));
 
 /* ------------------------------------------------------------------ fit charts */
 
@@ -262,7 +264,7 @@ export function guidePage(g: Guide, builtAt: string) {
     <section class="answers">
       <h2>The Short Answer</h2>
       <ul>${g.answers.map((a) => `<li>${a}</li>`).join('')}</ul>
-      <a class="cta" href="${builderUrl(platform.id)}">Check Your Own ${esc(platform.name)} Build</a>
+      <a class="cta" href="${baseUrl(platform)}">Check Your Own ${esc(platform.name)} Build</a>
     </section>
     ${g.charts.map((c) => chartHtml(platform, c)).join('')}
     <section>
@@ -389,7 +391,7 @@ const PLATFORM_SLUGS: Record<string, string> = {
 export interface PageView extends Platform { pageId: string }
 export const PAGE_VIEWS: PageView[] = PLATFORMS.flatMap((p) => [
   { ...p, pageId: p.id },
-  ...(p.models ?? []).map((m) => ({ ...p, pageId: m.id, name: m.name, blurb: m.blurb, presets: m.presets, parts: m.parts ? p.parts.filter(m.parts) : p.parts })),
+  ...(p.models ?? []).map((m) => ({ ...p, pageId: m.id, name: m.name, blurb: m.blurb, presets: m.presets, base: m.base, parts: m.parts ? p.parts.filter(m.parts) : p.parts })),
 ]);
 
 export const platformSlug = (p: Platform & { pageId?: string }) =>
@@ -452,7 +454,7 @@ export function platformPage(platform: PageView) {
   <article>
     <h1>${esc(platform.name)} Build Planner: Parts, Fit and Prices</h1>
     <p class="lede">${esc(platform.blurb)} ${platform.parts.length} parts from ${brands} brands, each checked for fit against the rest of your build, with prices compared across retailers.</p>${includesHtml(platform)}
-    <a class="cta" href="${builderUrl(platform.id)}">Open the ${esc(platform.name)} Builder</a>
+    <a class="cta" href="${baseUrl(platform)}">Open the ${esc(platform.name)} Builder</a>
     <section>
       <h2>Start from a Complete Build</h2>
       <p class="muted">Three ${esc(platform.name)} builds where every part already fits, from ${money(budget)}. Open one in the builder and swap anything you like.</p>
