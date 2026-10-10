@@ -90,11 +90,9 @@ const out = { updatedAt: report.ok ? now.toISOString() : previous.updatedAt ?? n
 console.log(`\nDone: ${report.ok} updated, ${report.kept} kept from last run, ${report.failed} failed (${report.rejected} of them ignored as likely misreads), ${report.blocked} blocked by robots.txt`);
 if (!dryRun) {
   writeFileSync('data/prices.json', JSON.stringify(out, null, 2) + '\n');
-  // Only fresh reads go into the history; a price kept from an earlier night is already recorded.
-  const fresh = Object.fromEntries(
-    Object.entries(offers).map(([id, byR]) => [id, Object.fromEntries(Object.entries(byR).filter(([, o]) => o.checkedAt === now.toISOString()))]),
-  );
+  // History records what the site shows: the lowest over every offer written, kept ones included. Leaving out a
+  // kept price would log a false rise whenever the cheapest store's read fails for a night.
   let history = null;
   try { history = JSON.parse(readFileSync('data/price-history.json', 'utf8')); } catch { /* first run */ }
-  writeFileSync('data/price-history.json', formatHistory(recordHistory(history, fresh, now)));
+  writeFileSync('data/price-history.json', formatHistory(recordHistory(history, offers, now)));
 }
