@@ -159,7 +159,7 @@ for (const p of PLATFORMS.filter((x) => x.family === 'Rifle'))
     ['ar15', 'budget', { light: 'r-light-hlx' }, 'light', 'ok'],
     ['ar15', 'value', { magnifier: 'r-mag-hm3x' }, 'magnifier', 'error'],
     ['ar15', 'premium', { magnifier: 'r-mag-hm3x' }, 'magnifier', 'info'],
-    ['ar15', 'budget', { sling: 'r-sling-ms4', qdmount: 'r-qd-magpul' }, 'sling', 'warn'],
+    ['ar15', 'budget', { stock: 'ar-stock-psa', sling: 'r-sling-ms4', qdmount: 'r-qd-magpul' }, 'sling', 'warn'],
     ['ar15', 'value', { sling: 'r-sling-ms4', qdmount: 'r-qd-magpul' }, 'sling', 'ok'],
     ['ar15', 'budget', { case: 'r-case-sav36' }, 'case', 'ok'],
     ['ar10', 'value', { case: 'r-case-sav36' }, 'case', 'warn'],
