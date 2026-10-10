@@ -25,7 +25,7 @@ import { PriceChart } from './PriceChart';
 import { alertsAvailable, checkAlertSignup, loadAlertSignup, signUpForAlerts, stopAlerts, storeAlertSignup, syncAlertBuilds, type AlertSignup } from './alerts';
 import { MOVABLE, SIDE_LABEL, mountsFor, railLength, type Resolved } from './data/addons';
 import { GUIDES } from './guides/content';
-import { titleCase } from './text';
+import { isPlural, titleCase, withArticle } from './text';
 import type { Build, Issue, Part, Placement, Platform, PlatformModel, Severity, Side, Slot, Tier } from './types';
 
 const STORE_KEY = 'firearm-designer:v2';
@@ -696,7 +696,7 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
                     ) : other ? (
                       <span className="part-name">Your own {slot.name.toLowerCase()} <span className="brand-dim">(not in our list, so its fit isn't checked)</span></span>
                     ) : (
-                      <span className="part-name choose">{slot.required ? `Choose a ${slot.name.toLowerCase()}` : 'Add one'} →</span>
+                      <span className="part-name choose">{slot.required ? `Choose ${withArticle(slot.name)}` : 'Add one'} →</span>
                     )}
                     {rowIssues.map((i, k) => <span key={k} className={'row-issue ' + i.severity}>{i.message}</span>)}
                   </button>
@@ -773,7 +773,7 @@ function MountControl({ slot, m, onMount }: { slot: Slot; m: Resolved; onMount: 
 }
 
 function Summary({ platform, build, issues, aware, states, status, total, owned, openSaved, onSave, onShare, onCopyLink, onOpen, onCompare, onFindOwned }: {
-  platform: Platform; build: Build; issues: Issue[]; aware: Aware[]; states: Record<string, RegionState>; status: { cls: string; text: string }; total: number;
+  platform: Platform; build: Build; issues: Issue[]; aware: Aware[]; states: Record<string, RegionState>; status: { cls: string; text: string; complete: boolean }; total: number;
   owned: Owned; openSaved: SavedBuild | null; onSave: (name: string, asNew: boolean) => void; onShare: (name: string, note: string) => Promise<void>;
   onCopyLink: () => void; onOpen: (s: string) => void; onCompare: () => void; onFindOwned: () => void;
 }) {
@@ -784,7 +784,7 @@ function Summary({ platform, build, issues, aware, states, status, total, owned,
   const [shareError, setShareError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // A part that isn't in our catalog can't go on the Community page, where every part has to be checkable.
-  const canShare = status.cls === 'ok' && owned.other.size === 0;
+  const canShare = status.complete && owned.other.size === 0;
   const all = platform.slots.map((s) => build[s.id]).filter((p): p is Part => !!p);
   const chosen = all.filter((p) => !owned.owned.has(p.slot));
   const ownedParts = all.filter((p) => owned.owned.has(p.slot));
@@ -971,8 +971,10 @@ function Picker({ platform, slot, focusId: focusProp, number, model, build, plac
     .filter((c) => !hideConflicts || c.sev !== 'error')
     .sort((a, b) => {
       if (focusId && (a.part.id === focusId) !== (b.part.id === focusId)) return a.part.id === focusId ? -1 : 1;
-      if (sort === 'price') return a.price - b.price;
-      if (sort === 'picks') return Number(!!b.part.pick) - Number(!!a.part.pick) || a.price - b.price;
+      // Every sort lists parts that conflict with the build after the ones that fit.
+      const clash = Number(a.sev === 'error') - Number(b.sev === 'error');
+      if (sort === 'price') return clash || a.price - b.price;
+      if (sort === 'picks') return clash || Number(!!b.part.pick) - Number(!!a.part.pick) || a.price - b.price;
       return rank[a.sev] - rank[b.sev] || a.price - b.price;
     });
 
@@ -1015,7 +1017,7 @@ function Picker({ platform, slot, focusId: focusProp, number, model, build, plac
           {candidates.length === 0 && <li className="cand-empty">Every option conflicts with your current build. Turn off the filter to see why.</li>}
         </ul>
         <div className="own-other">
-          <p>Already have a {slot.name.toLowerCase()} that isn't listed here?</p>
+          <p>Already have {withArticle(slot.name)} that {isPlural(slot.name) ? "aren't" : "isn't"} listed here?</p>
           <button className="btn" onClick={onOwnOther}>Use My Own {titleCase(slot.name)}</button>
           <p className="dim">It's left out of the total. We can't check its fit, so double-check it with the maker.</p>
         </div>

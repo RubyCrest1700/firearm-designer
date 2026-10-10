@@ -161,7 +161,7 @@ function FactRow({ label, a, b, diff }: { label: string; a: ReactNode; b: ReactN
 }
 
 function StatusText({ f }: { f: Facts }) {
-  return <span className={'status small ' + f.status.cls}>{f.status.text}{f.checks > 0 && f.status.cls !== 'error' ? `, ${f.checks} to check` : ''}</span>;
+  return <span className={'status small ' + f.status.cls}>{f.status.text}{f.checks > 0 && !f.status.complete && f.status.cls !== 'error' ? `, ${f.checks} to check` : ''}</span>;
 }
 
 function IssueList({ issues }: { issues: Issue[] }) {
