@@ -95,7 +95,7 @@ function listHtml(rows: { part: Part; groups: Group[] }[]) {
   return rows
     .map(({ part, groups }) => `
       <div class="fit-row">
-        <h4>${esc(label(part))}</h4>
+        <h3>${esc(label(part))}</h3>
         <ul>${groups.map((g) => `
           <li class="v-${g.verdict}"><span class="verdict">${VERDICT[g.verdict].text}</span>
             <span class="parts">${g.labels.map(esc).join('<span class="sep"> · </span>')}</span>
@@ -192,6 +192,23 @@ function shortDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 }
 
+/** Search results cut titles off past about 65 characters. Counted as written in the page (& as &amp;), the stricter way. */
+const TITLE_MAX = 65;
+const BRAND = ' | Drop-In Builds';
+const fits = (t: string) => esc(t).length <= TITLE_MAX;
+
+/**
+ * A page title: the first option that fits, with the site name after it when that fits too (search results name
+ * the site anyway). Options go from most to least descriptive.
+ */
+export function pageTitle(...options: string[]) {
+  for (const o of options) {
+    if (fits(o + BRAND)) return o + BRAND;
+    if (fits(o)) return o;
+  }
+  throw new Error(`Page title over ${TITLE_MAX} characters: ${options[options.length - 1]}`);
+}
+
 function layout(o: { title: string; description: string; path: string; body: string; jsonLd: object[]; notFound?: boolean; image?: string; current?: 'build' | 'faq' }) {
   const current = o.current ?? (o.notFound ? undefined : 'faq');
   return `<!doctype html>
@@ -268,7 +285,7 @@ export function guidePage(g: Guide, builtAt: string) {
     ${relatedHtml(g)}
   </article>`;
   return layout({
-    title: `${g.title} | Drop-In Builds`,
+    title: pageTitle(g.title),
     description: g.description,
     path,
     body,
@@ -345,7 +362,7 @@ export function indexPage(builtAt: string) {
   <p><a class="cta" href="/#build">Open the Builder</a></p>
   <p class="muted">Every fit chart is checked part against part with the same rules the builder uses. Updated ${shortDate(builtAt)}.</p>`;
   return layout({
-    title: 'FAQ: Glock, Sig, M&P, Hellcat and AR-15 Parts Compatibility | Drop-In Builds',
+    title: pageTitle('FAQ: Glock, Sig, M&P, Hellcat and AR-15 Parts Compatibility'),
     description: 'How Drop-In Builds works, plus fit charts for Glock, Sig, S&W M&P 2.0, Springfield Hellcat and AR-15 parts: slides, frames, barrels, optics and more.',
     path: '/faq/',
     body,
@@ -453,7 +470,7 @@ export function platformPage(platform: PageView) {
     <section><h2>Other Platforms</h2><ul class="guide-list cols">${others.map((p) => `<li><a href="/build/${platformSlug(p)}/">${esc(p.name)}</a></li>`).join('')}</ul></section>
   </article>`;
   return layout({
-    title: `${platform.name} Build Planner: Parts, Fit and Prices | Drop-In Builds`,
+    title: pageTitle(`${platform.name} Build Planner: Parts, Fit and Prices`, `${platform.name} Build Planner`),
     description: `Plan a ${platform.name} build part by part. ${platform.parts.length} parts checked for fit, prices compared across retailers, and starter builds from ${money(budget)}.`,
     path,
     body,
@@ -486,7 +503,7 @@ export function platformsIndexPage() {
   </section>`).join('')}
   <p><a class="cta" href="/#build">Open the Builder</a></p>`;
   return layout({
-    title: 'Firearm Build Planners: AR, Glock, Sig and More | Drop-In Builds',
+    title: pageTitle('Firearm Build Planners: AR, Glock, Sig and More'),
     description: 'Plan an AR-15, AR-10, AR-9, Glock, Sig, M&P or Hellcat build part by part. Parts checked for fit, prices compared across retailers.',
     path: '/build/',
     body,
@@ -498,7 +515,7 @@ export function platformsIndexPage() {
 /** GitHub Pages shows /404.html for any address that doesn't exist. */
 export function notFoundPage() {
   return layout({
-    title: 'Page Not Found | Drop-In Builds',
+    title: pageTitle('Page Not Found'),
     description: 'This page doesn\'t exist on Drop-In Builds.',
     path: '/404.html',
     notFound: true,
@@ -515,7 +532,7 @@ export function notFoundPage() {
  */
 export function feedbackPage() {
   return layout({
-    title: 'Send Feedback | Drop-In Builds',
+    title: pageTitle('Send Feedback'),
     description: 'Tell us what to add, fix or change on Drop-In Builds.',
     path: '/feedback/',
     notFound: true,
@@ -556,13 +573,13 @@ export const robots = () => `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap
 
 /* ----------------------------------------------------------------------- style */
 
-const MARK = `<svg class="mark" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 3l18.19 10.5v21L24 45 5.81 34.5v-21z" fill="none" stroke="currentColor" stroke-width="2.5"/><g transform="translate(11.7 10.8) scale(.55)"><path d="M4 9h10a15 15 0 0 1 0 30H4z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><rect x="36" y="9" width="7" height="30" rx="1.5" fill="#d4691e"/></g></svg>`;
+const MARK = `<svg class="mark" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 3l18.19 10.5v21L24 45 5.81 34.5v-21z" fill="none" stroke="currentColor" stroke-width="2.5"/><g transform="translate(11.7 10.8) scale(.55)"><path d="M4 9h10a15 15 0 0 1 0 30H4z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><rect x="36" y="9" width="7" height="30" rx="1.5" class="fill"/></g></svg>`;
 
 const CSS = `
-:root{--bg:#f2f3f0;--surface:#fff;--surface-2:#f7f8f6;--ink:#17212b;--muted:#56616b;--line:#dde2e0;--navy:#0e2a47;--on-navy:#e8eef5;--on-navy-muted:#a9b8c8;--blue:#1e5a91;--cta:#d4691e;--cta-ink:#fff;
---ok:#2e7d4f;--ok-soft:#e4f2e9;--warn:#a8670a;--warn-soft:#fbefd9;--note:#1d5fa8;--note-soft:#e3eefb;--err:#b8382c;--err-soft:#fbe6e3;--shadow:0 1px 2px rgba(16,30,45,.06),0 4px 14px rgba(16,30,45,.06);
+:root{--bg:#f2f3f0;--surface:#fff;--surface-2:#f7f8f6;--ink:#17212b;--muted:#56616b;--line:#dde2e0;--navy:#0e2a47;--on-navy:#e8eef5;--on-navy-muted:#a9b8c8;--blue:#1e5a91;--cta:#b5520f;--cta-ink:#fff;--cta-on-navy:#e07428;
+--ok:#2a7348;--ok-soft:#e4f2e9;--warn:#965c08;--warn-soft:#fbefd9;--note:#1d5fa8;--note-soft:#e3eefb;--err:#b8382c;--err-soft:#fbe6e3;--shadow:0 1px 2px rgba(16,30,45,.06),0 4px 14px rgba(16,30,45,.06);
 --f-sans:'Archivo',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--f-head:'Archivo Narrow','Archivo',system-ui,sans-serif;color-scheme:light}
-@media (prefers-color-scheme:dark){:root{--bg:#0e1318;--surface:#151c23;--surface-2:#1a232c;--ink:#e6ebef;--muted:#a3aeb8;--line:#2a3540;--navy:#0a1f36;--blue:#6aa6dd;--cta:#ec8a45;--cta-ink:#1a0f06;
+@media (prefers-color-scheme:dark){:root{--bg:#0e1318;--surface:#151c23;--surface-2:#1a232c;--ink:#e6ebef;--muted:#a3aeb8;--line:#2a3540;--navy:#0a1f36;--blue:#6aa6dd;--cta:#ec8a45;--cta-ink:#1a0f06;--cta-on-navy:#ec8a45;
 --ok:#5fc58a;--ok-soft:rgba(95,197,138,.12);--warn:#e7b04f;--warn-soft:rgba(231,176,79,.13);--note:#79aef0;--note-soft:rgba(121,174,240,.14);--err:#f07a6c;--err-soft:rgba(240,122,108,.13);--shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.25);color-scheme:dark}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.6 var(--f-sans);-webkit-text-size-adjust:100%}
@@ -574,6 +591,8 @@ a{color:var(--blue)}
 .mark{width:34px;height:34px}
 .brand-name{font:500 19px/1 var(--f-head);letter-spacing:.01em;text-transform:uppercase;margin:0}
 .brand-name b{font-weight:700;color:var(--cta)}
+.site-header .brand-name b{color:var(--cta-on-navy)}
+.mark .fill{fill:var(--cta-on-navy)}
 .brand-name.small{font-size:16px;margin-bottom:8px}
 .site-header nav{display:flex;gap:4px}
 @media (max-width:560px){.header-row{gap:0}.site-header nav{width:calc(100% + 16px);margin:0 -8px 4px;justify-content:space-between;gap:0}}
@@ -587,7 +606,7 @@ main.wrap{padding-top:20px;padding-bottom:40px}
 h1{font:700 clamp(28px,5vw,40px)/1.1 var(--f-head);margin:8px 0 12px;letter-spacing:-.01em}
 h2{font:700 24px/1.2 var(--f-head);margin:36px 0 8px}
 h3{font:700 19px/1.2 var(--f-head);margin:20px 0 8px}
-h4{font-size:16px;margin:0 0 6px}
+.fit-row h3{font:700 16px/1.6 var(--f-sans);margin:0 0 6px}
 .lede{font-size:18px;color:var(--muted);margin:0 0 16px}
 .includes{font-weight:700;color:var(--blue);margin:-6px 0 16px}
 .muted{color:var(--muted);font-size:15px}
