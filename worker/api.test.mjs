@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
+import { createHash } from 'node:crypto';
 import { cleanText, handle, networkOf } from './src/api.js';
 
 function fakeD1() {
@@ -192,6 +193,29 @@ test('bad share links get the site card and a 404', async () => {
   assert.equal((await page(env(), '/b/glock19~<script>')).status, 404);
   assert.equal((await page(env(), '/c/aaaaaaaaaa')).status, 404);
   assert.equal((await page(env(), '/api/builds')).status, 200);
+  const bad = await page(env(), '/b/%E0');
+  assert.equal(bad.status, 404);
+  assert.match(bad.type, /^text\/html/);
+  assert.equal(meta(bad.text, 'og:title'), 'Drop-In Builds');
+});
+
+test('share pages allow only their redirect script and cannot be framed', async () => {
+  const { default: worker } = await import('./src/index.js');
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify(INDEX));
+  try {
+    for (const path of ['/b/glock19~g19-frame-g5.g-fcg-apex5', '/b/%E0']) {
+      const r = await worker.fetch(new Request(`https://share.example${path}`), env());
+      const csp = r.headers.get('content-security-policy');
+      assert.match(csp, /default-src 'none'/);
+      assert.match(csp, /frame-ancestors 'none'/);
+      const script = (await r.text()).match(/<script>([^<]*)<\/script>/)[1];
+      const hash = createHash('sha256').update(script).digest('base64');
+      assert.ok(csp.includes(`script-src 'sha256-${hash}'`), csp);
+    }
+  } finally {
+    globalThis.fetch = realFetch;
+  }
 });
 
 /* ------------------------------------------------------------- price alerts */
@@ -256,6 +280,24 @@ test('every response carries basic browser protections', async () => {
   assert.equal(res.headers.get('x-frame-options'), 'DENY');
   assert.equal(res.headers.get('content-type'), 'application/json; charset=utf-8');
   assert.deepEqual(await res.json(), { ok: true });
+  const { withSecurityHeaders } = await import('./src/index.js');
+  const other = await withSecurityHeaders(new Response('<p>hi</p>', { headers: { 'content-type': 'text/html' } }));
+  assert.match(other.headers.get('content-security-policy'), /default-src 'none'.*frame-ancestors 'none'/);
+});
+
+test('price alert pages run no scripts, post only to themselves and cannot be framed', async () => {
+  const e = alertEnv();
+  const { token } = (await signup(e)).body;
+  const csp = (await visit(e, 'GET', `/alerts/stop?t=${token}`)).headers.get('content-security-policy');
+  assert.equal(csp, "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
+});
+
+test('the API answers only the site, and local dev servers only when DEV is set', async () => {
+  const from = (origin, e = env()) => handle(new Request('https://api.example/health', { headers: { origin } }), e).then((r) => r.headers.get('access-control-allow-origin'));
+  assert.equal(await from('https://dropinbuilds.com'), 'https://dropinbuilds.com');
+  assert.equal(await from('http://localhost:5173'), 'https://rubycrest1700.github.io');
+  assert.equal(await from('https://evil.example'), 'https://rubycrest1700.github.io');
+  assert.equal(await from('http://localhost:5173', { ...env(), DEV: '1' }), 'http://localhost:5173');
 });
 
 test('emails confirmed signups when prices move, once, then stays quiet', async () => {

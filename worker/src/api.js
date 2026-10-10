@@ -24,7 +24,9 @@ const idsFor = (platform) => [platform, ...Object.keys(PLATFORM_ALIASES).filter(
  */
 export const LIVE_PLATFORMS = [...PLATFORM_IDS, ...Object.keys(PLATFORM_ALIASES)].map((p) => `'${p}'`).join(', ');
 
-const ALLOWED_ORIGINS = ['https://rubycrest1700.github.io', 'https://dropinbuilds.com', 'https://www.dropinbuilds.com', 'http://localhost:5173', 'http://localhost:4173'];
+const ALLOWED_ORIGINS = ['https://rubycrest1700.github.io', 'https://dropinbuilds.com', 'https://www.dropinbuilds.com'];
+/** Local Vite dev and preview servers, allowed only when the DEV variable is set (e.g. `wrangler dev --var DEV:1`). */
+const DEV_ORIGINS = ['http://localhost:5173', 'http://localhost:4173'];
 const DAY = 86_400_000;
 const WEEK = 7 * DAY;
 const MAX_SHARES_PER_DAY = 10;
@@ -49,9 +51,12 @@ const json = (data, status, origin) =>
     },
   });
 
+/** The caller's origin when it's allowed, otherwise the site's. */
+const allowedOrigin = (origin, env) => (ALLOWED_ORIGINS.includes(origin) || (env.DEV && DEV_ORIGINS.includes(origin)) ? origin : ALLOWED_ORIGINS[0]);
+
 function cors(origin) {
   return {
-    'access-control-allow-origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    'access-control-allow-origin': origin,
     'access-control-allow-methods': 'GET, POST, PUT, OPTIONS',
     'access-control-allow-headers': 'content-type',
     vary: 'origin',
@@ -111,7 +116,7 @@ const SORTS = {
 };
 
 export async function handle(request, env, now = Date.now()) {
-  const origin = request.headers.get('origin') ?? '';
+  const origin = allowedOrigin(request.headers.get('origin') ?? '', env);
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(origin) });
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '');

@@ -1,7 +1,8 @@
 # Builds the site and publishes it to GitHub Pages (free for public repos).
 # Pull requests only build and test; nothing is published until they merge.
 # On the nightly schedule (or a manual run) it first refreshes data/prices.json
-# from retailer product pages and commits the change.
+# from retailer product pages and commits the change. Only that job may push;
+# pull request runs get read-only access.
 name: Build, update prices, deploy
 
 on:
@@ -18,17 +19,20 @@ on:
         default: true
 
 permissions:
-  contents: write
-  pages: write
-  id-token: write
+  contents: read
 
 concurrency:
   group: deploy-${{ github.event_name == 'pull_request' && github.ref || 'main' }}
   cancel-in-progress: false
 
 jobs:
-  build:
+  prices:
+    if: github.event_name == 'schedule' || inputs.update_prices
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -38,10 +42,9 @@ jobs:
       - run: npm ci
       - run: npm test
       - name: Refresh prices
-        if: github.event_name == 'schedule' || inputs.update_prices
         run: npm run update-prices
       - name: Commit updated prices
-        if: github.event_name == 'schedule' || inputs.update_prices
+        id: commit
         run: |
           if [ -n "$(git status --porcelain data/prices.json data/price-history.json)" ]; then
             git config user.name "github-actions[bot]"
@@ -50,6 +53,23 @@ jobs:
             git commit -m "Update prices"
             git push
           fi
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: prices
+    # Runs after the price refresh, or without it when that job is skipped.
+    if: ${{ !cancelled() && (needs.prices.result == 'success' || needs.prices.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prices.outputs.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
       - run: npm run check-data
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
@@ -59,8 +79,11 @@ jobs:
 
   deploy:
     needs: build
-    if: github.event_name != 'pull_request'
+    if: ${{ !cancelled() && needs.build.result == 'success' && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
