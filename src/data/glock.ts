@@ -349,8 +349,10 @@ function rules(b: Build): Issue[] {
     }
   }
   if (plate && slide && slide.attrs.cut !== 'mos')
-    out.push({ severity: 'error', slots: ['slide', 'plate'], message: 'Optic plates fit MOS slides only. This slide is cut for the optic directly.' });
-  out.push(...sightHeightIssues(sights, optic, !!barrel?.attrs.threaded && { slot: 'barrel' }));
+    out.push({ severity: 'error', slots: ['slide', 'plate'], message: slide.attrs.cut === 'none'
+      ? 'This slide has no optic cut. Optic plates fit MOS slides only; pick an MOS slide.'
+      : 'Optic plates fit MOS slides only. This slide is cut for the optic directly.' });
+  out.push(...sightHeightIssues(sights, optic, !!barrel?.attrs.threaded && { slot: 'barrel' }, true));
   if (barrel?.attrs.threaded && !muzzle)
     out.push({ severity: 'info', slots: ['barrel', 'muzzle'], message: `The ${barrel.attrs.thread} threads stick out past the slide with nothing on them. Add a thread protector to keep them from getting dinged.` });
   if (mag && FM) {

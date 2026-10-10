@@ -49,6 +49,8 @@ export async function syncAlertBuilds(s: AlertSignup, builds: Watched[]): Promis
   }
 }
 
+/** Throws if the request didn't go through, so the page doesn't say alerts are off while they're still on. */
 export async function stopAlerts(s: AlertSignup) {
-  await fetch(`${COMMUNITY_API.replace(/\/$/, '')}/alerts/stop?t=${s.token}`, { method: 'POST' }).catch(() => undefined);
+  const res = await fetch(`${COMMUNITY_API.replace(/\/$/, '')}/alerts/stop?t=${s.token}`, { method: 'POST', signal: AbortSignal.timeout(10000) }).catch(() => null);
+  if (!res?.ok) throw new Error("Couldn't turn off price alerts. Please try again.");
 }

@@ -148,7 +148,7 @@ function rules(b: Build): Issue[] {
   // On the M18 and X-Series slides the rear sight is part of the optic cover plate, so it comes off with the plate.
   if (optic && slide?.attrs.rearSight === 'off')
     out.push({ severity: 'info', slots: ['slide', 'optic'], message: 'On this slide the rear sight is part of the optic cover plate, so it comes off when the optic goes on. Only the front sight is left.' });
-  else out.push(...sightHeightIssues(b.sights, optic, false));
+  else out.push(...sightHeightIssues(b.sights, optic, false, !!slide?.attrs.stripped));
   if (slide && optic) {
     if (slide.attrs.cut === 'none')
       out.push({ severity: 'error', slots: ['slide', 'optic'], message: 'This slide has no optic cut. Choose an optic-ready slide or skip the optic.' });

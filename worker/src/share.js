@@ -58,6 +58,8 @@ export function describe(index, platform, parts, name, note) {
   return { title, description };
 }
 
+const redirect = (target) => `location.replace(${JSON.stringify(target).replace(/</g, '\\u003c')})`;
+
 function page({ title, description, image, url, target }) {
   return `<!doctype html>
 <html lang="en">
@@ -86,16 +88,27 @@ function page({ title, description, image, url, target }) {
 </head>
 <body style="font-family: system-ui, sans-serif; background: #0e2a47; color: #e8eef5; padding: 32px;">
 <p>Opening <a style="color: #ec8a45" href="${esc(target)}">${esc(title)}</a> on Drop-In Builds…</p>
-<script>location.replace(${JSON.stringify(target).replace(/</g, '\\u003c')})</script>
+<script>${redirect(target)}</script>
 </body>
 </html>`;
 }
 
-const html = (body, status = 200) =>
-  new Response(body, {
+/**
+ * The page's only script is its redirect, allowed by its hash; the meta refresh covers browsers that block it.
+ * Styles are inline attributes; the only outside file is the site's icon.
+ */
+async function html(args, status = 200) {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(redirect(args.target)));
+  const hash = btoa(String.fromCharCode(...new Uint8Array(digest)));
+  return new Response(page(args), {
     status,
-    headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': status === 200 ? 'public, max-age=300' : 'no-store' },
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': status === 200 ? 'public, max-age=300' : 'no-store',
+      'content-security-policy': `default-src 'none'; script-src 'sha256-${hash}'; style-src 'unsafe-inline'; img-src ${SITE}; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`,
+    },
   });
+}
 
 /** Answers a share link, or returns null when the path isn't one. */
 export async function sharePage(request, env) {
@@ -110,15 +123,18 @@ export async function sharePage(request, env) {
   let platform, parts, name = '', note = '', image;
   if (community) {
     const row = await env.DB.prepare(`SELECT platform, name, note, parts FROM builds WHERE id = ? AND hidden = 0 AND platform IN (${LIVE_PLATFORMS})`).bind(community[1]).first();
-    if (!row) return html(page({ title: 'Build Not Found', description: 'This shared build was removed.', image: `${SITE}/og/site.png`, url: url.href, target: SITE }), 404);
+    if (!row) return html({ title: 'Build Not Found', description: 'This shared build was removed.', image: `${SITE}/og/site.png`, url: url.href, target: SITE }, 404);
     ({ name, note } = row);
     platform = canonical(row.platform);
     parts = JSON.parse(row.parts);
     const own = `${SITE}/og/c/${community[1]}.png`;
     image = (await exists(own)) ? own : `${SITE}/og/${platform}.png`;
   } else {
-    const parsed = parseCode(decodeURIComponent(custom[1]));
-    if (!parsed) return html(page({ title: 'Drop-In Builds', description: 'Plan a firearm build part by part.', image: `${SITE}/og/site.png`, url: url.href, target: SITE }), 404);
+    let parsed = null;
+    try {
+      parsed = parseCode(decodeURIComponent(custom[1]));
+    } catch {} // malformed percent-encoding, e.g. /b/%E0
+    if (!parsed) return html({ title: 'Drop-In Builds', description: 'Plan a firearm build part by part.', image: `${SITE}/og/site.png`, url: url.href, target: SITE }, 404);
     ({ platform, parts } = parsed);
     image = `${SITE}/og/${platform}.png`;
   }
@@ -126,5 +142,5 @@ export async function sharePage(request, env) {
   const index = await priceIndex();
   const { title, description } = describe(index, platform, parts, name, note);
   const target = `${SITE}/?b=${encodeURIComponent(`${platform}~${parts.join('.')}`)}`;
-  return html(page({ title, description, image, url: url.href, target }));
+  return html({ title, description, image, url: url.href, target });
 }

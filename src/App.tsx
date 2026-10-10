@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { createPortal } from 'react-dom';
 import { PLATFORMS, PRICES_UPDATED_AT, canonicalPlatform } from './data';
 import { RETAILERS, buyUrl } from './data/retailers';
 import {
@@ -25,10 +26,12 @@ import { PriceChart } from './PriceChart';
 import { alertsAvailable, checkAlertSignup, loadAlertSignup, signUpForAlerts, stopAlerts, storeAlertSignup, syncAlertBuilds, type AlertSignup } from './alerts';
 import { MOVABLE, SIDE_LABEL, mountsFor, railLength, type Resolved } from './data/addons';
 import { GUIDES } from './guides/content';
-import { titleCase } from './text';
+import { isPlural, titleCase, withArticle } from './text';
 import type { Build, Issue, Part, Placement, Platform, PlatformModel, Severity, Side, Slot, Tier } from './types';
 
 const STORE_KEY = 'firearm-designer:v2';
+/** The home page's title, the same as the <title> in index.html. */
+const HOME_TITLE = 'Drop-In Builds: Plan Your Firearm Build Part by Part';
 const SEV_LABEL: Record<Severity, string> = { error: 'Conflict', warn: 'Check', info: 'Note' };
 const FAMILIES = ['Rifle', 'Pistol'];
 type Route = 'home' | 'build' | 'community' | 'saved' | 'compare';
@@ -89,6 +92,9 @@ export default function App() {
   /** The two builds on the Compare page, kept for this tab like the build in progress. */
   const [compare, setCompare] = useState<(CompareItem | null)[]>(loadCompare);
   useEffect(() => { storeCompare(compare); }, [compare]);
+  /** Builders opened in this tab. Compare offers the build in progress only from one of these. */
+  const [opened, setOpened] = useState(() => new Set(Object.keys(selections)));
+  useEffect(() => { if (route === 'build' && !opened.has(platformId)) setOpened(new Set(opened).add(platformId)); }, [route, platformId, opened]);
 
   useEffect(() => { void checkShareLinks(); }, []);
   useEffect(() => {
@@ -189,8 +195,8 @@ export default function App() {
   // Each page names itself in the browser tab, history and bookmarks.
   useEffect(() => {
     const name = PLATFORMS.find((p) => p.id === platformId)?.name ?? '';
-    const page = { home: 'Plan Your Build, Check the Fit, Pay Less', build: `Build Your ${name}`, saved: 'My Builds', community: 'Community Builds', compare: 'Compare Builds' }[route];
-    document.title = `${page} | Drop-In Builds`;
+    const page = { home: '', build: `Build Your ${name}`, saved: 'My Builds', community: 'Community Builds', compare: 'Compare Builds' }[route];
+    document.title = page ? `${page} | Drop-In Builds` : HOME_TITLE;
   }, [route, platformId]);
 
   return (
@@ -233,6 +239,7 @@ export default function App() {
             setPlatformId={(id) => { setPlatformId(id); setOpenSavedId(null); setCommunityOpen(null); }}
             selection={selOf(platformId)}
             setSelection={(sel) => { setSelections((s) => ({ ...s, [platformId]: sel })); setCommunityOpen(null); }}
+            startOver={(sel) => { setSelections((s) => ({ ...s, [platformId]: sel })); setOpenSavedId(null); setCommunityOpen(null); }}
             openSaved={openSaved}
             communityOpen={communityOpen?.platform === platformId ? communityOpen : null}
             onSave={saveBuild}
@@ -279,7 +286,8 @@ export default function App() {
             items={compare}
             onSet={(i, item) => setCompare((list) => list.map((x, k) => (k === i ? item : x)))}
             saved={saved}
-            current={partIds(selOf(platformId)).length || ownsAny(selOf(platformId)) ? { platform: platformId, selection: selOf(platformId), name: openSaved?.name } : null}
+            current={opened.has(platformId) && (partIds(selOf(platformId)).length || ownsAny(selOf(platformId))) ? { platform: platformId, selection: selOf(platformId), name: openSaved?.name } : null}
+            lastPlatform={platformId}
             onOpen={(item) => openInBuilder(item.platform, item.selection)}
           />
         )}
@@ -309,23 +317,50 @@ export default function App() {
 /** One "Change platform" button next to the builder's title; its panel lists rifles and pistols side by side, grouped by maker. */
 function PlatformMenu({ current, onPick }: { current: Platform; onPick: (id: string) => void }) {
   const [open, setOpen] = useState(false);
+  /** Which item to focus once the menu opens: the current platform, or the first or last item. */
+  const [focusOn, setFocusOn] = useState<'current' | 'first' | 'last' | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const items = () => [...(ref.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? [])];
+  useEffect(() => {
+    if (!open || !focusOn) return;
+    const list = items();
+    (focusOn === 'last' ? list[list.length - 1] : focusOn === 'current' ? list.find((x) => x.classList.contains('active')) ?? list[0] : list[0])?.focus();
+    setFocusOn(null);
+  }, [open, focusOn]);
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (ref.current?.contains(document.activeElement)) btnRef.current?.focus();
+      setOpen(false);
+    };
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
     return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
   }, [open]);
   return (
     <div className="pmenu" ref={ref}>
-      <button className="pmenu-btn" aria-expanded={open} aria-haspopup="true" onClick={() => setOpen(!open)}>
+      <button ref={btnRef} className="pmenu-btn" aria-expanded={open} aria-haspopup="true" onClick={() => setOpen(!open)}
+        onKeyDown={(e) => {
+          if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+          e.preventDefault();
+          setOpen(true);
+          setFocusOn(e.key === 'ArrowUp' ? 'last' : 'current');
+        }}>
         Change Platform
         <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" /></svg>
       </button>
       {open && (
-        <div className="pmenu-panel" role="menu">
+        <div className="pmenu-panel" role="menu" aria-label="Platforms" onKeyDown={(e) => {
+          const list = items();
+          const at = list.indexOf(document.activeElement as HTMLButtonElement);
+          const next = { ArrowDown: at + 1, ArrowUp: at < 0 ? -1 : at - 1, Home: 0, End: list.length - 1 }[e.key];
+          if (next === undefined) return;
+          e.preventDefault();
+          list[(next + list.length) % list.length]?.focus();
+        }}>
           {FAMILIES.map((fam) => {
             const list = PLATFORMS.filter((p) => p.family === fam);
             return (
@@ -482,8 +517,10 @@ function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string, part?: P
 
 /* ================================================================== builder */
 
-function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelection, openSaved, communityOpen, onSave, onShare, onCopyLink, onBuyClick, onBrowseFeatured, onCompare }: {
+function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelection, startOver, openSaved, communityOpen, onSave, onShare, onCopyLink, onBuyClick, onBrowseFeatured, onCompare }: {
   platformId: string; startPart: Part | null; setPlatformId: (id: string) => void; selection: Selection; setSelection: (s: Selection) => void;
+  /** Replaces the whole build, leaving the saved or community build it came from: the next save is a new build. */
+  startOver: (s: Selection) => void;
   openSaved: SavedBuild | null; communityOpen: CommunityBuild | null; onSave: (name: string, asNew: boolean) => void;
   onShare: (name: string, note: string) => Promise<void>; onCopyLink: () => void; onBuyClick: () => void; onBrowseFeatured: () => void;
   onCompare: () => void;
@@ -521,6 +558,7 @@ function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelec
   const made = platform.modelOf?.(build);
   const model = platform.models?.find((m) => m.id === (made?.id ?? modelPick[platform.id])) ?? platform.models?.find((m) => m.presets === platform.presets);
   const starter = model ? { ...platform, presets: model.presets, base: model.base } : platform;
+  const baseNote = rifle ? 'Base is a plain rifle: standard parts, no sights or optic.' : 'Base is the factory gun as it comes in the box.';
 
   /** Puts a part in its slot; `own` marks it as one the builder already has. */
   const choose = (slot: string, partId: string, own = false) => {
@@ -558,7 +596,7 @@ function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelec
               <span className="tb-label">Model</span>
               {platform.models.map((m) => (
                 <button key={m.id} className={'chip' + (made?.id === m.id ? ' on' : '')} aria-pressed={made?.id === m.id} title={`${m.name}: ${m.blurb}`}
-                  onClick={() => { setModelPick({ ...modelPick, [platform.id]: m.id }); setSelection(baseSelection({ ...platform, presets: m.presets, base: m.base })); setOpenSlot(null); }}>
+                  onClick={() => { setModelPick({ ...modelPick, [platform.id]: m.id }); startOver(baseSelection({ ...platform, presets: m.presets, base: m.base })); setOpenSlot(null); }}>
                   {m.short}
                 </button>
               ))}
@@ -571,17 +609,23 @@ function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelec
           <div className="wb-center">
             <div className="bp-toolbar" role="toolbar" aria-label="Build actions">
               <span className="tb-label">{chosen === 0 ? 'Start From' : 'Start Over From'}</span>
-              <button className="chip" onClick={() => { setSelection(baseSelection(starter)); setOpenSlot(null); }}>
+              <button className="chip" title={baseNote} onClick={() => { startOver(baseSelection(starter)); setOpenSlot(null); }}>
                 Base{model ? ` ${model.short}` : ''} <span className="chip-amt">{money(totalOf(platform, toBuild(platform, baseSelection(starter))))}</span>
               </button>
-              {(['budget', 'value', 'premium'] as Tier[]).map((t) => (
-                <button key={t} className="chip" onClick={() => { setSelection(presetSelection(starter, t)); setOpenSlot(null); }}>
-                  {TIER_LABEL[t]}{model ? ` ${model.short}` : ''} <span className="chip-amt">{money(totalOf(platform, toBuild(platform, presetSelection(starter, t))))}</span>
-                </button>
-              ))}
+              {(['budget', 'value', 'premium'] as Tier[]).map((t) => {
+                const sel = presetSelection(starter, t);
+                const optic = opticTag(platform.parts.find((p) => p.id === sel.optic));
+                return (
+                  <button key={t} className="chip" onClick={() => { startOver(sel); setOpenSlot(null); }}>
+                    {TIER_LABEL[t]}{model ? ` ${model.short}` : ''} <span className="chip-amt">{money(totalOf(platform, toBuild(platform, sel)))}</span>
+                    {optic && <> <span className="chip-tag">{optic}</span></>}
+                  </button>
+                );
+              })}
               <button className="chip" onClick={onBrowseFeatured}>Community Builds</button>
               <button className="chip chip-own" onClick={() => setFinding(true)}>Parts I Own</button>
-              {chosen > 0 && <button className="chip chip-clear" onClick={() => { setSelection({}); setOpenSlot(null); }}>Clear Build</button>}
+              {chosen > 0 && <button className="chip chip-clear" onClick={() => { startOver({}); setOpenSlot(null); }}>Clear Build</button>}
+              <p className="tb-note">{baseNote} Budget, Best Value and Premium are builds from our parts list.</p>
             </div>
             <figure className="blueprint">
               <div className="bp-strip">
@@ -653,6 +697,12 @@ function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelec
   );
 }
 
+/** The tag on a starter build's chip saying what optic it comes with, if any. */
+function opticTag(optic?: Part) {
+  if (!optic) return null;
+  return optic.attrs.kind === 'lpvo' || optic.attrs.kind === 'scope' ? 'Scope' : 'Red Dot';
+}
+
 function groupSlots(slots: Slot[]): [string, Slot[]][] {
   const m = new Map<string, Slot[]>();
   for (const s of slots) m.set(s.group, [...(m.get(s.group) ?? []), s]);
@@ -689,14 +739,14 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
                 <li key={slot.id} className={'part-row ' + (other ? 'other' : states[slot.id]) + (own ? ' owned' : '') + (hover === slot.id ? ' hover' : '')}
                   onMouseEnter={() => onHover(slot.id)} onMouseLeave={() => onHover(null)}>
                   <span className="part-no">{platform.slots.indexOf(slot) + 1}</span>
-                  <button className="part-main" onClick={() => onOpen(slot.id)} aria-label={`${slot.name}: ${part ? `${part.brand} ${part.name}. Change` : 'choose a part'}`}>
+                  <button className="part-main" onClick={() => onOpen(slot.id)}>
                     <span className="part-slot">{slot.name}{!slot.required && <span className="opt">Optional</span>}</span>
                     {part ? (
-                      <span className="part-name"><span className="brand-dim">{part.brand}</span> {part.name}{part.serialized && <span className="ffl" title="Serialized: ships to an FFL">FFL</span>}</span>
+                      <span className="part-name"><span className="brand-dim">{part.brand}</span> {part.name}{part.serialized && <span className="ffl" title="Serialized: ships to an FFL">FFL</span>}<span className="sr">. Change</span></span>
                     ) : other ? (
                       <span className="part-name">Your own {slot.name.toLowerCase()} <span className="brand-dim">(not in our list, so its fit isn't checked)</span></span>
                     ) : (
-                      <span className="part-name choose">{slot.required ? `Choose a ${slot.name.toLowerCase()}` : 'Add one'} →</span>
+                      <span className="part-name choose">{slot.required ? `Choose ${withArticle(slot.name)}` : 'Add one'} →</span>
                     )}
                     {rowIssues.map((i, k) => <span key={k} className={'row-issue ' + i.severity}>{i.message}</span>)}
                   </button>
@@ -773,7 +823,7 @@ function MountControl({ slot, m, onMount }: { slot: Slot; m: Resolved; onMount: 
 }
 
 function Summary({ platform, build, issues, aware, states, status, total, owned, openSaved, onSave, onShare, onCopyLink, onOpen, onCompare, onFindOwned }: {
-  platform: Platform; build: Build; issues: Issue[]; aware: Aware[]; states: Record<string, RegionState>; status: { cls: string; text: string }; total: number;
+  platform: Platform; build: Build; issues: Issue[]; aware: Aware[]; states: Record<string, RegionState>; status: { cls: string; text: string; complete: boolean }; total: number;
   owned: Owned; openSaved: SavedBuild | null; onSave: (name: string, asNew: boolean) => void; onShare: (name: string, note: string) => Promise<void>;
   onCopyLink: () => void; onOpen: (s: string) => void; onCompare: () => void; onFindOwned: () => void;
 }) {
@@ -784,7 +834,7 @@ function Summary({ platform, build, issues, aware, states, status, total, owned,
   const [shareError, setShareError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // A part that isn't in our catalog can't go on the Community page, where every part has to be checkable.
-  const canShare = status.cls === 'ok' && owned.other.size === 0;
+  const canShare = status.complete && owned.other.size === 0;
   const all = platform.slots.map((s) => build[s.id]).filter((p): p is Part => !!p);
   const chosen = all.filter((p) => !owned.owned.has(p.slot));
   const ownedParts = all.filter((p) => owned.owned.has(p.slot));
@@ -934,6 +984,32 @@ function Dock({ total, status, toBuy }: { total: number; status: { cls: string; 
 
 /* ------------------------------------------------------------------ picker */
 
+/**
+ * Shared by the side drawers. Focus starts inside the drawer and the page behind it is inert, so Tab stays
+ * in the drawer. Escape closes it, and focus goes back to the button that opened it. Drawers render into
+ * <body> (a portal) so they sit outside the inert #root.
+ */
+function useDrawer(onClose: () => void, focusRef: RefObject<HTMLElement>) {
+  const closeFn = useRef(onClose);
+  closeFn.current = onClose;
+  useEffect(() => {
+    const opener = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
+    const page = document.getElementById('root');
+    page?.setAttribute('inert', '');
+    focusRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeFn.current(); };
+    document.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+      page?.removeAttribute('inert');
+      if (opener?.isConnected) opener.focus();
+    };
+  }, []);
+}
+
 type SortKey = 'fit' | 'price' | 'picks';
 
 function Picker({ platform, slot, focusId: focusProp, number, model, build, place, selectedId, ownsSelected, onChoose, onToggleOwn, onOwnOther, onRemove, onClose, onBuyClick }: {
@@ -946,18 +1022,8 @@ function Picker({ platform, slot, focusId: focusProp, number, model, build, plac
   const [focusId] = useState(focusProp);
   const [allModels, setAllModels] = useState(!!focusId && !!model?.parts && !model.parts(platform.parts.find((p) => p.id === focusId)!));
   const closeRef = useRef<HTMLButtonElement>(null);
-  const closeFn = useRef(onClose);
-  closeFn.current = onClose;
   const rank = { ok: 0, info: 0, warn: 1, error: 2 } as const;
-
-  useEffect(() => {
-    closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeFn.current(); };
-    document.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
-  }, []);
+  useDrawer(onClose, closeRef);
 
   // In a builder with models, the list starts with the current model's parts (frames, slides, barrels...).
   const inSlot = platform.parts.filter((p) => p.slot === slot.id);
@@ -971,15 +1037,17 @@ function Picker({ platform, slot, focusId: focusProp, number, model, build, plac
     .filter((c) => !hideConflicts || c.sev !== 'error')
     .sort((a, b) => {
       if (focusId && (a.part.id === focusId) !== (b.part.id === focusId)) return a.part.id === focusId ? -1 : 1;
-      if (sort === 'price') return a.price - b.price;
-      if (sort === 'picks') return Number(!!b.part.pick) - Number(!!a.part.pick) || a.price - b.price;
+      // Every sort lists parts that conflict with the build after the ones that fit.
+      const clash = Number(a.sev === 'error') - Number(b.sev === 'error');
+      if (sort === 'price') return clash || a.price - b.price;
+      if (sort === 'picks') return clash || Number(!!b.part.pick) - Number(!!a.part.pick) || a.price - b.price;
       return rank[a.sev] - rank[b.sev] || a.price - b.price;
     });
 
-  return (
+  return createPortal(
     <div className="drawer-wrap">
       <div className="scrim" onClick={onClose} />
-      <aside className="drawer" role="dialog" aria-modal="true" aria-labelledby="picker-title">
+      <div className="drawer" role="dialog" aria-modal="true" aria-labelledby="picker-title">
         <header className="drawer-head">
           <div>
             <p className="kicker">Item {number} · {platform.name}</p>
@@ -1015,13 +1083,14 @@ function Picker({ platform, slot, focusId: focusProp, number, model, build, plac
           {candidates.length === 0 && <li className="cand-empty">Every option conflicts with your current build. Turn off the filter to see why.</li>}
         </ul>
         <div className="own-other">
-          <p>Already have a {slot.name.toLowerCase()} that isn't listed here?</p>
+          <p>Already have {withArticle(slot.name)} that {isPlural(slot.name) ? "aren't" : "isn't"} listed here?</p>
           <button className="btn" onClick={onOwnOther}>Use My Own {titleCase(slot.name)}</button>
           <p className="dim">It's left out of the total. We can't check its fit, so double-check it with the maker.</p>
         </div>
         {onRemove && <button className="btn ghost wide" onClick={onRemove}>Remove {titleCase(slot.name)} from Build</button>}
-      </aside>
-    </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -1065,7 +1134,7 @@ function Candidate({ part, open, issues, sev, selected, owned, onChoose, onBuyCl
         <div className="offers-wrap">
           {hasHistory(part) && <PriceChart points={partSeries(part, daysAgo(90))} label="Best Price, Last 90 Days" />}
           <table className="offers">
-            <thead><tr><th>Retailer</th><th className="num">Price</th><th>Stock</th><th>Checked</th><th /></tr></thead>
+            <thead><tr><th>Retailer</th><th className="num">Price</th><th>Stock</th><th>Checked</th><th><span className="sr">Link</span></th></tr></thead>
             <tbody>
               {[...part.offers].sort((a, b) => a.price - b.price).map((o) => (
                 <tr key={o.retailer} className={best && o.retailer === best.retailer ? 'best' : ''}>
@@ -1098,26 +1167,17 @@ function OwnedFinder({ platform, build, owned, onOwn, onOwnOther, onSwitch, onCl
   const [query, setQuery] = useState('');
   const [otherSlot, setOtherSlot] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-  const closeFn = useRef(onClose);
-  closeFn.current = onClose;
-  useEffect(() => {
-    inputRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeFn.current(); };
-    document.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
-  }, []);
+  useDrawer(onClose, inputRef);
   const { here, elsewhere } = useMemo(() => findParts(query, platform), [query, platform]);
   const shown = here.slice(0, 30);
   const otherPlatforms = [...new Map(elsewhere.map((f) => [f.platform.id, f.platform])).values()];
   const ownedList = platform.slots.filter((s) => owned.owned.has(s.id) || owned.other.has(s.id));
   const searched = query.trim().length > 0;
 
-  return (
+  return createPortal(
     <div className="drawer-wrap">
       <div className="scrim" onClick={onClose} />
-      <aside className="drawer finder" role="dialog" aria-modal="true" aria-labelledby="finder-title">
+      <div className="drawer finder" role="dialog" aria-modal="true" aria-labelledby="finder-title">
         <header className="drawer-head">
           <div>
             <p className="kicker">{platform.name}</p>
@@ -1174,8 +1234,9 @@ function OwnedFinder({ platform, build, owned, onOwn, onOwnOther, onSwitch, onCl
           </div>
         </section>
         <button className="btn primary wide" onClick={onClose}>Done</button>
-      </aside>
-    </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -1248,6 +1309,8 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onCompare, o
   const [builds, setBuilds] = useState<CommunityBuild[] | null>(null);
   const [featured, setFeatured] = useState<CommunityBuild[]>([]);
   const [error, setError] = useState<string | null>(null);
+  /** Bumped by Try Again to load the list again. */
+  const [attempt, setAttempt] = useState(0);
   const [votes, setVotes] = useState(myVotes);
   const [confirmReport, setConfirmReport] = useState<string | null>(null);
   const isPlatform = PLATFORMS.some((p) => p.id === filter);
@@ -1264,7 +1327,7 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onCompare, o
       .then((list) => { if (live) setBuilds(list.filter((b) => matches(b.platform))); })
       .catch((e: Error) => { if (live) { setBuilds([]); setError(e.message); } });
     return () => { live = false; };
-  }, [filter, sort]);
+  }, [filter, sort, attempt]);
   useEffect(() => { featuredBuilds().then(setFeatured).catch(() => setFeatured([])); }, []);
 
   const replace = (b: CommunityBuild | undefined) => {
@@ -1361,8 +1424,12 @@ function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onCompare, o
             <button key={k} className={'chip' + (filter === k ? ' on' : '')} aria-pressed={filter === k} onClick={() => setFilter(k)}>{label}</button>
           ))}
         </div>
-        {error && <p className="form-error" role="alert">{error}</p>}
-        {builds === null ? <p className="dim">Loading shared builds…</p> : builds.length === 0 ? (
+        {error ? (
+          <div className="load-error">
+            <p className="form-error" role="alert">{error}</p>
+            <button className="btn" onClick={() => { setBuilds(null); setAttempt(attempt + 1); }}>Try Again</button>
+          </div>
+        ) : builds === null ? <p className="dim">Loading shared builds…</p> : builds.length === 0 ? (
           <div className="empty-state card">
             <h2>No Shared Builds Here Yet</h2>
             <p>Be the first. Put together a complete build, then press Share to Community.</p>
@@ -1426,7 +1493,12 @@ function AlertsPanel({ signup, hasBuilds, onSignUp, onRefresh, onStop }: {
           ? <>We'll email <b>{signup.email}</b> when parts in your saved builds go up or down in price, at most once a day. Builds you save here are added automatically.</>
           : <>We sent a link to <b>{signup.email}</b>. Press it to turn on price alerts.</>}</p>
       </div>
-      <button className="btn ghost" disabled={busy} onClick={async () => { setBusy(true); await onStop(); setBusy(false); }}>{signup.confirmed ? 'Turn Off' : 'Cancel'}</button>
+      <button className="btn ghost" disabled={busy} onClick={async () => {
+        setBusy(true); setError(null);
+        try { await onStop(); } catch (err) { setError((err as Error).message); }
+        setBusy(false);
+      }}>{signup.confirmed ? 'Turn Off' : 'Cancel'}</button>
+      {error && <p className="form-error" role="alert">{error}</p>}
     </section>
   );
   return (

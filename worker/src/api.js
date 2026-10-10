@@ -1,5 +1,5 @@
 // Community builds API. Runs as a Cloudflare Worker with a D1 database bound as `DB`.
-// Everything is anonymous: visitors are identified only by a salted hash of their IP address,
+// Everything is anonymous: visitors are identified only by a salted hash of their IP address (IPv6: its /64),
 // which limits each person to one vote, one report and one counted buy click per build.
 // Share links with picture cards (/c/<id> and /b/<code>) are answered by share.js.
 
@@ -24,7 +24,9 @@ const idsFor = (platform) => [platform, ...Object.keys(PLATFORM_ALIASES).filter(
  */
 export const LIVE_PLATFORMS = [...PLATFORM_IDS, ...Object.keys(PLATFORM_ALIASES)].map((p) => `'${p}'`).join(', ');
 
-const ALLOWED_ORIGINS = ['https://rubycrest1700.github.io', 'https://dropinbuilds.com', 'https://www.dropinbuilds.com', 'http://localhost:5173', 'http://localhost:4173'];
+const ALLOWED_ORIGINS = ['https://rubycrest1700.github.io', 'https://dropinbuilds.com', 'https://www.dropinbuilds.com'];
+/** Local Vite dev and preview servers, allowed only when the DEV variable is set (e.g. `wrangler dev --var DEV:1`). */
+const DEV_ORIGINS = ['http://localhost:5173', 'http://localhost:4173'];
 const DAY = 86_400_000;
 const WEEK = 7 * DAY;
 const MAX_SHARES_PER_DAY = 10;
@@ -49,9 +51,12 @@ const json = (data, status, origin) =>
     },
   });
 
+/** The caller's origin when it's allowed, otherwise the site's. */
+const allowedOrigin = (origin, env) => (ALLOWED_ORIGINS.includes(origin) || (env.DEV && DEV_ORIGINS.includes(origin)) ? origin : ALLOWED_ORIGINS[0]);
+
 function cors(origin) {
   return {
-    'access-control-allow-origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    'access-control-allow-origin': origin,
     'access-control-allow-methods': 'GET, POST, PUT, OPTIONS',
     'access-control-allow-headers': 'content-type',
     vary: 'origin',
@@ -66,19 +71,36 @@ export function cleanText(s, max) {
 
 async function visitorHash(request, salt) {
   const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
-  const bytes = new TextEncoder().encode(`${salt}:${ip}`);
+  const bytes = new TextEncoder().encode(`${salt}:${visitorOf(ip)}`);
   const digest = await crypto.subtle.digest('SHA-256', bytes);
   return [...new Uint8Array(digest)].slice(0, 12).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-/** The visitor's network: the first three parts of an IPv4 address, or the first 48 bits of an IPv6 one. */
-export function networkOf(ip) {
-  if (ip.includes('.')) return ip.split('.').slice(0, 3).join('.');
+/** An IPv4 address (IPv4-mapped IPv6 included) as plain IPv4, or an IPv6 address as its eight groups. */
+function parseIp(ip) {
+  const v4 = ip.match(/^(?:::ffff:)?(\d+\.\d+\.\d+\.\d+)$/i);
+  if (v4) return { v4: v4[1] };
   const [head, tail = ''] = ip.split('::');
   const h = head ? head.split(':') : [];
   const t = tail ? tail.split(':') : [];
   const groups = [...h, ...Array(Math.max(8 - h.length - t.length, 0)).fill('0'), ...t];
-  return groups.slice(0, 3).map((g) => g.toLowerCase().replace(/^0+(?=.)/, '')).join(':');
+  return { groups: groups.map((g) => g.toLowerCase().replace(/^0+(?=.)/, '')) };
+}
+
+/**
+ * Who counts as one visitor: a full IPv4 address, or an IPv6 /64 network (the first four groups). One home or
+ * phone gets a whole /64 and can switch addresses inside it freely.
+ */
+export function visitorOf(ip) {
+  const { v4, groups } = parseIp(ip);
+  return v4 ?? `${groups.slice(0, 4).join(':')}::/64`;
+}
+
+/** The visitor's network: the first three parts of an IPv4 address, or the first 48 bits of an IPv6 one. */
+export function networkOf(ip) {
+  const { v4, groups } = parseIp(ip);
+  if (v4) return v4.split('.').slice(0, 3).join('.');
+  return groups.slice(0, 3).join(':');
 }
 
 async function networkHash(request, salt) {
@@ -111,7 +133,7 @@ const SORTS = {
 };
 
 export async function handle(request, env, now = Date.now()) {
-  const origin = request.headers.get('origin') ?? '';
+  const origin = allowedOrigin(request.headers.get('origin') ?? '', env);
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(origin) });
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '');

@@ -3,7 +3,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
-import { cleanText, handle, networkOf } from './src/api.js';
+import { createHash } from 'node:crypto';
+import { cleanText, handle, networkOf, visitorOf } from './src/api.js';
 
 function fakeD1() {
   const db = new DatabaseSync(':memory:');
@@ -116,6 +117,34 @@ test('groups addresses by network', () => {
   assert.equal(networkOf('203.0.113.7'), '203.0.113');
   assert.equal(networkOf('2001:0db8:0001:aaaa::1'), '2001:db8:1');
   assert.equal(networkOf('2001:db8::1'), '2001:db8:0');
+  assert.equal(networkOf('::ffff:203.0.113.7'), '203.0.113');
+});
+
+test('one visitor is a full IPv4 address or an IPv6 /64', () => {
+  assert.equal(visitorOf('203.0.113.7'), '203.0.113.7');
+  assert.equal(visitorOf('::FFFF:203.0.113.7'), '203.0.113.7');
+  assert.equal(visitorOf('2001:0db8:0001:0002:aaaa:bbbb:cccc:dddd'), '2001:db8:1:2::/64');
+  assert.equal(visitorOf('2001:db8:1:2::1'), '2001:db8:1:2::/64');
+  assert.equal(visitorOf('2001:db8::1'), '2001:db8:0:0::/64');
+});
+
+test('addresses in one IPv6 /64 vote once and share the daily limits', async () => {
+  const e = env();
+  const home = (i) => `2001:db8:1:2::${i.toString(16)}`;
+  const { id } = (await share(e, {}, home(0))).body.build;
+  for (let i = 1; i <= 20; i++) await call(e, 'POST', `/api/builds/${id}/vote`, null, home(i));
+  for (let i = 1; i <= 5; i++) await call(e, 'POST', `/api/builds/${id}/click`, null, home(i));
+  const b = (await call(e, 'GET', `/api/builds/${id}`)).body.build;
+  assert.equal(b.votes, 1);
+  assert.equal(b.clicks, 1);
+  for (let i = 1; i < 10; i++) assert.equal((await share(e, { name: `Build ${i}` }, home(100 + i))).status, 201);
+  assert.equal((await share(e, { name: 'One too many' }, home(200))).status, 429);
+  // Another /64, even in the same /48, is someone else.
+  assert.equal((await share(e, { name: 'Neighbor' }, '2001:db8:1:3::1')).status, 201);
+  assert.equal((await call(e, 'POST', `/api/builds/${id}/vote`, null, '2001:db8:1:3::1')).body.build.votes, 2);
+  // IPv4-mapped addresses count as the IPv4 address.
+  await call(e, 'POST', `/api/builds/${id}/vote`, null, '203.0.113.7');
+  assert.equal((await call(e, 'POST', `/api/builds/${id}/vote`, null, '::ffff:203.0.113.7')).body.build.votes, 3);
 });
 
 test('featured picks the most voted builds of the week', async () => {
@@ -192,6 +221,29 @@ test('bad share links get the site card and a 404', async () => {
   assert.equal((await page(env(), '/b/glock19~<script>')).status, 404);
   assert.equal((await page(env(), '/c/aaaaaaaaaa')).status, 404);
   assert.equal((await page(env(), '/api/builds')).status, 200);
+  const bad = await page(env(), '/b/%E0');
+  assert.equal(bad.status, 404);
+  assert.match(bad.type, /^text\/html/);
+  assert.equal(meta(bad.text, 'og:title'), 'Drop-In Builds');
+});
+
+test('share pages allow only their redirect script and cannot be framed', async () => {
+  const { default: worker } = await import('./src/index.js');
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify(INDEX));
+  try {
+    for (const path of ['/b/glock19~g19-frame-g5.g-fcg-apex5', '/b/%E0']) {
+      const r = await worker.fetch(new Request(`https://share.example${path}`), env());
+      const csp = r.headers.get('content-security-policy');
+      assert.match(csp, /default-src 'none'/);
+      assert.match(csp, /frame-ancestors 'none'/);
+      const script = (await r.text()).match(/<script>([^<]*)<\/script>/)[1];
+      const hash = createHash('sha256').update(script).digest('base64');
+      assert.ok(csp.includes(`script-src 'sha256-${hash}'`), csp);
+    }
+  } finally {
+    globalThis.fetch = realFetch;
+  }
 });
 
 /* ------------------------------------------------------------- price alerts */
@@ -256,6 +308,24 @@ test('every response carries basic browser protections', async () => {
   assert.equal(res.headers.get('x-frame-options'), 'DENY');
   assert.equal(res.headers.get('content-type'), 'application/json; charset=utf-8');
   assert.deepEqual(await res.json(), { ok: true });
+  const { withSecurityHeaders } = await import('./src/index.js');
+  const other = await withSecurityHeaders(new Response('<p>hi</p>', { headers: { 'content-type': 'text/html' } }));
+  assert.match(other.headers.get('content-security-policy'), /default-src 'none'.*frame-ancestors 'none'/);
+});
+
+test('price alert pages run no scripts, post only to themselves and cannot be framed', async () => {
+  const e = alertEnv();
+  const { token } = (await signup(e)).body;
+  const csp = (await visit(e, 'GET', `/alerts/stop?t=${token}`)).headers.get('content-security-policy');
+  assert.equal(csp, "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
+});
+
+test('the API answers only the site, and local dev servers only when DEV is set', async () => {
+  const from = (origin, e = env()) => handle(new Request('https://api.example/health', { headers: { origin } }), e).then((r) => r.headers.get('access-control-allow-origin'));
+  assert.equal(await from('https://dropinbuilds.com'), 'https://dropinbuilds.com');
+  assert.equal(await from('http://localhost:5173'), 'https://rubycrest1700.github.io');
+  assert.equal(await from('https://evil.example'), 'https://rubycrest1700.github.io');
+  assert.equal(await from('http://localhost:5173', { ...env(), DEV: '1' }), 'http://localhost:5173');
 });
 
 test('emails confirmed signups when prices move, once, then stays quiet', async () => {
