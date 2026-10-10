@@ -38,7 +38,8 @@ export function parseBuildLink(text: string): { platform: string; selection: Sel
   const c = url.pathname.match(/\/c\/([a-z0-9]{10})\/?$/);
   if (c) return { communityId: c[1] };
   const b = url.pathname.match(/\/b\/([^/]+)\/?$/);
-  const raw = url.searchParams.get('b') ?? (b ? decodeURIComponent(b[1]) : null);
+  let raw: string | null;
+  try { raw = url.searchParams.get('b') ?? (b ? decodeURIComponent(b[1]) : null); } catch { return null; } // a broken %-escape
   if (!raw) return null;
   const [old, ids = ''] = raw.split('~');
   const pid = canonicalPlatform(old);
@@ -64,9 +65,9 @@ function factsOf(item: CompareItem) {
 }
 type Facts = ReturnType<typeof factsOf>;
 
-export function ComparePage({ items, onSet, saved, current, onOpen }: {
+export function ComparePage({ items, onSet, saved, current, lastPlatform, onOpen }: {
   items: (CompareItem | null)[]; onSet: (i: number, item: CompareItem | null) => void; saved: SavedBuild[];
-  current: { platform: string; selection: Selection; name?: string } | null; onOpen: (item: CompareItem) => void;
+  current: { platform: string; selection: Selection; name?: string } | null; lastPlatform: string; onOpen: (item: CompareItem) => void;
 }) {
   const [a, b] = items;
   const fa = useMemo(() => (a ? factsOf(a) : null), [a]);
@@ -85,7 +86,8 @@ export function ComparePage({ items, onSet, saved, current, onOpen }: {
       </div>
     </div>
   ) : (
-    <Chooser key={i} label={'AB'[i]} saved={saved} current={current} otherPlatform={(i === 0 ? b : a)?.platform} onPick={(item) => onSet(i, item)} />
+    <Chooser key={i} label={'AB'[i]} saved={saved} current={current} other={i === 0 ? b : a} lastPlatform={lastPlatform}
+      skipCurrent={i === 1 || (i === 0 ? b : a)?.kind === 'Current Build'} onPick={(item) => onSet(i, item)} />
   );
 
   return (
@@ -217,17 +219,18 @@ function PartCell({ f, slot }: { f: Facts; slot: Slot }) {
 
 type Source = 'saved' | 'current' | 'starter' | 'community' | 'link';
 
-function Chooser({ label, saved, current, otherPlatform, onPick }: {
+/** `skipCurrent`: open on another source than the build in progress, so both sides don't start on the same build. */
+function Chooser({ label, saved, current, other, lastPlatform, skipCurrent, onPick }: {
   label: string; saved: SavedBuild[]; current: { platform: string; selection: Selection; name?: string } | null;
-  otherPlatform?: string; onPick: (item: CompareItem) => void;
+  other: CompareItem | null; lastPlatform: string; skipCurrent: boolean; onPick: (item: CompareItem) => void;
 }) {
   const sources: [Source, string][] = [
     ...(saved.length ? [['saved', 'My Builds'] as [Source, string]] : []),
     ...(current ? [['current', 'Current Build'] as [Source, string]] : []),
     ['starter', 'Starter Builds'], ['community', 'Community'], ['link', 'Paste a Link'],
   ];
-  const [src, setSrc] = useState<Source>(sources[0][0]);
-  const [platform, setPlatform] = useState(otherPlatform ?? current?.platform ?? PLATFORMS[0].id);
+  const [src, setSrc] = useState<Source>((sources.find(([k]) => !skipCurrent || k !== 'current') ?? sources[0])[0]);
+  const [platform, setPlatform] = useState(other?.platform ?? current?.platform ?? lastPlatform);
   const [community, setCommunity] = useState<CommunityBuild[] | null>(null);
   const [link, setLink] = useState('');
   const [error, setError] = useState<string | null>(null);

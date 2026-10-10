@@ -224,15 +224,16 @@ h1 { font: 700 clamp(28px, 4.2vw, 40px)/1.08 var(--f-head); letter-spacing: -.00
   .bp-canvas.zoomed.pistol .bp { width: 170%; }
 }
 
-.title-block { display: grid; grid-template-columns: repeat(6, auto); border-top: 1px solid rgba(234,243,255,.3); }
-.title-block > div { padding: 8px 14px 10px; border-left: 1px solid rgba(234,243,255,.3); min-width: 0; }
-.title-block > div:first-child { border-left: 0; }
+/* Cells wrap onto a second row when the drawing is narrow; each draws its left and top rule, and the ones on
+   the outer edges are pulled under the edge and clipped. */
+.title-block { display: flex; flex-wrap: wrap; border-top: 1px solid rgba(234,243,255,.3); overflow: hidden; }
+.title-block > div { flex: 1 0 auto; padding: 8px 14px 10px; margin: -1px 0 0 -1px; border-left: 1px solid rgba(234,243,255,.3); border-top: 1px solid rgba(234,243,255,.3); min-width: 0; }
 .title-block span { display: block; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; opacity: .7; }
 .title-block b { display: block; font-weight: 500; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tb-ok { color: #9ff0bf; } .tb-warn { color: var(--bp-hi); } .tb-error { color: var(--bp-err); }
 @media (max-width: 719px) {
-  .title-block { grid-template-columns: 1fr 1fr; }
-  .title-block > div { border-left: 0; border-top: 1px solid rgba(234,243,255,.18); }
+  .title-block { display: grid; grid-template-columns: 1fr 1fr; }
+  .title-block > div { margin: 0; border-left: 0; border-top: 1px solid rgba(234,243,255,.18); }
   .title-block > div:nth-child(even) { border-left: 1px solid rgba(234,243,255,.18); }
   .title-block > div:first-child, .title-block > div:nth-child(2) { border-top: 0; }
   .title-block > div { padding: 8px 12px 10px; }
@@ -606,6 +607,8 @@ tr:first-child td { border-top: 0; }
 .save-form textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--surface); resize: vertical; font: inherit; color: inherit; }
 .form-note { font-size: 12.5px; color: var(--muted); }
 .form-error { font-size: 13.5px; color: var(--err); font-weight: 600; margin-bottom: 10px; }
+.load-error { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: 10px; }
+.load-error .form-error { margin-bottom: 0; }
 
 /* ---------------------------------------------------------------- home page */
 
