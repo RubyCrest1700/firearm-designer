@@ -19,7 +19,7 @@ test('the factory AR-15 is complete and compatible', () => {
   const sel = baseSelection(ar15);
   const build = toBuild(ar15, sel);
   assert.deepEqual(errors(ar15, sel), []);
-  assert.deepEqual(buildStatus(ar15, build, issuesFor(ar15, build)), { cls: 'ok', text: 'Complete and compatible' });
+  assert.deepEqual(buildStatus(ar15, build, issuesFor(ar15, build)), { cls: 'ok', text: 'Complete and compatible', complete: true });
 });
 
 test('a 5/8x24 brake on a 1/2x28 AR-15 barrel is a conflict on both parts', () => {
@@ -32,7 +32,7 @@ test('a 5/8x24 brake on a 1/2x28 AR-15 barrel is a conflict on both parts', () =
   assert.equal(states.barrel, 'error');
   assert.equal(states.lower, 'ok');
   assert.equal(states.optic, 'empty');
-  assert.deepEqual(buildStatus(ar15, toBuild(ar15, sel), issues), { cls: 'error', text: '1 conflict to fix' });
+  assert.deepEqual(buildStatus(ar15, toBuild(ar15, sel), issues), { cls: 'error', text: '1 conflict to fix', complete: false });
   // The picker flags the brake before it's added, and not a matching device.
   const build = toBuild(ar15, baseSelection(ar15));
   assert.ok(candidateIssues(ar15, build, part(ar15, 'ar-mz-pa')).some((i) => i.severity === 'error'));
@@ -52,9 +52,9 @@ test('a missing required part counts unless the builder has their own', () => {
   assert.ok(barrel);
   const build = toBuild(ar15, sel);
   const issues = issuesFor(ar15, build);
-  assert.deepEqual(buildStatus(ar15, build, issues), { cls: 'warn', text: '1 required part missing' });
+  assert.deepEqual(buildStatus(ar15, build, issues), { cls: 'warn', text: '1 required part missing', complete: false });
   const { other } = ownedOf({ ...sel, '+barrel': 'other' });
-  assert.deepEqual(buildStatus(ar15, build, issues, other), { cls: 'ok', text: 'Complete and compatible' });
+  assert.deepEqual(buildStatus(ar15, build, issues, other), { cls: 'ok', text: 'Complete and compatible', complete: true });
   assert.equal(buildStatus(ar15, {}, []).text, `${ar15.slots.filter((s) => s.required).length} required parts missing`);
 });
 
