@@ -16,11 +16,16 @@ export function statesFor(platform: Platform, build: Build, place: Placement = {
   return { issues, states };
 }
 
-/** `other` holds slots filled with the builder's own part that isn't in our catalog: present, but not checked. */
+/**
+ * `other` holds slots filled with the builder's own part that isn't in our catalog: present, but not checked.
+ * `complete` means every required part is in and nothing conflicts; open Checks still show amber.
+ */
 export function buildStatus(platform: Platform, build: Build, issues: Issue[], other?: Set<string>) {
   const missing = platform.slots.filter((s) => s.required && !build[s.id] && !other?.has(s.id)).length;
   const errors = issues.filter((i) => i.severity === 'error').length;
-  if (errors) return { cls: 'error', text: `${errors} conflict${errors > 1 ? 's' : ''} to fix` };
-  if (missing) return { cls: 'warn', text: `${missing} required part${missing > 1 ? 's' : ''} missing` };
-  return { cls: 'ok', text: 'Complete and compatible' };
+  const checks = issues.filter((i) => i.severity === 'warn').length;
+  if (errors) return { cls: 'error', text: `${errors} conflict${errors > 1 ? 's' : ''} to fix`, complete: false };
+  if (missing) return { cls: 'warn', text: `${missing} required part${missing > 1 ? 's' : ''} missing`, complete: false };
+  if (checks) return { cls: 'warn', text: `Complete · ${checks} check${checks > 1 ? 's' : ''} to review`, complete: true };
+  return { cls: 'ok', text: 'Complete and compatible', complete: true };
 }

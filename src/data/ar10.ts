@@ -1,5 +1,5 @@
 import type { Build, Issue, Placement, Platform } from '../types';
-import { boreIssue, parts, pick, threadIssue } from './helpers';
+import { boreIssue, gasLength, parts, pick, threadIssue } from './helpers';
 import { rifleAddonParts, rifleAddonRules, rifleAddonSlots } from './addons';
 import { ironParts, ironRules, ironsSlot } from './irons';
 
@@ -201,7 +201,7 @@ function rules(b: Build, place: Placement = {}): Issue[] {
   if (lower && mag && mag.attrs.family !== 'SR-25')
     out.push({ severity: 'error', slots: ['lower', 'mag'], message: `This lower takes SR-25 pattern magazines.` });
   if (barrel && gastube && barrel.attrs.gas !== gastube.attrs.length)
-    out.push({ severity: 'error', slots: ['barrel', 'gastube'], message: `The barrel is ${barrel.attrs.gas}-length gas but the gas tube is ${gastube.attrs.length}-length.` });
+    out.push({ severity: 'error', slots: ['barrel', 'gastube'], message: `The barrel is ${gasLength(barrel.attrs.gas)} gas but the gas tube is ${gasLength(gastube.attrs.length)}.` });
   if (barrel && gasblock && barrel.attrs.journal !== gasblock.attrs.journal)
     out.push({ severity: 'error', slots: ['barrel', 'gasblock'], message: `The barrel has a ${barrel.attrs.journal}" gas journal but the gas block is ${gasblock.attrs.journal}".` });
   const thread = threadIssue(barrel, muzzle) ?? boreIssue(barrel, muzzle);

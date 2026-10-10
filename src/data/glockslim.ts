@@ -105,7 +105,7 @@ function rules(b: Build): Issue[] {
     else if (slide.attrs.cut !== optic.attrs.footprint)
       out.push({ severity: 'error', slots: ['slide', 'optic'], message: 'Slimline MOS slides take the RMSc footprint. An RMR is too wide for this slide.' });
   }
-  out.push(...sightHeightIssues(sights, optic, false));
+  out.push(...sightHeightIssues(sights, optic, false, true));
   if (mag?.attrs.kind === 's15')
     out.push({ severity: 'info', slots: ['mag'], message: 'Shield Arms recommends their steel magazine catch with S15 mags, especially in older frames.' });
   const len = slide?.attrs.len as string | undefined;
