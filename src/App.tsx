@@ -521,6 +521,7 @@ function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelec
   const made = platform.modelOf?.(build);
   const model = platform.models?.find((m) => m.id === (made?.id ?? modelPick[platform.id])) ?? platform.models?.find((m) => m.presets === platform.presets);
   const starter = model ? { ...platform, presets: model.presets, base: model.base } : platform;
+  const baseNote = rifle ? 'Base is a plain rifle: standard parts, no sights or optic.' : 'Base is the factory gun as it comes in the box.';
 
   /** Puts a part in its slot; `own` marks it as one the builder already has. */
   const choose = (slot: string, partId: string, own = false) => {
@@ -571,17 +572,23 @@ function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelec
           <div className="wb-center">
             <div className="bp-toolbar" role="toolbar" aria-label="Build actions">
               <span className="tb-label">{chosen === 0 ? 'Start From' : 'Start Over From'}</span>
-              <button className="chip" onClick={() => { setSelection(baseSelection(starter)); setOpenSlot(null); }}>
+              <button className="chip" title={baseNote} onClick={() => { setSelection(baseSelection(starter)); setOpenSlot(null); }}>
                 Base{model ? ` ${model.short}` : ''} <span className="chip-amt">{money(totalOf(platform, toBuild(platform, baseSelection(starter))))}</span>
               </button>
-              {(['budget', 'value', 'premium'] as Tier[]).map((t) => (
-                <button key={t} className="chip" onClick={() => { setSelection(presetSelection(starter, t)); setOpenSlot(null); }}>
-                  {TIER_LABEL[t]}{model ? ` ${model.short}` : ''} <span className="chip-amt">{money(totalOf(platform, toBuild(platform, presetSelection(starter, t))))}</span>
-                </button>
-              ))}
+              {(['budget', 'value', 'premium'] as Tier[]).map((t) => {
+                const sel = presetSelection(starter, t);
+                const optic = opticTag(platform.parts.find((p) => p.id === sel.optic));
+                return (
+                  <button key={t} className="chip" onClick={() => { setSelection(sel); setOpenSlot(null); }}>
+                    {TIER_LABEL[t]}{model ? ` ${model.short}` : ''} <span className="chip-amt">{money(totalOf(platform, toBuild(platform, sel)))}</span>
+                    {optic && <> <span className="chip-tag">{optic}</span></>}
+                  </button>
+                );
+              })}
               <button className="chip" onClick={onBrowseFeatured}>Community Builds</button>
               <button className="chip chip-own" onClick={() => setFinding(true)}>Parts I Own</button>
               {chosen > 0 && <button className="chip chip-clear" onClick={() => { setSelection({}); setOpenSlot(null); }}>Clear Build</button>}
+              <p className="tb-note">{baseNote} Budget, Best Value and Premium are builds from our parts list.</p>
             </div>
             <figure className="blueprint">
               <div className="bp-strip">
@@ -651,6 +658,12 @@ function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelec
       )}
     </>
   );
+}
+
+/** The tag on a starter build's chip saying what optic it comes with, if any. */
+function opticTag(optic?: Part) {
+  if (!optic) return null;
+  return optic.attrs.kind === 'lpvo' || optic.attrs.kind === 'scope' ? 'Scope' : 'Red Dot';
 }
 
 function groupSlots(slots: Slot[]): [string, Slot[]][] {
