@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { createHash } from 'node:crypto';
-import { cleanText, handle, networkOf } from './src/api.js';
+import { cleanText, handle, networkOf, visitorOf } from './src/api.js';
 
 function fakeD1() {
   const db = new DatabaseSync(':memory:');
@@ -117,6 +117,34 @@ test('groups addresses by network', () => {
   assert.equal(networkOf('203.0.113.7'), '203.0.113');
   assert.equal(networkOf('2001:0db8:0001:aaaa::1'), '2001:db8:1');
   assert.equal(networkOf('2001:db8::1'), '2001:db8:0');
+  assert.equal(networkOf('::ffff:203.0.113.7'), '203.0.113');
+});
+
+test('one visitor is a full IPv4 address or an IPv6 /64', () => {
+  assert.equal(visitorOf('203.0.113.7'), '203.0.113.7');
+  assert.equal(visitorOf('::FFFF:203.0.113.7'), '203.0.113.7');
+  assert.equal(visitorOf('2001:0db8:0001:0002:aaaa:bbbb:cccc:dddd'), '2001:db8:1:2::/64');
+  assert.equal(visitorOf('2001:db8:1:2::1'), '2001:db8:1:2::/64');
+  assert.equal(visitorOf('2001:db8::1'), '2001:db8:0:0::/64');
+});
+
+test('addresses in one IPv6 /64 vote once and share the daily limits', async () => {
+  const e = env();
+  const home = (i) => `2001:db8:1:2::${i.toString(16)}`;
+  const { id } = (await share(e, {}, home(0))).body.build;
+  for (let i = 1; i <= 20; i++) await call(e, 'POST', `/api/builds/${id}/vote`, null, home(i));
+  for (let i = 1; i <= 5; i++) await call(e, 'POST', `/api/builds/${id}/click`, null, home(i));
+  const b = (await call(e, 'GET', `/api/builds/${id}`)).body.build;
+  assert.equal(b.votes, 1);
+  assert.equal(b.clicks, 1);
+  for (let i = 1; i < 10; i++) assert.equal((await share(e, { name: `Build ${i}` }, home(100 + i))).status, 201);
+  assert.equal((await share(e, { name: 'One too many' }, home(200))).status, 429);
+  // Another /64, even in the same /48, is someone else.
+  assert.equal((await share(e, { name: 'Neighbor' }, '2001:db8:1:3::1')).status, 201);
+  assert.equal((await call(e, 'POST', `/api/builds/${id}/vote`, null, '2001:db8:1:3::1')).body.build.votes, 2);
+  // IPv4-mapped addresses count as the IPv4 address.
+  await call(e, 'POST', `/api/builds/${id}/vote`, null, '203.0.113.7');
+  assert.equal((await call(e, 'POST', `/api/builds/${id}/vote`, null, '::ffff:203.0.113.7')).body.build.votes, 3);
 });
 
 test('featured picks the most voted builds of the week', async () => {
