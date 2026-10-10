@@ -29,6 +29,8 @@ import { titleCase } from './text';
 import type { Build, Issue, Part, Placement, Platform, PlatformModel, Severity, Side, Slot, Tier } from './types';
 
 const STORE_KEY = 'firearm-designer:v2';
+/** The home page's title, the same as the <title> in index.html. */
+const HOME_TITLE = 'Drop-In Builds: Plan Your Firearm Build Part by Part';
 const SEV_LABEL: Record<Severity, string> = { error: 'Conflict', warn: 'Check', info: 'Note' };
 const FAMILIES = ['Rifle', 'Pistol'];
 type Route = 'home' | 'build' | 'community' | 'saved' | 'compare';
@@ -189,8 +191,8 @@ export default function App() {
   // Each page names itself in the browser tab, history and bookmarks.
   useEffect(() => {
     const name = PLATFORMS.find((p) => p.id === platformId)?.name ?? '';
-    const page = { home: 'Plan Your Build, Check the Fit, Pay Less', build: `Build Your ${name}`, saved: 'My Builds', community: 'Community Builds', compare: 'Compare Builds' }[route];
-    document.title = `${page} | Drop-In Builds`;
+    const page = { home: '', build: `Build Your ${name}`, saved: 'My Builds', community: 'Community Builds', compare: 'Compare Builds' }[route];
+    document.title = page ? `${page} | Drop-In Builds` : HOME_TITLE;
   }, [route, platformId]);
 
   return (
