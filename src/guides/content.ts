@@ -308,7 +308,7 @@ export const GUIDES: Guide[] = [
   },
   {
     slug: 'sig-p320-red-dot-compatibility',
-    title: 'Sig P320 Red Dot Compatibility: Romeo1Pro Footprint and RMR Plates',
+    title: 'Sig P320 Red Dot Compatibility: Romeo1Pro Footprint, RMR Plates',
     h1: 'Which red dots fit a Sig P320 slide?',
     description: 'Sig P320 optic-ready slides take the Romeo1Pro footprint. See which red dots mount directly, which need an RMR plate, and which slides have no cut.',
     platform: 'p320',
@@ -329,7 +329,7 @@ export const GUIDES: Guide[] = [
   },
   {
     slug: 'ar-15-barrel-compatibility',
-    title: 'AR-15 Barrel Compatibility: Gas Block, Gas Tube, Bolt and Muzzle Threads',
+    title: 'AR-15 Barrel Compatibility: Gas Block, Gas Tube, Bolt and Threads',
     h1: 'What has to match your AR-15 barrel?',
     description: 'Gas journal, gas system length, bolt face and muzzle threads: a fit chart for AR-15 barrels against gas blocks, gas tubes, bolt carriers and muzzle devices.',
     platform: 'ar15',
@@ -358,7 +358,7 @@ export const GUIDES: Guide[] = [
     slug: 'ar-15-handguard-length-chart',
     title: 'AR-15 Handguard Length Chart: Which Rail Length for Your Barrel',
     h1: 'AR-15 Handguard Length Chart',
-    description: 'Which handguard length fits a 10.3", 11.5", 16", 18" or 20" AR-15 barrel? A chart of every rail we list against barrel length and gas system.',
+    description: 'Which handguard fits a 10.3", 11.5", 16", 18" or 20" AR-15 barrel? Every rail we list, charted by barrel length and gas system.',
     platform: 'ar15',
     lede: 'Handguard length is measured from the front of the upper receiver. Pick it by two things on the barrel: how long the barrel is, and where the gas block sits.',
     answers: [
@@ -429,7 +429,7 @@ export const GUIDES: Guide[] = [
   },
   {
     slug: 'glock-20-vs-21-parts-compatibility',
-    title: 'Glock 20 vs 21 Parts Compatibility: 10mm and .45 Slides, Barrels and Mags',
+    title: 'Glock 20 vs 21 Compatibility: 10mm and .45 Slides, Barrels, Mags',
     h1: 'Which parts swap between a Glock 20 and a Glock 21?',
     description: 'The Glock 20 and 21 share a frame, but not a caliber. See which slides, barrels, recoil springs, magazines and .40 conversion barrels fit each one.',
     platform: 'glock20',
@@ -483,7 +483,7 @@ export const GUIDES: Guide[] = [
   },
   {
     slug: 'mp-2-0-red-dot-optic-plates',
-    title: 'M&P 2.0 Red Dot Compatibility: CORE Plates and Optic Footprints',
+    title: 'M&P 2.0 Red Dot Compatibility: CORE Plates and Footprints',
     h1: 'Which red dots fit an M&P 2.0 Optics Ready slide?',
     description: 'RMR, RMSc, DeltaPoint Pro or Acro? See which red dots mount to an M&P9 M2.0 Optics Ready slide with the included CORE plates and which need a plate kit.',
     platform: 'mp2',
@@ -509,9 +509,9 @@ export const GUIDES: Guide[] = [
   },
   {
     slug: 'mp-2-0-full-size-vs-compact-parts',
-    title: 'M&P 2.0 Full Size vs Compact: Slide, Barrel and Magazine Compatibility',
+    title: 'M&P 2.0 Full Size vs Compact Parts: Slides, Barrels and Mags',
     h1: 'Do M&P 2.0 Full Size and Compact parts interchange?',
-    description: 'Will a Full Size M&P 2.0 barrel fit the Compact? A fit chart for M&P9 M2.0 slides, barrels, recoil springs and magazines across the Full Size and Compact.',
+    description: 'Will a Full Size M&P 2.0 barrel fit the Compact? A fit chart for M&P9 M2.0 slides, barrels, recoil springs and magazines in both sizes.',
     platform: 'mp2',
     lede: 'The M&P9 M2.0 Full Size and Compact look almost the same, but the slide, barrel and recoil spring are each made for one length. Magazines are the part that crosses over, in one direction.',
     answers: [
@@ -535,7 +535,7 @@ export const GUIDES: Guide[] = [
   },
   {
     slug: 'hellcat-red-dot-compatibility',
-    title: 'Springfield Hellcat Red Dot Compatibility: OSP Cut, RMSc and Holosun K',
+    title: 'Springfield Hellcat Red Dot Compatibility: OSP, RMSc, Holosun K',
     h1: 'Which red dots fit a Springfield Hellcat?',
     description: 'Shield RMSc or Holosun 507K? See which red dots mount directly to the Hellcat and Hellcat Pro OSP cut, which need a plate, and which sights co-witness.',
     platform: 'hellcat',
@@ -561,7 +561,7 @@ export const GUIDES: Guide[] = [
   },
   {
     slug: 'hellcat-pro-slide-on-hellcat',
-    title: 'Hellcat Pro Slide on a 3" Hellcat: Slides, Barrels, Springs and Mags',
+    title: 'Hellcat Pro Slide on a 3" Hellcat: Barrels, Springs and Mags',
     h1: 'Can you put a Hellcat Pro slide on a 3" Hellcat?',
     description: 'Aftermarket Hellcat Pro slides fit the 3" Hellcat frame too. See which barrels, recoil springs, threaded barrels and magazines go with each Hellcat.',
     platform: 'hellcat',
@@ -608,7 +608,7 @@ export const GUIDES: Guide[] = [
   },
   {
     slug: 'ar-9-last-round-bolt-hold-open',
-    title: 'AR-9 Last Round Bolt Hold Open: Which Bolts Work With Which Lowers',
+    title: 'AR-9 Last Round Bolt Hold Open: Which Bolts Fit Which Lowers',
     h1: 'Which AR-9 bolts lock open on an empty mag?',
     description: 'AR-9 last-round bolt hold-open only works with a bolt made for that lower. See which bolt carriers and parts kits match each 9mm lower.',
     platform: 'ar9',

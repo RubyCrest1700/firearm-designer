@@ -48,6 +48,9 @@ export function parts(slot: string, list: Omit<PartInput, 'slot'>[]): Part[] {
 
 export const pick = (tier: Tier, note: string) => ({ tier, note });
 
+/** An AR gas system length for a sentence: "carbine-length", but "midlength" already says it. */
+export const gasLength = (len: unknown) => (len === 'midlength' ? 'midlength' : `${len}-length`);
+
 /**
  * Muzzle threads must match exactly: diameter, pitch and hand. A 1/2x28 device will not go on a
  * 5/8x24 or an M13.5x1 left-hand barrel, even when both parts are sold for the same gun.
@@ -66,10 +69,11 @@ export function boreIssue(barrel?: Part, muzzle?: Part): Issue | undefined {
 /**
  * Iron sights too short to aim with once a red dot or a suppressor is on, shared by every pistol. An empty sights slot
  * means the slide's own factory sights, which are standard height. A threaded barrel only gets a note: the builder has
- * no suppressors to pick, so it can't know one is coming.
+ * no suppressors to pick, so it can't know one is coming. `stripped`: the slides come without sights (the Glocks),
+ * so an empty slot means no sights yet and there's nothing to check.
  */
-export function sightHeightIssues(sights: Part | undefined, optic: Part | undefined, threaded: { slot: string } | false): Issue[] {
-  if (sights?.attrs.height === 'suppressor') return [];
+export function sightHeightIssues(sights: Part | undefined, optic: Part | undefined, threaded: { slot: string } | false, stripped = false): Issue[] {
+  if (sights?.attrs.height === 'suppressor' || (stripped && !sights)) return [];
   const what = sights ? 'standard-height sights' : 'factory sights';
   const out: Issue[] = [];
   if (optic)

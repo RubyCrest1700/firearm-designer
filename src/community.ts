@@ -121,9 +121,14 @@ export async function shareBuild(platform: string, name: string, note: string, p
   return strip(build);
 }
 
+/** The vote is kept as this visitor's only once the service has counted it. */
 export async function setVote(id: string, on: boolean): Promise<CommunityBuild | undefined> {
+  if (communityLive) {
+    const { build } = await api<{ build: CommunityBuild }>(`/api/builds/${id}/${on ? 'vote' : 'unvote'}`, { method: 'POST' });
+    setMyVote(id, on);
+    return build;
+  }
   setMyVote(id, on);
-  if (communityLive) return (await api<{ build: CommunityBuild }>(`/api/builds/${id}/${on ? 'vote' : 'unvote'}`, { method: 'POST' })).build;
   return updatePreview(id, (r) => {
     r.votes = Math.max(0, r.votes + (on ? 1 : -1));
     if (on) r.voteLog.push(Date.now()); else r.voteLog.pop();
