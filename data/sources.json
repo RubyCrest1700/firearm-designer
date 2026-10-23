@@ -1,5 +1,11 @@
 {
   "_comment": "Product page URLs the nightly price job reads, keyed by part id, then retailer id (see src/data/retailers.ts). Add a URL here to make that part's price live.",
+  "_paused": "Retailers listed in \"paused\" are skipped by every script that reads these links, and their prices (live or sample) are not shown or counted on the site. Their URLs stay below. Remove an entry to resume.",
+  "paused": {
+    "ARD": "2026-10-22: paused pending review of the retailer's terms on automated price collection",
+    "PA": "2026-10-22: paused pending review of the retailer's terms on automated price collection",
+    "VED": "2026-10-22: paused pending review of the retailer's terms on automated price collection"
+  },
   "parts": {
     "a10-bcg-jp": {
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-bolts-bolt-carrier-groups/ar-.308-low-mass-operating-system-complete-carrier-group/",

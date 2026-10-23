@@ -10,7 +10,15 @@ test('the packed table unpacks to the same prices and links as the data files', 
   const sources = read('sources.json');
   const table = JSON.parse(JSON.stringify(packPrices(prices, sources)));
   assert.deepEqual(unpackPrices(table), prices);
-  assert.deepEqual(unpackSources(table), { parts: sources.parts });
+  assert.deepEqual(unpackSources(table), { parts: sources.parts, paused: sources.paused });
+});
+
+test('carries the paused retailers through, and adds none when there are none', () => {
+  const at = '2026-10-09T15:15:53.953Z';
+  const prices = { updatedAt: at, offers: {} };
+  const sources = { paused: { PA: '2026-10-22: why' }, parts: { a: { PA: 'https://x/a', AERO: 'https://y/a' } } };
+  assert.deepEqual(unpackSources(JSON.parse(JSON.stringify(packPrices(prices, sources)))), sources);
+  assert.equal('paused' in unpackSources(packPrices(prices, { parts: sources.parts })), false);
 });
 
 test('keeps live prices without a tracked link, and links without a live price', () => {

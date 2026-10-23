@@ -11,6 +11,12 @@ const LIVE = (prices as unknown as { offers: Record<string, Record<string, Offer
 /** Known product page URLs, so "View" links go to the product even before a live price exists. */
 const URLS = (sources as unknown as { parts: Record<string, Record<string, string>> }).parts;
 /**
+ * Retailers paused in data/sources.json ("paused"), while we review their terms on automated price collection.
+ * Their prices, live or sample, are left out of every part here, so no page shows them or counts them in a best
+ * price or total. The price scripts skip the same list (scripts/sources.mjs). Delete an entry there to resume.
+ */
+export const PAUSED = new Set(Object.keys((sources as unknown as { paused?: Record<string, string> }).paused ?? {}));
+/**
  * Parts no tracked store sells or prices: holsters whose live price is the base page's ("From"), Glock factory parts
  * with only an estimate ("Factory Part"), and hand-checked list prices, each shown with its label and the day it was checked.
  */
@@ -28,15 +34,16 @@ const WEIGHTS = (weights as unknown as { parts: Record<string, { oz: number; bas
  * Builds parts from inline sample offers, then overlays any live prices from data/prices.json.
  * A live price replaces the sample price for the same retailer; new retailers are added. Once a part has any live
  * price, its remaining sample prices are dropped, so a made-up figure never undercuts a real one. A part with no live
- * price but a hand-checked list price (data/list-prices.json) shows that instead of its samples.
+ * price but a hand-checked list price (data/list-prices.json) shows that instead of its samples. Paused retailers'
+ * offers are dropped first, so a part sold only there has no offers and shows no price.
  */
 export function parts(slot: string, list: Omit<PartInput, 'slot'>[]): Part[] {
   return list.map((p) => {
     const byRetailer = new Map<string, Offer>(
-      p.offers.map(([retailer, price, inStock]) => [retailer, { retailer, price, inStock: inStock ?? true, url: URLS[p.id]?.[retailer] }]),
+      p.offers.filter(([retailer]) => !PAUSED.has(retailer)).map(([retailer, price, inStock]) => [retailer, { retailer, price, inStock: inStock ?? true, url: URLS[p.id]?.[retailer] }]),
     );
-    const live = Object.entries(LIVE[p.id] ?? {});
-    const listed = LISTED.parts[p.id];
+    const live = Object.entries(LIVE[p.id] ?? {}).filter(([retailer]) => !PAUSED.has(retailer));
+    const listed = PAUSED.has(LISTED.parts[p.id]?.retailer ?? '') ? undefined : LISTED.parts[p.id];
     if (live.length || listed) byRetailer.clear();
     for (const [retailer, offer] of live) byRetailer.set(retailer, { ...offer, retailer, ...(FROM.has(p.id) ? { basis: 'from' as const } : {}) });
     if (!live.length && listed) byRetailer.set(listed.retailer, { retailer: listed.retailer, price: listed.price, inStock: true, url: listed.url, basis: listed.basis, asOf: listed.asOf });

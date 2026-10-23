@@ -2,10 +2,15 @@
 // Bundled with esbuild by `npm test` (like check-data), then run with node (node --test skips files under node_modules).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { PLATFORMS } from '../src/data/index';
-import { baseSelection, candidateIssues, issuesFor, ownedOf, placementOf, selectionTokens, toBuild, toBuyIds, type Selection } from '../src/engine';
+import { PAUSED } from '../src/data/helpers';
+import { hasHistory, priceOn, recentChange } from '../src/data/history';
+import { baseSelection, bestOffer, candidateIssues, issuesFor, ownedOf, placementOf, priceRange, selectionTokens, singleRetailerCarts, toBuild, toBuyIds, type Selection } from '../src/engine';
+import { Candidate } from '../src/Picker';
 import { buildStatus, statesFor } from '../src/status';
-import { loadSavedBuilds, priceChanges, priceSnapshot, readSharedBuild, selectionFromParts, storeSavedBuilds, type SavedBuild } from '../src/store';
+import { loadSavedBuilds, priceChanges, priceSnapshot, readSharedBuild, selectionFromParts, storeSavedBuilds, totalOf, type SavedBuild } from '../src/store';
 
 const platform = (id: string) => PLATFORMS.find((p) => p.id === id)!;
 const ar15 = platform('ar15');
@@ -89,6 +94,49 @@ test('an old Glock 19 link opens in the Glock builder; an unknown platform opens
   assert.equal(readSharedBuild(), null);
   at('');
   assert.equal(readSharedBuild(), null);
+});
+
+/* ------------------------------------------------------------------ paused retailers */
+
+const PAUSED_IDS = ['ARD', 'PA', 'VED'];
+
+test('no part offers a paused retailer, so no best price, total or cart counts one', () => {
+  assert.deepEqual([...PAUSED].sort(), PAUSED_IDS);
+  for (const p of PLATFORMS)
+    for (const x of p.parts) {
+      assert.deepEqual(x.offers.filter((o) => PAUSED.has(o.retailer)).map((o) => o.retailer), [], `${p.id}/${x.id}`);
+      const best = bestOffer(x);
+      if (best) assert.ok(!PAUSED.has(best.retailer), `${p.id}/${x.id}`);
+    }
+  for (const p of PLATFORMS) {
+    const parts = Object.values(toBuild(p, baseSelection(p))).filter((x): x is NonNullable<typeof x> => !!x);
+    assert.ok(singleRetailerCarts(parts).every((c) => !PAUSED.has(c.retailer)), p.id);
+  }
+});
+
+test('a part sold only by a paused retailer has no price and renders without one', () => {
+  // The MI 9" handguard had only Primary Arms prices; it stays in the catalog with no offers.
+  const hg = part(ar15, 'ar-hg-mi9');
+  assert.deepEqual(hg.offers, []);
+  assert.equal(bestOffer(hg), undefined);
+  assert.deepEqual(priceRange(hg), [0, 0]);
+  assert.equal(hasHistory(hg), false);
+  assert.equal(recentChange(hg), undefined);
+  assert.equal(priceOn(hg, '2026-10-01'), 0);
+  const sel = { ...baseSelection(ar15), handguard: 'ar-hg-mi9' };
+  assert.equal(priceSnapshot('ar15', sel)['ar-hg-mi9'], undefined);
+  const build = toBuild(ar15, sel);
+  const { handguard, ...rest } = build;
+  assert.equal(handguard?.id, 'ar-hg-mi9');
+  assert.ok(Number.isFinite(totalOf(ar15, build)) && totalOf(ar15, build) > 0);
+  assert.equal(totalOf(ar15, build), totalOf(ar15, rest));
+  const html = renderToStaticMarkup(createElement(Candidate, { part: hg, open: true, issues: [], sev: 'ok', selected: false, owned: false, onChoose: () => {}, onBuyClick: () => {} }));
+  assert.match(html, /<span class="amt dim">—<\/span>/);
+  assert.doesNotMatch(html, /Compare|View Retailer|<table|NaN|Infinity|undefined/);
+  // A part with prices still shows them.
+  const priced = renderToStaticMarkup(createElement(Candidate, { part: part(ar15, 'ar-mz-vg6'), open: true, issues: [], sev: 'ok', selected: false, owned: false, onChoose: () => {}, onBuyClick: () => {} }));
+  assert.match(priced, /<table class="offers">/);
+  assert.doesNotMatch(priced, /Primary Arms|AR15Discounts|Vedder Holsters/);
 });
 
 /* ------------------------------------------------------------------ saved builds */

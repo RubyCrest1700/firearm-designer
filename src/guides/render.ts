@@ -326,7 +326,7 @@ const GENERAL_FAQ: { section: string; items: { q: string; a: string }[] }[] = [
   ] },
   { section: 'Prices and Alerts', items: [
     { q: 'Where do the prices come from?', a: "We check retailer and maker sites every night where they allow it, and show each part's price at every retailer we track. Prices marked Sample aren't tracked yet, List Price and dated Factory Part prices were checked by hand on that date, and undated Factory Part prices are estimates, so always confirm the price at the retailer." },
-    { q: "Why isn't my favorite retailer listed?", a: "Some retailers don't allow automated price checks, and we respect that. We add retailers as they make their prices available to us." },
+    { q: "Why isn't my favorite retailer listed?", a: "Some retailers don't allow automated price checks, and we respect that. We've also paused some retailers while we review their terms. We add retailers as they make their prices available to us." },
     { q: 'How do price alerts work?', a: 'Save a build to My Builds, then enter your email there. We send one email a day at most, only when a part in a saved build moves by $20 and 10% or more. Every email has a one-click unsubscribe link.' },
     { q: 'What do you do with my email address?', a: "We only use it to send the price alerts you asked for. We don't sell it or share it, and unsubscribing deletes it." },
   ] },

@@ -142,7 +142,8 @@ for (const b of shared) {
 const index = {
   platforms: Object.fromEntries(PLATFORMS.map((p) => [p.id, {
     name: p.name,
-    parts: Object.fromEntries(p.parts.map((part) => [part.id, [`${part.brand} ${part.name}`, bestOffer(part)?.price ?? 0]])),
+    // A part with no price (sold only by a paused retailer) is left out, so a price alert never reads it as a drop to $0.
+    parts: Object.fromEntries(p.parts.flatMap((part) => { const o = bestOffer(part); return o ? [[part.id, [`${part.brand} ${part.name}`, o.price]]] : []; })),
   }])),
 };
 writeFileSync(`${OUT}/index.json`, JSON.stringify(index));

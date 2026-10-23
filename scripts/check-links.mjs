@@ -10,12 +10,15 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseRobots, isAllowed } from './robots.mjs';
+import { pausedHosts, readRetailers } from './sources.mjs';
 
 const USER_AGENT = 'FirearmDesignerLinkCheck/0.1 (+https://github.com/RubyCrest1700/firearm-designer)';
 const HOST_DELAY_MS = 3000;
 /** Our own services and third-party assets aren't outbound links. */
 const SKIP = /^https:\/\/(dropinbuilds\.com|share\.dropinbuilds\.com|[^/]*\.workers\.dev|fonts\.(googleapis|gstatic)\.com|static\.cloudflareinsights\.com|schema\.org|www\.w3\.org|github\.com\/RubyCrest1700)/;
 const URL_RE = /https:\/\/[^\s'"`<>)\\]+/g;
+/** Retailers paused in data/sources.json aren't fetched at all, search links included (scripts/sources.mjs). */
+const PAUSED_HOSTS = pausedHosts(JSON.parse(readFileSync('data/sources.json', 'utf8')), readRetailers());
 
 /** Store search pages (src/data/retailers.ts) always exist; a 404 there means the store turned the checker away. */
 const SEARCH_PREFIXES = [...readFileSync('src/data/retailers.ts', 'utf8').matchAll(/search: '(https:[^']+)'/g)].map((m) => m[1]);
@@ -28,6 +31,7 @@ const where = new Map();
 const add = (url, from) => {
   url = decode(url).replace(/[.,;]+$/, '');
   if (SKIP.test(url) || /\$\{|=$/.test(url) || !/^https:\/\/[^/]+\.[a-z]{2,}/.test(url)) return; // template pieces, bare search prefixes, examples in comments
+  if (PAUSED_HOSTS.has(new URL(url).host)) return;
   if (!where.has(url)) where.set(url, new Set());
   where.get(url).add(from);
 };
@@ -89,6 +93,7 @@ const show = (title, list) => {
   console.log(`\n${title} (${list.length})`);
   for (const [url, why] of list) console.log(`  ${url}\n    ${why}; used in ${[...where.get(url)].join(', ')}`);
 };
+console.log(`Not checked, paused in data/sources.json: ${[...PAUSED_HOSTS].join(', ') || 'none'}.`);
 console.log(`Checked ${where.size} outbound links: ${result.ok.length} work, ${result.broken.length} broken, ${result.home.length} land on a home page, ${result.blocked.length} couldn't be checked (site blocks bots or timed out), ${result.skipped.length} skipped by robots.txt.`);
 show('Broken', result.broken);
 show('Land on the home page (product may be gone)', result.home);

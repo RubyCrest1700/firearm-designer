@@ -1,6 +1,8 @@
 // Verifies every preset build is complete and free of compatibility errors.
 import { awarenessFor } from '../src/awareness';
 import { PLATFORMS, canonicalPlatform } from '../src/data/index';
+import { PAUSED } from '../src/data/helpers';
+import { RETAILERS } from '../src/data/retailers';
 import { baseSelection, issuesFor, ownedOf, placementOf, presetSelection, selectionTokens, toBuild, toBuyIds } from '../src/engine';
 import { GUIDES } from '../src/guides/content';
 import { FAQ_PICKS } from '../src/guides/picks';
@@ -268,6 +270,17 @@ for (const p of PLATFORMS) {
     const sel = selectionFromParts(old, [`g${n}-frame-g5`, `g${n}-slide-mos`, 'g-mag-oem17']);
     if (canonicalPlatform(old) !== 'glock9' || sel.frame !== `g${n}-frame-g5` || sel.slide !== `g${n}-slide-mos` || sel.mag !== 'g-mag-oem17') { console.log(`old ${old} link did not open in the double-stack 9mm Glock builder`, sel); bad++; }
   }
+}
+// Every paused retailer ("paused" in data/sources.json) is a real retailer id, and none of its prices reach a part.
+for (const id of PAUSED) if (!RETAILERS[id]) { console.log(`data/sources.json paused: unknown retailer ${id}`); bad++; }
+{
+  const unpriced = new Set<string>();
+  for (const p of PLATFORMS)
+    for (const part of p.parts) {
+      if (part.offers.some((o) => PAUSED.has(o.retailer))) { console.log(`${p.id}: ${part.id} still shows a paused retailer's price`); bad++; }
+      if (!part.offers.length) unpriced.add(part.id);
+    }
+  console.log(`Paused retailers: ${[...PAUSED].join(', ') || 'none'}. Parts with no price left: ${unpriced.size} (${[...unpriced].join(', ')}).`);
 }
 // The home page's FAQ links keep their own copy of each guide's question.
 for (const pick of FAQ_PICKS) {

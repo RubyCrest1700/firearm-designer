@@ -24,8 +24,8 @@ function sampleFloor(part: Part) {
  * recorded price stands in; a part with no history is at today's price throughout.
  */
 export function priceOn(part: Part, day: string): number {
+  if (!hasHistory(part)) return bestOffer(part)?.price ?? 0;
   const series = SERIES[part.id];
-  if (!series?.length) return bestOffer(part)?.price ?? 0;
   const live = (series.filter(([d]) => d <= day).pop() ?? series[0])[1];
   return Math.min(live, sampleFloor(part));
 }
@@ -50,14 +50,19 @@ export interface Change { was: number; now: number; by: number }
 
 /** How a part's best price moved over the last `days`: `by` is positive for a drop, negative for a rise. */
 export function recentChange(part: Part, days = 30): Change | undefined {
-  if (!SERIES[part.id]?.length) return undefined;
+  if (!hasHistory(part)) return undefined;
   const was = priceOn(part, daysAgo(days));
   const now = bestOffer(part)?.price ?? priceOn(part, today());
   return worthShowing(was, now) ? { was, now, by: was - now } : undefined;
 }
 
-/** Whether a part has any price history yet (sample-priced parts never do). */
-export const hasHistory = (part: Part) => (SERIES[part.id]?.length ?? 0) > 0;
+/**
+ * Whether a part has any price history yet (sample-priced parts never do). A part with no offers now (sold only by
+ * a paused retailer) has none to show either: its recorded prices came from that retailer.
+ */
+export function hasHistory(part: Part) {
+  return part.offers.length > 0 && (SERIES[part.id]?.length ?? 0) > 0;
+}
 
 /** A drop big enough for the home page: $5, and 5% of the price. */
 const bigDrop = (was: number, now: number) => was - now >= Math.max(5, was * 0.05);

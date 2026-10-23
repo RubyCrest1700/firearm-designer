@@ -105,8 +105,10 @@ export function priceLabel(o: Offer): string {
 /** A price as shown: "From" in front when it's a holster's base price before the light option. */
 export const priceText = (o: Offer) => (o.basis === 'from' ? 'From ' : '') + money(o.price);
 
+/** Lowest and highest price; [0, 0] for a part with no offers (one sold only by a paused retailer). */
 export function priceRange(part: Part): [number, number] {
   const ps = part.offers.map((o) => o.price);
+  if (!ps.length) return [0, 0];
   return [Math.min(...ps), Math.max(...ps)];
 }
 
