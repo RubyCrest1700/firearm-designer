@@ -265,6 +265,12 @@ const withIndex = async (index, fn) => {
 const G19 = { name: 'Carry G19', platform: 'glock19', parts: ['g19-frame-g5', 'g-fcg-apex5', 'g19-slide-mos'] };
 const signup = (e, email = 'Me@Example.com', builds = [G19], ip) => withIndex(ALERT_INDEX(), () => call(e, 'POST', '/api/alerts', { email, builds }, ip));
 const visit = (e, method, path) => handle(new Request(`https://share.example${path}`, { method }), e);
+const DAY = 86_400_000;
+/** The one-time code in a confirmation email's link. */
+const codeIn = (mail) => mail.html.match(/\/alerts\/confirm\?c=([a-f0-9]{32})"/)[1];
+/** Presses the button on the confirmation page, as the person who got the email does. */
+const pressConfirm = (e, code, now) => handle(new Request('https://share.example/alerts/confirm', { method: 'POST', body: `c=${code}`, headers: { 'content-type': 'application/x-www-form-urlencoded' } }), e, now);
+const confirmMail = async (e, mail) => (await pressConfirm(e, codeIn(mail))).text();
 
 test('alerts stay off until Resend and a mailing address are set', async () => {
   const e = env();
@@ -280,7 +286,11 @@ test('signing up sends a confirmation email and rejects bad input', async () => 
   assert.match(r.body.token, /^[a-f0-9]{32}$/);
   assert.equal(r.body.email, 'me@example.com');
   assert.equal(e.outbox.length, 1);
-  assert.match(e.outbox[0].html, new RegExp(`/alerts/confirm\\?t=${r.body.token}`));
+  // The email links to a one-time code of its own, never the token the site got back.
+  const code = codeIn(e.outbox[0]);
+  assert.notEqual(code, r.body.token);
+  assert.ok(e.outbox[0].text.includes(`/alerts/confirm?c=${code}\n`));
+  assert.ok(!e.outbox[0].html.includes(`confirm?t=`));
   assert.match(e.outbox[0].html, /PO Box 1/);
   assert.match(e.outbox[0].headers['List-Unsubscribe'], /alerts\/stop/);
   assert.equal((await signup(e, 'not an email')).status, 400);
@@ -334,7 +344,8 @@ test('emails confirmed signups when prices move, once, then stays quiet', async 
   // Unconfirmed: nothing goes out
   await withIndex(ALERT_INDEX(120), () => runAlerts(e));
   assert.equal(e.outbox.length, 1);
-  assert.match(await (await visit(e, 'GET', `/alerts/confirm?t=${token}`)).text(), /Price Alerts Are On/);
+  assert.match(await confirmMail(e, e.outbox[0]), /Price Alerts Are On/);
+  assert.equal((await call(e, 'GET', `/api/alerts/${token}`)).body.confirmed, true);
   // Apex down $30, slide up $40 (both over $20 and 10%)
   const r = await withIndex(ALERT_INDEX(120, 340), () => runAlerts(e));
   assert.equal(r.sent, 1);
@@ -358,7 +369,8 @@ test('one email per address covers every browser and build it watches', async ()
   const e = alertEnv();
   const a = (await signup(e, 'me@example.com', [G19], '1.0.0.1')).body.token;
   const b = (await signup(e, 'me@example.com', [{ ...G19, name: 'Range G19', parts: ['g-fcg-apex5'] }], '1.0.0.2')).body.token;
-  for (const t of [a, b]) await visit(e, 'GET', `/alerts/confirm?t=${t}`);
+  for (const mail of [e.outbox[0], e.outbox[1]]) assert.match(await confirmMail(e, mail), /Price Alerts Are On/);
+  for (const t of [a, b]) assert.equal((await call(e, 'GET', `/api/alerts/${t}`)).body.confirmed, true);
   await withIndex(ALERT_INDEX(120), () => runAlerts(e));
   assert.equal(e.outbox.length, 3);
   assert.equal(e.outbox[2].subject, 'Price drop on 2 of your builds');
@@ -367,7 +379,7 @@ test('one email per address covers every browser and build it watches', async ()
 test('the site keeps the watched builds in sync', async () => {
   const e = alertEnv();
   const { token } = (await signup(e)).body;
-  await visit(e, 'GET', `/alerts/confirm?t=${token}`);
+  assert.match(await confirmMail(e, e.outbox[0]), /Price Alerts Are On/);
   // Apex already fell before this update; the new build's slide starts from today's price
   const put = await withIndex(ALERT_INDEX(120, 260), () => call(e, 'PUT', `/api/alerts/${token}`, { builds: [G19, { ...G19, name: 'Second' }] }));
   assert.equal(put.status, 200);
@@ -393,6 +405,134 @@ test('unsubscribing removes every signup for the address, including one-click', 
   const c = (await signup(e, 'you@example.com', [G19], '1.0.0.3')).body.token;
   assert.equal((await visit(e, 'POST', `/alerts/stop?t=${c}`)).status, 204);
   assert.equal((await call(e, 'GET', `/api/alerts/${c}`)).status, 404);
+});
+
+/* ------------------------------------------------- confirming and suppression */
+
+const signupAt = (e, now, email = 'me@example.com', ip = '1.1.1.1') =>
+  withIndex(ALERT_INDEX(), async () => { const r = await handle(req('POST', '/api/alerts', { email, builds: [G19] }, ip), e, now); return { status: r.status, body: await r.json() }; });
+const confirmedOf = async (e, token) => (await e.DB.prepare('SELECT confirmed FROM alerts WHERE token = ?').bind(token).first())?.confirmed;
+const unsubscribe = (e, token) => handle(new Request(`https://share.example/alerts/stop?t=${token}`, { method: 'POST', body: 'from=page', headers: { 'content-type': 'application/x-www-form-urlencoded' } }), e);
+
+test('the token the site gets back cannot confirm a signup', async () => {
+  const e = alertEnv();
+  const r = await signup(e);
+  const code = codeIn(e.outbox[0]);
+  assert.notEqual(code, r.body.token);
+  assert.ok(!JSON.stringify(r.body).includes(code));
+  assert.match(await (await visit(e, 'GET', `/alerts/confirm?t=${r.body.token}`)).text(), /This Link Has Expired/);
+  assert.match(await (await visit(e, 'GET', `/alerts/confirm?c=${r.body.token}`)).text(), /This Link Has Expired/);
+  assert.match(await (await pressConfirm(e, r.body.token)).text(), /This Link Has Expired/);
+  assert.equal(await confirmedOf(e, r.body.token), 0);
+  assert.equal((await call(e, 'GET', `/api/alerts/${r.body.token}`)).body.confirmed, false);
+  // Only a hash of the code is stored.
+  const { confirm_hash } = await e.DB.prepare('SELECT confirm_hash FROM alerts WHERE token = ?').bind(r.body.token).first();
+  assert.equal(confirm_hash, createHash('sha256').update(code).digest('hex'));
+  assert.notEqual(confirm_hash, code);
+});
+
+test('opening the confirmation link only asks; the button confirms once', async () => {
+  const e = alertEnv();
+  const { token } = (await signup(e)).body;
+  const code = codeIn(e.outbox[0]);
+  const ask = await visit(e, 'GET', `/alerts/confirm?c=${code}`);
+  const html = await ask.text();
+  assert.match(html, /Turn On Price Alerts\?[\s\S]*<form method="post" action="\/alerts\/confirm"><input type="hidden" name="c" value="[a-f0-9]{32}">/);
+  assert.doesNotMatch(html, /<script/);
+  assert.equal(ask.headers.get('content-security-policy'), "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
+  assert.equal(await confirmedOf(e, token), 0);
+  await visit(e, 'GET', `/alerts/confirm?c=${code}`); // a scanner opening it again changes nothing
+  assert.equal(await confirmedOf(e, token), 0);
+  assert.match(await (await pressConfirm(e, code)).text(), /Price Alerts Are On/);
+  assert.equal(await confirmedOf(e, token), 1);
+  assert.equal((await e.DB.prepare('SELECT confirm_hash FROM alerts WHERE token = ?').bind(token).first()).confirm_hash, null);
+  assert.match(await (await pressConfirm(e, code)).text(), /This Link Has Expired/);
+  assert.match(await (await visit(e, 'GET', `/alerts/confirm?c=${code}`)).text(), /This Link Has Expired/);
+});
+
+test('wrong, malformed and old confirmation codes have expired', async () => {
+  const e = alertEnv();
+  const now = Date.now();
+  const old = (await signupAt(e, now - 8 * DAY)).body.token;
+  const oldCode = codeIn(e.outbox[0]);
+  const fresh = (await signupAt(e, now, 'you@example.com')).body.token;
+  for (const c of ['0'.repeat(32), 'nothex', `${codeIn(e.outbox[1])}0`, codeIn(e.outbox[1]).toUpperCase(), '', oldCode]) {
+    assert.match(await (await pressConfirm(e, c, now)).text(), /This Link Has Expired/, c);
+  }
+  assert.match(await (await handle(new Request(`https://share.example/alerts/confirm?c=${oldCode}`), e, now)).text(), /This Link Has Expired/);
+  assert.equal(await confirmedOf(e, old), 0);
+  assert.equal(await confirmedOf(e, fresh), 0);
+  assert.match(await (await pressConfirm(e, codeIn(e.outbox[1]), now)).text(), /Price Alerts Are On/);
+});
+
+test('signups from before confirmation codes: pending links expire, confirmed ones keep getting alerts', async () => {
+  const e = alertEnv();
+  const now = Date.now();
+  const add = (token, email, confirmed) => e.DB.prepare('INSERT INTO alerts (token, email, builds, seen, confirmed, created_at, ip_hash) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .bind(token, email, JSON.stringify([G19]), JSON.stringify({ 'glock19/g-fcg-apex5': 150, 'glock19/g19-slide-mos': 300, 'glock19/g19-frame-g5': 200 }), confirmed, now - DAY, 'x').run();
+  const pending = 'a'.repeat(32);
+  await add(pending, 'pending@example.com', 0);
+  await add('b'.repeat(32), 'old@example.com', 1);
+  assert.match(await (await visit(e, 'GET', `/alerts/confirm?t=${pending}`)).text(), /This Link Has Expired/);
+  assert.match(await (await pressConfirm(e, pending)).text(), /This Link Has Expired/);
+  assert.equal(await confirmedOf(e, pending), 0);
+  const r = await withIndex(ALERT_INDEX(120), () => runAlerts(e, now));
+  assert.equal(r.sent, 1);
+  assert.deepEqual(e.outbox.map((m) => m.to[0]), ['old@example.com']);
+});
+
+test('an address that unsubscribes after confirming gets no confirmation email for 90 days', async () => {
+  const e = alertEnv();
+  const now = Date.now();
+  const first = await signupAt(e, now - 2 * DAY);
+  assert.match(await (await pressConfirm(e, codeIn(e.outbox[0]), now - 2 * DAY)).text(), /Price Alerts Are On/);
+  await unsubscribe(e, first.body.token);
+  const rows = (await e.DB.prepare('SELECT * FROM suppressed').all()).results;
+  assert.equal(rows.length, 1);
+  assert.match(rows[0].email_hash, /^[a-f0-9]{64}$/);
+  assert.doesNotMatch(JSON.stringify(rows), /@/);
+  // Signed up again: the same answer as anyone gets, the row is saved, but no email goes out.
+  const again = await signupAt(e, now, 'Me@Example.com', '7.7.7.7');
+  assert.equal(again.status, 201);
+  assert.deepEqual(Object.keys(again.body).sort(), ['confirmed', 'email', 'token']);
+  assert.match(again.body.token, /^[a-f0-9]{32}$/);
+  assert.equal(again.body.email, 'me@example.com');
+  assert.equal(again.body.confirmed, false);
+  assert.equal(await confirmedOf(e, again.body.token), 0);
+  assert.equal(e.outbox.length, 1);
+  // After 90 days the suppression no longer applies.
+  const later = await signupAt(e, now + 89 * DAY, 'me@example.com', '7.7.7.8');
+  assert.equal(later.status, 201);
+  assert.equal(e.outbox.length, 1);
+  const after = await signupAt(e, now + 91 * DAY, 'me@example.com', '7.7.7.9');
+  assert.equal(after.status, 201);
+  assert.equal(e.outbox.length, 2);
+  assert.equal(e.outbox[1].to[0], 'me@example.com');
+});
+
+test('cancelling a signup nobody confirmed does not suppress the address', async () => {
+  const e = alertEnv();
+  const { token } = (await signup(e)).body;
+  assert.equal((await unsubscribe(e, token)).status, 200);
+  assert.equal((await e.DB.prepare('SELECT COUNT(*) AS n FROM suppressed').first()).n, 0);
+  assert.equal((await signup(e, 'me@example.com', [G19], '7.7.7.7')).status, 201);
+  assert.equal(e.outbox.length, 2);
+});
+
+test('without the private salt nothing is written', async () => {
+  const e = { ...alertEnv(), SALT: undefined };
+  delete e.SALT;
+  e.FEEDBACK_EMAIL = 'owner@example.com';
+  assert.equal((await share(e)).status, 503);
+  assert.equal((await signup(e)).status, 503);
+  assert.equal((await call(e, 'PUT', `/api/alerts/${'0'.repeat(32)}`, { builds: [] })).status, 503);
+  assert.equal((await call(e, 'POST', '/api/feedback', { message: 'Looks good to me' })).status, 503);
+  assert.equal((await call(e, 'POST', '/api/builds/aaaaaaaaaa/vote')).status, 503);
+  assert.equal(e.outbox.length, 0);
+  for (const t of ['builds', 'alerts', 'feedback', 'votes']) assert.equal((await e.DB.prepare(`SELECT COUNT(*) AS n FROM ${t}`).first()).n, 0, t);
+  // Reading still works.
+  assert.equal((await call(e, 'GET', '/api/builds')).status, 200);
+  assert.equal((await call(e, 'GET', '/health')).status, 200);
 });
 
 test('saves feedback and emails one daily digest', async () => {

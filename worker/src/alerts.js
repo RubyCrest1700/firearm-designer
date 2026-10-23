@@ -2,7 +2,10 @@
 // watched; the site keeps the list up to date. After the nightly price refresh, the Worker's daily cron
 // compares each part's best price with the one we last told them about and sends one email per address
 // listing what went down and what went up. Signups are confirmed by email first (double opt-in), every
-// email carries a one-click unsubscribe, and nothing is sent until Resend is set up:
+// email carries a one-click unsubscribe, and nothing is sent until Resend is set up. The confirmation email
+// carries its own one-time code, stored only as a hash, so the token the site gets back can't confirm a
+// signup. An address that unsubscribes after confirming isn't emailed again for 90 days, even if someone
+// signs it up again (the signup is saved but no confirmation email goes out). Needs:
 //   RESEND_API_KEY   Resend API key (free plan: 3,000 emails a month, 100 a day)
 //   MAILING_ADDRESS  postal address printed in every email, as US law (CAN-SPAM) requires
 //   ALERTS_FROM      optional sender, default "Drop-In Builds <alerts@dropinbuilds.com>"
@@ -25,6 +28,10 @@ const MAX_SIGNUPS_PER_DAY = 5;
  */
 const MAX_ALERT_EMAILS_PER_RUN = 79;
 const MAX_SIGNUPS_PER_DAY_TOTAL = 20;
+/** Confirmation links work this long; unconfirmed signups are deleted after the same time (runAlerts). */
+const CONFIRM_FOR = 7 * DAY;
+/** How long an address that unsubscribed gets no confirmation emails. */
+export const SUPPRESS_FOR = 90 * DAY;
 
 export const alertsEnabled = (env) => !!(env.RESEND_API_KEY && env.MAILING_ADDRESS);
 
@@ -39,6 +46,11 @@ export const worthTelling = (was, now) => Math.abs(was - now) >= Math.max(EMAIL_
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const money = (n) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 const clean = (s, max) => (typeof s === 'string' ? s.replace(/[\u0000-\u001f\u007f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max) : '');
+const hex = (bytes) => [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, '0')).join('');
+const randomHex = () => hex(crypto.getRandomValues(new Uint8Array(16)));
+const sha256 = async (s) => hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)));
+/** How an address is kept on the suppression list: salted, so the list holds no addresses. */
+export const emailHash = (salt, email) => sha256(`${salt}:email:${email}`);
 
 /** Builds as the site sends them, or null if anything is off. */
 export function cleanBuilds(list) {
@@ -113,8 +125,9 @@ function layout(env, token, inner, why) {
 
 const footerText = (env, token, why) => `\n\n--\n${why}\nUnsubscribe: ${API_BASE}/alerts/stop?t=${token}\n${env.MAILING_ADDRESS}\n`;
 
-async function sendConfirm(env, row) {
-  const link = `${API_BASE}/alerts/confirm?t=${row.token}`;
+/** `code` is the one-time confirmation code; it appears only in this email. */
+async function sendConfirm(env, row, code) {
+  const link = `${API_BASE}/alerts/confirm?c=${code}`;
   const why = 'You got this email because someone entered this address on dropinbuilds.com. If it wasn\'t you, ignore it and you won\'t hear from us again.';
   await send(env, {
     to: row.email, token: row.token,
@@ -172,12 +185,14 @@ const page = (title, body, homeButton = true) => new Response(`<!doctype html><h
 <body><header>DROP-IN <b>BUILDS</b></header><main><h1>${esc(title)}</h1>${body}${homeButton ? `<p><a class="btn" href="${SITE}/#saved">Go to My Builds</a></p>` : ''}</main></body></html>`, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'content-security-policy': PAGE_CSP } });
 
 /** Answers alert requests, or returns null for anything else. `json` and `who` come from api.js. */
-export async function alertsRoute(request, env, { path, url, json, who, now }) {
+export async function alertsRoute(request, env, { path, url, json, who, now, salt }) {
   const db = env.DB;
 
   if (request.method === 'GET' && path === '/api/alerts/status') return json({ enabled: alertsEnabled(env) }, 200);
 
-  // POST /api/alerts { email, builds }: sign up; sends the confirmation email
+  // POST /api/alerts { email, builds }: sign up; sends the confirmation email. The token in the answer
+  // manages the signup from the site; only the code in the email confirms it. An address on the
+  // suppression list gets the same answer, but no email.
   if (request.method === 'POST' && path === '/api/alerts') {
     if (!alertsEnabled(env)) return json({ error: 'Email alerts are not available yet.' }, 503);
     const body = await request.json().catch(() => null);
@@ -190,12 +205,13 @@ export async function alertsRoute(request, env, { path, url, json, who, now }) {
     if (recent.n >= MAX_SIGNUPS_PER_DAY) return json({ error: 'Too many signups today. Try again tomorrow.' }, 429);
     const today = await db.prepare('SELECT COUNT(*) AS n FROM alerts WHERE created_at > ?').bind(now - DAY).first();
     if (today.n >= MAX_SIGNUPS_PER_DAY_TOTAL) return json({ error: 'Email signups are busy today. Try again tomorrow.' }, 429);
-    const token = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, '0')).join('');
+    const token = randomHex();
+    const code = randomHex();
     const index = await loadIndex();
-    const row = { token, email };
-    await db.prepare('INSERT INTO alerts (token, email, builds, seen, created_at, ip_hash) VALUES (?, ?, ?, ?, ?, ?)')
-      .bind(token, email, JSON.stringify(builds), JSON.stringify(pricesFor(index, builds)), now, hash).run();
-    await sendConfirm(env, row);
+    await db.prepare('INSERT INTO alerts (token, email, builds, seen, created_at, ip_hash, confirm_hash) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .bind(token, email, JSON.stringify(builds), JSON.stringify(pricesFor(index, builds)), now, hash, await sha256(code)).run();
+    const suppressed = await db.prepare('SELECT 1 AS n FROM suppressed WHERE email_hash = ? AND created_at > ?').bind(await emailHash(salt, email), now - SUPPRESS_FOR).first();
+    if (!suppressed) await sendConfirm(env, { token, email }, code);
     return json({ token, email, confirmed: false }, 201);
   }
 
@@ -220,19 +236,32 @@ export async function alertsRoute(request, env, { path, url, json, who, now }) {
     return json({ ok: true }, 200);
   }
 
-  // GET /alerts/confirm?t=<token>: the link in the confirmation email
-  if (request.method === 'GET' && path === '/alerts/confirm') {
-    const token = url.searchParams.get('t') ?? '';
-    const r = TOKEN.test(token) ? await db.prepare('UPDATE alerts SET confirmed = 1 WHERE token = ?').bind(token).run() : { meta: { changes: 0 } };
+  // GET /alerts/confirm?c=<code>: the link in the confirmation email. Like Unsubscribe, it only asks,
+  // because email security scanners open links on their own.
+  // POST /alerts/confirm (form field c=<code>): that page's button turns the alerts on. Each code works
+  // once, for 7 days. Links from before codes (?t=<token>) have expired.
+  if (path === '/alerts/confirm' && (request.method === 'GET' || request.method === 'POST')) {
+    const expired = () => page('This Link Has Expired', '<p>Sign up again from My Builds on the site.</p>');
+    const code = request.method === 'GET' ? url.searchParams.get('c') ?? '' : new URLSearchParams(await request.text().catch(() => '')).get('c') ?? '';
+    if (!TOKEN.test(code)) return expired();
+    const codeHash = await sha256(code);
+    if (request.method === 'GET') {
+      const row = await db.prepare('SELECT 1 AS n FROM alerts WHERE confirm_hash = ? AND confirmed = 0 AND created_at > ?').bind(codeHash, now - CONFIRM_FOR).first();
+      if (!row) return expired();
+      return page('Turn On Price Alerts?', `<p>Press the button and we'll email you when parts in your saved builds get cheaper or more expensive. At most one email a day.</p>
+<form method="post" action="/alerts/confirm"><input type="hidden" name="c" value="${code}"><p><button class="btn" type="submit">Turn On Price Alerts</button></p></form>`, false);
+    }
+    const r = await db.prepare('UPDATE alerts SET confirmed = 1, confirm_hash = NULL WHERE confirm_hash = ? AND confirmed = 0 AND created_at > ?').bind(codeHash, now - CONFIRM_FOR).run();
     return r.meta.changes
       ? page('Price Alerts Are On', '<p>We\'ll email you when parts in your saved builds change price, at most once a day. Builds you save later in the same browser are added automatically.</p>')
-      : page('This Link Has Expired', '<p>Sign up again from My Builds on the site.</p>');
+      : expired();
   }
 
   // GET /alerts/stop?t=<token>: the Unsubscribe link in every email. It asks first, because email security
   // scanners open links in emails on their own and would otherwise unsubscribe people who never clicked.
   // POST /alerts/stop?t=<token>: unsubscribe this address from everything. Sent by that page's button, by
-  // the one-click List-Unsubscribe header in Gmail and Apple Mail, and by Turn Off on the site.
+  // the one-click List-Unsubscribe header in Gmail and Apple Mail, and by Turn Off on the site. An address
+  // that had confirmed goes on the suppression list; cancelling a signup nobody confirmed doesn't.
   if (request.method === 'GET' && path === '/alerts/stop') {
     const token = url.searchParams.get('t') ?? '';
     const row = TOKEN.test(token) ? await db.prepare('SELECT email FROM alerts WHERE token = ?').bind(token).first() : null;
@@ -243,7 +272,14 @@ export async function alertsRoute(request, env, { path, url, json, who, now }) {
   if (request.method === 'POST' && path === '/alerts/stop') {
     const token = url.searchParams.get('t') ?? '';
     const row = TOKEN.test(token) ? await db.prepare('SELECT email FROM alerts WHERE token = ?').bind(token).first() : null;
-    if (row) await db.prepare('DELETE FROM alerts WHERE email = ?').bind(row.email).run();
+    if (row) {
+      const any = await db.prepare('SELECT MAX(confirmed) AS confirmed FROM alerts WHERE email = ?').bind(row.email).first();
+      // Unsubscribing must always work, so a missing salt only skips the suppression list.
+      if (any?.confirmed && salt) {
+        await db.prepare('INSERT OR REPLACE INTO suppressed (email_hash, created_at) VALUES (?, ?)').bind(await emailHash(salt, row.email), now).run();
+      }
+      await db.prepare('DELETE FROM alerts WHERE email = ?').bind(row.email).run();
+    }
     const fromPage = (await request.text().catch(() => '')).includes('from=page');
     if (!fromPage) return new Response(null, { status: 204 });
     return page('You\'re Unsubscribed', '<p>We won\'t email this address again. Your saved builds are still on the site.</p>');
@@ -257,7 +293,7 @@ export async function alertsRoute(request, env, { path, url, json, who, now }) {
 /** Runs from the Worker's cron after the nightly price refresh. Returns counts, for the logs and tests. */
 export async function runAlerts(env, now = Date.now()) {
   const db = env.DB;
-  await db.prepare('DELETE FROM alerts WHERE confirmed = 0 AND created_at < ?').bind(now - 7 * DAY).run();
+  await db.prepare('DELETE FROM alerts WHERE confirmed = 0 AND created_at < ?').bind(now - CONFIRM_FOR).run();
   if (!alertsEnabled(env)) return { sent: 0, skipped: 'not set up' };
   const index = await loadIndex(true);
   if (!index) return { sent: 0, skipped: 'price index unreachable' };

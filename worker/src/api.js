@@ -138,7 +138,12 @@ export async function handle(request, env, now = Date.now()) {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '');
   const db = env.DB;
-  const salt = env.SALT ?? 'firearm-designer';
+  // The private salt for hashing visitor IPs and addresses. Without it the hashes could be reversed, so
+  // nothing is written until it's set.
+  const salt = env.SALT;
+  if (!salt && (request.method === 'POST' || request.method === 'PUT') && path.startsWith('/api/')) {
+    return json({ error: 'This isn\'t available right now. Please try again later.' }, 503, origin);
+  }
 
   try {
     const shared = await sharePage(request, env);
@@ -227,7 +232,7 @@ export async function handle(request, env, now = Date.now()) {
       return json({ build: toBuild(row), hidden: !!row.hidden }, 200, origin);
     }
 
-    const alerts = await alertsRoute(request, env, { path, url, now, json: (d, s) => json(d, s, origin), who: () => visitorHash(request, salt) });
+    const alerts = await alertsRoute(request, env, { path, url, now, salt, json: (d, s) => json(d, s, origin), who: () => visitorHash(request, salt) });
     if (alerts) return alerts;
 
     // POST /api/feedback { message, email, page }
