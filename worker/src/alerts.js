@@ -108,7 +108,8 @@ async function send(env, { to, subject, html, text, token }) {
     headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
     body: JSON.stringify(message),
   });
-  if (!res.ok) throw new Error(`Resend ${res.status}: ${await res.text()}`);
+  // Only the status: Resend's error text can repeat the address, and errors end up in the logs.
+  if (!res.ok) throw new Error(`Resend ${res.status}`);
 }
 
 function layout(env, token, inner, why) {
@@ -290,7 +291,10 @@ export async function alertsRoute(request, env, { path, url, json, who, now, sal
 
 /* ------------------------------------------------------------------ daily run */
 
-/** Runs from the Worker's cron after the nightly price refresh. Returns counts, for the logs and tests. */
+/**
+ * Runs from the Worker's cron after the nightly price refresh. Returns counts, for the logs and tests: emails
+ * sent, addresses put off to tomorrow by the daily cap, and sends that failed. Addresses are never logged.
+ */
 export async function runAlerts(env, now = Date.now()) {
   const db = env.DB;
   await db.prepare('DELETE FROM alerts WHERE confirmed = 0 AND created_at < ?').bind(now - CONFIRM_FOR).run();
@@ -303,6 +307,8 @@ export async function runAlerts(env, now = Date.now()) {
   for (const row of results) (byEmail.get(row.email) ?? byEmail.set(row.email, []).get(row.email)).push(row);
 
   let sent = 0;
+  let deferred = 0;
+  let failed = 0;
   for (const [email, rows] of byEmail) {
     const moved = [];
     const updates = [];
@@ -317,14 +323,14 @@ export async function runAlerts(env, now = Date.now()) {
       updates.push([row.token, next]);
     }
     if (!moved.length) continue;
-    if (sent >= MAX_ALERT_EMAILS_PER_RUN) { console.log(`Alert email cap reached; ${email} waits for tomorrow`); continue; }
+    if (sent >= MAX_ALERT_EMAILS_PER_RUN) { deferred++; continue; } // waits for tomorrow
     try {
       await send(env, { to: email, token: rows[0].token, ...digest(env, rows[0].token, moved) });
       sent++;
       for (const [token, seen] of updates) await db.prepare('UPDATE alerts SET seen = ?, last_sent_at = ? WHERE token = ?').bind(JSON.stringify(seen), now, token).run();
-    } catch (err) {
-      console.error(`Alert to ${email} failed: ${err.message}`);
+    } catch {
+      failed++;
     }
   }
-  return { sent, watched: results.length };
+  return { sent, deferred, failed, watched: results.length };
 }

@@ -575,3 +575,179 @@ test('builds for a shelved platform stay stored but are not listed or opened', a
   assert.equal((await call(e, 'GET', `/api/builds/${s.body.build.id}`)).status, 404);
   assert.equal((await e.DB.prepare('SELECT COUNT(*) AS n FROM builds').first()).n, 1);
 });
+
+/* ------------------------------------------------------ logs and retention */
+
+import { format } from 'node:util';
+import { runRetention, RETENTION_LIVE } from './src/retention.js';
+
+/** Runs fn with every console line captured instead of printed. */
+const captureLogs = async (fn) => {
+  const lines = [];
+  const real = { ...console };
+  for (const k of ['log', 'info', 'warn', 'error', 'debug']) console[k] = (...a) => lines.push(format(...a));
+  try { return { result: await fn(), lines }; } finally { Object.assign(console, real); }
+};
+/** Answers the price index and turns every Resend call into a 422 that repeats the address. */
+const resend422 = (index) => async (url) => (String(url).includes('api.resend.com')
+  ? new Response('{"message":"Invalid `to` field: victim@example.com is not allowed","name":"validation_error"}', { status: 422 })
+  : new Response(JSON.stringify(index)));
+const withFetch = async (fake, fn) => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = fake;
+  try { return await fn(); } finally { globalThis.fetch = realFetch; }
+};
+
+test('the daily alert run logs no addresses and counts sent, deferred and failed emails', async () => {
+  const e = alertEnv();
+  const now = Date.now();
+  const seen = JSON.stringify({ 'glock9/g-fcg-apex5': 150, 'glock9/g19-slide-mos': 300, 'glock9/g19-frame-g5': 200 });
+  // 81 confirmed addresses whose apex trigger fell; one address's send fails with an error naming it.
+  for (let i = 0; i < 81; i++) {
+    await e.DB.prepare('INSERT INTO alerts (token, email, builds, seen, confirmed, created_at, ip_hash) VALUES (?, ?, ?, ?, 1, ?, ?)')
+      .bind(i.toString(16).padStart(32, '0'), `u${String(i).padStart(2, '0')}@example.com`, JSON.stringify([G19]), seen, now - DAY, 'x').run();
+  }
+  e.sendEmail = async (m) => { if (m.to[0] === 'u05@example.com') throw new Error(`Mailbox ${m.to[0]} rejected`); e.outbox.push(m); };
+  const { result, lines } = await captureLogs(() => withIndex(ALERT_INDEX(120), () => runAlerts(e, now)));
+  assert.deepEqual(result, { sent: 79, deferred: 1, failed: 1, watched: 81 });
+  assert.equal(e.outbox.length, 79);
+  for (const line of lines) assert.doesNotMatch(line, /@/);
+  // The daily job logs the counts, again without addresses.
+  const { runDaily } = await import('./src/index.js');
+  const daily = await captureLogs(() => withIndex(ALERT_INDEX(100), () => runDaily(e, now)));
+  assert.ok(daily.lines.some((l) => /^Price alerts \{"sent":\d+,"deferred":\d+,"failed":1,/.test(l)), daily.lines.join('\n'));
+  for (const line of daily.lines) assert.doesNotMatch(line, /@/);
+});
+
+test('a Resend error during signup answers 500 and logs neither the address nor the error text', async () => {
+  const e = { ...env(), RESEND_API_KEY: 'k', MAILING_ADDRESS: 'PO Box 1, Town, ST 00000' };
+  const { result, lines } = await captureLogs(() => withFetch(resend422(ALERT_INDEX()), async () => {
+    const r = await handle(req('POST', '/api/alerts', { email: 'victim@example.com', builds: [G19] }), e);
+    return { status: r.status, body: await r.json() };
+  }));
+  assert.equal(result.status, 500);
+  assert.deepEqual(result.body, { error: 'Something went wrong. Please try again.' });
+  assert.deepEqual(lines, ['Error: Resend 422']);
+  for (const line of lines) {
+    assert.doesNotMatch(line, /@/);
+    assert.doesNotMatch(line, /Invalid|validation_error|not allowed/);
+  }
+});
+
+test('a Resend error in the feedback digest throws and logs only the status', async () => {
+  const { runFeedback } = await import('./src/feedback.js');
+  const { runDaily } = await import('./src/index.js');
+  const e = { ...env(), RESEND_API_KEY: 'k', FEEDBACK_EMAIL: 'owner@example.com' };
+  assert.equal((await call(e, 'POST', '/api/feedback', { message: 'Please add the CZ P-10', email: 'fan@example.com' })).status, 201);
+  const direct = await captureLogs(() => withFetch(resend422(INDEX), () => runFeedback(e).then(() => null, (err) => err)));
+  assert.equal(direct.result.message, 'Resend 422');
+  assert.equal(direct.lines.length, 0);
+  const daily = await captureLogs(() => withFetch(resend422(INDEX), () => runDaily(e)));
+  assert.ok(daily.lines.includes('Feedback failed: Error: Resend 422'), daily.lines.join('\n'));
+  for (const line of daily.lines) {
+    assert.doesNotMatch(line, /@/);
+    assert.doesNotMatch(line, /Invalid|validation_error/);
+  }
+  // Unsent, so it waits for tomorrow.
+  assert.equal((await e.DB.prepare('SELECT COUNT(*) AS n FROM feedback WHERE emailed_at IS NULL').first()).n, 1);
+});
+
+test('the scheduled handler logs failed jobs by name, without addresses', async () => {
+  const { default: worker } = await import('./src/index.js');
+  const e = { ...alertEnv(), DB: { prepare: () => { throw new TypeError('D1 lost row for me@example.com, token abc'); } } };
+  const waits = [];
+  const { lines } = await captureLogs(async () => {
+    worker.scheduled({}, e, { waitUntil: (p) => waits.push(p) });
+    await Promise.all(waits);
+  });
+  assert.equal(waits.length, 1);
+  for (const job of ['Price alerts', 'Retention']) assert.ok(lines.includes(`${job} failed: TypeError: D1 lost row for <address> token abc`), lines.join('\n'));
+  assert.ok(lines.includes('Feedback {"sent":0,"skipped":"not set up"}'), lines.join('\n'));
+  for (const line of lines) assert.doesNotMatch(line, /@/);
+});
+
+/** One row of each kind `age` days old, plus a click that day. */
+async function seedAged(e, now, age, tag) {
+  const at = now - age * DAY;
+  const id = `b${tag}`.padEnd(10, '0');
+  await e.DB.prepare('INSERT INTO builds (id, platform, name, parts, created_at, ip_hash) VALUES (?, ?, ?, ?, ?, ?)').bind(id, 'glock9', `Build ${tag}`, '[]', at, `ip${tag}`).run();
+  await e.DB.prepare('INSERT INTO alerts (token, email, builds, confirmed, created_at, ip_hash) VALUES (?, ?, ?, 1, ?, ?)').bind(tag.padEnd(32, '0'), `${tag}@example.com`, '[]', at, `ip${tag}`).run();
+  await e.DB.prepare('INSERT INTO clicks (build_id, voter, day) VALUES (?, ?, ?)').bind(id, `ip${tag}`, Math.floor(at / DAY)).run();
+  await e.DB.prepare('INSERT INTO suppressed (email_hash, created_at) VALUES (?, ?)').bind(tag.padEnd(64, '0'), at).run();
+  await e.DB.prepare('INSERT INTO votes (build_id, voter, created_at) VALUES (?, ?, ?)').bind(id, `ip${tag}`, at).run();
+  await e.DB.prepare('INSERT INTO reports (build_id, voter) VALUES (?, ?)').bind(id, `net${tag}`).run();
+}
+const addFeedback = (e, created, emailed, tag) => e.DB.prepare('INSERT INTO feedback (message, email, created_at, ip_hash, emailed_at) VALUES (?, ?, ?, ?, ?)')
+  .bind(`Message ${tag}`, `${tag}@example.com`, created, `ip${tag}`, emailed).run();
+const snapshot = async (e) => {
+  const out = {};
+  for (const t of ['builds', 'alerts', 'clicks', 'suppressed', 'votes', 'reports', 'feedback']) out[t] = (await e.DB.prepare(`SELECT * FROM ${t} ORDER BY 1, 2`).all()).results;
+  return out;
+};
+/** Ages in days: recent rows, and rows past each limit. */
+async function seedRetention(e, now) {
+  await seedAged(e, now, 5, 'aa');
+  await seedAged(e, now, 31, 'bb');
+  await seedAged(e, now, 100, 'cc');
+  await addFeedback(e, now - 10 * DAY, now - 9 * DAY, 'f1'); // sent 9 days ago: all kept
+  await addFeedback(e, now - 50 * DAY, now - 40 * DAY, 'f2'); // sent 40 days ago: email and ip_hash blanked
+  await addFeedback(e, now - 120 * DAY, now - 95 * DAY, 'f3'); // sent 95 days ago: deleted
+  await addFeedback(e, now - 170 * DAY, null, 'f4'); // never sent, 170 days: ip_hash blanked, message and email kept
+  await addFeedback(e, now - 190 * DAY, null, 'f5'); // never sent, 190 days: deleted
+}
+const EXPECTED_COUNTS = {
+  feedbackDeleted: 2, feedbackEmailsBlanked: 1, feedbackIpHashesBlanked: 2,
+  alertIpHashesBlanked: 2, buildIpHashesBlanked: 2, clicksDeleted: 2, suppressedDeleted: 1,
+};
+
+test('retention ships as a dry run that only counts', async () => {
+  assert.equal(RETENTION_LIVE, false);
+  const e = env(); // no Resend settings: retention runs anyway
+  const now = Date.now();
+  await seedRetention(e, now);
+  const before = await snapshot(e);
+  const { result, lines } = await captureLogs(() => runRetention(e, now));
+  assert.deepEqual(result, { live: false, ...EXPECTED_COUNTS });
+  assert.deepEqual(await snapshot(e), before);
+  assert.equal(lines.length, 0);
+  // The daily job runs it and logs only the counts.
+  const { runDaily } = await import('./src/index.js');
+  const daily = await captureLogs(() => withIndex(ALERT_INDEX(), () => runDaily(e, now)));
+  assert.ok(daily.lines.includes(`Retention ${JSON.stringify({ live: false, ...EXPECTED_COUNTS })}`), daily.lines.join('\n'));
+  for (const line of daily.lines) assert.doesNotMatch(line, /@/);
+  assert.deepEqual(await snapshot(e), before);
+});
+
+test('live retention deletes and blanks old data and keeps recent data', async () => {
+  const e = env();
+  const now = Date.now();
+  await seedRetention(e, now);
+  assert.deepEqual(await runRetention(e, now, true), { live: true, ...EXPECTED_COUNTS });
+  const s = await snapshot(e);
+  assert.deepEqual(s.builds.map((b) => [b.name, b.ip_hash, b.clicks]), [['Build aa', 'ipaa', 0], ['Build bb', '', 0], ['Build cc', '', 0]]);
+  assert.deepEqual(s.alerts.map((a) => [a.email, a.ip_hash, a.confirmed]), [['aa@example.com', 'ipaa', 1], ['bb@example.com', '', 1], ['cc@example.com', '', 1]]);
+  assert.deepEqual(s.clicks.map((c) => c.voter), ['ipaa']);
+  assert.deepEqual(s.suppressed.map((x) => x.email_hash.slice(0, 2)), ['aa', 'bb']);
+  assert.equal(s.votes.length, 3);
+  assert.equal(s.reports.length, 3);
+  assert.deepEqual(s.feedback.map((f) => [f.message, f.email, f.ip_hash]), [
+    ['Message f1', 'f1@example.com', 'ipf1'],
+    ['Message f2', '', ''],
+    ['Message f4', 'f4@example.com', ''],
+  ]);
+  // Nothing left to do on the next run.
+  assert.deepEqual(await runRetention(e, now, true), { live: true, ...Object.fromEntries(Object.keys(EXPECTED_COUNTS).map((k) => [k, 0])) });
+});
+
+test('daily limits still work after old ip hashes are blanked', async () => {
+  const e = alertEnv();
+  const now = Date.now();
+  await seedRetention(e, now);
+  await runRetention(e, now, true);
+  for (let i = 0; i < 5; i++) assert.equal((await signupAt(e, now, `x${i}@example.com`)).status, 201);
+  assert.equal((await signupAt(e, now, 'y@example.com')).status, 429);
+  for (let i = 0; i < 5; i++) assert.equal((await handle(req('POST', '/api/feedback', { message: `Note number ${i}` }), e, now)).status, 201);
+  assert.equal((await handle(req('POST', '/api/feedback', { message: 'One too many' }), e, now)).status, 429);
+  for (let i = 0; i < 10; i++) assert.equal((await handle(req('POST', '/api/builds', { platform: 'glock9', name: `Build ${i}`, parts: ['a', 'b', 'c'] }), e, now)).status, 201);
+  assert.equal((await handle(req('POST', '/api/builds', { platform: 'glock9', name: 'One too many', parts: ['a', 'b', 'c'] }), e, now)).status, 429);
+});
