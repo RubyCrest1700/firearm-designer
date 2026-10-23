@@ -167,9 +167,9 @@ function rifle(platform: Platform, b: Build): Aware[] {
   }
 
   // Legal reminders.
-  if (platform.id === 'ar10' && L < 16 && stock)
+  if (platform.id === 'ar10' && L < 16 && stock && !stock.attrs.brace)
     out.push({ level: 'caution', title: 'Short-barreled rifle', basis: `${inch(L)} barrel with a stock`,
-      message: 'A rifle barrel under 16" with a stock is a short-barreled rifle under the NFA. It must be registered and approved before assembly.' });
+      message: 'A rifle barrel under 16" with a stock may be a short-barreled rifle under the National Firearms Act, which can require ATF approval before assembly. Some states ban them. Not legal advice: check federal, state and local law.' });
   if (mk)
     out.push({ level: 'note', title: 'Check your state', basis: 'Muzzle device on a semi-auto rifle',
       message: 'Some states restrict flash hiders and other muzzle devices on semi-auto rifles. Check current law where you live.' });

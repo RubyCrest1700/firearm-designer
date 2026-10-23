@@ -658,7 +658,7 @@ export const GUIDES: Guide[] = [
     lede: 'Many AR-9s use short barrels, so the stock choice decides what the gun is under federal law. This is a summary, not legal advice; check federal and state law before you build.',
     answers: [
       'A barrel <b>16" or longer</b> with a stock is a rifle.',
-      'A barrel <b>under 16" with a stock</b> is a short-barreled rifle (SBR). It needs an approved ATF Form 1 before you assemble it.',
+      'A barrel <b>under 16" with a stock</b> is a short-barreled rifle (SBR). Federal law generally requires ATF approval first (you file ATF Form 1). Some states ban them.',
       'A barrel under 16" with <b>no stock</b>, or with a pistol brace, is built as a pistol. Brace rules have changed several times, so check current law first.',
       'Some states ban SBRs or braces, or restrict pistol builds further.',
     ],

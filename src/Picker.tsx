@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { RETAILERS, buyUrl } from './data/retailers';
-import { bestOffer, candidateIssues, money, priceLabel, priceRange, priceText, worst } from './engine';
+import { bestOffer, candidateIssues, listedParts, money, priceLabel, priceRange, priceText, worst } from './engine';
 import type { RegionState } from './Blueprint';
 import { TIER_LABEL } from './store';
 import { daysAgo, hasHistory, partSeries } from './data/history';
@@ -26,7 +26,7 @@ export function Picker({ platform, slot, focusId: focusProp, number, model, buil
   useDrawer(onClose, closeRef);
 
   // In a builder with models, the list starts with the current model's parts (frames, slides, barrels...).
-  const inSlot = platform.parts.filter((p) => p.slot === slot.id);
+  const inSlot = listedParts(platform, slot.id, selectedId);
   const forModel = model?.parts ? inSlot.filter((p) => model.parts!(p) || p.id === selectedId) : inSlot;
   const all = (allModels ? inSlot : forModel).map((p) => {
     const iss = candidateIssues(platform, build, p, place);

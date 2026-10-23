@@ -2,12 +2,15 @@
 // Bundled with esbuild by `npm test` (like check-data), then run with node (node --test skips files under node_modules).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync, readdirSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { awarenessFor } from '../src/awareness';
 import { PLATFORMS } from '../src/data/index';
-import { PAUSED } from '../src/data/helpers';
+import { PAUSED, SBR_MESSAGE } from '../src/data/helpers';
 import { hasHistory, priceOn, recentChange } from '../src/data/history';
-import { baseSelection, bestOffer, candidateIssues, issuesFor, ownedOf, placementOf, priceRange, selectionTokens, singleRetailerCarts, toBuild, toBuyIds, type Selection } from '../src/engine';
+import { baseSelection, bestOffer, candidateIssues, issuesFor, listedParts, ownedOf, placementOf, presetSelection, priceRange, selectionTokens, singleRetailerCarts, toBuild, toBuyIds, type Selection } from '../src/engine';
+import { findParts } from '../src/find';
 import { Candidate } from '../src/Picker';
 import { buildStatus, statesFor } from '../src/status';
 import { loadSavedBuilds, priceChanges, priceSnapshot, readSharedBuild, selectionFromParts, storeSavedBuilds, totalOf, type SavedBuild } from '../src/store';
@@ -72,6 +75,112 @@ test('placements and owned marks ride along without becoming parts', () => {
   assert.ok(ownedOf(sel).owned.has('lower'));
   assert.ok(!toBuyIds(sel).includes(sel.lower));
   assert.ok(toBuyIds(sel).includes('r-light-hlx'));
+});
+
+/* ------------------------------------------------------------------ short barrels with a stock (interim, pending legal advice) */
+
+const ar9 = platform('ar9');
+const ar10 = platform('ar10');
+const sbr = (issues: { severity: string; slots: string[]; message: string }[]) => issues.filter((i) => i.message === SBR_MESSAGE);
+const HIDDEN_AR15 = ['ar-bbl-ba10', 'ar-bbl-ba115', 'ar-bbl-ba300-9', 'ar-bbl-ba75'];
+
+test('an AR-15 barrel under 16" with any stock is a conflict on both, and the build is not complete', () => {
+  const short = ar15.parts.filter((p) => p.slot === 'barrel' && (p.attrs.length as number) < 16);
+  assert.deepEqual(short.map((p) => p.id).sort(), HIDDEN_AR15);
+  const stocks = ar15.parts.filter((p) => p.slot === 'stock');
+  assert.ok(stocks.length >= 5);
+  for (const b of short)
+    for (const s of stocks) {
+      const build = toBuild(ar15, { ...baseSelection(ar15), barrel: b.id, stock: s.id });
+      const issues = issuesFor(ar15, build);
+      assert.deepEqual(sbr(issues).map((i) => [i.severity, [...i.slots].sort()]), [['error', ['barrel', 'stock']]], `${b.id} + ${s.id}`);
+      assert.equal(buildStatus(ar15, build, issues).complete, false, `${b.id} + ${s.id}`);
+      assert.equal(statesFor(ar15, build).states.barrel, 'error');
+      assert.equal(statesFor(ar15, build).states.stock, 'error');
+    }
+});
+
+test('an AR-15 barrel of 16" or more with any stock raises no short-barrel issue', () => {
+  const long = ar15.parts.filter((p) => p.slot === 'barrel' && (p.attrs.length as number) >= 16);
+  assert.ok(long.length >= 10);
+  for (const b of long)
+    for (const s of ar15.parts.filter((p) => p.slot === 'stock'))
+      assert.deepEqual(sbr(issuesFor(ar15, toBuild(ar15, { ...baseSelection(ar15), barrel: b.id, stock: s.id }))), [], `${b.id} + ${s.id}`);
+});
+
+test('the short AR-15 barrels are hidden from the picker and search but still open from links and saved builds', () => {
+  const listed = listedParts(ar15, 'barrel').map((p) => p.id);
+  for (const id of HIDDEN_AR15) {
+    assert.equal(part(ar15, id).hidden, true, id);
+    assert.ok(!listed.includes(id), id);
+    assert.ok(listedParts(ar15, 'barrel', id).some((p) => p.id === id), `${id} shows when it's already in the build`);
+    assert.ok(!findParts(part(ar15, id).name, ar15).here.some((f) => f.part.id === id), `${id} found by name`);
+  }
+  assert.deepEqual(ar15.parts.filter((p) => p.hidden).map((p) => p.id).sort(), HIDDEN_AR15);
+  assert.ok(listed.includes('ar-bbl-ba16') && listed.length === ar15.parts.filter((p) => p.slot === 'barrel').length - 4);
+  // A share token and a ?b= link resolve the hidden barrel, and the build shows the conflict.
+  const sel = { ...baseSelection(ar15), barrel: 'ar-bbl-ba10' };
+  const back = selectionFromParts('ar15', selectionTokens(sel));
+  assert.deepEqual(back, sel);
+  Object.defineProperty(globalThis, 'location', { value: { search: `?b=${encodeURIComponent(`ar15~${selectionTokens(sel).join('.')}`)}`, origin: 'https://example.test', pathname: '/' }, configurable: true });
+  assert.deepEqual(readSharedBuild(), { platform: 'ar15', selection: sel });
+  const build = toBuild(ar15, back);
+  assert.equal(build.barrel?.id, 'ar-bbl-ba10');
+  const issues = issuesFor(ar15, build);
+  assert.equal(sbr(issues).length, 1);
+  assert.deepEqual(buildStatus(ar15, build, issues), { cls: 'error', text: '1 conflict to fix', complete: false });
+});
+
+test('AR-9: a stock on a short barrel is a conflict; a brace, or a 16" barrel, is not', () => {
+  const at = (over: Selection) => issuesFor(ar9, toBuild(ar9, { ...baseSelection(ar9), ...over }));
+  const shortBarrels = ar9.parts.filter((p) => p.slot === 'barrel' && (p.attrs.length as number) < 16);
+  const stocks = ar9.parts.filter((p) => p.slot === 'stock' && !p.attrs.brace);
+  const braces = ar9.parts.filter((p) => p.slot === 'stock' && p.attrs.brace);
+  assert.ok(shortBarrels.length && stocks.length && braces.length);
+  for (const b of shortBarrels) {
+    for (const s of stocks) assert.deepEqual(sbr(at({ barrel: b.id, stock: s.id })).map((i) => [i.severity, [...i.slots].sort()]), [['error', ['barrel', 'stock']]], `${b.id} + ${s.id}`);
+    for (const s of braces) assert.deepEqual(at({ barrel: b.id, stock: s.id }).filter((i) => i.severity === 'error' && i.slots.includes('stock')), [], `${b.id} + ${s.id}`);
+  }
+  for (const s of [...stocks, ...braces]) assert.deepEqual(sbr(at({ barrel: 'a9-bbl-aero16', stock: s.id })), [], s.id);
+  const sel = { ...baseSelection(ar9), barrel: 'a9-bbl-faxon85' };
+  assert.equal(buildStatus(ar9, toBuild(ar9, sel), issuesFor(ar9, toBuild(ar9, sel))).complete, false);
+});
+
+test('AR-9: a vertical foregrip on a short braced or stockless build is a conflict; an angled grip or hand stop is not', () => {
+  const fgErrors = (over: Selection) => issuesFor(ar9, toBuild(ar9, { ...baseSelection(ar9), ...over })).filter((i) => i.severity === 'error' && i.slots.includes('foregrip'));
+  const braced = { barrel: 'a9-bbl-faxon85', stock: 'a9-brace-sba3' };
+  for (const fg of ['r-fg-mvg', 'r-fg-bcmvg']) {
+    assert.deepEqual(fgErrors({ ...braced, foregrip: fg }).map((i) => [...i.slots].sort()), [['barrel', 'foregrip']], fg);
+    const { stock, ...noStock } = { ...baseSelection(ar9), ...braced, foregrip: fg };
+    assert.ok(stock);
+    assert.equal(issuesFor(ar9, toBuild(ar9, noStock)).filter((i) => i.severity === 'error' && i.slots.includes('foregrip')).length, 1, `${fg} with no stock`);
+    assert.deepEqual(fgErrors({ barrel: 'a9-bbl-aero16', stock: 'a9-brace-sba3', foregrip: fg }), [], `${fg} on 16"`);
+  }
+  for (const fg of ['r-fg-kag', 'r-fg-afg2', 'r-fg-stop']) assert.deepEqual(fgErrors({ ...braced, foregrip: fg }), [], fg);
+  // The braced Best Value AR-9 starter build is unchanged and still conflict-free.
+  assert.ok(ar9.presets.value.includes('a9-brace-sba3'));
+  assert.deepEqual(errors(ar9, presetSelection(ar9, 'value')), []);
+});
+
+test('AR-10: a barrel under 16" with a stock is flagged too, though none is listed today', () => {
+  assert.ok(ar10.parts.filter((p) => p.slot === 'barrel').every((p) => (p.attrs.length as number) >= 16));
+  const build = toBuild(ar10, presetSelection(ar10, 'value'));
+  assert.ok(build.stock);
+  assert.deepEqual(sbr(ar10.rules(build)), []);
+  build.barrel = { ...build.barrel!, attrs: { ...build.barrel!.attrs, length: 14.5 } };
+  assert.deepEqual(sbr(ar10.rules(build)).map((i) => [i.severity, [...i.slots].sort()]), [['error', ['barrel', 'stock']]]);
+  assert.ok(awarenessFor(ar10, build).some((w) => w.level === 'caution' && w.title === 'Short-barreled rifle'));
+});
+
+test('no rule, awareness, pick or hint text says something "is legal" or tells people to approve ATF forms', () => {
+  const dir = 'src/data';
+  const files = [...readdirSync(dir).filter((f) => f.endsWith('.ts')).map((f) => `${dir}/${f}`), 'src/awareness.ts'];
+  assert.ok(files.length > 10);
+  for (const f of files) assert.doesNotMatch(readFileSync(f, 'utf8'), /\bis legal\b|legal without|Approve an ATF/, f);
+  // And at run time, across every platform's slot hints, pick notes and starter-build issues.
+  const texts = PLATFORMS.flatMap((p) => [...p.slots.map((s) => s.hint), ...p.parts.map((x) => x.pick?.note ?? ''),
+    ...(['budget', 'value', 'premium'] as const).flatMap((t) => issuesFor(p, toBuild(p, presetSelection(p, t))).map((i) => i.message))]);
+  for (const t of texts) assert.doesNotMatch(t, /\bis legal\b|legal without|Approve an ATF/);
 });
 
 /* ------------------------------------------------------------------ share links */

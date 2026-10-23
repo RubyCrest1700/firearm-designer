@@ -76,7 +76,8 @@ export function biggestDrops(parts: Part[], days = 7, max = 6): (Change & { part
   const drops: (Change & { part: Part })[] = [];
   for (const part of parts) {
     const name = `${part.brand} ${part.name}`;
-    if (seen.has(part.id) || seen.has(name) || !hasHistory(part) || !bestOffer(part)?.checkedAt) continue;
+    // Hidden parts aren't in the picker, so the home page doesn't offer them as a drop to open.
+    if (part.hidden || seen.has(part.id) || seen.has(name) || !hasHistory(part) || !bestOffer(part)?.checkedAt) continue;
     seen.add(part.id).add(name);
     const was = priceOn(part, daysAgo(days));
     const now = bestOffer(part)!.price;

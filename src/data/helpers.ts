@@ -55,6 +55,18 @@ export function parts(slot: string, list: Omit<PartInput, 'slot'>[]): Part[] {
 
 export const pick = (tier: Tier, note: string) => ({ tier, note });
 
+/** Owner-approved wording (2026-10-22). */
+export const SBR_MESSAGE = 'A barrel under 16" with a stock may be regulated under the National Firearms Act and can require ATF approval before assembly. Some states ban it. Not legal advice: check federal, state and local law before you build.';
+
+/**
+ * A rifle barrel under 16" with a stock is a conflict, so the build can't count as complete or be posted to
+ * Community. Interim rule pending legal advice (2026-10-22). A brace is not a stock. Used by the AR-15, AR-9 and AR-10.
+ */
+export function shortBarrelStockIssue(barrel?: Part, stock?: Part): Issue | undefined {
+  if (!barrel || !stock || stock.attrs.brace || (barrel.attrs.length as number) >= 16) return undefined;
+  return { severity: 'error', slots: ['barrel', 'stock'], message: SBR_MESSAGE };
+}
+
 /** An AR gas system length for a sentence: "carbine-length", but "midlength" already says it. */
 export const gasLength = (len: unknown) => (len === 'midlength' ? 'midlength' : `${len}-length`);
 

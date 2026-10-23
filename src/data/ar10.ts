@@ -1,5 +1,5 @@
 import type { Build, Issue, Placement, Platform } from '../types';
-import { boreIssue, gasLength, parts, pick, threadIssue } from './helpers';
+import { boreIssue, gasLength, parts, pick, shortBarrelStockIssue, threadIssue } from './helpers';
 import { rifleAddonParts, rifleAddonRules, rifleAddonSlots } from './addons';
 import { ironParts, ironRules, ironsSlot } from './irons';
 
@@ -206,6 +206,9 @@ function rules(b: Build, place: Placement = {}): Issue[] {
     out.push({ severity: 'error', slots: ['barrel', 'gasblock'], message: `The barrel has a ${barrel.attrs.journal}" gas journal but the gas block is ${gasblock.attrs.journal}".` });
   const thread = threadIssue(barrel, muzzle) ?? boreIssue(barrel, muzzle);
   if (thread) out.push(thread);
+  // No AR-10 barrel we list is under 16" today; the rule is here for when one is added.
+  const sbr = shortBarrelStockIssue(barrel, b.stock);
+  if (sbr) out.push(sbr);
   if (handguard && barrel) {
     const hg = handguard.attrs.length as number;
     const bl = barrel.attrs.length as number;
