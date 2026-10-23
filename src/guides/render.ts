@@ -311,7 +311,7 @@ function relatedHtml(g: Guide) {
 const GENERAL_FAQ: { section: string; items: { q: string; a: string }[] }[] = [
   { section: 'About Drop-In Builds', items: [
     { q: 'Is Drop-In Builds a store?', a: "No. We don't sell anything. You plan the build here, and every buy link goes to the retailer or maker, where you check out as usual." },
-    { q: 'Do I need an account?', a: 'No. There is nothing to sign up for. Builds you save are kept in your browser, and Copy Link gives you a link that opens the same build on any other device.' },
+    { q: 'Do I need an account?', a: 'No. Builds you save are kept in your browser, and Copy Link opens the same build on any other device. The only thing you can sign up for is optional price alert emails.' },
     { q: 'Which platforms can I build?', a: 'The AR-15, AR-10 and AR-9, the Glock 17, 19, 19X, 26, 34, 45 and 47, the Glock 43X and 48, the Glock 20 and 21, the Sig P320, the Sig P365, the S&W M&P 2.0 and the Springfield Hellcat. More platforms are on the way.' },
     { q: 'Do you make money from the links?', a: 'Some retailer links may earn us a small commission at no extra cost to you. It never changes which parts we show or how we check fit.' },
   ] },
@@ -328,7 +328,7 @@ const GENERAL_FAQ: { section: string; items: { q: string; a: string }[] }[] = [
     { q: 'Where do the prices come from?', a: "We check retailer and maker sites every night where they allow it, and show each part's price at every retailer we track. Prices marked Sample aren't tracked yet, List Price and dated Factory Part prices were checked by hand on that date, and undated Factory Part prices are estimates, so always confirm the price at the retailer." },
     { q: "Why isn't my favorite retailer listed?", a: "Some retailers don't allow automated price checks, and we respect that. We've also paused some retailers while we review their terms. We add retailers as they make their prices available to us." },
     { q: 'How do price alerts work?', a: 'Save a build to My Builds, then enter your email there. We send one email a day at most, only when a part in a saved build moves by $20 and 10% or more. Every email has a one-click unsubscribe link.' },
-    { q: 'What do you do with my email address?', a: "We only use it to send the price alerts you asked for. We don't sell it or share it, and unsubscribing deletes it." },
+    { q: 'What do you do with my email address?', a: "We only use it to send the price alerts you asked for. We don't sell it. Our email provider (Resend) and host (Cloudflare) process it to deliver the emails. Unsubscribing deletes it from our database; the providers may keep delivery logs for a limited time." },
   ] },
   { section: 'Buying and the Law', items: [
     { q: 'What does FFL mean on a part?', a: 'FFL marks the serialized part, which is legally the firearm (a pistol frame or fire control unit, or an AR lower receiver). It ships to a licensed dealer near you, who handles the transfer and background check.' },
