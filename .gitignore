@@ -3,3 +3,8 @@ dist/
 .DS_Store
 *.log
 weights-found.json
+.env
+.env.*
+!.env.example
+.dev.vars*
+.wrangler/
