@@ -18,7 +18,7 @@ export async function withSecurityHeaders(res) {
 }
 
 export default {
-  fetch: async (request, env) => withSecurityHeaders(await handle(request, env)),
+  fetch: async (request, env, ctx) => withSecurityHeaders(await handle(request, env, Date.now(), ctx)),
   // Daily, after the nightly price refresh has rebuilt the site: email price alerts and the feedback digest,
   // and clear out old personal data. Each logs only counts, or its error's name and message.
   scheduled: (event, env, ctx) => ctx.waitUntil(runDaily(env)),

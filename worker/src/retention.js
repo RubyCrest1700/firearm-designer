@@ -4,6 +4,7 @@
 //   ip_hash             blanked after 30 days on alerts, feedback and builds (the daily limits only look back a day)
 //   clicks              deleted after 30 days (the per-build click counts in builds stay)
 //   suppressed          deleted 90 days after the unsubscribe, when it stops applying (alerts.js)
+//   signups             deleted after 30 days (the signup limits only look back a day)
 // Votes and reports are kept, so nobody can vote twice or re-report a build. Unconfirmed alert signups are
 // deleted after 7 days by runAlerts, and confirmed ones are kept until the address unsubscribes.
 
@@ -30,6 +31,7 @@ function rules(now) {
     { name: 'buildIpHashesBlanked', table: 'builds', set: "ip_hash = ''", where: "ip_hash != '' AND created_at < ?", args: [month] },
     { name: 'clicksDeleted', table: 'clicks', where: 'day < ?', args: [Math.floor(now / DAY) - 30] },
     { name: 'suppressedDeleted', table: 'suppressed', where: 'created_at < ?', args: [now - SUPPRESS_FOR] },
+    { name: 'signupsDeleted', table: 'signups', where: 'created_at < ?', args: [month] },
   ];
 }
 

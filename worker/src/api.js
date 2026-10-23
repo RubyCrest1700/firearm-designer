@@ -138,7 +138,8 @@ const SORTS = {
   bought: 'clicks DESC, votes DESC, created_at DESC',
 };
 
-export async function handle(request, env, now = Date.now()) {
+/** `ctx` is the Worker's execution context; without one (tests), work it would hand to waitUntil is awaited instead. */
+export async function handle(request, env, now = Date.now(), ctx = null) {
   const origin = allowedOrigin(request.headers.get('origin') ?? '', env);
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(origin) });
   const url = new URL(request.url);
@@ -238,7 +239,8 @@ export async function handle(request, env, now = Date.now()) {
       return json({ build: toBuild(row), hidden: !!row.hidden }, 200, origin);
     }
 
-    const alerts = await alertsRoute(request, env, { path, url, now, salt, json: (d, s) => json(d, s, origin), who: () => visitorHash(request, salt) });
+    const wait = (p) => (ctx?.waitUntil ? ctx.waitUntil(p) : p);
+    const alerts = await alertsRoute(request, env, { path, url, now, salt, wait, json: (d, s) => json(d, s, origin), who: () => visitorHash(request, salt) });
     if (alerts) return alerts;
 
     // POST /api/feedback { message, email, page }
