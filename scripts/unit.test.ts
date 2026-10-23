@@ -7,13 +7,22 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { awarenessFor } from '../src/awareness';
 import { PLATFORMS } from '../src/data/index';
-import { PAUSED, SBR_MESSAGE } from '../src/data/helpers';
-import { hasHistory, priceOn, recentChange } from '../src/data/history';
-import { baseSelection, bestOffer, candidateIssues, issuesFor, listedParts, ownedOf, placementOf, presetSelection, priceRange, selectionTokens, singleRetailerCarts, toBuild, toBuyIds, type Selection } from '../src/engine';
+import { PAUSED, SBR_MESSAGE, shortBarrelStockIssue } from '../src/data/helpers';
+import { biggestDrops, daysAgo, hasHistory, partSeries, priceOn, recentChange, seriesOf } from '../src/data/history';
+import { baseSelection, bestOffer, candidateIssues, issuesFor, listedParts, noPriceNote, ownedOf, placementOf, presetSelection, priceRange, selectionTokens, singleRetailerCarts, toBuild, toBuyIds, unpricedCount, type Selection } from '../src/engine';
 import { findParts } from '../src/find';
 import { Candidate } from '../src/Picker';
 import { buildStatus, statesFor } from '../src/status';
-import { loadSavedBuilds, priceChanges, priceSnapshot, readSharedBuild, selectionFromParts, storeSavedBuilds, totalOf, type SavedBuild } from '../src/store';
+import { loadSavedBuilds, priceChanges, priceSnapshot, readSharedBuild, selectionFromParts, storeSavedBuilds, totalOf, unpricedOf, type SavedBuild } from '../src/store';
+import { Summary } from '../src/BuilderPage';
+import { HomePage } from '../src/HomePage';
+import { BuildCard, ChangeChip } from '../src/ui';
+import { PAGE_VIEWS, guidePage, platformPage } from '../src/guides/render';
+import { GUIDES } from '../src/guides/content';
+import { RETAILERS } from '../src/data/retailers';
+import { priceIndex } from './og-index';
+import history from '../data/price-history.json';
+import type { Part, Platform } from '../src/types';
 
 const platform = (id: string) => PLATFORMS.find((p) => p.id === id)!;
 const ar15 = platform('ar15');
@@ -239,6 +248,11 @@ test('a part sold only by a paused retailer has no price and renders without one
   assert.equal(handguard?.id, 'ar-hg-mi9');
   assert.ok(Number.isFinite(totalOf(ar15, build)) && totalOf(ar15, build) > 0);
   assert.equal(totalOf(ar15, build), totalOf(ar15, rest));
+  // The total stays the same, and says the handguard isn't in it.
+  assert.equal(unpricedOf(ar15, build), 1);
+  assert.equal(unpricedOf(ar15, rest), 0);
+  assert.equal(unpricedOf(ar15, build, new Set(['handguard'])), 0);
+  assert.equal(noPriceNote(unpricedOf(ar15, build)), '1 part has no price');
   const html = renderToStaticMarkup(createElement(Candidate, { part: hg, open: true, issues: [], sev: 'ok', selected: false, owned: false, onChoose: () => {}, onBuyClick: () => {} }));
   assert.match(html, /<span class="amt dim">—<\/span>/);
   assert.doesNotMatch(html, /Compare|View Retailer|<table|NaN|Infinity|undefined/);
@@ -289,4 +303,231 @@ test('a part that got cheaper since saving shows as a drop, owned parts left out
   assert.deepEqual(changes.map((c) => c.part.id), [sel.barrel]);
   assert.equal(Math.round(drop * 100) / 100, 20);
   assert.equal(priceSnapshot('ar15', saved.selection)[sel.lower], undefined);
+});
+
+/* ------------------------------------------------------------------ paused retailers' price history */
+
+const RAW_HISTORY = (history as unknown as { parts: Record<string, [string, number][]> }).parts;
+const everyPart = () => PLATFORMS.flatMap((p) => p.parts);
+const PAUSE_DAY = '2026-10-22';
+
+test('a part any paused retailer priced carries the pause date; one none of them priced does not', () => {
+  // Primary Arms sample prices only (the hidden 10.3" barrel), a Primary Arms live price (the MI handguard), and a part no paused store sells.
+  assert.equal(part(ar15, 'ar-bbl-ba10').pausedThrough, PAUSE_DAY);
+  assert.equal(part(ar15, 'ar-hg-mi9').pausedThrough, PAUSE_DAY);
+  assert.equal(part(ar15, 'ar-gt-pistol').pausedThrough, undefined);
+  assert.ok(everyPart().filter((x) => x.pausedThrough).every((x) => x.pausedThrough === PAUSE_DAY));
+});
+
+test('price history from on or before a paused retailer\'s pause date is never shown for the parts it priced', () => {
+  const affected = everyPart().filter((x) => x.pausedThrough);
+  assert.ok(affected.length > 100, `${affected.length} parts`);
+  for (const x of affected) {
+    assert.ok(seriesOf(x).every(([d]) => d > x.pausedThrough!), x.id);
+    const best = bestOffer(x);
+    if (!best) continue;
+    const kept = seriesOf(x);
+    // Before the first point we can still trust, the chart and the change chip use that point's price, or today's when there is none.
+    const stand = kept.length ? priceOn(x, kept[0][0]) : best.price;
+    for (const [d, price] of partSeries(x, daysAgo(90))) if (d <= x.pausedThrough!) assert.equal(price, stand, `${x.id} on ${d}`);
+    if (!kept.length) {
+      // No history point below today's low (from the paused store or anywhere), so no chart, no chip and no home page drop.
+      assert.ok(partSeries(x, daysAgo(90)).every(([, price]) => price >= best.price), x.id);
+      assert.equal(hasHistory(x), false, x.id);
+      assert.equal(recentChange(x), undefined, x.id);
+      assert.equal(renderToStaticMarkup(createElement(ChangeChip, { part: x, long: true })), '', x.id);
+    }
+  }
+  const dropped = new Set(biggestDrops(everyPart(), 90, 1000).map((d) => d.part.id));
+  for (const x of affected) if (!seriesOf(x).length) assert.ok(!dropped.has(x.id), x.id);
+});
+
+test('a part still sold elsewhere: its old paused-store low is dropped from the chart, and the chip shows no rise from it', () => {
+  // Today's file holds only points from before the pause, so for every affected part they're the ones to drop.
+  // Where one was below the part's current low, the chart used to dip and the chip to show a rise.
+  const hits = everyPart().filter((x) => x.pausedThrough && bestOffer(x) && (RAW_HISTORY[x.id] ?? []).some(([d, price]) => d <= x.pausedThrough! && price < bestOffer(x)!.price));
+  for (const x of hits) {
+    const now = bestOffer(x)!.price;
+    const before = partSeries(x, daysAgo(90)).filter(([d]) => d <= x.pausedThrough!);
+    assert.ok(before.every(([, price]) => price >= now) || seriesOf(x).length > 0, x.id);
+    const chip = recentChange(x);
+    assert.ok(!chip || chip.by >= 0 || seriesOf(x).length > 0, `${x.id} shows a rise of ${chip && -chip.by}`);
+  }
+  // The same thing with a pause date set on a part with history, so it doesn't depend on today's prices.
+  const real = everyPart().find((x) => bestOffer(x) && (RAW_HISTORY[x.id]?.length ?? 0) >= 2)!;
+  const series = RAW_HISTORY[real.id];
+  const last = series[series.length - 1][0];
+  const allOld: Part = { ...real, pausedThrough: last };
+  assert.deepEqual(seriesOf(allOld), []);
+  assert.equal(hasHistory(allOld), false);
+  assert.equal(recentChange(allOld), undefined);
+  assert.equal(priceOn(allOld, series[0][0]), bestOffer(real)!.price);
+  const keepLast: Part = { ...real, pausedThrough: series[series.length - 2][0] };
+  assert.deepEqual(seriesOf(keepLast), [series[series.length - 1]]);
+  // Earlier days now read the first kept price, not the older (possibly paused-store) one.
+  assert.equal(priceOn(keepLast, series[0][0]), priceOn(real, last));
+  assert.deepEqual(seriesOf({ ...real, pausedThrough: undefined }), series);
+});
+
+test('a saved build\'s price from before a pause isn\'t compared with today\'s; one saved after it is', () => {
+  storage.clear();
+  const x = ar15.parts.find((p) => p.pausedThrough && !p.hidden && bestOffer(p) && p.slot === 'handguard')!;
+  assert.ok(x, 'an AR-15 handguard a paused retailer priced');
+  const sel = { ...baseSelection(ar15), handguard: x.id };
+  const now = priceSnapshot('ar15', sel);
+  const cheaper = { ...now, [x.id]: now[x.id] - 30 };
+  const before: SavedBuild = { id: 'p', name: 'Before', platform: 'ar15', selection: sel, savedAt: '2026-10-01T00:00:00Z', prices: cheaper };
+  assert.deepEqual(priceChanges(before), { changes: [], drop: 0 });
+  const after: SavedBuild = { ...before, id: 'q', savedAt: '2026-10-23T00:00:00Z' };
+  assert.deepEqual(priceChanges(after).changes.map((c) => [c.part.id, c.was, c.now]), [[x.id, now[x.id] - 30, now[x.id]]]);
+  // Loading resets that one price to today's and notes when, so later changes show again; other parts keep theirs.
+  storeSavedBuilds([before]);
+  const [loaded] = loadSavedBuilds();
+  assert.equal(loaded.prices![x.id], now[x.id]);
+  assert.ok(loaded.pricesAt && loaded.pricesAt.slice(0, 10) > PAUSE_DAY);
+  assert.deepEqual(Object.keys(loaded.prices!).sort(), Object.keys(cheaper).sort());
+  assert.deepEqual(priceChanges({ ...loaded, prices: { ...loaded.prices!, [x.id]: now[x.id] + 5 } }).changes.map((c) => c.part.id), [x.id]);
+  storeSavedBuilds([loaded]);
+  const [again] = loadSavedBuilds();
+  assert.equal(again.pricesAt, loaded.pricesAt);
+  // A build saved after the pause loads with its prices as they are.
+  storage.clear();
+  storeSavedBuilds([after]);
+  assert.equal(loadSavedBuilds()[0].prices![x.id], now[x.id] - 30);
+  assert.equal(loadSavedBuilds()[0].pricesAt, undefined);
+});
+
+/* ------------------------------------------------------------------ totals with parts that have no price */
+
+test('the note beside a total says how many parts have no price', () => {
+  assert.equal(noPriceNote(0), '');
+  assert.equal(noPriceNote(1), '1 part has no price');
+  assert.equal(noPriceNote(2), '2 parts have no price');
+  assert.equal(noPriceNote(7), '7 parts have no price');
+  assert.equal(unpricedCount([part(ar15, 'ar-hg-mi9'), undefined, part(ar15, 'ar-mz-vg6')]), 1);
+});
+
+const summaryHtml = (p: Platform, sel: Selection) => {
+  const build = toBuild(p, sel);
+  const owned = ownedOf(sel);
+  const { issues, states } = statesFor(p, build);
+  const noop = () => {};
+  return renderToStaticMarkup(createElement(Summary, {
+    platform: p, build, issues, aware: [], states, status: buildStatus(p, build, issues, owned.other), total: totalOf(p, build, owned.owned), owned, openSaved: null,
+    onSave: noop, onShare: async () => {}, onCopyLink: noop, onOpen: noop, onCompare: noop, onFindOwned: noop,
+  }));
+};
+
+test('the builder summary notes parts with no price, and counts only retailers that price a part', () => {
+  const priced = baseSelection(ar15);
+  const one = { ...priced, handguard: 'ar-hg-mi9' };
+  const two = { ...one, optic: 'ar-opt-slx16' };
+  assert.equal(bestOffer(part(ar15, 'ar-opt-slx16')), undefined);
+  const retailers = (sel: Selection) => new Set(Object.values(toBuild(ar15, sel)).filter((x): x is Part => !!x).map((x) => bestOffer(x)?.retailer).filter(Boolean)).size;
+  const n = (k: number) => `${k} retailer${k === 1 ? '' : 's'}`;
+  assert.doesNotMatch(summaryHtml(ar15, priced), /no price/);
+  const h1 = summaryHtml(ar15, one);
+  assert.match(h1, /1 part has no price/);
+  assert.match(h1, new RegExp(`from <!-- -->${n(retailers(one))}|from ${n(retailers(one))}`));
+  const h2 = summaryHtml(ar15, two);
+  assert.match(h2, /2 parts have no price/);
+  assert.match(h2, new RegExp(`from <!-- -->${n(retailers(two))}|from ${n(retailers(two))}`));
+  // An owned part is out of the total either way, so it gets no note.
+  assert.doesNotMatch(summaryHtml(ar15, { ...one, '+handguard': 'own' }), /no price/);
+  // Saved and community build cards say it too.
+  const card = (sel: Selection) => renderToStaticMarkup(createElement(BuildCard, { platformId: 'ar15', selection: sel, title: 'T', meta: 'M', actions: null }));
+  assert.match(card(one), /1 part has no price/);
+  assert.doesNotMatch(card(priced), /no price/);
+});
+
+test('starter build cards and the platform page note parts with no price; totals are unchanged', () => {
+  const view = PAGE_VIEWS.find((v) => v.pageId === 'ar15')!;
+  const budget = Object.values(presetSelection(view, 'budget'));
+  const totalOfBudget = (v: typeof view) => budget.reduce((sum, id) => sum + (bestOffer(v.parts.find((x) => x.id === id)!)?.price ?? 0), 0);
+  const usd = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+  // Today the AR-15 budget build has the MI handguard, which only Primary Arms priced.
+  assert.ok(budget.includes('ar-hg-mi9'));
+  const card = (v: typeof view, note: string) => `${budget.length} parts, ${usd(totalOfBudget(v))} at the lowest prices we list${note ? ` · ${note}` : ''}</span>`;
+  const lede = (v: typeof view, note: string) => `every part already fits, from ${usd(totalOfBudget(v))}${note ? ` (${note})` : ''}.`;
+  assert.ok(platformPage(view).includes(card(view, '1 part has no price')), 'starter card');
+  assert.ok(platformPage(view).includes(lede(view, '1 part has no price')), 'page lede');
+  // With its price back, no note; with another part's price gone too, the note counts two.
+  const withMi = { ...view, parts: view.parts.map((x) => (x.id === 'ar-hg-mi9' ? { ...x, offers: [{ retailer: 'BRN', price: 200, inStock: true }] } : x)) };
+  assert.ok(platformPage(withMi).includes(card(withMi, '')) && platformPage(withMi).includes(lede(withMi, '')));
+  const other = budget.find((id) => id !== 'ar-hg-mi9')!;
+  const two = { ...view, parts: view.parts.map((x) => (x.id === other ? { ...x, offers: [] } : x)) };
+  assert.ok(platformPage(two).includes(card(two, '2 parts have no price')), 'starter card, two');
+  assert.ok(platformPage(two).includes(lede(two, '2 parts have no price')), 'page lede, two');
+  // The total itself still adds up only the priced parts.
+  assert.equal(Math.round(totalOfBudget(view) * 100), Math.round((totalOfBudget(withMi) - 200) * 100));
+  // Every real page shows the note exactly when a starter build has a part with no price.
+  for (const v of PAGE_VIEWS)
+    for (const tier of ['budget', 'value', 'premium'] as const) {
+      const k = unpricedCount(Object.values(presetSelection(v, tier)).map((id) => v.parts.find((x) => x.id === id)));
+      if (k) assert.ok(platformPage(v).includes(noPriceNote(k)), `${v.pageId}/${tier}`);
+    }
+});
+
+test('the home page counts neither hidden parts nor paused retailers, and notes a starter build with no-price parts', () => {
+  const html = renderToStaticMarkup(createElement(HomePage, { onPick: () => {}, onStart: () => {}, onBrowse: () => {} })).replace(/<!-- -->/g, '');
+  const parts = new Set(PLATFORMS.flatMap((p) => p.parts.filter((x) => !x.hidden).map((x) => x.id))).size;
+  const all = new Set(PLATFORMS.flatMap((p) => p.parts.map((x) => x.id))).size;
+  const stores = Object.keys(RETAILERS).length - PAUSED.size;
+  assert.ok(all > parts);
+  assert.ok(html.includes(`${PLATFORMS.length} platforms · ${parts} parts · ${stores} retailers compared`), 'hero facts');
+  for (const p of PLATFORMS) {
+    const k = unpricedOf(p, toBuild(p, presetSelection(p, 'budget')));
+    if (k) assert.ok(html.includes(noPriceNote(k)), p.id);
+  }
+});
+
+/* ------------------------------------------------------------------ hidden parts on the static pages */
+
+test('the static pages leave out hidden parts: tables, fit charts, picks and counts', () => {
+  const hidden = ar15.parts.filter((x) => x.hidden);
+  assert.deepEqual(hidden.map((x) => x.id).sort(), HIDDEN_AR15);
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const view = PAGE_VIEWS.find((v) => v.pageId === 'ar15')!;
+  assert.ok(view.parts.every((x) => !x.hidden));
+  const pages = [platformPage(view), ...GUIDES.filter((g) => g.platform === 'ar15').map((g) => guidePage(g, '2026-10-23T00:00:00Z'))];
+  for (const html of pages) for (const x of hidden) assert.ok(!html.includes(esc(x.name)) && !html.includes(x.name), x.id);
+  const shown = ar15.parts.filter((x) => !x.hidden);
+  assert.ok(pages[0].includes(`${shown.length} parts from ${new Set(shown.map((x) => x.brand)).size} brands`));
+  assert.ok(pages[0].includes(`${shown.length} parts checked for fit`));
+  const barrels = shown.filter((x) => x.slot === 'barrel').length;
+  assert.ok(pages[0].includes(`${barrels} options`), 'barrel count');
+  // The handguard chart's columns for 7.5", 9", 10.3" and 11.5" barrels were only for the hidden ones.
+  const hg = guidePage(GUIDES.find((g) => g.slug === 'ar-15-handguard-length-chart')!, '2026-10-23T00:00:00Z');
+  for (const col of ['7.5&quot; pistol', '9&quot; pistol', '10.3&quot; carbine', '11.5&quot; carbine']) assert.ok(!hg.includes(`<th scope="col">${col}</th>`), col);
+  for (const col of ['16&quot; carbine', '16&quot; mid', '16&quot; pistol', '18&quot; rifle', '20&quot; rifle']) assert.ok(hg.includes(`<th scope="col">${col}</th>`), col);
+  assert.doesNotMatch(hg, /10\.3|11\.5/);
+  // Shared links and saved builds still open them (the builder keeps the whole catalog).
+  assert.equal(toBuild(ar15, { ...baseSelection(ar15), barrel: 'ar-bbl-ba75' }).barrel?.id, 'ar-bbl-ba75');
+});
+
+/* ------------------------------------------------------------------ short-barrel rule, price index */
+
+test('a barrel with no listed length raises no short-barrel issue; a short one still does', () => {
+  const stock = ar15.parts.find((x) => x.slot === 'stock' && !x.attrs.brace)!;
+  const short = part(ar15, 'ar-bbl-ba10');
+  const { length, ...rest } = short.attrs;
+  assert.equal(length, 10.3);
+  assert.equal(shortBarrelStockIssue({ ...short, attrs: rest }, stock), undefined);
+  assert.equal(shortBarrelStockIssue({ ...short, attrs: { ...rest, length: '10.3' } }, stock), undefined);
+  assert.equal(shortBarrelStockIssue(short, stock)?.severity, 'error');
+  assert.equal(shortBarrelStockIssue(part(ar15, 'ar-bbl-ba16'), stock), undefined);
+});
+
+test('the price index leaves out parts with no price', () => {
+  const index = priceIndex(PLATFORMS);
+  assert.equal(index.platforms.ar15.parts['ar-hg-mi9'], undefined);
+  const vg6 = part(ar15, 'ar-mz-vg6');
+  assert.deepEqual(index.platforms.ar15.parts['ar-mz-vg6'], [`${vg6.brand} ${vg6.name}`, bestOffer(vg6)!.price]);
+  for (const p of PLATFORMS) {
+    assert.equal(index.platforms[p.id].name, p.name);
+    assert.deepEqual(Object.keys(index.platforms[p.id].parts).sort(), [...new Set(p.parts.filter((x) => bestOffer(x)).map((x) => x.id))].sort(), p.id);
+    for (const [, price] of Object.values(index.platforms[p.id].parts)) assert.ok(price > 0, p.id);
+  }
+  const tiny = { ...ar15, id: 'tiny', parts: [vg6, { ...vg6, id: 'no-price', offers: [] }] };
+  assert.deepEqual(Object.keys(priceIndex([tiny]).platforms.tiny.parts), ['ar-mz-vg6']);
 });

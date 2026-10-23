@@ -13,7 +13,7 @@ import { ironParts, ironRules, ironsSlot } from './irons';
  * https://www.80percentarms.com/blog/ar9-lrbho-explained/
  */
 const MAG_LABEL: Record<string, string> = { glock: 'Glock', colt: 'Colt SMG' };
-/** Not part of the owner-approved wording of 2026-10-22: written to match it, for review. */
+/** Owner-approved wording (2026-10-23). */
 const VERTICAL_GRIP_MESSAGE = 'A vertical foregrip on a pistol with a barrel under 16" may be regulated under the National Firearms Act and can require ATF approval. Not legal advice: check federal, state and local law before you build.';
 /** Who makes each lower's bolt hold-open system, as named on the bolts. */
 const LRBHO_LABEL: Record<string, string> = { aero: 'Aero Precision EPC', psa: 'PSA', nfa: 'New Frontier Armory', fm: 'FM Products', jp: 'JP Enterprises' };

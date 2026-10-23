@@ -10,7 +10,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseRobots, isAllowed } from './robots.mjs';
-import { pausedHosts, readRetailers } from './sources.mjs';
+import { readPausedHosts } from './sources.mjs';
 
 const USER_AGENT = 'FirearmDesignerLinkCheck/0.1 (+https://github.com/RubyCrest1700/firearm-designer)';
 const HOST_DELAY_MS = 3000;
@@ -18,7 +18,7 @@ const HOST_DELAY_MS = 3000;
 const SKIP = /^https:\/\/(dropinbuilds\.com|share\.dropinbuilds\.com|[^/]*\.workers\.dev|fonts\.(googleapis|gstatic)\.com|static\.cloudflareinsights\.com|schema\.org|www\.w3\.org|github\.com\/RubyCrest1700)/;
 const URL_RE = /https:\/\/[^\s'"`<>)\\]+/g;
 /** Retailers paused in data/sources.json aren't fetched at all, search links included (scripts/sources.mjs). */
-const PAUSED_HOSTS = pausedHosts(JSON.parse(readFileSync('data/sources.json', 'utf8')), readRetailers());
+const PAUSED_HOSTS = readPausedHosts();
 
 /** Store search pages (src/data/retailers.ts) always exist; a 404 there means the store turned the checker away. */
 const SEARCH_PREFIXES = [...readFileSync('src/data/retailers.ts', 'utf8').matchAll(/search: '(https:[^']+)'/g)].map((m) => m[1]);

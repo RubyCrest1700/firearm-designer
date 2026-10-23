@@ -7,12 +7,12 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { extractWeight } from './extract-price.mjs';
 import { parseRobots, isAllowed } from './robots.mjs';
-import { activeSources, readRetailers } from './sources.mjs';
+import { readActiveSources } from './sources.mjs';
 
 const USER_AGENT = 'FirearmDesignerPriceBot/0.1 (+https://github.com/RubyCrest1700/firearm-designer)';
 const HOST_DELAY_MS = 5000;
 // Paused retailers ("paused" in data/sources.json) are left out.
-const sources = activeSources(JSON.parse(readFileSync('data/sources.json', 'utf8')), readRetailers());
+const sources = readActiveSources();
 const current = JSON.parse(readFileSync('data/weights.json', 'utf8')).parts ?? {};
 
 const robotsCache = new Map();

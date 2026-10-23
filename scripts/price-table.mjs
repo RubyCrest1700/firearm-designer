@@ -2,7 +2,8 @@
 // (vite.config.ts). The two files repeat every product link; the table keeps each link once and each live price
 // as [link, price, in stock, day checked] (plus the price's own link when it differs, until the next price run): { updatedAt, days: [iso, ...], parts: { "<partId>": { "<retailer>": link | [...] } } }.
 // The app unpacks it into the same shapes the files have, so nothing else changes. The paused retailers
-// ("paused" in sources.json) ride along so the site can leave their prices out (src/data/helpers.ts).
+// ("paused" in sources.json, each with its pause date) ride along so the site can leave their prices out, and the
+// price history recorded before the pause for the parts they priced (src/data/helpers.ts, src/data/history.ts).
 
 /** Packs prices.json and sources.json into the table. */
 export function packPrices(prices, sources) {

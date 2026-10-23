@@ -9,7 +9,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { extractPrice, implausiblePrice } from './extract-price.mjs';
 import { parseRobots, isAllowed } from './robots.mjs';
 import { recordHistory, formatHistory } from './price-history.mjs';
-import { activeSources, readRetailers } from './sources.mjs';
+import { readActiveSources } from './sources.mjs';
 
 const USER_AGENT = 'FirearmDesignerPriceBot/0.1 (+https://github.com/RubyCrest1700/firearm-designer)';
 const HOST_DELAY_MS = 5000;
@@ -18,7 +18,7 @@ const KEEP_STALE_DAYS = 7;
 const dryRun = process.argv.includes('--dry-run');
 
 // Paused retailers ("paused" in data/sources.json) are left out: their pages aren't read and their prices drop out.
-const sources = activeSources(JSON.parse(readFileSync('data/sources.json', 'utf8')), readRetailers());
+const sources = readActiveSources();
 const previous = JSON.parse(readFileSync('data/prices.json', 'utf8'));
 const now = new Date();
 

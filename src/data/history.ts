@@ -5,6 +5,16 @@ import type { Part } from '../types';
 /** Days each part's lowest live price changed, written nightly by scripts/price-history.mjs. */
 const SERIES = (history as unknown as { parts: Record<string, [string, number][]> }).parts;
 
+/**
+ * A part's recorded price changes that we can still show. The file keeps only each part's lowest price, not which
+ * store had it, so for a part a paused retailer priced, every point on or before the pause date (Part.pausedThrough)
+ * is dropped: its low may be that retailer's. Until the part's price next changes it has no history to show.
+ */
+export function seriesOf(part: Part): [string, number][] {
+  const series = SERIES[part.id] ?? [];
+  return part.pausedThrough ? series.filter(([d]) => d > part.pausedThrough!) : series;
+}
+
 export const today = () => new Date().toISOString().slice(0, 10);
 export const daysAgo = (n: number, from = new Date()) => new Date(from.getTime() - n * 864e5).toISOString().slice(0, 10);
 
@@ -25,7 +35,7 @@ function sampleFloor(part: Part) {
  */
 export function priceOn(part: Part, day: string): number {
   if (!hasHistory(part)) return bestOffer(part)?.price ?? 0;
-  const series = SERIES[part.id];
+  const series = seriesOf(part);
   const live = (series.filter(([d]) => d <= day).pop() ?? series[0])[1];
   return Math.min(live, sampleFloor(part));
 }
@@ -33,7 +43,7 @@ export function priceOn(part: Part, day: string): number {
 /** Days any of these parts changed price between `from` and `to`, with both ends included. */
 function changeDays(parts: Part[], from: string, to: string) {
   const days = new Set([from, to]);
-  for (const p of parts) for (const [d] of SERIES[p.id] ?? []) if (d > from && d < to) days.add(d);
+  for (const p of parts) for (const [d] of seriesOf(p)) if (d > from && d < to) days.add(d);
   return [...days].sort();
 }
 
@@ -58,10 +68,11 @@ export function recentChange(part: Part, days = 30): Change | undefined {
 
 /**
  * Whether a part has any price history yet (sample-priced parts never do). A part with no offers now (sold only by
- * a paused retailer) has none to show either: its recorded prices came from that retailer.
+ * a paused retailer) has none to show either: its recorded prices came from that retailer. Nor does a part whose only
+ * points date from before a paused retailer's pause (seriesOf).
  */
 export function hasHistory(part: Part) {
-  return part.offers.length > 0 && (SERIES[part.id]?.length ?? 0) > 0;
+  return part.offers.length > 0 && seriesOf(part).length > 0;
 }
 
 /** A drop big enough for the home page: $5, and 5% of the price. */

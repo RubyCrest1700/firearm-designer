@@ -5,7 +5,7 @@
  */
 import { PLATFORMS, PRICES_UPDATED_AT } from '../data';
 import { RETAILERS, buyUrl } from '../data/retailers';
-import { baseSelection, bestOffer, money, presetSelection, priceLabel, priceText, worst } from '../engine';
+import { baseSelection, bestOffer, money, noPriceNote, presetSelection, priceLabel, priceText, unpricedCount, worst } from '../engine';
 import type { Part, Platform, Severity, Tier } from '../types';
 import { GUIDES, type AcrossChart, type FitChart, type Guide, type PairChart } from './content';
 import { titleCase } from '../text';
@@ -177,13 +177,18 @@ function picksHtml(platform: Platform, slots: string[]) {
     .join('');
 }
 
+/** A preset's total at the lowest prices we list, and the note for its parts with no price ('' when none). */
+function presetTotal(platform: Platform, tier: Tier) {
+  const parts = Object.values(presetSelection(platform, tier)).map((id) => platform.parts.find((p) => p.id === id)!);
+  return { total: parts.reduce((sum, p) => sum + (bestOffer(p)?.price ?? 0), 0), note: noPriceNote(unpricedCount(parts)) };
+}
+
 function startersHtml(platform: Platform) {
   return TIERS.map((tier) => {
-    const sel = presetSelection(platform, tier);
-    const ids = Object.values(sel);
-    const total = ids.reduce((sum, id) => sum + (bestOffer(platform.parts.find((p) => p.id === id)!)?.price ?? 0), 0);
+    const ids = Object.values(presetSelection(platform, tier));
+    const { total, note } = presetTotal(platform, tier);
     const name = tier === 'value' ? 'Best Value' : tier[0].toUpperCase() + tier.slice(1);
-    return `<a class="starter" href="${builderUrl(platform.id, ids)}"><b>${name} ${esc(platform.name)}</b><span>${ids.length} parts, ${money(total)} at the lowest prices we list</span></a>`;
+    return `<a class="starter" href="${builderUrl(platform.id, ids)}"><b>${name} ${esc(platform.name)}</b><span>${ids.length} parts, ${money(total)} at the lowest prices we list${note ? ` · ${esc(note)}` : ''}</span></a>`;
   }).join('');
 }
 
@@ -386,11 +391,14 @@ const PLATFORM_SLUGS: Record<string, string> = {
 /**
  * The pages: one per builder, plus one per model inside a builder that has models, so the Glock 17, 19 and 26
  * keep their own pages (with their own starter builds and parts) inside the double-stack 9mm Glock builder.
+ * Hidden parts (Part.hidden) are left out of every page's parts, so no table, fit chart, pick or count lists them;
+ * share links and saved builds still open them in the builder, which has the whole catalog.
  */
 export interface PageView extends Platform { pageId: string }
+const shown = (parts: Part[]) => parts.filter((x) => !x.hidden);
 export const PAGE_VIEWS: PageView[] = PLATFORMS.flatMap((p) => [
-  { ...p, pageId: p.id },
-  ...(p.models ?? []).map((m) => ({ ...p, pageId: m.id, name: m.name, blurb: m.blurb, presets: m.presets, base: m.base, parts: m.parts ? p.parts.filter(m.parts) : p.parts })),
+  { ...p, pageId: p.id, parts: shown(p.parts) },
+  ...(p.models ?? []).map((m) => ({ ...p, pageId: m.id, name: m.name, blurb: m.blurb, presets: m.presets, base: m.base, parts: shown(m.parts ? p.parts.filter(m.parts) : p.parts) })),
 ]);
 
 export const platformSlug = (p: Platform & { pageId?: string }) =>
@@ -447,7 +455,7 @@ export function platformPage(platform: PageView) {
   const guides = GUIDES.filter((g) => platformOf(g.platform).id === platform.id);
   const related = guides.length ? guides : GUIDES.filter((g) => platformOf(g.platform).maker === platform.maker).slice(0, 4);
   const others = PAGE_VIEWS.filter((p) => p.pageId !== platform.pageId);
-  const budget = Object.values(presetSelection(platform, 'budget')).reduce((sum, id) => sum + (bestOffer(platform.parts.find((p) => p.id === id)!)?.price ?? 0), 0);
+  const { total: budget, note: budgetNote } = presetTotal(platform, 'budget');
   const body = `
   <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="/build/">Platforms</a> › <span>${esc(platform.name)}</span></nav>
   <article>
@@ -456,7 +464,7 @@ export function platformPage(platform: PageView) {
     <a class="cta" href="${baseUrl(platform)}">Open the ${esc(platform.name)} Builder</a>
     <section>
       <h2>Start from a Complete Build</h2>
-      <p class="muted">Three ${esc(platform.name)} builds where every part already fits, from ${money(budget)}. Open one in the builder and swap anything you like.</p>
+      <p class="muted">Three ${esc(platform.name)} builds where every part already fits, from ${money(budget)}${budgetNote ? ` (${esc(budgetNote)})` : ''}. Open one in the builder and swap anything you like.</p>
       <div class="starters">${startersHtml(platform)}</div>
       ${starterListHtml(platform)}
     </section>

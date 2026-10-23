@@ -8,6 +8,7 @@ import { GUIDES } from '../src/guides/content';
 import { FAQ_PICKS } from '../src/guides/picks';
 import { selectionFromParts } from '../src/store';
 import { buildWeight, formatWeight } from '../src/weight';
+import sources from '../data/sources.json';
 
 let bad = 0;
 for (const p of PLATFORMS) {
@@ -280,14 +281,19 @@ for (const p of PLATFORMS) {
 }
 // Every paused retailer ("paused" in data/sources.json) is a real retailer id, and none of its prices reach a part.
 for (const id of PAUSED) if (!RETAILERS[id]) { console.log(`data/sources.json paused: unknown retailer ${id}`); bad++; }
+// Each has its pause date, which the site needs to drop the price history from before it (src/data/history.ts).
+for (const [id, e] of Object.entries((sources as unknown as { paused?: Record<string, { since?: unknown }> }).paused ?? {}))
+  if (typeof e?.since !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(e.since)) { console.log(`data/sources.json paused ${id}: needs "since": "YYYY-MM-DD"`); bad++; }
 {
   const unpriced = new Set<string>();
+  const pausedHistory = new Set<string>();
   for (const p of PLATFORMS)
     for (const part of p.parts) {
       if (part.offers.some((o) => PAUSED.has(o.retailer))) { console.log(`${p.id}: ${part.id} still shows a paused retailer's price`); bad++; }
       if (!part.offers.length) unpriced.add(part.id);
+      if (part.pausedThrough) pausedHistory.add(part.id);
     }
-  console.log(`Paused retailers: ${[...PAUSED].join(', ') || 'none'}. Parts with no price left: ${unpriced.size} (${[...unpriced].join(', ')}).`);
+  console.log(`Paused retailers: ${[...PAUSED].join(', ') || 'none'}. Parts with no price left: ${unpriced.size} (${[...unpriced].join(', ')}). Parts whose older price history is ignored: ${pausedHistory.size}.`);
 }
 // The home page's FAQ links keep their own copy of each guide's question.
 for (const pick of FAQ_PICKS) {

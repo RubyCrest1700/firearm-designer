@@ -45,6 +45,11 @@ export interface Part {
    * share links and community builds that use it still open (with any conflict it causes). Delete the flag to list it again.
    */
   hidden?: boolean;
+  /**
+   * The latest pause date ("since" in data/sources.json) of a paused retailer that priced this part, live or sample.
+   * Price history recorded on or before it is ignored (src/data/history.ts), as its lows may be that retailer's.
+   */
+  pausedThrough?: string;
 }
 
 export interface Slot {

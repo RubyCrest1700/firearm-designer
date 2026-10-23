@@ -110,6 +110,12 @@ export function priceLabel(o: Offer): string {
 }
 
 /** A price as shown: "From" in front when it's a holster's base price before the light option. */
+/** How many of these parts have no price (sold only by a paused retailer), which every total leaves out. */
+export const unpricedCount = (parts: (Part | undefined)[]) => parts.filter((p) => p && !bestOffer(p)).length;
+
+/** The note shown next to a total that leaves out parts with no price, or '' when there are none. Owner-approved wording. */
+export const noPriceNote = (n: number) => (n <= 0 ? '' : n === 1 ? '1 part has no price' : `${n} parts have no price`);
+
 export const priceText = (o: Offer) => (o.basis === 'from' ? 'From ' : '') + money(o.price);
 
 /** Lowest and highest price; [0, 0] for a part with no offers (one sold only by a paused retailer). */

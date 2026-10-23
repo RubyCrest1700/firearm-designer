@@ -358,7 +358,7 @@ export const GUIDES: Guide[] = [
     slug: 'ar-15-handguard-length-chart',
     title: 'AR-15 Handguard Length Chart: Which Rail Length for Your Barrel',
     h1: 'AR-15 Handguard Length Chart',
-    description: 'Which handguard fits a 10.3", 11.5", 16", 18" or 20" AR-15 barrel? Every rail we list, charted by barrel length and gas system.',
+    description: 'Which handguard fits a 16", 18" or 20" AR-15 barrel? Every rail we list, charted by barrel length and gas system.',
     platform: 'ar15',
     lede: 'Handguard length is measured from the front of the upper receiver. Pick it by two things on the barrel: how long the barrel is, and where the gas block sits.',
     answers: [

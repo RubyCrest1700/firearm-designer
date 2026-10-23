@@ -11,8 +11,9 @@ import { Resvg } from '@resvg/resvg-js';
 import { Blueprint, type RegionState } from '../src/Blueprint';
 import { COMMUNITY_API } from '../src/config';
 import { PLATFORMS, canonicalPlatform } from '../src/data/index';
-import { baseSelection, bestOffer, partIds, type Selection } from '../src/engine';
+import { baseSelection, partIds, type Selection } from '../src/engine';
 import { buildOf, selectionFromParts, totalOf } from '../src/store';
+import { priceIndex } from './og-index';
 import type { Platform } from '../src/types';
 
 const OUT = 'dist/og';
@@ -139,12 +140,6 @@ for (const b of shared) {
   if (platform && /^[a-z0-9]{10}$/.test(b.id)) png(buildCard(b.name, platform, selectionFromParts(platform.id, b.parts)), `${OUT}/c/${b.id}.png`);
 }
 
-const index = {
-  platforms: Object.fromEntries(PLATFORMS.map((p) => [p.id, {
-    name: p.name,
-    // A part with no price (sold only by a paused retailer) is left out, so a price alert never reads it as a drop to $0.
-    parts: Object.fromEntries(p.parts.flatMap((part) => { const o = bestOffer(part); return o ? [[part.id, [`${part.brand} ${part.name}`, o.price]]] : []; })),
-  }])),
-};
+const index = priceIndex(PLATFORMS);
 writeFileSync(`${OUT}/index.json`, JSON.stringify(index));
 console.log(`Link previews: site, ${PLATFORMS.length} platforms, ${shared.length} community builds (${(readFileSync(`${OUT}/index.json`).length / 1024).toFixed(0)} KB index)`);

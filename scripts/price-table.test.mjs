@@ -16,8 +16,11 @@ test('the packed table unpacks to the same prices and links as the data files', 
 test('carries the paused retailers through, and adds none when there are none', () => {
   const at = '2026-10-09T15:15:53.953Z';
   const prices = { updatedAt: at, offers: {} };
-  const sources = { paused: { PA: '2026-10-22: why' }, parts: { a: { PA: 'https://x/a', AERO: 'https://y/a' } } };
-  assert.deepEqual(unpackSources(JSON.parse(JSON.stringify(packPrices(prices, sources)))), sources);
+  const sources = { paused: { PA: { since: '2026-10-22', reason: 'why' } }, parts: { a: { PA: 'https://x/a', AERO: 'https://y/a' } } };
+  const back = unpackSources(JSON.parse(JSON.stringify(packPrices(prices, sources))));
+  assert.deepEqual(back, sources);
+  // The pause date rides along too: the site ignores that retailer's parts' price history up to it (src/data/history.ts).
+  assert.equal(back.paused.PA.since, '2026-10-22');
   assert.equal('paused' in unpackSources(packPrices(prices, { parts: sources.parts })), false);
 });
 
