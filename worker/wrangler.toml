@@ -4,7 +4,10 @@
 name = "firearm-designer-api"
 main = "src/index.js"
 compatibility_date = "2025-09-01"
-workers_dev = true
+# Served only on share.dropinbuilds.com (attached by the deploy workflow), not on a workers.dev address.
+workers_dev = false
+# No per-version preview addresses either: they would serve the API outside share.dropinbuilds.com.
+preview_urls = false
 
 # Price alert emails, daily at 11:00 UTC (7am Eastern), after the ~4am price refresh and site rebuild.
 [triggers]

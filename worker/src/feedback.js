@@ -85,7 +85,8 @@ export async function runFeedback(env, now = Date.now()) {
       headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
       body: JSON.stringify(message),
     });
-    if (!res.ok) throw new Error(`Resend ${res.status}: ${await res.text()}`);
+    // Only the status: Resend's error text can repeat addresses, and errors end up in the logs.
+    if (!res.ok) throw new Error(`Resend ${res.status}`);
   }
   const last = results[results.length - 1].id;
   await db.prepare('UPDATE feedback SET emailed_at = ? WHERE emailed_at IS NULL AND id <= ?').bind(now, last).run();

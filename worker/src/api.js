@@ -63,6 +63,12 @@ function cors(origin) {
   };
 }
 
+/**
+ * An error as one short line for the logs: its name and message, with anything shaped like an email address
+ * blanked out in case one ever slips into a message. Never the stack, request or response bodies.
+ */
+export const errorText = (err) => `${err?.name ?? 'Error'}: ${String(err?.message ?? err).replace(/[^\s@]*@[^\s@]*/g, '<address>').slice(0, 200)}`;
+
 /** Plain text only: no control characters, collapsed whitespace, length-capped. */
 export function cleanText(s, max) {
   if (typeof s !== 'string') return '';
@@ -132,13 +138,19 @@ const SORTS = {
   bought: 'clicks DESC, votes DESC, created_at DESC',
 };
 
-export async function handle(request, env, now = Date.now()) {
+/** `ctx` is the Worker's execution context; without one (tests), work it would hand to waitUntil is awaited instead. */
+export async function handle(request, env, now = Date.now(), ctx = null) {
   const origin = allowedOrigin(request.headers.get('origin') ?? '', env);
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(origin) });
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '');
   const db = env.DB;
-  const salt = env.SALT ?? 'firearm-designer';
+  // The private salt for hashing visitor IPs and addresses. Without it the hashes could be reversed, so
+  // nothing is written until it's set.
+  const salt = env.SALT;
+  if (!salt && (request.method === 'POST' || request.method === 'PUT') && path.startsWith('/api/')) {
+    return json({ error: 'This isn\'t available right now. Please try again later.' }, 503, origin);
+  }
 
   try {
     const shared = await sharePage(request, env);
@@ -227,7 +239,8 @@ export async function handle(request, env, now = Date.now()) {
       return json({ build: toBuild(row), hidden: !!row.hidden }, 200, origin);
     }
 
-    const alerts = await alertsRoute(request, env, { path, url, now, json: (d, s) => json(d, s, origin), who: () => visitorHash(request, salt) });
+    const wait = (p) => (ctx?.waitUntil ? ctx.waitUntil(p) : p);
+    const alerts = await alertsRoute(request, env, { path, url, now, salt, wait, json: (d, s) => json(d, s, origin), who: () => visitorHash(request, salt) });
     if (alerts) return alerts;
 
     // POST /api/feedback { message, email, page }
@@ -236,7 +249,7 @@ export async function handle(request, env, now = Date.now()) {
 
     return json({ error: 'Not found' }, 404, origin);
   } catch (err) {
-    console.error(err);
+    console.error(errorText(err));
     return json({ error: 'Something went wrong. Please try again.' }, 500, origin);
   }
 }
