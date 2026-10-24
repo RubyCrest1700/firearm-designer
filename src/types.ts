@@ -41,11 +41,6 @@ export interface Part {
   /** Weight as sold, from data/weights.json. `published` is false when it's our typical-figure estimate. */
   weight?: { oz: number; published: boolean; src?: string };
   /**
-   * Left out of the builder's part picker and the "Parts I Own" search, but still in the catalog, so saved builds,
-   * share links and community builds that use it still open (with any conflict it causes). Delete the flag to list it again.
-   */
-  hidden?: boolean;
-  /**
    * The latest pause date ("since" in data/sources.json) of a paused retailer that priced this part, live or sample.
    * Price history recorded on or before it is ignored (src/data/history.ts), as its lows may be that retailer's.
    */
@@ -64,6 +59,11 @@ export interface Issue {
   severity: Severity;
   slots: string[];
   message: string;
+  /**
+   * A legal point (short barrel with a stock, a vertical foregrip on a short pistol) rather than a fit problem. It
+   * doesn't stop the build: the builder, build cards and Compare show its message in a "Legal notice".
+   */
+  legal?: true;
 }
 
 export type Build = Record<string, Part | undefined>;

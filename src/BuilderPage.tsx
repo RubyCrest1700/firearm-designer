@@ -14,7 +14,7 @@ import { withArticle } from './text';
 import type { Build, Issue, Part, Platform, Side, Slot, Tier } from './types';
 import { OwnedFinder } from './OwnedFinder';
 import { Picker } from './Picker';
-import { ChangeChip, FitTag, PlatformMenu, SEV_LABEL } from './ui';
+import { ChangeChip, FitTag, LegalNotice, PlatformMenu, SUMMARY_LEGAL_ID, issueClass, issueLabel, legalOnly } from './ui';
 
 export function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelection, startOver, openSaved, communityOpen, onSave, onShare, onCopyLink, onBuyClick, onBrowseFeatured, onCompare }: {
   platformId: string; startPart: Part | null; setPlatformId: (id: string) => void; selection: Selection; setSelection: (s: Selection) => void;
@@ -163,7 +163,7 @@ export function BuilderPage({ platformId, startPart, setPlatformId, selection, s
         </div>
       </div>
 
-      <Dock total={total} status={status} toBuy={ownsSome} noPrice={noPrice} />
+      <Dock total={total} status={status} toBuy={ownsSome} noPrice={noPrice} legal={issues.some((i) => i.legal)} />
 
       {openSlotObj && (
         <Picker
@@ -216,7 +216,7 @@ function groupSlots(slots: Slot[]): [string, Slot[]][] {
   return [...m.entries()];
 }
 
-function PartsList({ platform, build, issues, states, hover, onHover, onOpen, onRemove, mounts, onMount, owned, onToggleOwn }: {
+export function PartsList({ platform, build, issues, states, hover, onHover, onOpen, onRemove, mounts, onMount, owned, onToggleOwn }: {
   platform: Platform; build: Build; issues: Issue[]; states: Record<string, RegionState>; hover: string | null;
   onHover: (s: string | null) => void; onOpen: (s: string) => void; onRemove: (s: string) => void;
   mounts: Record<string, Resolved>; onMount: (slot: string, side: Side, at: number) => void;
@@ -250,7 +250,7 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
                     ) : (
                       <span className="part-name choose">{slot.required ? `Choose ${withArticle(slot.name)}` : 'Add one'} →</span>
                     )}
-                    {rowIssues.map((i, k) => <span key={k} className={'row-issue ' + i.severity}>{i.message}</span>)}
+                    {rowIssues.map((i, k) => <span key={k} className={issueClass('row-issue', i)}>{i.message}</span>)}
                   </button>
                   <span className="part-price">
                     {other ? <span className="src owned-note">You Own It</span>
@@ -264,7 +264,7 @@ function PartsList({ platform, build, issues, states, hover, onHover, onOpen, on
                     )}
                   </span>
                   <span className="part-fit">
-                    {other ? <span className="fit-tag empty">Not Checked</span> : <FitTag state={states[slot.id]} />}
+                    {other ? <span className="fit-tag empty">Not Checked</span> : <FitTag state={states[slot.id]} legal={legalOnly(rowIssues)} />}
                     {(part || other) && !slot.required && <button className="x" onClick={() => onRemove(slot.id)} aria-label={`Remove ${slot.name}`} title="Remove">×</button>}
                   </span>
                   {mounts[slot.id] && <MountControl slot={slot} m={mounts[slot.id]} onMount={(side, at) => onMount(slot.id, side, at)} />}
@@ -371,6 +371,7 @@ export function Summary({ platform, build, issues, aware, states, status, total,
           ))}
         </div>
         <p className={'status ' + status.cls}>{status.text}</p>
+        <LegalNotice issues={issues} id={SUMMARY_LEGAL_ID} />
 
         {sharing ? (
           <form className="save-form" onSubmit={(e) => { e.preventDefault(); void submitShare(); }}>
@@ -418,7 +419,7 @@ export function Summary({ platform, build, issues, aware, states, status, total,
           <h2 className="card-title">Compatibility</h2>
           <ul className="issues">
             {issues.map((i, n) => (
-              <li key={n} className={'issue ' + i.severity}><span className="issue-tag">{SEV_LABEL[i.severity]}</span><span>{i.message}</span></li>
+              <li key={n} className={issueClass('issue', i)}><span className="issue-tag">{issueLabel(i)}</span><span>{i.message}</span></li>
             ))}
           </ul>
         </section>
@@ -464,14 +465,24 @@ export function Summary({ platform, build, issues, aware, states, status, total,
   );
 }
 
-function Dock({ total, status, toBuy, noPrice }: { total: number; status: { cls: string; text: string }; toBuy: boolean; noPrice: string }) {
+/** Scroll to the summary's Legal notice and move focus to it, so a screen reader reads it next. */
+export function toLegalNotice(doc: Pick<Document, 'getElementById'> = document) {
+  const el = doc.getElementById(SUMMARY_LEGAL_ID);
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.focus({ preventScroll: true });
+}
+
+/** The phone's bottom bar. `legal`: the build has a Legal notice, so a small badge leads to it in the summary. */
+export function Dock({ total, status, toBuy, noPrice, legal }: { total: number; status: { cls: string; text: string }; toBuy: boolean; noPrice: string; legal: boolean }) {
+  const toSummary = () => document.getElementById('summary')?.scrollIntoView({ behavior: 'smooth' });
   return (
     <div className="dock" role="region" aria-label="Build total">
       <div>
         <div className="dock-total">{money(total)}{toBuy && <small> to buy</small>}{noPrice && <small> · {noPrice}</small>}</div>
-        <p className={'status ' + status.cls}>{status.text}</p>
+        <p className={'status ' + status.cls}>{status.text}{legal && <> <button className="dock-legal" aria-label="Legal notice: see the summary" aria-controls={SUMMARY_LEGAL_ID} onClick={() => toLegalNotice()}>Legal</button></>}</p>
       </div>
-      <button className="btn" onClick={() => document.getElementById('summary')?.scrollIntoView({ behavior: 'smooth' })}>Summary</button>
+      <button className="btn" onClick={toSummary}>Summary</button>
     </div>
   );
 }

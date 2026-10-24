@@ -44,13 +44,12 @@ function score(platform: Platform, part: Part, q: string[]): number {
 export function findParts(query: string, platform: Platform): { here: Found[]; elsewhere: Found[] } {
   const key = /^https?:\/\//i.test(query.trim()) ? linkKey(query) : null;
   if (key) {
-    const hits = PLATFORMS.flatMap((p) => p.parts.filter((part) => !part.hidden && part.offers.some((o) => o.url && linkKey(o.url) === key)).map((part) => ({ part, platform: p, byLink: true })));
+    const hits = PLATFORMS.flatMap((p) => p.parts.filter((part) => part.offers.some((o) => o.url && linkKey(o.url) === key)).map((part) => ({ part, platform: p, byLink: true })));
     return { here: hits.filter((h) => h.platform.id === platform.id), elsewhere: hits.filter((h) => h.platform.id !== platform.id) };
   }
   const q = words(query);
   if (!q.length) return { here: [], elsewhere: [] };
-  // Hidden parts (Part.hidden) aren't offered here either, as they aren't in the picker.
-  const rank = (p: Platform) => p.parts.filter((part) => !part.hidden).map((part) => ({ part, platform: p, byLink: false, s: score(p, part, q) })).filter((x) => x.s > 0).sort((a, b) => b.s - a.s);
+  const rank = (p: Platform) => p.parts.map((part) => ({ part, platform: p, byLink: false, s: score(p, part, q) })).filter((x) => x.s > 0).sort((a, b) => b.s - a.s);
   const here = rank(platform);
   // Glock frames, slides and many accessories are listed under each model, so only count other platforms' parts we don't already show.
   const shown = new Set(here.map((h) => `${h.part.brand} ${h.part.name}`));

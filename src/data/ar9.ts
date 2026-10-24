@@ -1,5 +1,5 @@
 import type { Build, Issue, Placement, Platform } from '../types';
-import { SBR_MESSAGE, boreIssue, parts, pick, threadIssue } from './helpers';
+import { VERTICAL_GRIP_MESSAGE, boreIssue, parts, pick, shortBarrelStockIssue, threadIssue } from './helpers';
 import { rifleAddonParts, rifleAddonRules, rifleAddonSlots } from './addons';
 import { ironParts, ironRules, ironsSlot } from './irons';
 
@@ -13,8 +13,6 @@ import { ironParts, ironRules, ironsSlot } from './irons';
  * https://www.80percentarms.com/blog/ar9-lrbho-explained/
  */
 const MAG_LABEL: Record<string, string> = { glock: 'Glock', colt: 'Colt SMG' };
-/** Owner-approved wording (2026-10-23). */
-const VERTICAL_GRIP_MESSAGE = 'A vertical foregrip on a pistol with a barrel under 16" may be regulated under the National Firearms Act and can require ATF approval. Not legal advice: check federal, state and local law before you build.';
 /** Who makes each lower's bolt hold-open system, as named on the bolts. */
 const LRBHO_LABEL: Record<string, string> = { aero: 'Aero Precision EPC', psa: 'PSA', nfa: 'New Frontier Armory', fm: 'FM Products', jp: 'JP Enterprises' };
 
@@ -207,12 +205,12 @@ function rules(b: Build, place: Placement = {}): Issue[] {
     out.push({ severity: 'error', slots: ['buffer'], message: `A ${buffer.attrs.oz} oz 5.56 buffer is too light for 9mm blowback. The bolt slams open, batters the receiver and can bounce out of battery. Use a 9mm buffer of about 8 oz.` });
   const thread = threadIssue(barrel, muzzle) ?? boreIssue(barrel, muzzle);
   if (thread) out.push(thread);
-  // Interim rules pending legal advice (2026-10-22): a stock on a barrel under 16" is a conflict (a brace is not a
-  // stock), and so is a vertical foregrip on a short braced or stockless build.
+  // Legal warnings, not conflicts (owner decision, 2026-10-23): a stock on a barrel under 16" (a brace is not a
+  // stock), and a vertical foregrip on a short braced or stockless build. Each shows in the build's Legal notice.
   const short = !!barrel && (barrel.attrs.length as number) < 16;
+  const sbr = shortBarrelStockIssue(barrel, stock);
+  if (sbr) out.push(sbr);
   if (barrel && stock) {
-    if (short && !stock.attrs.brace)
-      out.push({ severity: 'error', slots: ['barrel', 'stock'], message: SBR_MESSAGE });
     if (!short && stock.attrs.brace)
       out.push({ severity: 'info', slots: ['barrel', 'stock'], message: 'With a 16" barrel, a regular stock is usually more comfortable than a brace. Check federal, state and local law; this is not legal advice.' });
     if (short && stock.attrs.brace)
@@ -220,7 +218,7 @@ function rules(b: Build, place: Placement = {}): Issue[] {
   }
   // Angled grips and hand stops get no rule here: whether they change anything is a question for the lawyer.
   if (short && foregrip?.attrs.kind === 'vertical' && (!stock || stock.attrs.brace))
-    out.push({ severity: 'error', slots: ['foregrip', 'barrel'], message: VERTICAL_GRIP_MESSAGE });
+    out.push({ severity: 'warn', slots: ['foregrip', 'barrel'], message: VERTICAL_GRIP_MESSAGE, legal: true });
   if (handguard && barrel) {
     const hg = handguard.attrs.length as number;
     const bl = barrel.attrs.length as number;

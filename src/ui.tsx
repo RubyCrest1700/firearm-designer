@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { PLATFORMS } from './data';
 import { money, noPriceNote, ownedOf, type Selection } from './engine';
 import type { RegionState } from './Blueprint';
@@ -6,11 +6,39 @@ import { Blueprint } from './drawings';
 import { buildStatus, statesFor } from './status';
 import { buildOf, totalOf, unpricedOf } from './store';
 import { recentChange } from './data/history';
-import type { Part, Platform, Severity } from './types';
+import type { Issue, Part, Platform, Severity } from './types';
 
 export const FAMILIES = ['Rifle', 'Pistol'];
 
 export const SEV_LABEL: Record<Severity, string> = { error: 'Conflict', warn: 'Check', info: 'Note' };
+/** An issue's tag: "Legal" for a legal point (Issue.legal), else its severity's label. */
+export const issueLabel = (i: Issue) => (i.legal ? 'Legal' : SEV_LABEL[i.severity]);
+/** The class for an issue's row or list item: its severity, plus "legal" for a legal point. */
+export const issueClass = (base: string, i: Issue) => `${base} ${i.severity}${i.legal ? ' legal' : ''}`;
+/** Whether a part's issues are legal points only (notes aside), so its fit tag reads Legal rather than Check. */
+export const legalOnly = (issues: Issue[]) => issues.some((i) => i.legal) && issues.every((i) => i.legal || i.severity === 'info');
+
+/** The id of the builder summary's Legal notice, which the phone dock's Legal badge scrolls to and focuses. */
+export const SUMMARY_LEGAL_ID = 'summary-legal';
+
+/**
+ * The build's legal points (short barrel with a stock, a vertical foregrip on a short pistol), each message once and
+ * word for word. Nothing when there are none. `compact` is the smaller version for build cards and Compare. `id`
+ * makes it a focus target (tabIndex -1), for the summary's notice. The "Legal notice" title names the note for screen
+ * readers (aria-labelledby); it stays a paragraph, not a heading, because the notice sits inside cards and columns
+ * whose heading levels differ.
+ */
+export function LegalNotice({ issues, compact, id }: { issues: Issue[]; compact?: boolean; id?: string }) {
+  const titleId = useId();
+  const messages = [...new Set(issues.filter((i) => i.legal).map((i) => i.message))];
+  if (!messages.length) return null;
+  return (
+    <div className={'legal-notice' + (compact ? ' compact' : '')} role="note" aria-labelledby={titleId} id={id} tabIndex={id ? -1 : undefined}>
+      <p className="legal-notice-title" id={titleId}>Legal notice</p>
+      {messages.map((m) => <p key={m}>{m}</p>)}
+    </div>
+  );
+}
 
 export const shortDate = (iso: string, year = false) =>
   new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(year ? { year: 'numeric' } : {}) });
@@ -88,7 +116,9 @@ export function PlatformMenu({ current, onPick }: { current: Platform; onPick: (
   );
 }
 
-export function FitTag({ state }: { state: RegionState }) {
+/** `legal`: the part's only checks are legal points, so a warn reads "Legal" rather than "Check". */
+export function FitTag({ state, legal }: { state: RegionState; legal?: boolean }) {
+  if (legal && state === 'warn') return <span className="fit-tag warn legal">Legal</span>;
   const text = { empty: 'Empty', ok: 'Fits', warn: 'Check', error: 'Conflict' }[state];
   return <span className={'fit-tag ' + state}>{text}</span>;
 }
@@ -149,6 +179,7 @@ export function BuildCard({ platformId, selection, badge, title, meta, body, act
         <h3>{title}</h3>
         <p className="meta">{meta}</p>
         {body}
+        <LegalNotice issues={issues} compact />
         <div className="build-card-foot">
           <span className="amt big">{money(totalOf(platform, build, owned.owned))}{ownsSome && <small className="to-buy"> to buy</small>}{noPrice && <small className="to-buy"> · {noPrice}</small>}</span>
           <span className={'status small ' + status.cls}>{status.text}</span>
