@@ -83,12 +83,8 @@ export function issuesFor(platform: Platform, build: Build, place: Placement = {
   return platform.rules(build, place).sort((a, b) => RANK[b.severity] - RANK[a.severity]);
 }
 
-/**
- * The parts the picker lists for a slot. Hidden parts (Part.hidden) are left out, except the one already in the
- * build, so a saved build or link that uses it still shows what it has.
- */
-export const listedParts = (platform: Platform, slot: string, selectedId?: string) =>
-  platform.parts.filter((p) => p.slot === slot && (!p.hidden || p.id === selectedId));
+/** The parts the picker lists for a slot: every part in the catalog that goes in it. */
+export const listedParts = (platform: Platform, slot: string) => platform.parts.filter((p) => p.slot === slot);
 
 /** Issues the candidate would cause, given everything else in the build. */
 export function candidateIssues(platform: Platform, build: Build, part: Part, place: Placement = {}): Issue[] {

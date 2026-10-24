@@ -391,14 +391,11 @@ const PLATFORM_SLUGS: Record<string, string> = {
 /**
  * The pages: one per builder, plus one per model inside a builder that has models, so the Glock 17, 19 and 26
  * keep their own pages (with their own starter builds and parts) inside the double-stack 9mm Glock builder.
- * Hidden parts (Part.hidden) are left out of every page's parts, so no table, fit chart, pick or count lists them;
- * share links and saved builds still open them in the builder, which has the whole catalog.
  */
 export interface PageView extends Platform { pageId: string }
-const shown = (parts: Part[]) => parts.filter((x) => !x.hidden);
 export const PAGE_VIEWS: PageView[] = PLATFORMS.flatMap((p) => [
-  { ...p, pageId: p.id, parts: shown(p.parts) },
-  ...(p.models ?? []).map((m) => ({ ...p, pageId: m.id, name: m.name, blurb: m.blurb, presets: m.presets, base: m.base, parts: shown(m.parts ? p.parts.filter(m.parts) : p.parts) })),
+  { ...p, pageId: p.id },
+  ...(p.models ?? []).map((m) => ({ ...p, pageId: m.id, name: m.name, blurb: m.blurb, presets: m.presets, base: m.base, parts: m.parts ? p.parts.filter(m.parts) : p.parts })),
 ]);
 
 export const platformSlug = (p: Platform & { pageId?: string }) =>

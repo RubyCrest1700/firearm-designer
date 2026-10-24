@@ -26,7 +26,7 @@ export function Picker({ platform, slot, focusId: focusProp, number, model, buil
   useDrawer(onClose, closeRef);
 
   // In a builder with models, the list starts with the current model's parts (frames, slides, barrels...).
-  const inSlot = listedParts(platform, slot.id, selectedId);
+  const inSlot = listedParts(platform, slot.id);
   const forModel = model?.parts ? inSlot.filter((p) => model.parts!(p) || p.id === selectedId) : inSlot;
   const all = (allModels ? inSlot : forModel).map((p) => {
     const iss = candidateIssues(platform, build, p, place);

@@ -113,7 +113,7 @@ for (const p of PLATFORMS.filter((x) => x.family === 'Rifle'))
   if (!ar.rules(fake).some((i) => i.severity === 'error' && /strike the device/.test(i.message))) { console.log('bore check: 5.56 device on .308 barrel not flagged'); bad++; }
 }
 // Full builds made from catalog parts beyond the presets come out free of conflicts, except the one the build is
-// meant to show: the hidden 9" .300 BLK barrel (still in the catalog for old builds and links) with the value
+// meant to show: the 9" .300 BLK barrel with the value
 // preset's stock is exactly the short-barrel conflict and nothing else.
 {
   const ar = PLATFORMS.find((x) => x.id === 'ar15')!;
@@ -128,11 +128,15 @@ for (const p of PLATFORMS.filter((x) => x.family === 'Rifle'))
     if (JSON.stringify(errs) !== JSON.stringify(want)) { console.log(`catalog build ${JSON.stringify(over)}: expected [${want.join(' | ')}], got [${errs.join(' | ')}]`); bad++; }
   }
 }
-// No preset or factory build uses a hidden part (Part.hidden): starter builds must be ones the picker can show.
+// No preset or factory build raises the short-barrel or vertical-foregrip message (or any legal issue): starter
+// builds stay ones that need no legal notice.
 for (const p of PLATFORMS)
   for (const m of [{ name: p.name, presets: p.presets, base: p.base }, ...(p.models ?? [])])
-    for (const [tier, list] of Object.entries({ ...m.presets, base: m.base ?? [] }))
-      for (const id of list) if (p.parts.find((x) => x.id === id)?.hidden) { console.log(`${p.id}/${m.name}/${tier}: uses hidden part ${id}`); bad++; }
+    for (const [tier, list] of Object.entries({ ...m.presets, base: m.base ?? [] })) {
+      const sel = Object.fromEntries(list.flatMap((id) => p.parts.filter((x) => x.id === id).map((x) => [x.slot, x.id])));
+      for (const i of issuesFor(p, toBuild(p, sel)))
+        if (i.message === SBR_MESSAGE || /National Firearms Act/.test(i.message) || (i as { legal?: boolean }).legal) { console.log(`${p.id}/${m.name}/${tier}: raises "${i.message}"`); bad++; }
+    }
 // Awareness warnings fire on the thresholds agreed in the Build Warnings Proposal.
 {
   const ar = PLATFORMS.find((x) => x.id === 'ar15')!;

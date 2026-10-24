@@ -91,11 +91,11 @@ test('placements and owned marks ride along without becoming parts', () => {
 const ar9 = platform('ar9');
 const ar10 = platform('ar10');
 const sbr = (issues: { severity: string; slots: string[]; message: string }[]) => issues.filter((i) => i.message === SBR_MESSAGE);
-const HIDDEN_AR15 = ['ar-bbl-ba10', 'ar-bbl-ba115', 'ar-bbl-ba300-9', 'ar-bbl-ba75'];
+const SHORT_AR15 = ['ar-bbl-ba10', 'ar-bbl-ba115', 'ar-bbl-ba300-9', 'ar-bbl-ba75'];
 
 test('an AR-15 barrel under 16" with any stock is a conflict on both, and the build is not complete', () => {
   const short = ar15.parts.filter((p) => p.slot === 'barrel' && (p.attrs.length as number) < 16);
-  assert.deepEqual(short.map((p) => p.id).sort(), HIDDEN_AR15);
+  assert.deepEqual(short.map((p) => p.id).sort(), SHORT_AR15);
   const stocks = ar15.parts.filter((p) => p.slot === 'stock');
   assert.ok(stocks.length >= 5);
   for (const b of short)
@@ -117,17 +117,19 @@ test('an AR-15 barrel of 16" or more with any stock raises no short-barrel issue
       assert.deepEqual(sbr(issuesFor(ar15, toBuild(ar15, { ...baseSelection(ar15), barrel: b.id, stock: s.id }))), [], `${b.id} + ${s.id}`);
 });
 
-test('the short AR-15 barrels are hidden from the picker and search but still open from links and saved builds', () => {
+test('the short AR-15 barrels are listed in the picker and search, and open from links and saved builds', () => {
   const listed = listedParts(ar15, 'barrel').map((p) => p.id);
-  for (const id of HIDDEN_AR15) {
-    assert.equal(part(ar15, id).hidden, true, id);
-    assert.ok(!listed.includes(id), id);
-    assert.ok(listedParts(ar15, 'barrel', id).some((p) => p.id === id), `${id} shows when it's already in the build`);
-    assert.ok(!findParts(part(ar15, id).name, ar15).here.some((f) => f.part.id === id), `${id} found by name`);
+  for (const id of SHORT_AR15) {
+    assert.ok(!('hidden' in part(ar15, id)), `${id} has no hidden flag`);
+    assert.ok(listed.includes(id), id);
+    // The name without its inch marks: search reads `9"` as "9 in", and the 9" barrel's text has no "in" (a search quirk).
+    assert.ok(findParts(part(ar15, id).name.replace(/"/g, ''), ar15).here.some((f) => f.part.id === id), `${id} found by name`);
+    const url = part(ar15, id).offers.find((o) => o.url)?.url;
+    if (url) assert.ok(findParts(url, ar15).here.some((f) => f.part.id === id), `${id} found by link`);
   }
-  assert.deepEqual(ar15.parts.filter((p) => p.hidden).map((p) => p.id).sort(), HIDDEN_AR15);
-  assert.ok(listed.includes('ar-bbl-ba16') && listed.length === ar15.parts.filter((p) => p.slot === 'barrel').length - 4);
-  // A share token and a ?b= link resolve the hidden barrel, and the build shows the conflict.
+  assert.ok(ar15.parts.every((p) => !('hidden' in p)));
+  assert.deepEqual(listed, ar15.parts.filter((p) => p.slot === 'barrel').map((p) => p.id));
+  // A share token and a ?b= link resolve the short barrel, and the build shows the short-barrel issue.
   const sel = { ...baseSelection(ar15), barrel: 'ar-bbl-ba10' };
   const back = selectionFromParts('ar15', selectionTokens(sel));
   assert.deepEqual(back, sel);
@@ -314,7 +316,7 @@ const PAUSE_DAY = '2026-10-24';
 const afterPause = (days: number) => new Date(Date.parse(PAUSE_DAY) + days * 86_400_000).toISOString();
 
 test('a part any paused retailer priced carries the pause date; one none of them priced does not', () => {
-  // Primary Arms sample prices only (the hidden 10.3" barrel), a Primary Arms live price (the MI handguard), and a part no paused store sells.
+  // Primary Arms sample prices only (the 10.3" barrel), a Primary Arms live price (the MI handguard), and a part no paused store sells.
   assert.equal(part(ar15, 'ar-bbl-ba10').pausedThrough, PAUSE_DAY);
   assert.equal(part(ar15, 'ar-hg-mi9').pausedThrough, PAUSE_DAY);
   assert.equal(part(ar15, 'ar-gt-pistol').pausedThrough, undefined);
@@ -373,7 +375,7 @@ test('a part still sold elsewhere: its old paused-store low is dropped from the 
 
 test('a saved build\'s price from before a pause isn\'t compared with today\'s; one saved after it is', () => {
   storage.clear();
-  const x = ar15.parts.find((p) => p.pausedThrough && !p.hidden && bestOffer(p) && p.slot === 'handguard')!;
+  const x = ar15.parts.find((p) => p.pausedThrough && bestOffer(p) && p.slot === 'handguard')!;
   assert.ok(x, 'an AR-15 handguard a paused retailer priced');
   const sel = { ...baseSelection(ar15), handguard: x.id };
   const now = priceSnapshot('ar15', sel);
@@ -476,12 +478,11 @@ test('starter build cards and the platform page note parts with no price; totals
     }
 });
 
-test('the home page counts neither hidden parts nor paused retailers, and notes a starter build with no-price parts', () => {
+test('the home page counts every part (once) but not paused retailers, and notes a starter build with no-price parts', () => {
   const html = renderToStaticMarkup(createElement(HomePage, { onPick: () => {}, onStart: () => {}, onBrowse: () => {} })).replace(/<!-- -->/g, '');
-  const parts = new Set(PLATFORMS.flatMap((p) => p.parts.filter((x) => !x.hidden).map((x) => x.id))).size;
-  const all = new Set(PLATFORMS.flatMap((p) => p.parts.map((x) => x.id))).size;
+  const parts = new Set(PLATFORMS.flatMap((p) => p.parts.map((x) => x.id))).size;
   const stores = Object.keys(RETAILERS).length - PAUSED.size;
-  assert.ok(all > parts);
+  assert.equal(html.match(/(\d+) parts · /)?.[1], String(parts));
   assert.ok(html.includes(`${PLATFORMS.length} platforms · ${parts} parts · ${stores} retailers compared`), 'hero facts');
   for (const p of PLATFORMS) {
     const k = unpricedOf(p, toBuild(p, presetSelection(p, 'budget')));
@@ -489,28 +490,30 @@ test('the home page counts neither hidden parts nor paused retailers, and notes 
   }
 });
 
-/* ------------------------------------------------------------------ hidden parts on the static pages */
+/* ------------------------------------------------------------------ short barrels on the static pages */
 
-test('the static pages leave out hidden parts: tables, fit charts, picks and counts', () => {
-  const hidden = ar15.parts.filter((x) => x.hidden);
-  assert.deepEqual(hidden.map((x) => x.id).sort(), HIDDEN_AR15);
+const HANDGUARD_DESCRIPTION = 'Which handguard fits a 10.3", 11.5", 16", 18" or 20" AR-15 barrel? Every rail we list, charted by barrel length and gas system.';
+
+test('the static pages list the whole catalog, short barrels included: tables, fit charts and counts', () => {
+  const short = SHORT_AR15.map((id) => part(ar15, id));
   const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const view = PAGE_VIEWS.find((v) => v.pageId === 'ar15')!;
-  assert.ok(view.parts.every((x) => !x.hidden));
-  const pages = [platformPage(view), ...GUIDES.filter((g) => g.platform === 'ar15').map((g) => guidePage(g, '2026-10-23T00:00:00Z'))];
-  for (const html of pages) for (const x of hidden) assert.ok(!html.includes(esc(x.name)) && !html.includes(x.name), x.id);
-  const shown = ar15.parts.filter((x) => !x.hidden);
-  assert.ok(pages[0].includes(`${shown.length} parts from ${new Set(shown.map((x) => x.brand)).size} brands`));
-  assert.ok(pages[0].includes(`${shown.length} parts checked for fit`));
-  const barrels = shown.filter((x) => x.slot === 'barrel').length;
-  assert.ok(pages[0].includes(`${barrels} options`), 'barrel count');
-  // The handguard chart's columns for 7.5", 9", 10.3" and 11.5" barrels were only for the hidden ones.
-  const hg = guidePage(GUIDES.find((g) => g.slug === 'ar-15-handguard-length-chart')!, '2026-10-23T00:00:00Z');
-  for (const col of ['7.5&quot; pistol', '9&quot; pistol', '10.3&quot; carbine', '11.5&quot; carbine']) assert.ok(!hg.includes(`<th scope="col">${col}</th>`), col);
-  for (const col of ['16&quot; carbine', '16&quot; mid', '16&quot; pistol', '18&quot; rifle', '20&quot; rifle']) assert.ok(hg.includes(`<th scope="col">${col}</th>`), col);
-  assert.doesNotMatch(hg, /10\.3|11\.5/);
-  // Shared links and saved builds still open them (the builder keeps the whole catalog).
-  assert.equal(toBuild(ar15, { ...baseSelection(ar15), barrel: 'ar-bbl-ba75' }).barrel?.id, 'ar-bbl-ba75');
+  assert.deepEqual(view.parts.map((x) => x.id), ar15.parts.map((x) => x.id));
+  const page = platformPage(view);
+  for (const x of short) assert.ok(page.includes(esc(x.name)), x.id);
+  const all = ar15.parts;
+  assert.ok(page.includes(`${all.length} parts from ${new Set(all.map((x) => x.brand)).size} brands`));
+  assert.ok(page.includes(`${all.length} parts checked for fit`));
+  const barrels = all.filter((x) => x.slot === 'barrel').length;
+  assert.ok(page.includes(`${barrels} options`), 'barrel count');
+  // The handguard chart has a column for every barrel length and gas system we list, the short ones included.
+  const guide = GUIDES.find((g) => g.slug === 'ar-15-handguard-length-chart')!;
+  assert.equal(guide.description, HANDGUARD_DESCRIPTION);
+  const hg = guidePage(guide, '2026-10-23T00:00:00Z');
+  assert.ok(hg.includes(`<meta name="description" content="${esc(HANDGUARD_DESCRIPTION)}" />`), 'description meta');
+  const cols = ['7.5&quot; pistol', '9&quot; pistol', '10.3&quot; carbine', '11.5&quot; carbine', '16&quot; carbine', '16&quot; mid', '16&quot; pistol', '18&quot; rifle', '20&quot; rifle'];
+  for (const col of cols) assert.ok(hg.includes(`<th scope="col">${col}</th>`), col);
+  assert.equal(hg.match(/<th scope="col">[^<]+<\/th>/g)?.length, cols.length, 'column count');
 });
 
 /* ------------------------------------------------------------------ short-barrel rule, price index */
