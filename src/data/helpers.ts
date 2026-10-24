@@ -11,6 +11,15 @@ const LIVE = (prices as unknown as { offers: Record<string, Record<string, Offer
 /** Known product page URLs, so "View" links go to the product even before a live price exists. */
 const URLS = (sources as unknown as { parts: Record<string, Record<string, string>> }).parts;
 /**
+ * Retailers paused in data/sources.json ("paused"), while we review their terms on automated price collection.
+ * Their prices, live or sample, are left out of every part here, so no page shows them or counts them in a best
+ * price or total. The price scripts skip the same list (scripts/sources.mjs). Delete an entry there to resume.
+ */
+const PAUSED_SINCE: Record<string, string> = Object.fromEntries(
+  Object.entries((sources as unknown as { paused?: Record<string, { since: string }> }).paused ?? {}).map(([id, e]) => [id, e.since]),
+);
+export const PAUSED = new Set(Object.keys(PAUSED_SINCE));
+/**
  * Parts no tracked store sells or prices: holsters whose live price is the base page's ("From"), Glock factory parts
  * with only an estimate ("Factory Part"), and hand-checked list prices, each shown with its label and the day it was checked.
  */
@@ -28,25 +37,49 @@ const WEIGHTS = (weights as unknown as { parts: Record<string, { oz: number; bas
  * Builds parts from inline sample offers, then overlays any live prices from data/prices.json.
  * A live price replaces the sample price for the same retailer; new retailers are added. Once a part has any live
  * price, its remaining sample prices are dropped, so a made-up figure never undercuts a real one. A part with no live
- * price but a hand-checked list price (data/list-prices.json) shows that instead of its samples.
+ * price but a hand-checked list price (data/list-prices.json) shows that instead of its samples. Paused retailers'
+ * offers are dropped first, so a part sold only there has no offers and shows no price. A part any paused retailer
+ * priced (a sample, live or list price, or a tracked link) gets `pausedThrough`, so its older price history is ignored.
  */
 export function parts(slot: string, list: Omit<PartInput, 'slot'>[]): Part[] {
   return list.map((p) => {
     const byRetailer = new Map<string, Offer>(
-      p.offers.map(([retailer, price, inStock]) => [retailer, { retailer, price, inStock: inStock ?? true, url: URLS[p.id]?.[retailer] }]),
+      p.offers.filter(([retailer]) => !PAUSED.has(retailer)).map(([retailer, price, inStock]) => [retailer, { retailer, price, inStock: inStock ?? true, url: URLS[p.id]?.[retailer] }]),
     );
-    const live = Object.entries(LIVE[p.id] ?? {});
-    const listed = LISTED.parts[p.id];
+    const live = Object.entries(LIVE[p.id] ?? {}).filter(([retailer]) => !PAUSED.has(retailer));
+    const listed = PAUSED.has(LISTED.parts[p.id]?.retailer ?? '') ? undefined : LISTED.parts[p.id];
     if (live.length || listed) byRetailer.clear();
     for (const [retailer, offer] of live) byRetailer.set(retailer, { ...offer, retailer, ...(FROM.has(p.id) ? { basis: 'from' as const } : {}) });
     if (!live.length && listed) byRetailer.set(listed.retailer, { retailer: listed.retailer, price: listed.price, inStock: true, url: listed.url, basis: listed.basis, asOf: listed.asOf });
     else if (!live.length && FACTORY.has(p.id)) for (const o of byRetailer.values()) o.basis = 'factory';
     const w = WEIGHTS[p.id];
-    return { ...p, slot, offers: [...byRetailer.values()], ...(w ? { weight: { oz: w.oz, published: w.basis === 'published', src: w.src ?? undefined } } : {}) };
+    const pausedThrough = pausedDate([...p.offers.map(([r]) => r), ...Object.keys(LIVE[p.id] ?? {}), ...Object.keys(URLS[p.id] ?? {}), LISTED.parts[p.id]?.retailer ?? '']);
+    return {
+      ...p, slot, offers: [...byRetailer.values()],
+      ...(w ? { weight: { oz: w.oz, published: w.basis === 'published', src: w.src ?? undefined } } : {}),
+      ...(pausedThrough ? { pausedThrough } : {}),
+    };
   });
 }
 
+/** The latest pause date among these retailers, or undefined when none is paused. */
+const pausedDate = (retailers: string[]) => retailers.map((r) => PAUSED_SINCE[r]).filter(Boolean).sort().pop();
+
 export const pick = (tier: Tier, note: string) => ({ tier, note });
+
+/** Owner-approved wording (2026-10-22). */
+export const SBR_MESSAGE = 'A barrel under 16" with a stock may be regulated under the National Firearms Act and can require ATF approval before assembly. Some states ban it. Not legal advice: check federal, state and local law before you build.';
+
+/**
+ * A rifle barrel under 16" with a stock is a conflict, so the build can't count as complete or be posted to
+ * Community. Interim rule pending legal advice (2026-10-22). A brace is not a stock. Used by the AR-15, AR-9 and AR-10.
+ */
+export function shortBarrelStockIssue(barrel?: Part, stock?: Part): Issue | undefined {
+  // A barrel with no listed length isn't treated as short.
+  const len = barrel?.attrs.length;
+  if (!barrel || !stock || stock.attrs.brace || typeof len !== 'number' || len >= 16) return undefined;
+  return { severity: 'error', slots: ['barrel', 'stock'], message: SBR_MESSAGE };
+}
 
 /** An AR gas system length for a sentence: "carbine-length", but "midlength" already says it. */
 export const gasLength = (len: unknown) => (len === 'midlength' ? 'midlength' : `${len}-length`);

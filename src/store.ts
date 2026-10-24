@@ -1,6 +1,6 @@
 import { SHARE_BASE } from './config';
 import { PLATFORMS, canonicalPlatform } from './data';
-import { MOUNT_CODE, baseSelection, bestOffer, ownedOf, placementOf, presetSelection, selectionTokens, toBuild, type Selection } from './engine';
+import { MOUNT_CODE, baseSelection, bestOffer, ownedOf, placementOf, presetSelection, selectionTokens, toBuild, unpricedCount, type Selection } from './engine';
 import { worthShowing } from './data/history';
 import type { Build, Part, Platform, Tier } from './types';
 
@@ -14,6 +14,8 @@ export interface SavedBuild {
   savedAt: string;
   /** Best price of each part when it went into the saved build, for "price dropped since you saved". */
   prices?: Record<string, number>;
+  /** When some of `prices` were last reset to that day's prices, because they may have been a paused retailer's (pausedPrice). */
+  pricesAt?: string;
 }
 
 const SAVED_KEY = 'firearm-designer:saved:v1';
@@ -42,9 +44,15 @@ function savedEntry(e: unknown): SavedBuild | null {
     if (prices !== undefined && (!isRecord(prices) || !Object.values(prices).every((v) => typeof v === 'number'))) return null;
     const platform = canonicalPlatform(e.platform);
     if (!PLATFORMS.some((p) => p.id === platform)) return null;
-    // Builds saved before price tracking start from today's prices.
+    // Builds saved before price tracking start from today's prices, and so does a part whose saved price may be a
+    // paused retailer's (pausedPrice).
     const sel = selection as Selection;
-    return { ...(e as unknown as SavedBuild), platform, selection: sel, prices: priceSnapshot(platform, sel, prices as Record<string, number> | undefined) };
+    const { pricesAt, ...entry } = e as unknown as SavedBuild;
+    const at = isText(pricesAt) ? { pricesAt } : {};
+    const stored = prices as Record<string, number> | undefined;
+    const kept = stored && withoutPausedPrices(platform, sel, pricedAt({ savedAt: entry.savedAt, ...at }), stored);
+    const reset = !!stored && Object.keys(kept!).length < Object.keys(stored).length;
+    return { ...entry, platform, selection: sel, prices: priceSnapshot(platform, sel, kept), ...(reset ? { pricesAt: new Date().toISOString() } : at) };
   } catch {
     return null;
   }
@@ -91,6 +99,23 @@ export function priceSnapshot(platformId: string, sel: Selection, keep: Record<s
   return out;
 }
 
+/**
+ * Whether a saved build's price for this part may be a paused retailer's: the build was saved on or before the pause
+ * date of a retailer that priced the part (Part.pausedThrough). Such a price isn't compared with today's, or the pause
+ * would read as a price rise. A save with no readable date counts as before.
+ */
+export const pausedPrice = (part: Part, savedAt: string) => !!part.pausedThrough && !(savedAt.slice(0, 10) > part.pausedThrough);
+
+/** When a saved build's prices were taken: its save, or a later reset (SavedBuild.pricesAt). */
+const pricedAt = (s: Pick<SavedBuild, 'savedAt' | 'pricesAt'>) => (s.pricesAt && s.pricesAt > s.savedAt ? s.pricesAt : s.savedAt);
+
+/** A saved build's prices without the ones that may be a paused retailer's (pausedPrice). */
+function withoutPausedPrices(platformId: string, sel: Selection, savedAt: string, prices: Record<string, number>) {
+  const { build } = buildOf(platformId, sel);
+  const stale = new Set(Object.values(build).filter((p): p is Part => !!p && pausedPrice(p, savedAt)).map((p) => p.id));
+  return Object.fromEntries(Object.entries(prices).filter(([id]) => !stale.has(id)));
+}
+
 export interface PriceChange { part: Part; was: number; now: number }
 
 /** Parts still to buy in a saved build whose best price moved since it was saved, biggest drop first, and the net change. */
@@ -99,7 +124,7 @@ export function priceChanges(s: SavedBuild): { changes: PriceChange[]; drop: num
   const { owned } = ownedOf(s.selection);
   const changes: PriceChange[] = [];
   for (const part of Object.values(build)) {
-    const was = part && !owned.has(part.slot) ? s.prices?.[part.id] : undefined;
+    const was = part && !owned.has(part.slot) && !pausedPrice(part, pricedAt(s)) ? s.prices?.[part.id] : undefined;
     const now = part && bestOffer(part)?.price;
     if (part && was !== undefined && now !== undefined && Math.abs(was - now) >= 0.01) changes.push({ part, was, now });
   }
@@ -221,6 +246,10 @@ export const FEATURED: FeaturedBuild[] = PLATFORMS.flatMap((p) =>
 export function totalOf(platform: Platform, build: Build, skip?: Set<string>) {
   return platform.slots.reduce((sum, s) => sum + (build[s.id] && !skip?.has(s.id) ? bestOffer(build[s.id]!)?.price ?? 0 : 0), 0);
 }
+
+/** How many parts totalOf leaves out for having no price, for the note beside the total (noPriceNote). */
+export const unpricedOf = (platform: Platform, build: Build, skip?: Set<string>) =>
+  unpricedCount(platform.slots.filter((s) => !skip?.has(s.id)).map((s) => build[s.id]));
 
 export function buildOf(platformId: string, sel: Selection) {
   const platform = PLATFORMS.find((p) => p.id === platformId) ?? PLATFORMS[0];

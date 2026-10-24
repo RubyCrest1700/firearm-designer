@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { RETAILERS, buyUrl } from './data/retailers';
-import { bestOffer, candidateIssues, money, priceLabel, priceRange, priceText, worst } from './engine';
+import { bestOffer, candidateIssues, listedParts, money, priceLabel, priceRange, priceText, worst } from './engine';
 import type { RegionState } from './Blueprint';
 import { TIER_LABEL } from './store';
 import { daysAgo, hasHistory, partSeries } from './data/history';
@@ -26,7 +26,7 @@ export function Picker({ platform, slot, focusId: focusProp, number, model, buil
   useDrawer(onClose, closeRef);
 
   // In a builder with models, the list starts with the current model's parts (frames, slides, barrels...).
-  const inSlot = platform.parts.filter((p) => p.slot === slot.id);
+  const inSlot = listedParts(platform, slot.id, selectedId);
   const forModel = model?.parts ? inSlot.filter((p) => model.parts!(p) || p.id === selectedId) : inSlot;
   const all = (allModels ? inSlot : forModel).map((p) => {
     const iss = candidateIssues(platform, build, p, place);
@@ -94,7 +94,8 @@ export function Picker({ platform, slot, focusId: focusProp, number, model, buil
   );
 }
 
-function Candidate({ part, open, issues, sev, selected, owned, onChoose, onBuyClick }: {
+/** One option in the picker (exported for the unit tests). */
+export function Candidate({ part, open, issues, sev, selected, owned, onChoose, onBuyClick }: {
   part: Part; open?: boolean; issues: Issue[]; sev: Severity | 'ok'; selected: boolean; owned: boolean; onChoose: (own: boolean) => void; onBuyClick: () => void;
 }) {
   const [showPrices, setShowPrices] = useState(!!open);
@@ -118,19 +119,20 @@ function Candidate({ part, open, issues, sev, selected, owned, onChoose, onBuyCl
           {issues.map((i, n) => <p key={n} className={'row-issue ' + i.severity}>{i.message}</p>)}
         </div>
         <div className="cand-buy">
-          {best && <span className="amt">{priceText(best)}</span>}
+          {best ? <span className="amt">{priceText(best)}</span> : <span className="amt dim">—</span>}
           {best && <span className="src">{RETAILERS[best.retailer].name}{label ? ` · ${label}` : ''}</span>}
           <ChangeChip part={part} long />
           {!selected && <button className="btn primary" onClick={() => onChoose(false)}>Add to Build</button>}
           <button className={'own-btn' + (owned ? ' on' : '')} aria-pressed={owned} onClick={() => onChoose(true)}>{owned ? '✓ Owned' : 'I Own This'}</button>
         </div>
       </div>
-      <button className="compare" aria-expanded={showPrices} onClick={() => setShowPrices(!showPrices)}>
+      {/* A part with no offers (sold only by a paused retailer) has no retailers to compare. */}
+      {part.offers.length > 0 && <button className="compare" aria-expanded={showPrices} onClick={() => setShowPrices(!showPrices)}>
         <span>{part.offers.length > 1 ? `Compare ${part.offers.length} Retailers` : 'View Retailer'}</span>
         {hi > lo && <span className="save">Save Up to {money(hi - lo)}</span>}
         <span className="chev" aria-hidden="true">{showPrices ? '−' : '+'}</span>
-      </button>
-      {showPrices && (
+      </button>}
+      {showPrices && part.offers.length > 0 && (
         <div className="offers-wrap">
           {hasHistory(part) && <PriceChart points={partSeries(part, daysAgo(90))} label="Best Price, Last 90 Days" />}
           <table className="offers">

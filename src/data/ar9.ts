@@ -1,5 +1,5 @@
 import type { Build, Issue, Placement, Platform } from '../types';
-import { boreIssue, parts, pick, threadIssue } from './helpers';
+import { SBR_MESSAGE, boreIssue, parts, pick, threadIssue } from './helpers';
 import { rifleAddonParts, rifleAddonRules, rifleAddonSlots } from './addons';
 import { ironParts, ironRules, ironsSlot } from './irons';
 
@@ -13,6 +13,8 @@ import { ironParts, ironRules, ironsSlot } from './irons';
  * https://www.80percentarms.com/blog/ar9-lrbho-explained/
  */
 const MAG_LABEL: Record<string, string> = { glock: 'Glock', colt: 'Colt SMG' };
+/** Owner-approved wording (2026-10-23). */
+const VERTICAL_GRIP_MESSAGE = 'A vertical foregrip on a pistol with a barrel under 16" may be regulated under the National Firearms Act and can require ATF approval. Not legal advice: check federal, state and local law before you build.';
 /** Who makes each lower's bolt hold-open system, as named on the bolts. */
 const LRBHO_LABEL: Record<string, string> = { aero: 'Aero Precision EPC', psa: 'PSA', nfa: 'New Frontier Armory', fm: 'FM Products', jp: 'JP Enterprises' };
 
@@ -21,7 +23,7 @@ const slots = [
   { id: 'lpk', name: 'Lower parts kit', group: 'Lower', required: true, hint: 'Standard AR-15 kits work; the 9mm mag catch and ejector come with most lowers.' },
   { id: 'trigger', name: 'Trigger group', group: 'Lower', required: true, hint: 'Mil-spec small-pin. Single-stage triggers suit blowback best.' },
   { id: 'buffer', name: 'Buffer system', group: 'Lower', required: true, hint: 'Blowback needs a heavy 9mm buffer (about 8 oz) on a carbine tube.' },
-  { id: 'stock', name: 'Stock or brace', group: 'Lower', required: true, hint: 'Any carbine stock. Under a 16" barrel a stock makes it an SBR.' },
+  { id: 'stock', name: 'Stock or brace', group: 'Lower', required: true, hint: 'Any carbine stock. A stock on a barrel under 16" may be NFA-regulated; check the law where you live.' },
   { id: 'grip', name: 'Pistol grip', group: 'Lower', required: true, hint: 'All standard AR-15 grips fit.' },
   { id: 'upper', name: 'Stripped upper receiver', group: 'Upper', required: true, hint: 'A standard AR-15 upper works; the forward assist isn\'t used.' },
   { id: 'barrel', name: 'Barrel', group: 'Upper', required: true, hint: '9mm blowback, standard AR-15 barrel nut, 1/2x28 muzzle threads.' },
@@ -116,7 +118,7 @@ const allParts = [
     { id: 'a9-bbl-faxon105', brand: 'Faxon Firearms', name: '10.5" 9mm Duty Series Light Taper', specs: ['10.5"', '9mm', 'Blowback', '4150 QPQ', '1/2x28'],
       attrs: { caliber: '9mm', bullet: .355, length: 10.5, thread: '1/2x28' }, offers: [['PA', 149.99], ['OP', 154.99]] },
     { id: 'a9-bbl-aero16', brand: 'Aero Precision', name: '16" 9mm CMV Barrel', specs: ['16"', '9mm', 'Blowback', '1:10 twist', '1/2x28'],
-      attrs: { caliber: '9mm', bullet: .355, length: 16, thread: '1/2x28' }, offers: [['AERO', 149.99], ['PA', 149.99]], pick: pick('budget', 'A 16" barrel keeps it a rifle, so a stock is legal without paperwork.') },
+      attrs: { caliber: '9mm', bullet: .355, length: 16, thread: '1/2x28' }, offers: [['AERO', 149.99], ['PA', 149.99]], pick: pick('budget', 'A 16" barrel for a full-size carbine with a stock.') },
     { id: 'a9-bbl-faxon16', brand: 'Faxon Firearms', name: '16" 9mm Duty Series Light Taper', specs: ['16"', '9mm', 'Blowback', '4150 QPQ', '1/2x28'],
       attrs: { caliber: '9mm', bullet: .355, length: 16, thread: '1/2x28' }, offers: [['PA', 179.99], ['OP', 184.99]], pick: pick('premium', 'Light, accurate 16" for a PCC carbine.') },
   ]),
@@ -192,7 +194,7 @@ const allParts = [
 
 function rules(b: Build, place: Placement = {}): Issue[] {
   const out: Issue[] = [];
-  const { lower, lpk, buffer, stock, barrel, handguard, bcg, muzzle, mag } = b;
+  const { lower, lpk, buffer, stock, barrel, handguard, bcg, muzzle, mag, foregrip } = b;
   if (lower && mag && mag.attrs.family !== lower.attrs.mag)
     out.push({ severity: 'error', slots: ['lower', 'mag'], message: `This lower takes ${MAG_LABEL[lower.attrs.mag as string]} magazines; this is a ${MAG_LABEL[mag.attrs.family as string]} magazine.` });
   if (lower && lpk && lower.attrs.lrbho === 'aero' && !lpk.attrs.epc)
@@ -205,15 +207,20 @@ function rules(b: Build, place: Placement = {}): Issue[] {
     out.push({ severity: 'error', slots: ['buffer'], message: `A ${buffer.attrs.oz} oz 5.56 buffer is too light for 9mm blowback. The bolt slams open, batters the receiver and can bounce out of battery. Use a 9mm buffer of about 8 oz.` });
   const thread = threadIssue(barrel, muzzle) ?? boreIssue(barrel, muzzle);
   if (thread) out.push(thread);
+  // Interim rules pending legal advice (2026-10-22): a stock on a barrel under 16" is a conflict (a brace is not a
+  // stock), and so is a vertical foregrip on a short braced or stockless build.
+  const short = !!barrel && (barrel.attrs.length as number) < 16;
   if (barrel && stock) {
-    const short = (barrel.attrs.length as number) < 16;
     if (short && !stock.attrs.brace)
-      out.push({ severity: 'warn', slots: ['barrel', 'stock'], message: `A barrel under 16" with a stock makes a short-barreled rifle under the NFA. Approve an ATF Form 1 before assembly, or build it as a pistol with a brace.` });
+      out.push({ severity: 'error', slots: ['barrel', 'stock'], message: SBR_MESSAGE });
     if (!short && stock.attrs.brace)
-      out.push({ severity: 'info', slots: ['barrel', 'stock'], message: 'With a 16" barrel this is a rifle, so a regular stock is legal and usually more comfortable than a brace.' });
+      out.push({ severity: 'info', slots: ['barrel', 'stock'], message: 'With a 16" barrel, a regular stock is usually more comfortable than a brace. Check federal, state and local law; this is not legal advice.' });
     if (short && stock.attrs.brace)
-      out.push({ severity: 'info', slots: ['stock'], message: 'Brace rules have changed several times. Check current federal and state law before building a braced pistol.' });
+      out.push({ severity: 'info', slots: ['stock'], message: 'Brace rules have changed several times. Check current federal, state and local law before building a braced pistol; this is not legal advice.' });
   }
+  // Angled grips and hand stops get no rule here: whether they change anything is a question for the lawyer.
+  if (short && foregrip?.attrs.kind === 'vertical' && (!stock || stock.attrs.brace))
+    out.push({ severity: 'error', slots: ['foregrip', 'barrel'], message: VERTICAL_GRIP_MESSAGE });
   if (handguard && barrel) {
     const hg = handguard.attrs.length as number;
     const bl = barrel.attrs.length as number;

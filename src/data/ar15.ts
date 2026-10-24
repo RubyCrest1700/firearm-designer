@@ -1,5 +1,5 @@
 import type { Build, Issue, Placement, Platform } from '../types';
-import { boreIssue, gasLength, parts, pick, threadIssue } from './helpers';
+import { boreIssue, gasLength, parts, pick, shortBarrelStockIssue, threadIssue } from './helpers';
 import { rifleAddonParts, rifleAddonRules, rifleAddonSlots } from './addons';
 import { ironParts, ironRules, ironsSlot } from './irons';
 
@@ -113,6 +113,8 @@ const allParts = [
     { id: 'ar-upper-anderson', brand: 'Anderson', name: 'AM-15 Stripped Upper', specs: ['Forged 7075-T6', 'M4 feed ramps', 'Forward assist not installed'], attrs: {},
       offers: [['PSA', 54.99], ['PA', 59.99]] },
   ]),
+  // The 7.5", 9", 10.3" and 11.5" barrels are `hidden` (2026-10-22, pending legal advice): the picker doesn't list
+  // them, but builds and links that already use them still open, with the short-barrel conflict. Delete the flag to list one again.
   ...parts('barrel', [
     { id: 'ar-bbl-psa16', brand: 'Palmetto State Armory', name: '16" 5.56 NATO Carbine, Nitride', specs: ['16"', '5.56 NATO', 'Carbine gas', '.750 journal', '1:7', '1/2x28 thread'],
       attrs: { caliber: '5.56', bolt: '5.56', bullet: .224, length: 16, gas: 'carbine', journal: '.750', thread: '1/2x28' },
@@ -131,7 +133,7 @@ const allParts = [
       offers: [['BRN', 279.0], ['PA', 284.99]] },
     { id: 'ar-bbl-ba10', brand: 'Ballistic Advantage', name: '10.3" 5.56 Carbine Hanson', specs: ['10.3"', '5.56 NATO', 'Carbine gas', '.750 journal', '1/2x28 thread'],
       attrs: { caliber: '5.56', bolt: '5.56', bullet: .224, length: 10.3, gas: 'carbine', journal: '.750', thread: '1/2x28' },
-      offers: [['PA', 164.99], ['OP', 169.99]] },
+      offers: [['PA', 164.99], ['OP', 169.99]], hidden: true },
     { id: 'ar-bbl-300', brand: 'Ballistic Advantage', name: '16" .300 BLK Pistol-Length', specs: ['16"', '.300 Blackout', 'Pistol gas', '.750 journal', '5/8x24'],
       attrs: { caliber: '.300 BLK', bolt: '5.56', bullet: .308, length: 16, gas: 'pistol', journal: '.750', thread: '5/8x24' },
       offers: [['PA', 164.99], ['BRN', 174.99]] },
@@ -146,13 +148,13 @@ const allParts = [
       offers: [['PA', 269.99], ['OP', 274.99]] },
     { id: 'ar-bbl-ba115', brand: 'Ballistic Advantage', name: '11.5" 5.56 Government Carbine, Modern Series', specs: ['11.5"', '5.56 NATO', 'Carbine gas', '.750 journal', '1:7', '1/2x28 thread'],
       attrs: { caliber: '5.56', bolt: '5.56', bullet: .224, length: 11.5, gas: 'carbine', journal: '.750', thread: '1/2x28' },
-      offers: [['PA', 154.99], ['BRN', 159.99]] },
+      offers: [['PA', 154.99], ['BRN', 159.99]], hidden: true },
     { id: 'ar-bbl-ba75', brand: 'Ballistic Advantage', name: '7.5" 5.56 Pistol-Length, Modern Series', specs: ['7.5"', '5.56 NATO', 'Pistol gas', '.750 journal', '1:7', '1/2x28 thread'],
       attrs: { caliber: '5.56', bolt: '5.56', bullet: .224, length: 7.5, gas: 'pistol', journal: '.750', thread: '1/2x28' },
-      offers: [['PA', 124.99], ['BRN', 129.99]] },
+      offers: [['PA', 124.99], ['BRN', 129.99]], hidden: true },
     { id: 'ar-bbl-ba300-9', brand: 'Ballistic Advantage', name: '9" .300 BLK Pistol-Length, Modern Series', specs: ['9"', '.300 Blackout', 'Pistol gas', '.750 journal', '1:7', '5/8x24'],
       attrs: { caliber: '.300 BLK', bolt: '5.56', bullet: .308, length: 9, gas: 'pistol', journal: '.750', thread: '5/8x24' },
-      offers: [['PA', 159.99], ['BRN', 164.99]] },
+      offers: [['PA', 159.99], ['BRN', 164.99]], hidden: true },
     { id: 'ar-bbl-grendel18', brand: 'Ballistic Advantage', name: '18" 6.5 Grendel SPR, Premium Series', specs: ['18"', '6.5 Grendel Type 2', 'Rifle gas', '.750 journal', '1:8', 'Stainless', '5/8x24'],
       attrs: { caliber: '6.5 Grendel', bolt: '6.5G', bullet: .264, length: 18, gas: 'rifle', journal: '.750', thread: '5/8x24' },
       offers: [['PA', 244.99], ['BRN', 249.99]] },
@@ -302,8 +304,8 @@ function rules(b: Build, place: Placement = {}): Issue[] {
   // The fatter Grendel/ARC case needs its own magazine: https://en.wikipedia.org/wiki/6.5mm_Grendel
   if (barrel?.attrs.bolt === '6.5G')
     out.push({ severity: 'info', slots: ['barrel'], message: `${barrel.attrs.caliber} needs magazines made for 6.5 Grendel or 6mm ARC. Standard 5.56 magazines don't feed it reliably.` });
-  if (barrel && (barrel.attrs.length as number) < 16 && stock)
-    out.push({ severity: 'warn', slots: ['barrel', 'stock'], message: `A barrel under 16" with a stock makes a short-barreled rifle under the NFA. Approve an ATF Form 1 before assembly, or build it as a pistol without a stock.` });
+  const sbr = shortBarrelStockIssue(barrel, stock);
+  if (sbr) out.push(sbr);
   out.push(...rifleAddonRules(b, false, place));
   out.push(...ironRules(b, b.gasblock));
   return out;

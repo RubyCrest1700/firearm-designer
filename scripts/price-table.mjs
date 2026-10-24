@@ -1,7 +1,9 @@
 // The builder's copy of data/prices.json and data/sources.json, packed into one small table at build time
 // (vite.config.ts). The two files repeat every product link; the table keeps each link once and each live price
 // as [link, price, in stock, day checked] (plus the price's own link when it differs, until the next price run): { updatedAt, days: [iso, ...], parts: { "<partId>": { "<retailer>": link | [...] } } }.
-// The app unpacks it into the same shapes the files have, so nothing else changes.
+// The app unpacks it into the same shapes the files have, so nothing else changes. The paused retailers
+// ("paused" in sources.json, each with its pause date) ride along so the site can leave their prices out, and the
+// price history recorded before the pause for the parts they priced (src/data/helpers.ts, src/data/history.ts).
 
 /** Packs prices.json and sources.json into the table. */
 export function packPrices(prices, sources) {
@@ -18,7 +20,7 @@ export function packPrices(prices, sources) {
       else parts[id][r] = [link ?? '', o.price, o.inStock ? 1 : 0, day(o.checkedAt), ...(o.url !== link ? [o.url ?? ''] : [])];
     }
   }
-  return { updatedAt: prices.updatedAt, days, parts };
+  return { updatedAt: prices.updatedAt, days, parts, ...(sources.paused ? { paused: sources.paused } : {}) };
 }
 
 /** The table back as prices.json: { updatedAt, offers }. */
@@ -33,7 +35,7 @@ export function unpackPrices(t) {
   return { updatedAt: t.updatedAt, offers };
 }
 
-/** The table back as sources.json: { parts }. */
+/** The table back as sources.json: { parts }, plus the paused retailers when there are any (scripts/sources.mjs). */
 export function unpackSources(t) {
   const parts = {};
   for (const [id, byRetailer] of Object.entries(t.parts))
@@ -41,5 +43,5 @@ export function unpackSources(t) {
       const link = typeof v === 'string' ? v : v[0];
       if (link) (parts[id] ??= {})[r] = link;
     }
-  return { parts };
+  return { parts, ...(t.paused ? { paused: t.paused } : {}) };
 }

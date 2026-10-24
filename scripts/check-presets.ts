@@ -1,11 +1,14 @@
 // Verifies every preset build is complete and free of compatibility errors.
 import { awarenessFor } from '../src/awareness';
 import { PLATFORMS, canonicalPlatform } from '../src/data/index';
+import { PAUSED, SBR_MESSAGE } from '../src/data/helpers';
+import { RETAILERS } from '../src/data/retailers';
 import { baseSelection, issuesFor, ownedOf, placementOf, presetSelection, selectionTokens, toBuild, toBuyIds } from '../src/engine';
 import { GUIDES } from '../src/guides/content';
 import { FAQ_PICKS } from '../src/guides/picks';
 import { selectionFromParts } from '../src/store';
 import { buildWeight, formatWeight } from '../src/weight';
+import sources from '../data/sources.json';
 
 let bad = 0;
 for (const p of PLATFORMS) {
@@ -109,20 +112,27 @@ for (const p of PLATFORMS.filter((x) => x.family === 'Rifle'))
   fake.muzzle = { ...fake.muzzle!, attrs: { ...fake.muzzle!.attrs, bore: 0.224 } };
   if (!ar.rules(fake).some((i) => i.severity === 'error' && /strike the device/.test(i.message))) { console.log('bore check: 5.56 device on .308 barrel not flagged'); bad++; }
 }
-// Full builds made from catalog parts beyond the presets come out free of conflicts.
+// Full builds made from catalog parts beyond the presets come out free of conflicts, except the one the build is
+// meant to show: the hidden 9" .300 BLK barrel (still in the catalog for old builds and links) with the value
+// preset's stock is exactly the short-barrel conflict and nothing else.
 {
   const ar = PLATFORMS.find((x) => x.id === 'ar15')!;
-  const builds: Record<string, string>[] = [
-    { barrel: 'ar-bbl-grendel18', bcg: 'ar-bcg-grendel', gastube: 'ar-gt-rifle', muzzle: 'ar-mz-a2-30' },
-    { barrel: 'ar-bbl-arc18', bcg: 'ar-bcg-grendel', gastube: 'ar-gt-rifle', muzzle: 'ar-mz-sf3p30' },
-    { barrel: 'ar-bbl-ba20', gastube: 'ar-gt-rifle', gasblock: 'ar-gb-fsb', handguard: 'ar-hg-moerifle', buffer: 'ar-buf-rifle', stock: 'ar-stock-moerifle' },
-    { barrel: 'ar-bbl-ba300-9', gastube: 'ar-gt-pistol', handguard: 'ar-hg-mi7', muzzle: 'ar-mz-sf3p30' },
+  const builds: [Record<string, string>, string[]][] = [
+    [{ barrel: 'ar-bbl-grendel18', bcg: 'ar-bcg-grendel', gastube: 'ar-gt-rifle', muzzle: 'ar-mz-a2-30' }, []],
+    [{ barrel: 'ar-bbl-arc18', bcg: 'ar-bcg-grendel', gastube: 'ar-gt-rifle', muzzle: 'ar-mz-sf3p30' }, []],
+    [{ barrel: 'ar-bbl-ba20', gastube: 'ar-gt-rifle', gasblock: 'ar-gb-fsb', handguard: 'ar-hg-moerifle', buffer: 'ar-buf-rifle', stock: 'ar-stock-moerifle' }, []],
+    [{ barrel: 'ar-bbl-ba300-9', gastube: 'ar-gt-pistol', handguard: 'ar-hg-mi7', muzzle: 'ar-mz-sf3p30' }, [`barrel+stock: ${SBR_MESSAGE}`]],
   ];
-  for (const over of builds) {
-    const errs = issuesFor(ar, toBuild(ar, { ...presetSelection(ar, 'value'), ...over })).filter((i) => i.severity === 'error');
-    if (errs.length) { console.log(`catalog build ${JSON.stringify(over)}: ${errs.map((i) => i.message).join(' | ')}`); bad++; }
+  for (const [over, want] of builds) {
+    const errs = issuesFor(ar, toBuild(ar, { ...presetSelection(ar, 'value'), ...over })).filter((i) => i.severity === 'error').map((i) => `${i.slots.join('+')}: ${i.message}`);
+    if (JSON.stringify(errs) !== JSON.stringify(want)) { console.log(`catalog build ${JSON.stringify(over)}: expected [${want.join(' | ')}], got [${errs.join(' | ')}]`); bad++; }
   }
 }
+// No preset or factory build uses a hidden part (Part.hidden): starter builds must be ones the picker can show.
+for (const p of PLATFORMS)
+  for (const m of [{ name: p.name, presets: p.presets, base: p.base }, ...(p.models ?? [])])
+    for (const [tier, list] of Object.entries({ ...m.presets, base: m.base ?? [] }))
+      for (const id of list) if (p.parts.find((x) => x.id === id)?.hidden) { console.log(`${p.id}/${m.name}/${tier}: uses hidden part ${id}`); bad++; }
 // Awareness warnings fire on the thresholds agreed in the Build Warnings Proposal.
 {
   const ar = PLATFORMS.find((x) => x.id === 'ar15')!;
@@ -268,6 +278,22 @@ for (const p of PLATFORMS) {
     const sel = selectionFromParts(old, [`g${n}-frame-g5`, `g${n}-slide-mos`, 'g-mag-oem17']);
     if (canonicalPlatform(old) !== 'glock9' || sel.frame !== `g${n}-frame-g5` || sel.slide !== `g${n}-slide-mos` || sel.mag !== 'g-mag-oem17') { console.log(`old ${old} link did not open in the double-stack 9mm Glock builder`, sel); bad++; }
   }
+}
+// Every paused retailer ("paused" in data/sources.json) is a real retailer id, and none of its prices reach a part.
+for (const id of PAUSED) if (!RETAILERS[id]) { console.log(`data/sources.json paused: unknown retailer ${id}`); bad++; }
+// Each has its pause date, which the site needs to drop the price history from before it (src/data/history.ts).
+for (const [id, e] of Object.entries((sources as unknown as { paused?: Record<string, { since?: unknown }> }).paused ?? {}))
+  if (typeof e?.since !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(e.since)) { console.log(`data/sources.json paused ${id}: needs "since": "YYYY-MM-DD"`); bad++; }
+{
+  const unpriced = new Set<string>();
+  const pausedHistory = new Set<string>();
+  for (const p of PLATFORMS)
+    for (const part of p.parts) {
+      if (part.offers.some((o) => PAUSED.has(o.retailer))) { console.log(`${p.id}: ${part.id} still shows a paused retailer's price`); bad++; }
+      if (!part.offers.length) unpriced.add(part.id);
+      if (part.pausedThrough) pausedHistory.add(part.id);
+    }
+  console.log(`Paused retailers: ${[...PAUSED].join(', ') || 'none'}. Parts with no price left: ${unpriced.size} (${[...unpriced].join(', ')}). Parts whose older price history is ignored: ${pausedHistory.size}.`);
 }
 // The home page's FAQ links keep their own copy of each guide's question.
 for (const pick of FAQ_PICKS) {

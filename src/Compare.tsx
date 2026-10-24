@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { PLATFORMS, canonicalPlatform } from './data';
 import type { RegionState } from './Blueprint';
 import { Blueprint } from './drawings';
-import { bestOffer, money, ownedOf, partIds, type Selection } from './engine';
-import { FEATURED, buildOf, selectionFromParts, totalOf, type SavedBuild } from './store';
+import { bestOffer, money, noPriceNote, ownedOf, partIds, type Selection } from './engine';
+import { FEATURED, buildOf, selectionFromParts, totalOf, unpricedOf, type SavedBuild } from './store';
 import { getBuild, listBuilds, type CommunityBuild } from './community';
 import { buildStatus, statesFor } from './status';
 import { buildWeight, formatWeight } from './weight';
@@ -56,6 +56,8 @@ function factsOf(item: CompareItem) {
     status: buildStatus(platform, build, issues, owned.other),
     toBuy: totalOf(platform, build, owned.owned),
     full: totalOf(platform, build),
+    toBuyNote: noPriceNote(unpricedOf(platform, build, owned.owned)),
+    fullNote: noPriceNote(unpricedOf(platform, build)),
     weight: buildWeight(platform, build),
     parts: partIds(item.selection).length + owned.other.size,
     ownedCount: owned.owned.size + owned.other.size,
@@ -108,9 +110,9 @@ export function ComparePage({ items, onSet, saved, current, lastPlatform, onOpen
         <>
           <section className="card cmp-table" aria-label="Totals">
             <h2 className="card-title">At a Glance</h2>
-            <FactRow label={fa.ownedCount || fb.ownedCount ? 'Left to Buy' : 'Total at Best Prices'} a={money(fa.toBuy)} b={money(fb.toBuy)} diff={moneyDiff(fa.toBuy, fb.toBuy)} />
+            <FactRow label={fa.ownedCount || fb.ownedCount ? 'Left to Buy' : 'Total at Best Prices'} a={withNote(fa.toBuy, fa.toBuyNote)} b={withNote(fb.toBuy, fb.toBuyNote)} diff={moneyDiff(fa.toBuy, fb.toBuy)} />
             {(fa.ownedCount > 0 || fb.ownedCount > 0) && (
-              <FactRow label="Full Price, New" a={money(fa.full)} b={money(fb.full)} diff={moneyDiff(fa.full, fb.full)} />
+              <FactRow label="Full Price, New" a={withNote(fa.full, fa.fullNote)} b={withNote(fb.full, fb.fullNote)} diff={moneyDiff(fa.full, fb.full)} />
             )}
             {(fa.ownedCount > 0 || fb.ownedCount > 0) && <FactRow label="Parts You Own" a={String(fa.ownedCount)} b={String(fb.ownedCount)} />}
             <FactRow label="Weight, Unloaded" a={weightText(fa, fb)} b={weightText(fb, fa)} diff={weightDiff(fa, fb)} />
@@ -151,6 +153,9 @@ function weightDiff(fa: Facts, fb: Facts): [ReactNode, ReactNode] | undefined {
   const t = `${formatWeight(Math.abs(d), rifleUnits(fa, fb))} lighter`;
   return d < 0 ? [t, null] : [null, t];
 }
+
+/** A total, with the note when some of its parts have no price. */
+const withNote = (total: number, note: string): ReactNode => (note ? <>{money(total)} <small className="dim">{note}</small></> : money(total));
 
 function FactRow({ label, a, b, diff }: { label: string; a: ReactNode; b: ReactNode; diff?: [ReactNode, ReactNode] }) {
   return (
@@ -249,7 +254,8 @@ function Chooser({ label, saved, current, other, lastPlatform, skipCurrent, onPi
   );
   const totalText = (pid: string, sel: Selection) => {
     const { platform: p, build } = buildOf(pid, sel);
-    return `${p.name} · ${money(totalOf(p, build, ownedOf(sel).owned))}`;
+    const note = noPriceNote(unpricedOf(p, build, ownedOf(sel).owned));
+    return `${p.name} · ${money(totalOf(p, build, ownedOf(sel).owned))}${note ? ` (${note})` : ''}`;
   };
 
   const pasteLink = async () => {

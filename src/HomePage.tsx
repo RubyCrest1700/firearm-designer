@@ -1,17 +1,20 @@
 import { PLATFORMS } from './data';
 import { RETAILERS } from './data/retailers';
-import { bestOffer, money, presetSelection, baseSelection, toBuild } from './engine';
+import { PAUSED } from './data/helpers';
+import { bestOffer, money, noPriceNote, presetSelection, baseSelection, toBuild } from './engine';
 import { Blueprint } from './drawings';
 import { statesFor } from './status';
-import { buildOf, totalOf } from './store';
+import { buildOf, totalOf, unpricedOf } from './store';
 import { biggestDrops } from './data/history';
 import { FAQ_PICKS } from './guides/picks';
 import type { Part } from './types';
 import { FAMILIES } from './ui';
 
 export function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string, part?: Part) => void; onStart: () => void; onBrowse: () => void }) {
-  // Shared add-ons (lights, cases) are listed under several platforms; count each once.
-  const partCount = new Set(PLATFORMS.flatMap((p) => p.parts.map((x) => x.id))).size;
+  // Shared add-ons (lights, cases) are listed under several platforms; count each once. Hidden parts (Part.hidden)
+  // and paused retailers (data/sources.json) aren't listed, so they aren't counted.
+  const partCount = new Set(PLATFORMS.flatMap((p) => p.parts.filter((x) => !x.hidden).map((x) => x.id))).size;
+  const retailerCount = Object.keys(RETAILERS).filter((id) => !PAUSED.has(id)).length;
   const drops = biggestDrops(PLATFORMS.flatMap((p) => p.parts));
   const hero = buildOf('ar15', baseSelection(PLATFORMS.find((p) => p.id === 'ar15')!));
   return (
@@ -26,7 +29,7 @@ export function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string, p
               <button className="btn primary big" onClick={onStart}>Start a Build</button>
               <button className="btn big" onClick={onBrowse}>Browse Community Builds</button>
             </div>
-            <p className="hero-facts">{PLATFORMS.length} platforms · {partCount} parts · {Object.keys(RETAILERS).length} retailers compared</p>
+            <p className="hero-facts">{PLATFORMS.length} platforms · {partCount} parts · {retailerCount} retailers compared</p>
           </div>
           <div className="hero-art thumb" aria-hidden="true">
             <Blueprint platform={hero.platform} build={hero.build} place={hero.place} states={statesFor(hero.platform, hero.build, hero.place).states} compact />
@@ -43,7 +46,9 @@ export function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string, p
               <div className={'tile-grid ' + fam.toLowerCase()}>
                 {PLATFORMS.filter((p) => p.family === fam).map((p) => {
                   const starter = buildOf(p.id, baseSelection(p));
-                  const from = totalOf(p, toBuild(p, presetSelection(p, 'budget')));
+                  const budget = toBuild(p, presetSelection(p, 'budget'));
+                  const from = totalOf(p, budget);
+                  const noPrice = noPriceNote(unpricedOf(p, budget));
                   return (
                     <button className="tile card" key={p.id} onClick={() => onPick(p.id)}>
                       <span className="thumb">
@@ -53,7 +58,7 @@ export function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string, p
                         <span className="tile-maker">{p.maker}</span>
                         <span className="tile-name">{p.name}</span>
                         <span className="tile-blurb">{p.blurb}</span>
-                        <span className="tile-from">Starter builds from <b>{money(from)}</b></span>
+                        <span className="tile-from">Starter builds from <b>{money(from)}</b>{noPrice && <> · {noPrice}</>}</span>
                       </span>
                     </button>
                   );

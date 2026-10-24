@@ -47,6 +47,15 @@ Some retailers' terms of use restrict automated price collection. The longer-ter
 free affiliate product feeds (for example AvantLink, which Palmetto State Armory uses) where
 available.
 
+Pausing a retailer: list its id under `"paused"` in `data/sources.json`, with the date and the
+reason (`"PA": { "since": "2026-10-24", "reason": "paused pending review of ..." }`). Its product links stay in the file,
+but `update-prices`, `check-links` and `read-weights` skip its pages and search links
+(`scripts/sources.mjs`), its old live prices drop out on the next nightly run, and the site leaves
+its prices, live or sample, out of every page, best price and total (`src/data/helpers.ts`). A part
+only that retailer sold shows no price. To undo, delete the entry; the next nightly run reads its
+pages again. An id that isn't in `src/data/retailers.ts` fails the tests and the price job. Paused
+since 2026-10-24: AR15Discounts (`ARD`), Primary Arms (`PA`) and Vedder Holsters (`VED`).
+
 ## Where things live
 
 - `src/data/<platform>.ts`: slots, parts with sample prices, compatibility rules and presets

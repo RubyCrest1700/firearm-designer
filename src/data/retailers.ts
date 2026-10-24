@@ -18,6 +18,10 @@ export const RETAILERS: Record<string, Retailer> = {
   CF: { id: 'CF', name: 'Classic Firearms', search: 'https://www.classicfirearms.com/catalogsearch/result/?q=' },
   YM: { id: 'YM', name: 'Young Manufacturing', search: 'https://www.youngmanufacturing.net/search.aspx?searchterm=' },
   // Stores the nightly job can read (robots.txt allows it and pages carry a price), added 2026-10-05.
+  // A store listed under "paused" in data/sources.json (AR15Discounts, Primary Arms and Vedder Holsters since
+  // 2026-10-24, while we review their terms on automated price collection) stays here so old links and saved
+  // builds still read, but the scripts don't fetch it and the site shows none of its prices (src/data/helpers.ts,
+  // scripts/sources.mjs). To undo, delete its line from "paused"; its product links in sources.json are kept.
   ARD: { id: 'ARD', name: 'AR15Discounts', search: 'https://ar15discounts.com/search?q=' },
   AT3: { id: 'AT3', name: 'AT3 Tactical', search: 'https://www.at3tactical.com/search?q=' },
   BRD: { id: 'BRD', name: 'Black Rifle Depot', search: 'https://blackrifledepot.com/search.php?search_query=' },

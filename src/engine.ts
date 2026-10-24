@@ -83,6 +83,13 @@ export function issuesFor(platform: Platform, build: Build, place: Placement = {
   return platform.rules(build, place).sort((a, b) => RANK[b.severity] - RANK[a.severity]);
 }
 
+/**
+ * The parts the picker lists for a slot. Hidden parts (Part.hidden) are left out, except the one already in the
+ * build, so a saved build or link that uses it still shows what it has.
+ */
+export const listedParts = (platform: Platform, slot: string, selectedId?: string) =>
+  platform.parts.filter((p) => p.slot === slot && (!p.hidden || p.id === selectedId));
+
 /** Issues the candidate would cause, given everything else in the build. */
 export function candidateIssues(platform: Platform, build: Build, part: Part, place: Placement = {}): Issue[] {
   const trial = { ...build, [part.slot]: part };
@@ -103,10 +110,18 @@ export function priceLabel(o: Offer): string {
 }
 
 /** A price as shown: "From" in front when it's a holster's base price before the light option. */
+/** How many of these parts have no price (sold only by a paused retailer), which every total leaves out. */
+export const unpricedCount = (parts: (Part | undefined)[]) => parts.filter((p) => p && !bestOffer(p)).length;
+
+/** The note shown next to a total that leaves out parts with no price, or '' when there are none. Owner-approved wording. */
+export const noPriceNote = (n: number) => (n <= 0 ? '' : n === 1 ? '1 part has no price' : `${n} parts have no price`);
+
 export const priceText = (o: Offer) => (o.basis === 'from' ? 'From ' : '') + money(o.price);
 
+/** Lowest and highest price; [0, 0] for a part with no offers (one sold only by a paused retailer). */
 export function priceRange(part: Part): [number, number] {
   const ps = part.offers.map((o) => o.price);
+  if (!ps.length) return [0, 0];
   return [Math.min(...ps), Math.max(...ps)];
 }
 

@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { PLATFORMS } from './data';
-import { money, ownedOf, type Selection } from './engine';
+import { money, noPriceNote, ownedOf, type Selection } from './engine';
 import type { RegionState } from './Blueprint';
 import { Blueprint } from './drawings';
 import { buildStatus, statesFor } from './status';
-import { buildOf, totalOf } from './store';
+import { buildOf, totalOf, unpricedOf } from './store';
 import { recentChange } from './data/history';
 import type { Part, Platform, Severity } from './types';
 
@@ -138,6 +138,7 @@ export function BuildCard({ platformId, selection, badge, title, meta, body, act
   const owned = ownedOf(selection);
   const status = buildStatus(platform, build, issues, owned.other);
   const ownsSome = owned.owned.size + owned.other.size > 0;
+  const noPrice = noPriceNote(unpricedOf(platform, build, owned.owned));
   return (
     <article className={'build-card card' + (className ? ' ' + className : '')}>
       <div className="thumb">
@@ -149,7 +150,7 @@ export function BuildCard({ platformId, selection, badge, title, meta, body, act
         <p className="meta">{meta}</p>
         {body}
         <div className="build-card-foot">
-          <span className="amt big">{money(totalOf(platform, build, owned.owned))}{ownsSome && <small className="to-buy"> to buy</small>}</span>
+          <span className="amt big">{money(totalOf(platform, build, owned.owned))}{ownsSome && <small className="to-buy"> to buy</small>}{noPrice && <small className="to-buy"> · {noPrice}</small>}</span>
           <span className={'status small ' + status.cls}>{status.text}</span>
         </div>
         <div className="build-card-actions">{actions}</div>

@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { PLATFORMS } from './data';
 import { RETAILERS } from './data/retailers';
-import { bestOffer, encodeMount, money, ownedOf, placementOf, presetSelection, baseSelection, priceRange, singleRetailerCarts, toBuild, type Owned, type Selection } from './engine';
+import { bestOffer, encodeMount, money, noPriceNote, ownedOf, placementOf, presetSelection, baseSelection, priceRange, singleRetailerCarts, toBuild, unpricedCount, type Owned, type Selection } from './engine';
 import type { RegionState } from './Blueprint';
 import { Blueprint, useDrawings } from './drawings';
 import { buildStatus, statesFor } from './status';
-import { TIER_LABEL, totalOf, type SavedBuild } from './store';
+import { TIER_LABEL, totalOf, unpricedOf, type SavedBuild } from './store';
 import { type CommunityBuild } from './community';
 import { awarenessFor, type Aware } from './awareness';
 import { buildWeight, formatWeight } from './weight';
@@ -45,6 +45,7 @@ export function BuilderPage({ platformId, startPart, setPlatformId, selection, s
   const owned = ownedOf(selection);
   const status = buildStatus(platform, build, issues, owned.other);
   const total = totalOf(platform, build, owned.owned);
+  const noPrice = noPriceNote(unpricedOf(platform, build, owned.owned));
   const ownsSome = owned.owned.size + owned.other.size > 0;
   const chosen = platform.slots.filter((s) => build[s.id] || owned.other.has(s.id)).length;
   const rifle = platform.family === 'Rifle';
@@ -109,14 +110,14 @@ export function BuilderPage({ platformId, startPart, setPlatformId, selection, s
             <div className="bp-toolbar" role="toolbar" aria-label="Build actions">
               <span className="tb-label">{chosen === 0 ? 'Start From' : 'Start Over From'}</span>
               <button className="chip" title={baseNote} onClick={() => { startOver(baseSelection(starter)); setOpenSlot(null); }}>
-                Base{model ? ` ${model.short}` : ''} <span className="chip-amt">{money(totalOf(platform, toBuild(platform, baseSelection(starter))))}</span>
+                Base{model ? ` ${model.short}` : ''} <ChipTotal platform={platform} sel={baseSelection(starter)} />
               </button>
               {(['budget', 'value', 'premium'] as Tier[]).map((t) => {
                 const sel = presetSelection(starter, t);
                 const optic = opticTag(platform.parts.find((p) => p.id === sel.optic));
                 return (
                   <button key={t} className="chip" onClick={() => { startOver(sel); setOpenSlot(null); }}>
-                    {TIER_LABEL[t]}{model ? ` ${model.short}` : ''} <span className="chip-amt">{money(totalOf(platform, toBuild(platform, sel)))}</span>
+                    {TIER_LABEL[t]}{model ? ` ${model.short}` : ''} <ChipTotal platform={platform} sel={sel} />
                     {optic && <> <span className="chip-tag">{optic}</span></>}
                   </button>
                 );
@@ -147,7 +148,7 @@ export function BuilderPage({ platformId, startPart, setPlatformId, selection, s
                 <div><span>Parts</span><b>{chosen} of {platform.slots.length}</b></div>
                 <div><span>Status</span><b className={'tb-' + status.cls}>{status.text}</b></div>
                 <div><span>Weight</span><b title={weightTitle}>{chosen ? `${weight.estimated ? '≈ ' : ''}${formatWeight(weight.oz, rifle)}` : '—'}</b></div>
-                <div><span>{ownsSome ? 'To Buy' : 'Total'}</span><b>{money(total)}</b></div>
+                <div><span>{ownsSome ? 'To Buy' : 'Total'}</span><b title={noPrice || undefined}>{money(total)}</b></div>
               </figcaption>
             </figure>
             <p className="hint">{zoom ? 'Zoomed in. Swipe the drawing sideways to see the rest, or tap a part to change it. ' : ''}{chosen === 0 ? 'Blank build. Pick parts from the list or click any part on the drawing, or start from a ready-made build above.' : Object.keys(mounts).length ? 'Select any part to change it. Drag a light, laser or grip along the rail to move it; pick its side in the parts list. Parts on the left side show as dashed lines.' : 'Select any part on the drawing or in the list to change it. The drawing updates with every part you choose.'}</p>
@@ -162,7 +163,7 @@ export function BuilderPage({ platformId, startPart, setPlatformId, selection, s
         </div>
       </div>
 
-      <Dock total={total} status={status} toBuy={ownsSome} />
+      <Dock total={total} status={status} toBuy={ownsSome} noPrice={noPrice} />
 
       {openSlotObj && (
         <Picker
@@ -194,6 +195,13 @@ export function BuilderPage({ platformId, startPart, setPlatformId, selection, s
       )}
     </>
   );
+}
+
+/** A starter build's total on its chip, with a note when some of its parts have no price. */
+function ChipTotal({ platform, sel }: { platform: Platform; sel: Selection }) {
+  const build = toBuild(platform, sel);
+  const note = noPriceNote(unpricedOf(platform, build));
+  return <><span className="chip-amt">{money(totalOf(platform, build))}</span>{note && <> <span className="chip-tag">{note}</span></>}</>;
 }
 
 /** The tag on a starter build's chip saying what optic it comes with, if any. */
@@ -305,7 +313,7 @@ function MountControl({ slot, m, onMount }: { slot: Slot; m: Resolved; onMount: 
   );
 }
 
-function Summary({ platform, build, issues, aware, states, status, total, owned, openSaved, onSave, onShare, onCopyLink, onOpen, onCompare, onFindOwned }: {
+export function Summary({ platform, build, issues, aware, states, status, total, owned, openSaved, onSave, onShare, onCopyLink, onOpen, onCompare, onFindOwned }: {
   platform: Platform; build: Build; issues: Issue[]; aware: Aware[]; states: Record<string, RegionState>; status: { cls: string; text: string; complete: boolean }; total: number;
   owned: Owned; openSaved: SavedBuild | null; onSave: (name: string, asNew: boolean) => void; onShare: (name: string, note: string) => Promise<void>;
   onCopyLink: () => void; onOpen: (s: string) => void; onCompare: () => void; onFindOwned: () => void;
@@ -324,7 +332,9 @@ function Summary({ platform, build, issues, aware, states, status, total, owned,
   const ownedCount = ownedParts.length + owned.other.size;
   const ownedWorth = ownedParts.reduce((sum, p) => sum + (bestOffer(p)?.price ?? 0), 0);
   const highest = chosen.reduce((sum, p) => sum + priceRange(p)[1], 0);
-  const retailers = new Set(chosen.map((p) => bestOffer(p)?.retailer)).size;
+  // A part with no price has no retailer, so it isn't counted as one.
+  const retailers = new Set(chosen.map((p) => bestOffer(p)?.retailer).filter(Boolean)).size;
+  const noPrice = noPriceNote(unpricedCount(chosen));
   const carts = singleRetailerCarts(chosen).slice(0, 4);
   const [dollars, cents] = money(total).split('.');
 
@@ -347,6 +357,7 @@ function Summary({ platform, build, issues, aware, states, status, total, owned,
         <p className="total-sub">
           {chosen.length} part{chosen.length === 1 ? '' : 's'}{ownedCount ? ' to buy' : ''} from {retailers} retailer{retailers === 1 ? '' : 's'}
           {highest > total && <> · {money(highest - total)} below the highest prices</>}
+          {noPrice && <> · <span className="no-price">{noPrice}</span></>}
         </p>
         {ownedCount > 0 && (
           <p className="owned-line">
@@ -453,11 +464,11 @@ function Summary({ platform, build, issues, aware, states, status, total, owned,
   );
 }
 
-function Dock({ total, status, toBuy }: { total: number; status: { cls: string; text: string }; toBuy: boolean }) {
+function Dock({ total, status, toBuy, noPrice }: { total: number; status: { cls: string; text: string }; toBuy: boolean; noPrice: string }) {
   return (
     <div className="dock" role="region" aria-label="Build total">
       <div>
-        <div className="dock-total">{money(total)}{toBuy && <small> to buy</small>}</div>
+        <div className="dock-total">{money(total)}{toBuy && <small> to buy</small>}{noPrice && <small> · {noPrice}</small>}</div>
         <p className={'status ' + status.cls}>{status.text}</p>
       </div>
       <button className="btn" onClick={() => document.getElementById('summary')?.scrollIntoView({ behavior: 'smooth' })}>Summary</button>
