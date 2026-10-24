@@ -2,9 +2,9 @@
   "_comment": "Product page URLs the nightly price job reads, keyed by part id, then retailer id (see src/data/retailers.ts). Add a URL here to make that part's price live.",
   "_paused": "Retailers listed in \"paused\" are skipped by every script that reads these links, and their prices (live or sample) are not shown or counted on the site. Their URLs stay below. Remove an entry to resume. \"since\" is the pause date (YYYY-MM-DD): price history recorded on or before it, for any part that retailer priced, is ignored, as its lows may be that retailer's.",
   "paused": {
-    "ARD": { "since": "2026-10-22", "reason": "paused pending review of the retailer's terms on automated price collection" },
-    "PA": { "since": "2026-10-22", "reason": "paused pending review of the retailer's terms on automated price collection" },
-    "VED": { "since": "2026-10-22", "reason": "paused pending review of the retailer's terms on automated price collection" }
+    "ARD": { "since": "2026-10-24", "reason": "paused pending review of the retailer's terms on automated price collection" },
+    "PA": { "since": "2026-10-24", "reason": "paused pending review of the retailer's terms on automated price collection" },
+    "VED": { "since": "2026-10-24", "reason": "paused pending review of the retailer's terms on automated price collection" }
   },
   "parts": {
     "a10-bcg-jp": {

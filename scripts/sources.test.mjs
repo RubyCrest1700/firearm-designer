@@ -18,7 +18,7 @@ test('AR15Discounts, Primary Arms and Vedder Holsters are paused, with a pause d
   assert.deepEqual([...pausedIds(sources, retailers)].sort(), ['ARD', 'PA', 'VED']);
   for (const entry of Object.values(sources.paused)) {
     assert.deepEqual(Object.keys(entry).sort(), ['reason', 'since']);
-    assert.equal(entry.since, '2026-10-22');
+    assert.equal(entry.since, '2026-10-24');
     assert.match(entry.reason, /^paused pending review of the retailer's terms on automated price collection$/);
   }
 });

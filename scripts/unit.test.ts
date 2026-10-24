@@ -1,6 +1,6 @@
 // Unit tests for the fit engine, build status and saved builds / share links, run against the real catalog.
 // Bundled with esbuild by `npm test` (like check-data), then run with node (node --test skips files under node_modules).
-import { test } from 'node:test';
+import { mock, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { createElement } from 'react';
@@ -309,7 +309,9 @@ test('a part that got cheaper since saving shows as a drop, owned parts left out
 
 const RAW_HISTORY = (history as unknown as { parts: Record<string, [string, number][]> }).parts;
 const everyPart = () => PLATFORMS.flatMap((p) => p.parts);
-const PAUSE_DAY = '2026-10-22';
+const PAUSE_DAY = '2026-10-24';
+/** Midnight UTC, `days` after the pause date. */
+const afterPause = (days: number) => new Date(Date.parse(PAUSE_DAY) + days * 86_400_000).toISOString();
 
 test('a part any paused retailer priced carries the pause date; one none of them priced does not', () => {
   // Primary Arms sample prices only (the hidden 10.3" barrel), a Primary Arms live price (the MI handguard), and a part no paused store sells.
@@ -378,23 +380,29 @@ test('a saved build\'s price from before a pause isn\'t compared with today\'s; 
   const cheaper = { ...now, [x.id]: now[x.id] - 30 };
   const before: SavedBuild = { id: 'p', name: 'Before', platform: 'ar15', selection: sel, savedAt: '2026-10-01T00:00:00Z', prices: cheaper };
   assert.deepEqual(priceChanges(before), { changes: [], drop: 0 });
-  const after: SavedBuild = { ...before, id: 'q', savedAt: '2026-10-23T00:00:00Z' };
+  const after: SavedBuild = { ...before, id: 'q', savedAt: afterPause(1) };
   assert.deepEqual(priceChanges(after).changes.map((c) => [c.part.id, c.was, c.now]), [[x.id, now[x.id] - 30, now[x.id]]]);
   // Loading resets that one price to today's and notes when, so later changes show again; other parts keep theirs.
-  storeSavedBuilds([before]);
-  const [loaded] = loadSavedBuilds();
-  assert.equal(loaded.prices![x.id], now[x.id]);
-  assert.ok(loaded.pricesAt && loaded.pricesAt.slice(0, 10) > PAUSE_DAY);
-  assert.deepEqual(Object.keys(loaded.prices!).sort(), Object.keys(cheaper).sort());
-  assert.deepEqual(priceChanges({ ...loaded, prices: { ...loaded.prices!, [x.id]: now[x.id] + 5 } }).changes.map((c) => c.part.id), [x.id]);
-  storeSavedBuilds([loaded]);
-  const [again] = loadSavedBuilds();
-  assert.equal(again.pricesAt, loaded.pricesAt);
-  // A build saved after the pause loads with its prices as they are.
-  storage.clear();
-  storeSavedBuilds([after]);
-  assert.equal(loadSavedBuilds()[0].prices![x.id], now[x.id] - 30);
-  assert.equal(loadSavedBuilds()[0].pricesAt, undefined);
+  // "Today" is fixed at two days after the pause, so the test doesn't depend on the date it runs.
+  mock.timers.enable({ apis: ['Date'], now: Date.parse(afterPause(2)) });
+  try {
+    storeSavedBuilds([before]);
+    const [loaded] = loadSavedBuilds();
+    assert.equal(loaded.prices![x.id], now[x.id]);
+    assert.ok(loaded.pricesAt && loaded.pricesAt.slice(0, 10) > PAUSE_DAY);
+    assert.deepEqual(Object.keys(loaded.prices!).sort(), Object.keys(cheaper).sort());
+    assert.deepEqual(priceChanges({ ...loaded, prices: { ...loaded.prices!, [x.id]: now[x.id] + 5 } }).changes.map((c) => c.part.id), [x.id]);
+    storeSavedBuilds([loaded]);
+    const [again] = loadSavedBuilds();
+    assert.equal(again.pricesAt, loaded.pricesAt);
+    // A build saved after the pause loads with its prices as they are.
+    storage.clear();
+    storeSavedBuilds([after]);
+    assert.equal(loadSavedBuilds()[0].prices![x.id], now[x.id] - 30);
+    assert.equal(loadSavedBuilds()[0].pricesAt, undefined);
+  } finally {
+    mock.timers.reset();
+  }
 });
 
 /* ------------------------------------------------------------------ totals with parts that have no price */
