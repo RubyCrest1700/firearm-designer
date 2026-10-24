@@ -6,16 +6,44 @@ import { DatabaseSync } from 'node:sqlite';
 import { createHash } from 'node:crypto';
 import { cleanText, handle, networkOf, visitorOf } from './src/api.js';
 
+/**
+ * `statements` counts every query the code runs (each statement in a batch counts as one), to check D1's
+ * per-invocation query limit. Setting `failBatchAt` to an index makes the next batch fail at that statement.
+ */
 function fakeD1() {
   const db = new DatabaseSync(':memory:');
   for (const f of readdirSync(new URL('./migrations/', import.meta.url)).sort()) db.exec(readFileSync(new URL(`./migrations/${f}`, import.meta.url), 'utf8'));
+  const d1 = { statements: 0, failBatchAt: undefined };
   const stmt = (sql, args = []) => ({
+    sql, args,
     bind: (...a) => stmt(sql, a),
-    all: async () => ({ results: db.prepare(sql).all(...args) }),
-    first: async () => db.prepare(sql).get(...args) ?? null,
-    run: async () => ({ meta: { changes: Number(db.prepare(sql).run(...args).changes) } }),
+    all: async () => { d1.statements++; return { results: db.prepare(sql).all(...args) }; },
+    first: async () => { d1.statements++; return db.prepare(sql).get(...args) ?? null; },
+    run: async () => { d1.statements++; return { meta: { changes: Number(db.prepare(sql).run(...args).changes) } }; },
   });
-  return { prepare: (sql) => stmt(sql), exec: (sql) => db.exec(sql) }; // exec: test setup only
+  d1.prepare = (sql) => stmt(sql);
+  d1.exec = (sql) => db.exec(sql); // test setup only, not counted
+  // Like D1: the statements run in order as one transaction, so either all of them take effect or none do.
+  d1.batch = async (list) => {
+    d1.statements += list.length;
+    const failAt = d1.failBatchAt;
+    d1.failBatchAt = undefined;
+    db.exec('BEGIN');
+    try {
+      const out = list.map((s, i) => {
+        const q = db.prepare(s.sql);
+        const result = /^\s*select/i.test(s.sql) ? { results: q.all(...s.args) } : { results: [], meta: { changes: Number(q.run(...s.args).changes) } };
+        if (i === failAt) throw new Error('D1_ERROR: batch failed');
+        return result;
+      });
+      db.exec('COMMIT');
+      return out;
+    } catch (err) {
+      db.exec('ROLLBACK');
+      throw err;
+    }
+  };
+  return d1;
 }
 
 const env = () => ({ DB: fakeD1(), SALT: 'test' });
@@ -1067,4 +1095,64 @@ test('the re-baseline waits for a run that can read the price index', async () =
   assert.deepEqual(await withIndex(null, () => runAlerts(e)), { sent: 0, skipped: 'price index unreachable' });
   assert.equal(await e.DB.prepare("SELECT value FROM meta WHERE key = 'rebaseline'").first(), null);
   assert.deepEqual(await withIndex(ALERT_INDEX(), () => runAlerts(e)), { sent: 0, rebaselined: 1 });
+});
+
+/** Builds to vary the re-baseline rows, and the prices each should end up with under ALERT_INDEX(180, 360). */
+const MIXED_BUILDS = [
+  [[G19], { 'glock9/g19-frame-g5': 200, 'glock9/g-fcg-apex5': 180, 'glock9/g19-slide-mos': 360 }],
+  [[{ ...G19, parts: ['g19-frame-g5'] }], { 'glock9/g19-frame-g5': 200 }],
+  [[{ ...G19, platform: 'glock17', parts: ['g-fcg-apex5', 'g19-slide-mos'] }], { 'glock9/g-fcg-apex5': 180, 'glock9/g19-slide-mos': 360 }],
+  [[{ ...G19, parts: ['g19-frame-g5', 'no-such-part'] }, { ...G19, name: 'Spare', parts: ['g-fcg-apex5'] }], { 'glock9/g19-frame-g5': 200, 'glock9/g-fcg-apex5': 180 }],
+  [[], {}],
+];
+/** n signups, alternately pending and confirmed, cycling through MIXED_BUILDS, all with stale last-seen prices. */
+const addMixed = async (e, n, now) => {
+  const stale = JSON.stringify({ 'glock9/g-fcg-apex5': 150, 'glock9/g19-slide-mos': 300, 'glock9/g19-frame-g5': 200 });
+  for (let i = 0; i < n; i++) {
+    await e.DB.prepare('INSERT INTO alerts (token, email, builds, seen, confirmed, created_at, ip_hash) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .bind(i.toString(16).padStart(32, '0'), `m${i}@example.com`, JSON.stringify(MIXED_BUILDS[i % MIXED_BUILDS.length][0]), stale, i % 2, now - DAY, 'x').run();
+  }
+};
+const allSeen = async (e) => (await e.DB.prepare('SELECT token, seen FROM alerts ORDER BY token').all()).results;
+
+test('the re-baseline of 1,000 signups stays well inside D1\'s 50 queries for the whole daily run', async (t) => {
+  const e = alertEnv({ rebaselined: false });
+  const now = Date.now();
+  await addMixed(e, 1000, now);
+  const { runDaily } = await import('./src/index.js');
+  e.DB.statements = 0;
+  const { lines } = await captureLogs(() => withIndex(ALERT_INDEX(180, 360), () => runDaily(e, now)));
+  const queries = e.DB.statements;
+  assert.ok(lines.includes('Price alerts {"sent":0,"rebaselined":1000}'), lines.join('\n'));
+  for (const line of lines) assert.doesNotMatch(line, /failed/, line);
+  assert.equal(e.outbox.length, 0);
+  const rows = await allSeen(e);
+  assert.equal(rows.length, 1000);
+  rows.forEach((row, i) => assert.deepEqual(JSON.parse(row.seen), MIXED_BUILDS[parseInt(row.token, 16) % MIXED_BUILDS.length][1], `row ${i}`));
+  assert.equal((await e.DB.prepare("SELECT value FROM meta WHERE key = 'rebaseline'").first()).value, REBASELINE);
+  // Alerts, feedback and retention all count towards the one limit.
+  t.diagnostic(`re-baseline daily run of 1,000 signups: ${queries} D1 queries`);
+  assert.ok(queries < 50, `${queries} queries`);
+});
+
+test('a re-baseline whose batch fails changes nothing and runs again the next day', async () => {
+  const e = alertEnv({ rebaselined: false });
+  const now = Date.now();
+  await addMixed(e, 100, now);
+  const before = await allSeen(e);
+  // 100 signups make 4 update statements; fail on the last, the mark, after all the updates have run.
+  e.DB.failBatchAt = 4;
+  await assert.rejects(withIndex(ALERT_INDEX(180, 360), () => runAlerts(e, now)), /batch failed/);
+  assert.deepEqual(await allSeen(e), before);
+  assert.equal(await e.DB.prepare("SELECT value FROM meta WHERE key = 'rebaseline'").first(), null);
+  // And a failure part way through the updates also leaves every row as it was.
+  e.DB.failBatchAt = 1;
+  await assert.rejects(withIndex(ALERT_INDEX(180, 360), () => runAlerts(e, now)), /batch failed/);
+  assert.deepEqual(await allSeen(e), before);
+  assert.equal(await e.DB.prepare("SELECT value FROM meta WHERE key = 'rebaseline'").first(), null);
+  assert.equal(e.outbox.length, 0);
+  // The next day's run re-baselines every row.
+  assert.deepEqual(await withIndex(ALERT_INDEX(180, 360), () => runAlerts(e, now + DAY)), { sent: 0, rebaselined: 100 });
+  for (const row of await allSeen(e)) assert.deepEqual(JSON.parse(row.seen), MIXED_BUILDS[parseInt(row.token, 16) % MIXED_BUILDS.length][1]);
+  assert.equal((await e.DB.prepare("SELECT value FROM meta WHERE key = 'rebaseline'").first()).value, REBASELINE);
 });

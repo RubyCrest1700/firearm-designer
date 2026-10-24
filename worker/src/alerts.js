@@ -39,6 +39,8 @@ export const SUPPRESS_FOR = 90 * DAY;
  * retailers were paused, which raised some best prices for no reason a subscriber cares about.
  */
 export const REBASELINE = '2026-10-pause';
+/** Signups updated per re-baseline statement: 3 bound parameters each keeps a statement within D1's 100. */
+const REBASELINE_ROWS = 33;
 
 export const alertsEnabled = (env) => !!(env.RESEND_API_KEY && env.MAILING_ADDRESS);
 
@@ -358,16 +360,23 @@ export async function runAlerts(env, now = Date.now()) {
   if (!index) return { sent: 0, skipped: 'price index unreachable' };
 
   // One-time quiet re-baseline (REBASELINE): today's prices become the last reported ones, nobody is emailed.
-  // Pending signups too, so one confirmed later doesn't report the same move. The mark is stored last, so a
-  // run that fails part way simply re-baselines again tomorrow.
+  // Pending signups too, so one confirmed later doesn't report the same move. D1 allows 50 queries per Worker
+  // invocation on the free plan, shared with the other daily jobs, so the rows are updated REBASELINE_ROWS at a
+  // time (3 bound parameters a row, within D1's 100 a query). The updates and the mark go in one batch, which
+  // D1 runs as a single transaction: if any part fails nothing changes and tomorrow's run re-baselines again.
   const mark = await db.prepare("SELECT value FROM meta WHERE key = 'rebaseline'").first();
   if (mark?.value !== REBASELINE) {
     const { results: all } = await db.prepare('SELECT token, builds FROM alerts').all();
-    for (const row of all) {
-      const seen = pricesFor(index, currentBuilds(JSON.parse(row.builds)));
-      await db.prepare('UPDATE alerts SET seen = ? WHERE token = ?').bind(JSON.stringify(seen), row.token).run();
+    const statements = [];
+    for (let i = 0; i < all.length; i += REBASELINE_ROWS) {
+      const chunk = all.slice(i, i + REBASELINE_ROWS);
+      const cases = chunk.map(() => 'WHEN ? THEN ?').join(' ');
+      const marks = chunk.map(() => '?').join(', ');
+      const args = chunk.flatMap((row) => [row.token, JSON.stringify(pricesFor(index, currentBuilds(JSON.parse(row.builds))))]);
+      statements.push(db.prepare(`UPDATE alerts SET seen = CASE token ${cases} END WHERE token IN (${marks})`).bind(...args, ...chunk.map((row) => row.token)));
     }
-    await db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES ('rebaseline', ?)").bind(REBASELINE).run();
+    statements.push(db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES ('rebaseline', ?)").bind(REBASELINE));
+    await db.batch(statements);
     return { sent: 0, rebaselined: all.length };
   }
 
