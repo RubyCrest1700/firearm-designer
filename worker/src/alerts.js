@@ -202,10 +202,11 @@ const suppress = async (db, salt, email, now) => {
 };
 
 /**
- * Answers alert requests, or returns null for anything else. `json` and `who` come from api.js. `wait` hands
- * work that can finish after the answer (the confirmation email) to the Worker's waitUntil.
+ * Answers alert requests, or returns null for anything else. `json`, `noContent` and `who` come from api.js,
+ * so every answer the site reads carries its CORS headers. `wait` hands work that can finish after the answer
+ * (the confirmation email) to the Worker's waitUntil.
  */
-export async function alertsRoute(request, env, { path, url, json, who, now, salt, wait = (p) => p }) {
+export async function alertsRoute(request, env, { path, url, json, noContent, who, now, salt, wait = (p) => p }) {
   const db = env.DB;
 
   if (request.method === 'GET' && path === '/api/alerts/status') return json({ enabled: alertsEnabled(env) }, 200);
@@ -338,7 +339,8 @@ ${names ? `<p>Builds you'll get alerts for:</p><ul>${names}</ul>` : ''}
       if (fromEmail) await suppress(db, salt, row.email, now);
       await db.prepare('DELETE FROM alerts WHERE email = ?').bind(row.email).run();
     }
-    if (!fromPage) return new Response(null, { status: 204 });
+    // Turn Off on the site reads this answer cross-origin, so it needs the CORS headers.
+    if (!fromPage) return noContent();
     return page('You\'re Unsubscribed', '<p>We won\'t email this address again. Your saved builds are still on the site.</p>');
   }
 
