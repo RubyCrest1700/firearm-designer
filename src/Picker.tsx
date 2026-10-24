@@ -8,7 +8,7 @@ import { daysAgo, hasHistory, partSeries } from './data/history';
 import { PriceChart } from './PriceChart';
 import { isPlural, titleCase, withArticle } from './text';
 import type { Build, Issue, Part, Placement, Platform, PlatformModel, Severity, Slot } from './types';
-import { ChangeChip, FitTag, shortDate, useDrawer } from './ui';
+import { ChangeChip, FitTag, issueClass, legalOnly, shortDate, useDrawer } from './ui';
 
 type SortKey = 'fit' | 'price' | 'picks';
 
@@ -106,7 +106,7 @@ export function Candidate({ part, open, issues, sev, selected, owned, onChoose, 
   return (
     <li className={'cand ' + fit + (selected ? ' selected' : '')}>
       <div className="cand-top">
-        <FitTag state={fit} />
+        <FitTag state={fit} legal={legalOnly(issues)} />
         {part.pick && <span className={'pick ' + part.pick.tier}>{TIER_LABEL[part.pick.tier]} Pick</span>}
         {part.serialized && <span className="ffl">FFL</span>}
         {selected && <span className="in-build">{owned ? 'In Your Build · You Own It' : 'In Your Build'}</span>}
@@ -116,7 +116,7 @@ export function Candidate({ part, open, issues, sev, selected, owned, onChoose, 
           <h3 className="cand-name"><span className="brand-dim">{part.brand}</span> {part.name}</h3>
           <ul className="specs">{part.specs.map((s) => <li key={s}>{s}</li>)}{part.weight && <li className="spec-weight" title={part.weight.published ? 'Listed weight' : 'Estimated weight'}>{part.weight.published ? '' : '≈ '}{part.weight.oz} oz</li>}</ul>
           {part.pick && <p className="pick-note">{part.pick.note}</p>}
-          {issues.map((i, n) => <p key={n} className={'row-issue ' + i.severity}>{i.message}</p>)}
+          {issues.map((i, n) => <p key={n} className={issueClass('row-issue', i)}>{i.message}</p>)}
         </div>
         <div className="cand-buy">
           {best ? <span className="amt">{priceText(best)}</span> : <span className="amt dim">—</span>}

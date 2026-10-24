@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { PLATFORMS } from './data';
 import { money, noPriceNote, ownedOf, type Selection } from './engine';
 import type { RegionState } from './Blueprint';
@@ -15,17 +15,26 @@ export const SEV_LABEL: Record<Severity, string> = { error: 'Conflict', warn: 'C
 export const issueLabel = (i: Issue) => (i.legal ? 'Legal' : SEV_LABEL[i.severity]);
 /** The class for an issue's row or list item: its severity, plus "legal" for a legal point. */
 export const issueClass = (base: string, i: Issue) => `${base} ${i.severity}${i.legal ? ' legal' : ''}`;
+/** Whether a part's issues are legal points only (notes aside), so its fit tag reads Legal rather than Check. */
+export const legalOnly = (issues: Issue[]) => issues.some((i) => i.legal) && issues.every((i) => i.legal || i.severity === 'info');
+
+/** The id of the builder summary's Legal notice, which the phone dock's Legal badge scrolls to and focuses. */
+export const SUMMARY_LEGAL_ID = 'summary-legal';
 
 /**
  * The build's legal points (short barrel with a stock, a vertical foregrip on a short pistol), each message once and
- * word for word. Nothing when there are none. `compact` is the smaller version for build cards and Compare.
+ * word for word. Nothing when there are none. `compact` is the smaller version for build cards and Compare. `id`
+ * makes it a focus target (tabIndex -1), for the summary's notice. The "Legal notice" title names the note for screen
+ * readers (aria-labelledby); it stays a paragraph, not a heading, because the notice sits inside cards and columns
+ * whose heading levels differ.
  */
-export function LegalNotice({ issues, compact }: { issues: Issue[]; compact?: boolean }) {
+export function LegalNotice({ issues, compact, id }: { issues: Issue[]; compact?: boolean; id?: string }) {
+  const titleId = useId();
   const messages = [...new Set(issues.filter((i) => i.legal).map((i) => i.message))];
   if (!messages.length) return null;
   return (
-    <div className={'legal-notice' + (compact ? ' compact' : '')} role="note">
-      <p className="legal-notice-title">Legal notice</p>
+    <div className={'legal-notice' + (compact ? ' compact' : '')} role="note" aria-labelledby={titleId} id={id} tabIndex={id ? -1 : undefined}>
+      <p className="legal-notice-title" id={titleId}>Legal notice</p>
       {messages.map((m) => <p key={m}>{m}</p>)}
     </div>
   );

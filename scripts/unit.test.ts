@@ -9,17 +9,17 @@ import { awarenessFor } from '../src/awareness';
 import { PLATFORMS } from '../src/data/index';
 import { PAUSED, SBR_MESSAGE, VERTICAL_GRIP_MESSAGE, shortBarrelStockIssue } from '../src/data/helpers';
 import { biggestDrops, daysAgo, hasHistory, partSeries, priceOn, recentChange, seriesOf } from '../src/data/history';
-import { baseSelection, bestOffer, candidateIssues, issuesFor, listedParts, noPriceNote, ownedOf, placementOf, presetSelection, priceRange, selectionTokens, singleRetailerCarts, toBuild, toBuyIds, unpricedCount, type Selection } from '../src/engine';
+import { baseSelection, bestOffer, candidateIssues, issuesFor, listedParts, noPriceNote, ownedOf, placementOf, presetSelection, priceRange, selectionTokens, singleRetailerCarts, toBuild, toBuyIds, unpricedCount, worst, type Selection } from '../src/engine';
 import { findParts } from '../src/find';
 import { Candidate } from '../src/Picker';
 import { buildStatus, statesFor } from '../src/status';
 import { loadSavedBuilds, priceChanges, priceSnapshot, readSharedBuild, selectionFromParts, storeSavedBuilds, totalOf, unpricedOf, type SavedBuild } from '../src/store';
-import { Dock, PartsList, Summary } from '../src/BuilderPage';
+import { Dock, PartsList, Summary, toLegalNotice } from '../src/BuilderPage';
 import { ComparePage } from '../src/Compare';
 import { HomePage } from '../src/HomePage';
-import { BuildCard, ChangeChip } from '../src/ui';
+import { BuildCard, ChangeChip, legalOnly } from '../src/ui';
 import { PAGE_VIEWS, guidePage, platformPage } from '../src/guides/render';
-import { GUIDES } from '../src/guides/content';
+import { GUIDES, type FitChart } from '../src/guides/content';
 import { RETAILERS } from '../src/data/retailers';
 import { priceIndex } from './og-index';
 import history from '../data/price-history.json';
@@ -155,7 +155,8 @@ test('the short AR-15 barrels are listed in the picker and search, and open from
     // The name without its inch marks: search reads `9"` as "9 in", and the 9" barrel's text has no "in" (a search quirk).
     assert.ok(findParts(part(ar15, id).name.replace(/"/g, ''), ar15).here.some((f) => f.part.id === id), `${id} found by name`);
     const url = part(ar15, id).offers.find((o) => o.url)?.url;
-    if (url) assert.ok(findParts(url, ar15).here.some((f) => f.part.id === id), `${id} found by link`);
+    assert.ok(url, `${id} has a product link`);
+    assert.ok(findParts(url, ar15).here.some((f) => f.part.id === id), `${id} found by link`);
   }
   assert.ok(ar15.parts.every((p) => !('hidden' in p)));
   assert.deepEqual(listed, ar15.parts.filter((p) => p.slot === 'barrel').map((p) => p.id));
@@ -389,6 +390,30 @@ test('price history from on or before a paused retailer\'s pause date is never s
   for (const x of affected) if (!seriesOf(x).length) assert.ok(!dropped.has(x.id), x.id);
 });
 
+test('the home page drops leave out no part: a short barrel with a big enough drop is listed', () => {
+  // A short AR-15 barrel given a price history (borrowed from any part that has one) and a live price well under it.
+  const donor = everyPart().find((x) => hasHistory(x) && bestOffer(x)?.checkedAt);
+  assert.ok(donor, 'some part has price history');
+  for (const id of SHORT_AR15) {
+    const real = part(ar15, id);
+    const live = (price: number): Part => ({ ...real, id: donor.id, pausedThrough: donor.pausedThrough, offers: [{ retailer: donor.offers[0].retailer, price, inStock: true, checkedAt: '2026-10-23T00:00:00Z' }] });
+    const was = priceOn(live(1), daysAgo(7));
+    const now = Math.round(was * 50) / 100;
+    assert.ok(now > 0 && was - now >= Math.max(5, was * 0.05), `${id}: a drop big enough to list`);
+    const synthetic = live(now);
+    assert.ok((synthetic.attrs.length as number) < 16 && synthetic.slot === 'barrel');
+    assert.deepEqual(biggestDrops([synthetic], 7, 10).map((d) => [d.part.name, d.was, d.now]), [[real.name, was, now]], id);
+  }
+  // And the real catalog: any short barrel whose drop qualifies is in the list.
+  const drops = new Set(biggestDrops(everyPart(), 7, 10_000).map((d) => d.part.id));
+  for (const id of SHORT_AR15) {
+    const x = part(ar15, id);
+    const p = priceOn(x, daysAgo(7));
+    const n = bestOffer(x)?.price;
+    if (hasHistory(x) && bestOffer(x)?.checkedAt && n !== undefined && p - n >= Math.max(5, p * 0.05)) assert.ok(drops.has(id), id);
+  }
+});
+
 test('a part still sold elsewhere: its old paused-store low is dropped from the chart, and the chip shows no rise from it', () => {
   // Today's file holds only points from before the pause, so for every affected part they're the ones to drop.
   // Where one was below the part's current low, the chart used to dip and the chip to show a rise.
@@ -557,6 +582,18 @@ test('the static pages list the whole catalog, short barrels included: tables, f
   const cols = ['7.5&quot; pistol', '9&quot; pistol', '10.3&quot; carbine', '11.5&quot; carbine', '16&quot; carbine', '16&quot; mid', '16&quot; pistol', '18&quot; rifle', '20&quot; rifle'];
   for (const col of cols) assert.ok(hg.includes(`<th scope="col">${col}</th>`), col);
   assert.equal(hg.match(/<th scope="col">[^<]+<\/th>/g)?.length, cols.length, 'column count');
+  // Every AR-15 guide that charts barrels shows each short one: by name in a fit list, or as its column in a grid
+  // (the handguard chart groups barrels by length and gas). The barrel FAQ and the handguard chart are among them.
+  const chartsBarrels = (c: FitChart) => ('a' in c ? c.a === 'barrel' || c.b === 'barrel' : c.slot === 'barrel');
+  const charting = GUIDES.filter((g) => g.platform === 'ar15' && g.charts.some(chartsBarrels));
+  assert.deepEqual(['ar-15-barrel-compatibility', 'ar-15-handguard-length-chart'].filter((s) => !charting.some((g) => g.slug === s)), []);
+  for (const g of charting) {
+    const html = guidePage(g, '2026-10-23T00:00:00Z');
+    for (const c of g.charts.filter(chartsBarrels))
+      for (const x of short)
+        if ('columns' in c && c.b === 'barrel' && c.columns) assert.ok(html.includes(`<th scope="col">${esc(c.columns(x))}</th>`), `${g.slug} ${c.heading}: ${x.id} column`);
+        else assert.ok(html.includes(esc(x.name)), `${g.slug} ${c.heading}: ${x.id}`);
+  }
 });
 
 /* ------------------------------------------------------------------ short-barrel rule, price index */
@@ -577,14 +614,28 @@ test('a barrel with no listed length raises no short-barrel issue; a short one r
 
 /** Text as React writes it into HTML. */
 const reactEsc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
-const LEGAL_NOTICE = (cls: string, ...messages: string[]) =>
-  `<div class="${cls}" role="note"><p class="legal-notice-title">Legal notice</p>${messages.map((m) => `<p>${reactEsc(m)}</p>`).join('')}</div>`;
+/** The title ids in a page's Legal notices, in order. */
+const noticeTitleIds = (html: string) => [...html.matchAll(/<p class="legal-notice-title" id="([^"]+)">Legal notice<\/p>/g)].map((m) => m[1]);
+/**
+ * The exact Legal notice markup in `html` with this class, these messages and (for the summary's) this element id,
+ * or '' when there's none. Its title's id is React's useId value, so it's read from the page, and the note must be
+ * labelled by that same title.
+ */
+const LEGAL_NOTICE = (html: string, cls: string, messages: string[], id?: string) => {
+  for (const t of noticeTitleIds(html)) {
+    const notice = `<div class="${cls}" role="note" aria-labelledby="${t}"${id ? ` id="${id}" tabindex="-1"` : ''}><p class="legal-notice-title" id="${t}">Legal notice</p>${messages.map((m) => `<p>${reactEsc(m)}</p>`).join('')}</div>`;
+    if (html.includes(notice)) return notice;
+  }
+  return '';
+};
 
 test('the builder summary shows a Legal notice for a short-barrel build, and it can still be shared', () => {
   const short = { ...baseSelection(ar15), ...CLEAN_SHORT_AR15['ar-bbl-ba10'] };
   const html = summaryHtml(ar15, short);
-  assert.ok(html.includes(LEGAL_NOTICE('legal-notice', SBR_TEXT)), 'notice');
+  // The summary's notice is the Dock badge's focus target: id summary-legal, tabindex -1, named by its title.
+  assert.ok(LEGAL_NOTICE(html, 'legal-notice', [SBR_TEXT], 'summary-legal'), 'notice');
   assert.equal(html.split('class="legal-notice"').length - 1, 1, 'one notice');
+  assert.equal(html.split('id="summary-legal"').length - 1, 1, 'one summary-legal id');
   assert.match(html, /<button class="btn wide-row" title="Post this build to the Community page">Share to Community<\/button>/);
   // The notice sits under the status line and above Save / Share.
   assert.ok(html.indexOf('class="status warn"') < html.indexOf('class="legal-notice"') && html.indexOf('class="legal-notice"') < html.indexOf('class="total-actions"'));
@@ -610,18 +661,75 @@ test('the parts list and the mobile dock flag legal issues', () => {
   assert.equal(short.split('>Legal</span>').length - 1, 2);
   assert.doesNotMatch(rows(baseSelection(ar15)), /legal/);
   const dock = (legal: boolean) => renderToStaticMarkup(createElement(Dock, { total: 100, status: { cls: 'warn', text: 'x' }, toBuy: false, noPrice: '', legal }));
-  assert.ok(dock(true).includes('<button class="dock-legal" aria-label="Legal notice: see the summary">Legal</button>'), 'dock badge');
+  assert.ok(dock(true).includes('<button class="dock-legal" aria-label="Legal notice: see the summary" aria-controls="summary-legal">Legal</button>'), 'dock badge');
   assert.doesNotMatch(dock(false), /dock-legal/);
+});
+
+test('the dock\'s Legal badge scrolls to the summary\'s Legal notice and focuses it', () => {
+  const calls: string[] = [];
+  const el = { scrollIntoView: (o: unknown) => calls.push(`scroll ${JSON.stringify(o)}`), focus: (o: unknown) => calls.push(`focus ${JSON.stringify(o)}`) };
+  const asked: string[] = [];
+  toLegalNotice({ getElementById: (id: string) => (asked.push(id), el as unknown as HTMLElement) });
+  assert.deepEqual(asked, ['summary-legal']);
+  assert.deepEqual(calls, ['scroll {"behavior":"smooth","block":"center"}', 'focus {"preventScroll":true}']);
+  // No notice on the page (it went away): nothing happens, nothing throws.
+  toLegalNotice({ getElementById: () => null });
+  // The id it looks for is the one the summary's notice carries.
+  const html = summaryHtml(ar15, { ...baseSelection(ar15), ...CLEAN_SHORT_AR15['ar-bbl-ba10'] });
+  assert.match(html, /<div class="legal-notice" role="note" aria-labelledby="[^"]+" id="summary-legal" tabindex="-1">/);
+});
+
+test('the picker tags a candidate Legal when its only checks are legal points', () => {
+  const noop = () => {};
+  const cand = (p: Platform, sel: Selection, id: string) => {
+    const candidate = part(p, id);
+    const issues = candidateIssues(p, toBuild(p, sel), candidate);
+    return { issues, html: renderToStaticMarkup(createElement(Candidate, { part: candidate, issues, sev: worst(issues) ?? 'ok', selected: false, owned: false, onChoose: noop, onBuyClick: noop })) };
+  };
+  // A short AR-15 barrel against a build with a stock: Legal tag and the approved message as a legal line.
+  const shortSel = { ...baseSelection(ar15), ...CLEAN_SHORT_AR15['ar-bbl-ba10'] };
+  assert.ok(shortSel.stock);
+  const short = cand(ar15, shortSel, 'ar-bbl-ba10');
+  assert.deepEqual(short.issues.filter((i) => i.severity !== 'info'), [SBR_WARN]);
+  assert.ok(short.html.includes('<span class="fit-tag warn legal">Legal</span>'), 'legal tag');
+  assert.ok(short.html.includes(`<p class="row-issue warn legal">${reactEsc(SBR_TEXT)}</p>`), 'legal line');
+  assert.doesNotMatch(short.html, /fit-tag warn">Check/);
+  // A 16" barrel on the same build: neither.
+  const long = cand(ar15, baseSelection(ar15), 'ar-bbl-ba16');
+  assert.doesNotMatch(long.html, /legal|Legal/);
+  // An AR-9 vertical foregrip on a short braced build: Legal tag and the vertical-grip message.
+  const braced = { ...baseSelection(ar9), barrel: 'a9-bbl-faxon85', stock: 'a9-brace-sba3' };
+  const grip = cand(ar9, braced, 'r-fg-mvg');
+  assert.deepEqual(grip.issues.filter((i) => i.severity !== 'info'), [GRIP_WARN]);
+  assert.ok(grip.html.includes('<span class="fit-tag warn legal">Legal</span>'), 'grip legal tag');
+  assert.ok(grip.html.includes(`<p class="row-issue warn legal">${reactEsc(GRIP_TEXT)}</p>`), 'grip legal line');
+});
+
+test('a part is tagged Legal only when every check it has (notes aside) is a legal point', () => {
+  const legal: Issue = { severity: 'warn', slots: ['barrel'], message: 'L', legal: true };
+  const check: Issue = { severity: 'warn', slots: ['barrel'], message: 'C' };
+  const note: Issue = { severity: 'info', slots: ['barrel'], message: 'N' };
+  const conflict: Issue = { severity: 'error', slots: ['barrel'], message: 'E' };
+  assert.equal(legalOnly([legal]), true);
+  assert.equal(legalOnly([legal, note]), true);
+  assert.equal(legalOnly([legal, check]), false);
+  assert.equal(legalOnly([legal, conflict]), false);
+  assert.equal(legalOnly([note]), false);
+  assert.equal(legalOnly([]), false);
+  // A legal point next to an ordinary check reads Check in the picker, with the legal line still marked legal.
+  const html = renderToStaticMarkup(createElement(Candidate, { part: part(ar15, 'ar-bbl-ba10'), issues: [legal, check], sev: 'warn', selected: false, owned: false, onChoose: () => {}, onBuyClick: () => {} }));
+  assert.ok(html.includes('<span class="fit-tag warn">Check</span>'));
+  assert.ok(html.includes('<p class="row-issue warn legal">L</p>') && html.includes('<p class="row-issue warn">C</p>'));
 });
 
 test('build cards show the Legal notice for short-barrel builds and the AR-9 vertical grip', () => {
   const card = (platformId: string, sel: Selection) => renderToStaticMarkup(createElement(BuildCard, { platformId, selection: sel, title: 'T', meta: 'M', actions: null }));
   const short = card('ar15', { ...baseSelection(ar15), ...CLEAN_SHORT_AR15['ar-bbl-ba75'] });
-  assert.ok(short.includes(LEGAL_NOTICE('legal-notice compact', SBR_TEXT)), 'short AR-15 card');
+  assert.ok(LEGAL_NOTICE(short, 'legal-notice compact', [SBR_TEXT]), 'short AR-15 card');
   assert.ok(short.indexOf('legal-notice') < short.indexOf('build-card-foot'), 'above the price and status');
   assert.doesNotMatch(card('ar15', baseSelection(ar15)), /legal-notice/);
   const grip = card('ar9', { ...baseSelection(ar9), barrel: 'a9-bbl-faxon85', stock: 'a9-brace-sba3', foregrip: 'r-fg-mvg' });
-  assert.ok(grip.includes(LEGAL_NOTICE('legal-notice compact', GRIP_TEXT)), 'AR-9 vertical grip card');
+  assert.ok(LEGAL_NOTICE(grip, 'legal-notice compact', [GRIP_TEXT]), 'AR-9 vertical grip card');
 });
 
 test('Compare shows the Legal notice under the side that needs it', () => {
@@ -630,12 +738,22 @@ test('Compare shows the Legal notice under the side that needs it', () => {
     onSet: () => {}, saved: [], current: null, lastPlatform: 'ar15', onOpen: () => {},
   }));
   const html = page({ ...baseSelection(ar15), ...CLEAN_SHORT_AR15['ar-bbl-ba115'] }, baseSelection(ar15));
-  const notice = LEGAL_NOTICE('legal-notice compact', SBR_TEXT);
+  const notice = LEGAL_NOTICE(html, 'legal-notice compact', [SBR_TEXT]);
+  assert.ok(notice);
   assert.equal(html.split(notice).length - 1, 1);
+  assert.equal(noticeTitleIds(html).length, 1);
   // It's on side A, after its header and before side B's.
   assert.ok(html.indexOf('<h2>A</h2>') < html.indexOf(notice) && html.indexOf(notice) < html.indexOf('<h2>B</h2>'));
   assert.ok(html.includes(`<li class="row-issue warn legal">${reactEsc(SBR_TEXT)}</li>`), 'fit notes');
   assert.doesNotMatch(page(baseSelection(ar15), baseSelection(ar15)), /legal/);
+  // Both sides short: two notices, each labelled by its own title, and no id used twice on the page.
+  const both = page({ ...baseSelection(ar15), ...CLEAN_SHORT_AR15['ar-bbl-ba115'] }, { ...baseSelection(ar15), ...CLEAN_SHORT_AR15['ar-bbl-ba10'] });
+  const titles = noticeTitleIds(both);
+  assert.equal(titles.length, 2);
+  assert.notEqual(titles[0], titles[1]);
+  for (const t of titles) assert.ok(both.includes(`role="note" aria-labelledby="${t}">`), t);
+  const ids = [...both.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]);
+  assert.equal(new Set(ids).size, ids.length, 'unique ids');
 });
 
 test('the price index leaves out parts with no price', () => {
