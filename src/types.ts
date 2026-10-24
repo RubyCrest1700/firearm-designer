@@ -59,6 +59,11 @@ export interface Issue {
   severity: Severity;
   slots: string[];
   message: string;
+  /**
+   * A legal point (short barrel with a stock, a vertical foregrip on a short pistol) rather than a fit problem. It
+   * doesn't stop the build: the builder, build cards and Compare show its message in a "Legal notice".
+   */
+  legal?: true;
 }
 
 export type Build = Record<string, Part | undefined>;

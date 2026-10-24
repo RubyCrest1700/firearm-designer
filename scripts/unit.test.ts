@@ -7,14 +7,15 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { awarenessFor } from '../src/awareness';
 import { PLATFORMS } from '../src/data/index';
-import { PAUSED, SBR_MESSAGE, shortBarrelStockIssue } from '../src/data/helpers';
+import { PAUSED, SBR_MESSAGE, VERTICAL_GRIP_MESSAGE, shortBarrelStockIssue } from '../src/data/helpers';
 import { biggestDrops, daysAgo, hasHistory, partSeries, priceOn, recentChange, seriesOf } from '../src/data/history';
 import { baseSelection, bestOffer, candidateIssues, issuesFor, listedParts, noPriceNote, ownedOf, placementOf, presetSelection, priceRange, selectionTokens, singleRetailerCarts, toBuild, toBuyIds, unpricedCount, type Selection } from '../src/engine';
 import { findParts } from '../src/find';
 import { Candidate } from '../src/Picker';
 import { buildStatus, statesFor } from '../src/status';
 import { loadSavedBuilds, priceChanges, priceSnapshot, readSharedBuild, selectionFromParts, storeSavedBuilds, totalOf, unpricedOf, type SavedBuild } from '../src/store';
-import { Summary } from '../src/BuilderPage';
+import { Dock, PartsList, Summary } from '../src/BuilderPage';
+import { ComparePage } from '../src/Compare';
 import { HomePage } from '../src/HomePage';
 import { BuildCard, ChangeChip } from '../src/ui';
 import { PAGE_VIEWS, guidePage, platformPage } from '../src/guides/render';
@@ -22,7 +23,7 @@ import { GUIDES } from '../src/guides/content';
 import { RETAILERS } from '../src/data/retailers';
 import { priceIndex } from './og-index';
 import history from '../data/price-history.json';
-import type { Part, Platform } from '../src/types';
+import type { Issue, Part, Platform } from '../src/types';
 
 const platform = (id: string) => PLATFORMS.find((p) => p.id === id)!;
 const ar15 = platform('ar15');
@@ -86,27 +87,56 @@ test('placements and owned marks ride along without becoming parts', () => {
   assert.ok(toBuyIds(sel).includes('r-light-hlx'));
 });
 
-/* ------------------------------------------------------------------ short barrels with a stock (interim, pending legal advice) */
+/* ------------------------------------------------------------------ short barrels with a stock: a legal notice, not a conflict */
 
 const ar9 = platform('ar9');
 const ar10 = platform('ar10');
-const sbr = (issues: { severity: string; slots: string[]; message: string }[]) => issues.filter((i) => i.message === SBR_MESSAGE);
+/** The owner-approved wording, byte for byte. */
+const SBR_TEXT = 'A barrel under 16" with a stock may be regulated under the National Firearms Act and can require ATF approval before assembly. Some states ban it. Not legal advice: check federal, state and local law before you build.';
+const GRIP_TEXT = 'A vertical foregrip on a pistol with a barrel under 16" may be regulated under the National Firearms Act and can require ATF approval. Not legal advice: check federal, state and local law before you build.';
+const sbr = (issues: Issue[]) => issues.filter((i) => i.message === SBR_MESSAGE);
 const SHORT_AR15 = ['ar-bbl-ba10', 'ar-bbl-ba115', 'ar-bbl-ba300-9', 'ar-bbl-ba75'];
+/** One clean full build per short AR-15 barrel: the factory build with a gas tube, rail and muzzle device that suit it. */
+const CLEAN_SHORT_AR15: Record<string, Selection> = {
+  'ar-bbl-ba75': { barrel: 'ar-bbl-ba75', gastube: 'ar-gt-pistol', handguard: 'ar-hg-mi7' },
+  'ar-bbl-ba300-9': { barrel: 'ar-bbl-ba300-9', gastube: 'ar-gt-pistol', handguard: 'ar-hg-mi7', muzzle: 'ar-mz-sf3p30' },
+  'ar-bbl-ba10': { barrel: 'ar-bbl-ba10', handguard: 'ar-hg-bcm10' },
+  'ar-bbl-ba115': { barrel: 'ar-bbl-ba115', handguard: 'ar-hg-bcm10' },
+};
+const SBR_WARN = { severity: 'warn', slots: ['barrel', 'stock'], message: SBR_TEXT, legal: true };
+const GRIP_WARN = { severity: 'warn', slots: ['foregrip', 'barrel'], message: GRIP_TEXT, legal: true };
 
-test('an AR-15 barrel under 16" with any stock is a conflict on both, and the build is not complete', () => {
+test('the short-barrel and vertical-foregrip messages are the approved wording', () => {
+  assert.equal(SBR_MESSAGE, SBR_TEXT);
+  assert.equal(VERTICAL_GRIP_MESSAGE, GRIP_TEXT);
+});
+
+test('an AR-15 barrel under 16" with any stock is a legal warning on both, and the build can still be complete', () => {
   const short = ar15.parts.filter((p) => p.slot === 'barrel' && (p.attrs.length as number) < 16);
   assert.deepEqual(short.map((p) => p.id).sort(), SHORT_AR15);
   const stocks = ar15.parts.filter((p) => p.slot === 'stock');
   assert.ok(stocks.length >= 5);
   for (const b of short)
     for (const s of stocks) {
-      const build = toBuild(ar15, { ...baseSelection(ar15), barrel: b.id, stock: s.id });
+      // Each barrel's clean build, with a rifle buffer for a rifle-tube stock, so the short-barrel warning is all that's left.
+      const rifleTube = !(s.attrs.fits as string[]).includes('carbine');
+      const build = toBuild(ar15, { ...baseSelection(ar15), ...CLEAN_SHORT_AR15[b.id], stock: s.id, ...(rifleTube ? { buffer: 'ar-buf-rifle' } : {}) });
       const issues = issuesFor(ar15, build);
-      assert.deepEqual(sbr(issues).map((i) => [i.severity, [...i.slots].sort()]), [['error', ['barrel', 'stock']]], `${b.id} + ${s.id}`);
-      assert.equal(buildStatus(ar15, build, issues).complete, false, `${b.id} + ${s.id}`);
-      assert.equal(statesFor(ar15, build).states.barrel, 'error');
-      assert.equal(statesFor(ar15, build).states.stock, 'error');
+      assert.deepEqual(sbr(issues).map((i) => [i.severity, [...i.slots].sort()]), [['warn', ['barrel', 'stock']]], `${b.id} + ${s.id}`);
+      assert.deepEqual(sbr(issues).map((i) => i.legal), [true], `${b.id} + ${s.id}`);
+      assert.deepEqual(issues.filter((i) => i.severity === 'error'), [], `${b.id} + ${s.id}`);
+      assert.equal(statesFor(ar15, build).states.barrel, 'warn', `${b.id} + ${s.id}`);
+      assert.equal(statesFor(ar15, build).states.stock, 'warn', `${b.id} + ${s.id}`);
+      assert.equal(buildStatus(ar15, build, issues).complete, true, `${b.id} + ${s.id}`);
     }
+  // A clean full build with each short barrel is complete, with the legal warning as its one check.
+  for (const id of SHORT_AR15) {
+    const build = toBuild(ar15, { ...baseSelection(ar15), ...CLEAN_SHORT_AR15[id] });
+    assert.equal(build.barrel?.id, id);
+    const issues = issuesFor(ar15, build);
+    assert.deepEqual(issues.filter((i) => i.severity !== 'info'), [SBR_WARN], id);
+    assert.deepEqual(buildStatus(ar15, build, issues), { cls: 'warn', text: 'Complete · 1 check to review', complete: true }, id);
+  }
 });
 
 test('an AR-15 barrel of 16" or more with any stock raises no short-barrel issue', () => {
@@ -129,8 +159,8 @@ test('the short AR-15 barrels are listed in the picker and search, and open from
   }
   assert.ok(ar15.parts.every((p) => !('hidden' in p)));
   assert.deepEqual(listed, ar15.parts.filter((p) => p.slot === 'barrel').map((p) => p.id));
-  // A share token and a ?b= link resolve the short barrel, and the build shows the short-barrel issue.
-  const sel = { ...baseSelection(ar15), barrel: 'ar-bbl-ba10' };
+  // A share token and a ?b= link resolve the short barrel, and the build shows the short-barrel warning.
+  const sel = { ...baseSelection(ar15), ...CLEAN_SHORT_AR15['ar-bbl-ba10'] };
   const back = selectionFromParts('ar15', selectionTokens(sel));
   assert.deepEqual(back, sel);
   Object.defineProperty(globalThis, 'location', { value: { search: `?b=${encodeURIComponent(`ar15~${selectionTokens(sel).join('.')}`)}`, origin: 'https://example.test', pathname: '/' }, configurable: true });
@@ -138,36 +168,49 @@ test('the short AR-15 barrels are listed in the picker and search, and open from
   const build = toBuild(ar15, back);
   assert.equal(build.barrel?.id, 'ar-bbl-ba10');
   const issues = issuesFor(ar15, build);
-  assert.equal(sbr(issues).length, 1);
-  assert.deepEqual(buildStatus(ar15, build, issues), { cls: 'error', text: '1 conflict to fix', complete: false });
+  assert.deepEqual(sbr(issues), [SBR_WARN]);
+  assert.deepEqual(buildStatus(ar15, build, issues), { cls: 'warn', text: 'Complete · 1 check to review', complete: true });
 });
 
-test('AR-9: a stock on a short barrel is a conflict; a brace, or a 16" barrel, is not', () => {
+test('AR-9: a stock on a short barrel is a legal warning; a brace, or a 16" barrel, is not', () => {
   const at = (over: Selection) => issuesFor(ar9, toBuild(ar9, { ...baseSelection(ar9), ...over }));
   const shortBarrels = ar9.parts.filter((p) => p.slot === 'barrel' && (p.attrs.length as number) < 16);
   const stocks = ar9.parts.filter((p) => p.slot === 'stock' && !p.attrs.brace);
   const braces = ar9.parts.filter((p) => p.slot === 'stock' && p.attrs.brace);
   assert.ok(shortBarrels.length && stocks.length && braces.length);
   for (const b of shortBarrels) {
-    for (const s of stocks) assert.deepEqual(sbr(at({ barrel: b.id, stock: s.id })).map((i) => [i.severity, [...i.slots].sort()]), [['error', ['barrel', 'stock']]], `${b.id} + ${s.id}`);
-    for (const s of braces) assert.deepEqual(at({ barrel: b.id, stock: s.id }).filter((i) => i.severity === 'error' && i.slots.includes('stock')), [], `${b.id} + ${s.id}`);
+    for (const s of stocks) assert.deepEqual(sbr(at({ barrel: b.id, stock: s.id })), [SBR_WARN], `${b.id} + ${s.id}`);
+    for (const s of braces) {
+      assert.deepEqual(sbr(at({ barrel: b.id, stock: s.id })), [], `${b.id} + ${s.id}`);
+      assert.deepEqual(at({ barrel: b.id, stock: s.id }).filter((i) => i.severity === 'error' && i.slots.includes('stock')), [], `${b.id} + ${s.id}`);
+    }
   }
   for (const s of [...stocks, ...braces]) assert.deepEqual(sbr(at({ barrel: 'a9-bbl-aero16', stock: s.id })), [], s.id);
   const sel = { ...baseSelection(ar9), barrel: 'a9-bbl-faxon85' };
-  assert.equal(buildStatus(ar9, toBuild(ar9, sel), issuesFor(ar9, toBuild(ar9, sel))).complete, false);
+  const issues = issuesFor(ar9, toBuild(ar9, sel));
+  assert.deepEqual(issues.filter((i) => i.severity === 'error'), []);
+  assert.equal(buildStatus(ar9, toBuild(ar9, sel), issues).complete, true);
 });
 
-test('AR-9: a vertical foregrip on a short braced or stockless build is a conflict; an angled grip or hand stop is not', () => {
-  const fgErrors = (over: Selection) => issuesFor(ar9, toBuild(ar9, { ...baseSelection(ar9), ...over })).filter((i) => i.severity === 'error' && i.slots.includes('foregrip'));
-  const braced = { barrel: 'a9-bbl-faxon85', stock: 'a9-brace-sba3' };
+test('AR-9: a vertical foregrip on a short braced or stockless build is a legal warning; an angled grip or hand stop is not', () => {
+  const fgIssues = (sel: Selection) => issuesFor(ar9, toBuild(ar9, sel)).filter((i) => i.severity !== 'info' && i.slots.includes('foregrip'));
+  const braced = { ...baseSelection(ar9), barrel: 'a9-bbl-faxon85', stock: 'a9-brace-sba3' };
+  const legalPoints = (sel: Selection) => issuesFor(ar9, toBuild(ar9, sel)).filter((i) => i.legal || i.message === GRIP_TEXT);
   for (const fg of ['r-fg-mvg', 'r-fg-bcmvg']) {
-    assert.deepEqual(fgErrors({ ...braced, foregrip: fg }).map((i) => [...i.slots].sort()), [['barrel', 'foregrip']], fg);
-    const { stock, ...noStock } = { ...baseSelection(ar9), ...braced, foregrip: fg };
+    assert.deepEqual(fgIssues({ ...braced, foregrip: fg }), [GRIP_WARN], fg);
+    assert.deepEqual(errors(ar9, { ...braced, foregrip: fg }), [], `${fg} braced: no conflicts`);
+    const { stock, ...noStock } = { ...braced, foregrip: fg };
     assert.ok(stock);
-    assert.equal(issuesFor(ar9, toBuild(ar9, noStock)).filter((i) => i.severity === 'error' && i.slots.includes('foregrip')).length, 1, `${fg} with no stock`);
-    assert.deepEqual(fgErrors({ barrel: 'a9-bbl-aero16', stock: 'a9-brace-sba3', foregrip: fg }), [], `${fg} on 16"`);
+    assert.deepEqual(fgIssues(noStock), [GRIP_WARN], `${fg} with no stock`);
+    assert.deepEqual(errors(ar9, noStock), [], `${fg} with no stock: no conflicts`);
+    assert.deepEqual(fgIssues({ ...braced, barrel: 'a9-bbl-aero16', foregrip: fg }), [], `${fg} on 16"`);
+    assert.deepEqual(legalPoints({ ...braced, barrel: 'a9-bbl-aero16', foregrip: fg }), [], `${fg} on 16"`);
   }
-  for (const fg of ['r-fg-kag', 'r-fg-afg2', 'r-fg-stop']) assert.deepEqual(fgErrors({ ...braced, foregrip: fg }), [], fg);
+  // Angled grips and hand stops raise no legal point (the AFG-2 still gets its Picatinny-on-M-LOK check).
+  for (const fg of ['r-fg-kag', 'r-fg-afg2', 'r-fg-stop']) {
+    assert.deepEqual(legalPoints({ ...braced, foregrip: fg }), [], fg);
+    assert.deepEqual(errors(ar9, { ...braced, foregrip: fg }), [], fg);
+  }
   // The braced Best Value AR-9 starter build is unchanged and still conflict-free.
   assert.ok(ar9.presets.value.includes('a9-brace-sba3'));
   assert.deepEqual(errors(ar9, presetSelection(ar9, 'value')), []);
@@ -179,7 +222,7 @@ test('AR-10: a barrel under 16" with a stock is flagged too, though none is list
   assert.ok(build.stock);
   assert.deepEqual(sbr(ar10.rules(build)), []);
   build.barrel = { ...build.barrel!, attrs: { ...build.barrel!.attrs, length: 14.5 } };
-  assert.deepEqual(sbr(ar10.rules(build)).map((i) => [i.severity, [...i.slots].sort()]), [['error', ['barrel', 'stock']]]);
+  assert.deepEqual(sbr(ar10.rules(build)), [SBR_WARN]);
   assert.ok(awarenessFor(ar10, build).some((w) => w.level === 'caution' && w.title === 'Short-barreled rifle'));
 });
 
@@ -518,15 +561,81 @@ test('the static pages list the whole catalog, short barrels included: tables, f
 
 /* ------------------------------------------------------------------ short-barrel rule, price index */
 
-test('a barrel with no listed length raises no short-barrel issue; a short one still does', () => {
+test('a barrel with no listed length raises no short-barrel issue; a short one raises the legal warning', () => {
   const stock = ar15.parts.find((x) => x.slot === 'stock' && !x.attrs.brace)!;
   const short = part(ar15, 'ar-bbl-ba10');
   const { length, ...rest } = short.attrs;
   assert.equal(length, 10.3);
   assert.equal(shortBarrelStockIssue({ ...short, attrs: rest }, stock), undefined);
   assert.equal(shortBarrelStockIssue({ ...short, attrs: { ...rest, length: '10.3' } }, stock), undefined);
-  assert.equal(shortBarrelStockIssue(short, stock)?.severity, 'error');
+  assert.deepEqual(shortBarrelStockIssue(short, stock), SBR_WARN);
+  assert.equal(shortBarrelStockIssue(short, { ...stock, attrs: { ...stock.attrs, brace: true } }), undefined);
   assert.equal(shortBarrelStockIssue(part(ar15, 'ar-bbl-ba16'), stock), undefined);
+});
+
+/* ------------------------------------------------------------------ the Legal notice in the builder, cards and Compare */
+
+/** Text as React writes it into HTML. */
+const reactEsc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+const LEGAL_NOTICE = (cls: string, ...messages: string[]) =>
+  `<div class="${cls}" role="note"><p class="legal-notice-title">Legal notice</p>${messages.map((m) => `<p>${reactEsc(m)}</p>`).join('')}</div>`;
+
+test('the builder summary shows a Legal notice for a short-barrel build, and it can still be shared', () => {
+  const short = { ...baseSelection(ar15), ...CLEAN_SHORT_AR15['ar-bbl-ba10'] };
+  const html = summaryHtml(ar15, short);
+  assert.ok(html.includes(LEGAL_NOTICE('legal-notice', SBR_TEXT)), 'notice');
+  assert.equal(html.split('class="legal-notice"').length - 1, 1, 'one notice');
+  assert.match(html, /<button class="btn wide-row" title="Post this build to the Community page">Share to Community<\/button>/);
+  // The notice sits under the status line and above Save / Share.
+  assert.ok(html.indexOf('class="status warn"') < html.indexOf('class="legal-notice"') && html.indexOf('class="legal-notice"') < html.indexOf('class="total-actions"'));
+  // In the Compatibility list it's tagged Legal, not Check.
+  assert.ok(html.includes(`<li class="issue warn legal"><span class="issue-tag">Legal</span><span>${reactEsc(SBR_TEXT)}</span></li>`), 'compatibility row');
+  const long = summaryHtml(ar15, baseSelection(ar15));
+  assert.doesNotMatch(long, /legal-notice|Legal notice|issue warn legal/);
+  assert.match(long, /<button class="btn wide-row" title="Post this build to the Community page">Share to Community<\/button>/);
+});
+
+test('the parts list and the mobile dock flag legal issues', () => {
+  const noop = () => {};
+  const rows = (sel: Selection) => {
+    const build = toBuild(ar15, sel);
+    const { issues, states } = statesFor(ar15, build);
+    return renderToStaticMarkup(createElement(PartsList, { platform: ar15, build, issues, states, hover: null, onHover: noop, onOpen: noop, onRemove: noop, mounts: {}, onMount: noop, owned: ownedOf(sel), onToggleOwn: noop }));
+  };
+  // The barrel and the stock rows each carry it once.
+  const short = rows({ ...baseSelection(ar15), ...CLEAN_SHORT_AR15['ar-bbl-ba10'] });
+  assert.equal(short.split(`<span class="row-issue warn legal">${reactEsc(SBR_TEXT)}</span>`).length - 1, 2);
+  // Their fit tag reads Legal, not Check; no other row is tagged Legal.
+  assert.equal(short.split('<span class="fit-tag warn legal">Legal</span>').length - 1, 2);
+  assert.equal(short.split('>Legal</span>').length - 1, 2);
+  assert.doesNotMatch(rows(baseSelection(ar15)), /legal/);
+  const dock = (legal: boolean) => renderToStaticMarkup(createElement(Dock, { total: 100, status: { cls: 'warn', text: 'x' }, toBuy: false, noPrice: '', legal }));
+  assert.ok(dock(true).includes('<button class="dock-legal" aria-label="Legal notice: see the summary">Legal</button>'), 'dock badge');
+  assert.doesNotMatch(dock(false), /dock-legal/);
+});
+
+test('build cards show the Legal notice for short-barrel builds and the AR-9 vertical grip', () => {
+  const card = (platformId: string, sel: Selection) => renderToStaticMarkup(createElement(BuildCard, { platformId, selection: sel, title: 'T', meta: 'M', actions: null }));
+  const short = card('ar15', { ...baseSelection(ar15), ...CLEAN_SHORT_AR15['ar-bbl-ba75'] });
+  assert.ok(short.includes(LEGAL_NOTICE('legal-notice compact', SBR_TEXT)), 'short AR-15 card');
+  assert.ok(short.indexOf('legal-notice') < short.indexOf('build-card-foot'), 'above the price and status');
+  assert.doesNotMatch(card('ar15', baseSelection(ar15)), /legal-notice/);
+  const grip = card('ar9', { ...baseSelection(ar9), barrel: 'a9-bbl-faxon85', stock: 'a9-brace-sba3', foregrip: 'r-fg-mvg' });
+  assert.ok(grip.includes(LEGAL_NOTICE('legal-notice compact', GRIP_TEXT)), 'AR-9 vertical grip card');
+});
+
+test('Compare shows the Legal notice under the side that needs it', () => {
+  const page = (a: Selection, b: Selection) => renderToStaticMarkup(createElement(ComparePage, {
+    items: [{ kind: 'Saved', name: 'A', platform: 'ar15', selection: a }, { kind: 'Saved', name: 'B', platform: 'ar15', selection: b }],
+    onSet: () => {}, saved: [], current: null, lastPlatform: 'ar15', onOpen: () => {},
+  }));
+  const html = page({ ...baseSelection(ar15), ...CLEAN_SHORT_AR15['ar-bbl-ba115'] }, baseSelection(ar15));
+  const notice = LEGAL_NOTICE('legal-notice compact', SBR_TEXT);
+  assert.equal(html.split(notice).length - 1, 1);
+  // It's on side A, after its header and before side B's.
+  assert.ok(html.indexOf('<h2>A</h2>') < html.indexOf(notice) && html.indexOf(notice) < html.indexOf('<h2>B</h2>'));
+  assert.ok(html.includes(`<li class="row-issue warn legal">${reactEsc(SBR_TEXT)}</li>`), 'fit notes');
+  assert.doesNotMatch(page(baseSelection(ar15), baseSelection(ar15)), /legal/);
 });
 
 test('the price index leaves out parts with no price', () => {

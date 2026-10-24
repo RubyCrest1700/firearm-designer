@@ -6,11 +6,30 @@ import { Blueprint } from './drawings';
 import { buildStatus, statesFor } from './status';
 import { buildOf, totalOf, unpricedOf } from './store';
 import { recentChange } from './data/history';
-import type { Part, Platform, Severity } from './types';
+import type { Issue, Part, Platform, Severity } from './types';
 
 export const FAMILIES = ['Rifle', 'Pistol'];
 
 export const SEV_LABEL: Record<Severity, string> = { error: 'Conflict', warn: 'Check', info: 'Note' };
+/** An issue's tag: "Legal" for a legal point (Issue.legal), else its severity's label. */
+export const issueLabel = (i: Issue) => (i.legal ? 'Legal' : SEV_LABEL[i.severity]);
+/** The class for an issue's row or list item: its severity, plus "legal" for a legal point. */
+export const issueClass = (base: string, i: Issue) => `${base} ${i.severity}${i.legal ? ' legal' : ''}`;
+
+/**
+ * The build's legal points (short barrel with a stock, a vertical foregrip on a short pistol), each message once and
+ * word for word. Nothing when there are none. `compact` is the smaller version for build cards and Compare.
+ */
+export function LegalNotice({ issues, compact }: { issues: Issue[]; compact?: boolean }) {
+  const messages = [...new Set(issues.filter((i) => i.legal).map((i) => i.message))];
+  if (!messages.length) return null;
+  return (
+    <div className={'legal-notice' + (compact ? ' compact' : '')} role="note">
+      <p className="legal-notice-title">Legal notice</p>
+      {messages.map((m) => <p key={m}>{m}</p>)}
+    </div>
+  );
+}
 
 export const shortDate = (iso: string, year = false) =>
   new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(year ? { year: 'numeric' } : {}) });
@@ -88,7 +107,9 @@ export function PlatformMenu({ current, onPick }: { current: Platform; onPick: (
   );
 }
 
-export function FitTag({ state }: { state: RegionState }) {
+/** `legal`: the part's only checks are legal points, so a warn reads "Legal" rather than "Check". */
+export function FitTag({ state, legal }: { state: RegionState; legal?: boolean }) {
+  if (legal && state === 'warn') return <span className="fit-tag warn legal">Legal</span>;
   const text = { empty: 'Empty', ok: 'Fits', warn: 'Check', error: 'Conflict' }[state];
   return <span className={'fit-tag ' + state}>{text}</span>;
 }
@@ -149,6 +170,7 @@ export function BuildCard({ platformId, selection, badge, title, meta, body, act
         <h3>{title}</h3>
         <p className="meta">{meta}</p>
         {body}
+        <LegalNotice issues={issues} compact />
         <div className="build-card-foot">
           <span className="amt big">{money(totalOf(platform, build, owned.owned))}{ownsSome && <small className="to-buy"> to buy</small>}{noPrice && <small className="to-buy"> · {noPrice}</small>}</span>
           <span className={'status small ' + status.cls}>{status.text}</span>

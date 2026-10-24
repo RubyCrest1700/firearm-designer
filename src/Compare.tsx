@@ -8,6 +8,7 @@ import { getBuild, listBuilds, type CommunityBuild } from './community';
 import { buildStatus, statesFor } from './status';
 import { buildWeight, formatWeight } from './weight';
 import type { Issue, Part, Slot } from './types';
+import { LegalNotice, issueClass } from './ui';
 
 /** One side of the comparison: where the build came from, its name, and its parts. */
 export interface CompareItem { kind: string; name: string; platform: string; selection: Selection }
@@ -81,6 +82,7 @@ export function ComparePage({ items, onSet, saved, current, lastPlatform, onOpen
       <p className="kicker">{'AB'[i]} · {f.item.kind}</p>
       <h2>{f.item.name}</h2>
       <p className="meta">{f.platform.name}</p>
+      <LegalNotice issues={f.issues} compact />
       <div className="thumb"><Blueprint platform={f.platform} build={f.build} place={f.place} states={f.states} compact /></div>
       <div className="build-card-actions">
         <button className="btn primary" onClick={() => onOpen(f.item)}>Open in Builder</button>
@@ -174,7 +176,7 @@ function StatusText({ f }: { f: Facts }) {
 function IssueList({ issues }: { issues: Issue[] }) {
   const shown = issues.filter((i) => i.severity !== 'info');
   if (!shown.length) return <span className="dim">None</span>;
-  return <ul className="cmp-issues">{shown.map((i, n) => <li key={n} className={'row-issue ' + i.severity}>{i.message}</li>)}</ul>;
+  return <ul className="cmp-issues">{shown.map((i, n) => <li key={n} className={issueClass('row-issue', i)}>{i.message}</li>)}</ul>;
 }
 
 function PartRows({ fa, fb, onlyDiff }: { fa: Facts; fb: Facts; onlyDiff: boolean }) {
