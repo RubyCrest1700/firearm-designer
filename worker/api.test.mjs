@@ -908,6 +908,66 @@ test('only an unsubscribe from an email suppresses; Turn Off on the site does no
   assert.equal(await count(e, 'suppressed'), 2);
 });
 
+// Turn Off on the site (src/alerts.ts stopAlerts) is a cross-origin POST with no body. The browser only lets
+// the site read the 204 if it carries the same CORS headers as the JSON answers.
+const turnOff = (e, token, origin, now) =>
+  handle(new Request(`https://share.example/alerts/stop?t=${token}`, { method: 'POST', headers: { origin } }), e, now);
+
+test('Turn Off on the site gets a 204 the site is allowed to read', async () => {
+  const e = alertEnv();
+  const now = Date.now();
+  const { body } = await signupAt(e, now - DAY, 'site@example.com', '1.0.0.1');
+  const spare = (await signupAt(e, now - DAY, 'site@example.com', '1.0.0.2')).body.token;
+  assert.match(await (await pressConfirm(e, codeIn(e.outbox[0]), now - DAY)).text(), /Price Alerts Are On/);
+  assert.equal(await confirmedOf(e, body.token), 1);
+  // A confirmed signup: every signup for the address goes, nothing is suppressed.
+  const res = await turnOff(e, body.token, 'https://dropinbuilds.com', now);
+  assert.equal(res.status, 204);
+  assert.equal(res.headers.get('access-control-allow-origin'), 'https://dropinbuilds.com');
+  assert.equal(res.headers.get('vary'), 'origin');
+  assert.equal(await res.text(), '');
+  assert.equal(await statusOf(e, body.token), 404);
+  assert.equal(await statusOf(e, spare), 404);
+  assert.equal(await count(e, 'alerts'), 0);
+  assert.equal(await count(e, 'suppressed'), 0);
+  // An unknown token: the same readable 204, and nothing else changes.
+  const unknown = await turnOff(e, 'c'.repeat(32), 'https://dropinbuilds.com', now);
+  assert.equal(unknown.status, 204);
+  assert.equal(unknown.headers.get('access-control-allow-origin'), 'https://dropinbuilds.com');
+  assert.equal(unknown.headers.get('vary'), 'origin');
+  assert.equal(await count(e, 'suppressed'), 0);
+});
+
+test('Turn Off never hands its CORS header to an origin that is not the site', async () => {
+  const e = alertEnv();
+  const now = Date.now();
+  const { body } = await signupAt(e, now, 'site@example.com');
+  const res = await turnOff(e, body.token, 'https://evil.example', now);
+  assert.equal(res.status, 204);
+  assert.notEqual(res.headers.get('access-control-allow-origin'), 'https://evil.example');
+  assert.equal(res.headers.get('access-control-allow-origin'), 'https://rubycrest1700.github.io');
+  assert.notEqual(res.headers.get('access-control-allow-origin'), '*');
+});
+
+test('the Unsubscribe page button still gets its page, and the Worker entry keeps the CORS header', async () => {
+  const e = alertEnv();
+  const now = Date.now();
+  const first = await signupAt(e, now, 'page@example.com', '1.0.0.1');
+  const pressed = await unsubscribe(e, first.body.token);
+  assert.equal(pressed.status, 200);
+  assert.match(pressed.headers.get('content-type'), /^text\/html/);
+  assert.match(await pressed.text(), /<h1>You&#39;re Unsubscribed<\/h1><p>We won't email this address again/);
+  // Through the full fetch entry (index.js, with withSecurityHeaders) the 204 keeps its CORS headers.
+  const { default: worker } = await import('./src/index.js');
+  const second = await signupAt(e, now, 'site@example.com', '2.0.0.1');
+  const res = await worker.fetch(new Request(`https://share.example/alerts/stop?t=${second.body.token}`, { method: 'POST', headers: { origin: 'https://dropinbuilds.com' } }), e, null);
+  assert.equal(res.status, 204);
+  assert.equal(res.headers.get('access-control-allow-origin'), 'https://dropinbuilds.com');
+  assert.equal(res.headers.get('vary'), 'origin');
+  assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+  assert.equal(await statusOf(e, second.body.token), 404);
+});
+
 test('signup answers before the confirmation email is sent', async () => {
   const e = alertEnv();
   let release;

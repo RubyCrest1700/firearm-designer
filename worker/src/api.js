@@ -240,7 +240,7 @@ export async function handle(request, env, now = Date.now(), ctx = null) {
     }
 
     const wait = (p) => (ctx?.waitUntil ? ctx.waitUntil(p) : p);
-    const alerts = await alertsRoute(request, env, { path, url, now, salt, wait, json: (d, s) => json(d, s, origin), who: () => visitorHash(request, salt) });
+    const alerts = await alertsRoute(request, env, { path, url, now, salt, wait, json: (d, s) => json(d, s, origin), noContent: () => new Response(null, { status: 204, headers: cors(origin) }), who: () => visitorHash(request, salt) });
     if (alerts) return alerts;
 
     // POST /api/feedback { message, email, page }
