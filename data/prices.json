@@ -1,12 +1,12 @@
 {
-  "updatedAt": "2026-10-24T12:39:12.117Z",
+  "updatedAt": "2026-10-25T13:09:56.682Z",
   "offers": {
     "a10-buf-aero": {
       "AERO": {
         "price": 105,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/m5-308-carbine-buffer-kit-1",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-ch-dpms": {
@@ -14,7 +14,7 @@
         "price": 27,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/ar308-charging-handle",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-ch-radian": {
@@ -22,13 +22,13 @@
         "price": 119.95,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/radian-raptor-ambidextrous-ar10-charging-handle",
-        "checkedAt": "2026-10-21T13:45:25.171Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BRD": {
         "price": 109.95,
-        "inStock": true,
+        "inStock": false,
         "url": "https://blackrifledepot.com/radian-raptor-ambidextrous-charging-handle-ar10-sr25/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-gb-750": {
@@ -36,7 +36,7 @@
         "price": 40,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/750-low-profile-gas-block-w-aero-logo-nitride",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-grip-bcm": {
@@ -44,7 +44,7 @@
         "price": 19.95,
         "inStock": true,
         "url": "https://www.rainierarms.com/bcm-gunfighter-grip-mod-3-black/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-grip-moe": {
@@ -52,7 +52,7 @@
         "price": 21.95,
         "inStock": true,
         "url": "https://magpul.com/moe-grip-ar15-m4.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-hg-atlas": {
@@ -60,7 +60,7 @@
         "price": 225,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/m5-15-atlas-s-one-m-lok-handguard-anodized-black",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-lower-aero": {
@@ -68,7 +68,7 @@
         "price": 170,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/m5-308-stripped-lower-receiver-anodized-black",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-lpk-dpms": {
@@ -76,7 +76,7 @@
         "price": 55,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/m5-308-lower-parts-kit-minus-fcg",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-mag-pmag": {
@@ -84,7 +84,7 @@
         "price": 23.95,
         "inStock": true,
         "url": "https://magpul.com/pmag-20-lr-sr-gen-m3.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-mz-pa": {
@@ -92,7 +92,7 @@
         "price": 94.99,
         "inStock": false,
         "url": "https://www.rainierarms.com/precision-armament-m4-72-severe-duty-compensator-7-62mm-308/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-stock-moesl": {
@@ -100,7 +100,7 @@
         "price": 69.95,
         "inStock": true,
         "url": "https://magpul.com/moe-sl-carbine-stock-mil-spec.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-stock-ubr": {
@@ -108,7 +108,7 @@
         "price": 219.95,
         "inStock": true,
         "url": "https://magpul.com/ubr-gen2-collapsible-stock.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-upper-aero": {
@@ -116,7 +116,7 @@
         "price": 155,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/m5-stripped-upper-receiver-anodized",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-bbl-ba16": {
@@ -124,7 +124,7 @@
         "price": 156.75,
         "inStock": false,
         "url": "https://www.righttobear.com/ballistic-advantage-16-5-56-mid-length-govt-barrel-babl556015m/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AT3": {
         "price": 166.25,
@@ -138,7 +138,7 @@
         "price": 54.95,
         "inStock": false,
         "url": "https://www.righttobear.com/Aero-Precision-AR15-Carbine-Buffer-Kit-w-H-Buffer-p/aprh100959c.htm",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-buf-vltor": {
@@ -146,7 +146,7 @@
         "price": 107.96,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/vltor-a5-receiver-extension-kit-with-a5-buffer-and-spring-for-ar-15",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-ch-aero": {
@@ -154,7 +154,7 @@
         "price": 24,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/ar15-charging-handle",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-ch-bcm": {
@@ -162,7 +162,7 @@
         "price": 74.95,
         "inStock": false,
         "url": "https://www.righttobear.com/bcm-vltor-charging-handle-mod-4b-medium-latch-bcm-gfh-mod4b-556/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-gb-aero750": {
@@ -170,7 +170,7 @@
         "price": 40,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/750-low-profile-gas-block-w-aero-logo-nitride",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-grip-bcm": {
@@ -178,7 +178,7 @@
         "price": 20,
         "inStock": true,
         "url": "https://www.righttobear.com/bcm-gunfighter-grip-mod-3-black-bcm-gfg-mod-3-blk/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-grip-k2": {
@@ -186,7 +186,7 @@
         "price": 21.95,
         "inStock": true,
         "url": "https://www.opticsplanet.com/v/mag532-blk-magpul-industries-moe-k2-grip.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-grip-moe": {
@@ -194,7 +194,7 @@
         "price": 18.95,
         "inStock": true,
         "url": "https://aerospacearms.com/magpul-industries-moe-grip-ar15-m4-black/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-gt-carbine": {
@@ -202,7 +202,7 @@
         "price": 20,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/gas-tube-carbine-length-melonite",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-hg-bcm": {
@@ -218,7 +218,7 @@
         "price": 139.99,
         "inStock": false,
         "url": "https://www.sportsmans.com/shooting-gear-gun-supplies/gun-parts-accessories/gun-parts-magazines/rifle-parts/receivers-lowers/aero-precision-m4e1-anodized-black-stripped-lower-receiver/p/1628378",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-lower-anderson": {
@@ -226,13 +226,13 @@
         "price": 38.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/anderson-d2-k067-ag00-am-15-no-logo-lower-receiver-multi-cal",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AT3": {
         "price": 51.97,
         "inStock": false,
         "url": "https://www.at3tactical.com/products/anderson-manufacturing-stripped-am-15-lower-receiver",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-lpk-aero": {
@@ -240,7 +240,7 @@
         "price": 40,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/ar15-lpk-minus",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-mz-warcomp": {
@@ -248,7 +248,7 @@
         "price": 159.95,
         "inStock": false,
         "url": "https://blackrifledepot.com/surefire-warcomp-flash-hider-5-56-1-2x28/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-opt-aimpoint": {
@@ -256,7 +256,7 @@
         "price": 512,
         "inStock": false,
         "url": "https://www.rainierarms.com/aimpoint-pro-patrol-rifle-optic/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-stock-bcm": {
@@ -264,13 +264,13 @@
         "price": 55.95,
         "inStock": true,
         "url": "https://www.wingtactical.com/firearm-parts/ar-15-parts/stocks-accessories/bravo-company-bcmgunfighter-mod-0-stock/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 55.95,
         "inStock": true,
         "url": "https://www.rainierarms.com/bcm-gunfighter-stock-assembly-mod-0/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-stock-moesl": {
@@ -278,7 +278,7 @@
         "price": 69.95,
         "inStock": true,
         "url": "https://magpul.com/moe-sl-carbine-stock-mil-spec.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-upper-aero": {
@@ -286,7 +286,7 @@
         "price": 150,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/m4e1-threaded-stripped-upper-receiver-anodized-black",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-mag-oem15": {
@@ -294,13 +294,13 @@
         "price": 23.99,
         "inStock": true,
         "url": "https://www.kygunco.com/product/glock-mf19015-g19-9mm-magazine-15rd",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 26.99,
         "inStock": true,
         "url": "https://www.rainierarms.com/glock-19-oem-15rd-magazine/",
-        "checkedAt": "2026-10-23T13:21:55.997Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-mag-pmag12": {
@@ -308,7 +308,7 @@
         "price": 14.95,
         "inStock": true,
         "url": "https://magpul.com/pmag-12-gl9-glock-g26.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-mag-pmag15": {
@@ -316,7 +316,7 @@
         "price": 14.95,
         "inStock": true,
         "url": "https://magpul.com/pmag-15-gl9-glock-g19.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-mag-pmag17": {
@@ -324,7 +324,7 @@
         "price": 14.95,
         "inStock": true,
         "url": "https://magpul.com/pmag-17-gl9-glock-17.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-opt-rmr": {
@@ -332,7 +332,7 @@
         "price": 559.99,
         "inStock": true,
         "url": "https://www.rainierarms.com/trijicon-rmr-sight-adjustable-3-25-moa-red-dot-type-2/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-sight-ameriglo": {
@@ -340,7 +340,7 @@
         "price": 66.95,
         "inStock": false,
         "url": "https://blackrifledepot.com/ameriglo-suppressor-tritium-night-sights-set-glock-green-orange-front-black-rear/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-spk-lw": {
@@ -348,7 +348,7 @@
         "price": 71.2,
         "inStock": true,
         "url": "https://lonewolfdist.com/parts/frame-and-slide-parts-kits/completion-kit-for-9mm-slides/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-spk-oem34": {
@@ -356,7 +356,7 @@
         "price": 149.99,
         "inStock": true,
         "url": "https://www.glockstore.com/Glock-Factory-Compact-Gen-4-Upper-Parts-Kit",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g17-bbl-faxon": {
@@ -364,13 +364,13 @@
         "price": 82.8,
         "inStock": true,
         "url": "https://www.opticsplanet.com/faxon-firearms-g17-barrel-full-size-gen-1-4-9mm-saami-4150-qpq-threaded-barrel.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 82.99,
         "inStock": true,
         "url": "https://gritrsports.com/faxon-duty-9mm-barrel-for-glock-g17-ga910n17ngq-t",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g17-bbl-oem34": {
@@ -378,19 +378,19 @@
         "price": 169.95,
         "inStock": false,
         "url": "https://www.topgunsupply.com/glock-factory-barrel-g17.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "CP": {
         "price": 173.59,
         "inStock": false,
         "url": "https://copsplus.com/gun-parts-accessories/handgun-parts/handgun-barrels/glock-sp32001-oem-factory-4-49-barrel-9mm-for-glock-17-gen-1-3-matte-black/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BRD": {
         "price": 199.95,
         "inStock": false,
         "url": "https://blackrifledepot.com/glock-17-oem-barrel/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g17-rsa-g3": {
@@ -398,13 +398,13 @@
         "price": 9.95,
         "inStock": false,
         "url": "https://www.topgunsupply.com/glock-recoil-spring-assembly-g17-g17l-g22-g24-g31-g34-g35.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "IMP": {
         "price": 7.79,
         "inStock": true,
         "url": "https://www.impactguns.com/glock-oem-recoil-spring-for-glock-17-22-24-31-764503055676",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g19-bbl-faxon": {
@@ -412,7 +412,7 @@
         "price": 98,
         "inStock": false,
         "url": "https://faxonfirearms.com/GA910N19NGQ-N",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g19-frame-lw": {
@@ -420,13 +420,13 @@
         "price": 134.49,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/pistols/lone-wolf-timberwolf-compact-9mm-40-sw-357-sig-frame-714024847",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 139.95,
         "inStock": true,
         "url": "https://gritrsports.com/lone-wolf-twc-9mm-40-s-w-357-sig-compact-textured-pistol-frame-built-f-gen3-gen4-glock-19-23-32-38-slides-lwd-twc3-built",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g19-rsa-g3": {
@@ -434,13 +434,13 @@
         "price": 9.49,
         "inStock": true,
         "url": "https://copsplus.com/handgun-internals/glock-sp02457-oem-factory-guide-rod-recoil-spring-19-23-25-32-gen-1-3/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "TGS": {
         "price": 9.95,
         "inStock": false,
         "url": "https://www.topgunsupply.com/glock-recoil-spring-assembly-g19-g23-g32.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g19-rsa-g45": {
@@ -448,19 +448,19 @@
         "price": 21.3,
         "inStock": true,
         "url": "https://copsplus.com/handgun-internals/glock-sp39310-oem-factory-guide-rod-recoil-spring-assembly-dual-for-19-g19-gen5/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RYG": {
         "price": 19.95,
         "inStock": false,
         "url": "https://rockyourglock.com/glock-oem-recoil-spring-assembly-g19-gen5",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "TGS": {
         "price": 23.95,
         "inStock": true,
         "url": "https://www.topgunsupply.com/glock-recoil-spring-assembly-g19-gen5-models-only.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gs-fcg-apex": {
@@ -468,13 +468,13 @@
         "price": 135,
         "inStock": true,
         "url": "https://www.rainierarms.com/apex-tactical-action-enhancement-trigger-kit-for-glock-43-43x-48/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "WING": {
         "price": 128.25,
         "inStock": true,
         "url": "https://www.wingtactical.com/firearm-parts/handgun/pistol-trigger-parts/apex-action-enhancement-trigger-kit-for-glock-43-43x-48/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gs-mag-oem10": {
@@ -482,13 +482,13 @@
         "price": 27.95,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/glock-oem-9mm-10rd-magazine-glock-43x-48",
-        "checkedAt": "2026-10-23T13:21:55.997Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BUDS": {
         "price": 21.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/magazines/glock-43x-48-9mm-10-round-factory-magazine-110488",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gs-mag-s15": {
@@ -496,7 +496,7 @@
         "price": 67.49,
         "inStock": false,
         "url": "https://www.kygunco.com/product/shield-arms-s15me5insg3blk-s15-mag-gen-3-15rd-for-glock-43x48-black-nitride",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gs-rsa-48": {
@@ -504,13 +504,13 @@
         "price": 21.3,
         "inStock": true,
         "url": "https://copsplus.com/handgun-internals/glock-sp33379-oem-factory-guide-rod-recoil-spring-assembly-dual-for-43-g43-slim/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "TGS": {
         "price": 19.95,
         "inStock": false,
         "url": "https://www.topgunsupply.com/glock-recoil-spring-assembly-g43.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-bbl-c9": {
@@ -518,7 +518,7 @@
         "price": 147.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/sig-sauer-barrel-p320-9mm-dlc-3.9-no-lci-blk",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-bbl-f9": {
@@ -526,25 +526,25 @@
         "price": 144.38,
         "inStock": true,
         "url": "https://gritrsports.com/sig-sauer-p250-p320-4-7in-9mm-barrel-bbl-mod-f-9",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BUDS": {
         "price": 150.49,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-barrels/sig-sauer-p250-p320-9mm-full-size-4-7in-barrel-black-55975",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "CF": {
         "price": 155.27,
         "inStock": true,
         "url": "https://www.classicfirearms.com/sig-sauer-bblmodf9-p320-full-size-barrel/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "TGS": {
         "price": 179.99,
         "inStock": true,
         "url": "https://www.topgunsupply.com/sig-sauer-p320-full-size-replacement-barrel-9mm.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-bbl-faxonc": {
@@ -552,7 +552,7 @@
         "price": 123,
         "inStock": true,
         "url": "https://faxonfirearms.com/sig-p320-compact-flame-fluted-barrel-9mm-416-r-nitride-non-threaded/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-grip-compact": {
@@ -560,7 +560,7 @@
         "price": 58.65,
         "inStock": true,
         "url": "https://www.kygunco.com/product/sig-sauer-grip-module-assy-p320-9-40-357-compact-medium-blk",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-grip-xcarry": {
@@ -568,19 +568,19 @@
         "price": 75.49,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/handgun-frames/sig-sauer-p320-x-series-carry-grip-module-assembly-9mm-black-157396",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 76.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/sig-sauer-grip-modx-ca-943-m-blk-320x-carry-grip-module-assembly-black",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "SPW": {
         "price": 85.99,
         "inStock": false,
         "url": "https://www.sportsmans.com/shooting-gear-gun-supplies/gun-parts-accessories/gun-parts-magazines/handgun-parts/handgun-grips-frames/sig-sauer-p320-xseries-carry-medium-grip-module-black/p/1695113",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-grip-xfull": {
@@ -588,19 +588,19 @@
         "price": 72.49,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/handgun-frames/sig-sauer-p320-x-series-medium-grip-module-9mm-40-sw-357-sig-black-157404",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 73.82,
         "inStock": true,
         "url": "https://www.kygunco.com/product/sig-sauer-grip-modx-f-943-m-blk-320x-full-size-grip-module-assembly-medium",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "SPW": {
         "price": 85.99,
         "inStock": true,
         "url": "https://www.sportsmans.com/shooting-gear-gun-supplies/gun-parts-accessories/gun-parts-magazines/handgun-parts/handgun-grips-frames/sig-sauer-p320-xseries-full-size-medium-grip-module-black/p/1695121",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-mag-sig15": {
@@ -614,7 +614,7 @@
         "price": 40.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/magazines/sig-sauer-p250-p320-9mm-15rd-black-magazine-93824",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-mag-sig17": {
@@ -622,7 +622,15 @@
         "price": 43.99,
         "inStock": true,
         "url": "https://www.rainierarms.com/sig-sauer-p320-p250-full-size-9mm-17-rd-magazine/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
+      }
+    },
+    "p-opt-r1p": {
+      "OP": {
+        "price": 299.49,
+        "inStock": true,
+        "url": "https://www.opticsplanet.com/v/sor1p101-sig-sauer-romeo1pro-1x30mm-red.html",
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-opt-romeox": {
@@ -630,7 +638,7 @@
         "price": 429.95,
         "inStock": true,
         "url": "https://wilsoncombat.com/optic-sig-sauer-romeo-x-pro-6-moa.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-slide-compact": {
@@ -638,13 +646,13 @@
         "price": 616.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/sig-sauer-8900276-p320-9mm-3.6-slide-assembly-coyote-brown",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 269.99,
         "inStock": false,
         "url": "https://gritrsports.com/sig-sauer-x-series-p320-slide-assembly-8900141",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-spr-c": {
@@ -656,15 +664,15 @@
       },
       "IMP": {
         "price": 46.69,
-        "inStock": false,
+        "inStock": true,
         "url": "https://www.impactguns.com/handgun-parts/sig-p320-9mm-recoil-spring-fits-compact-models-798681594702-kit-320c-9-recoil-spring",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "TGS": {
         "price": 38.99,
         "inStock": false,
         "url": "https://www.topgunsupply.com/sig-sauer-recoil-spring-p320-compact-carry-9mm.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-spr-f": {
@@ -678,13 +686,13 @@
         "price": 63.69,
         "inStock": true,
         "url": "https://www.impactguns.com/handgun-parts/sig-p320-full-size-recoil-spring-assembly-9mm-798681559558-rsa-320f-9",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "TGS": {
         "price": 48.99,
         "inStock": false,
         "url": "https://www.topgunsupply.com/sig-sauer-recoil-spring-assembly-p320-full-size-9mm.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p365-bbl-std": {
@@ -692,7 +700,7 @@
         "price": 150.49,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-barrels/sig-sauer-bbl3659-p365-31-9mm-luger-black-barrel-108781",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p365-grip-std": {
@@ -700,7 +708,7 @@
         "price": 42.95,
         "inStock": true,
         "url": "https://www.wingtactical.com/firearm-parts/handgun/handgun-grips-accessories/sig-sauer-p365-grip-module/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p365-grip-xl": {
@@ -708,7 +716,7 @@
         "price": 75.49,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/handgun-frames/sig-sauer-p365xl-9mm-grip-module-assembly-black-157381",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p365-slide-std": {
@@ -716,13 +724,13 @@
         "price": 265.99,
         "inStock": false,
         "url": "https://gritrsports.com/sig-sauer-p365x-9mm-slide-assembly-8900983",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 286.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/sig-sauer-p365x-9mm-3.1-slide-assembly-sig-loc-optic-ready-black",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p365-slide-xl": {
@@ -730,7 +738,7 @@
         "price": 286.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/sig-sauer-p365-xl-9mm-3.7-slide-assembly-sig-loc-optic-ready-black",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p365-spr-std": {
@@ -738,7 +746,7 @@
         "price": 33.35,
         "inStock": true,
         "url": "https://www.kygunco.com/product/sig-sauer-kit365recoilspring-p365-recoil-spring-assembly-for-9mm-sig-p365",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 39.99,
@@ -752,7 +760,7 @@
         "price": 44.99,
         "inStock": true,
         "url": "https://www.rainierarms.com/sig-sauer-p365xl-9mm-recoil-spring-assembly/",
-        "checkedAt": "2026-10-23T13:21:55.997Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-bcg-young": {
@@ -760,7 +768,7 @@
         "price": 199.95,
         "inStock": true,
         "url": "https://www.youngmanufacturing.net/ar-10-armalite-black-nitride-bolt-carrier-group.aspx",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "r-rail-5": {
@@ -768,7 +776,7 @@
         "price": 11.95,
         "inStock": true,
         "url": "https://magpul.com/m-lokpolymerrailsection-5slots.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "r-qd-magpul": {
@@ -776,7 +784,7 @@
         "price": 20.95,
         "inStock": true,
         "url": "https://magpul.com/m-lok-qd-sling-mount.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "r-sling-ms4": {
@@ -784,7 +792,7 @@
         "price": 79.95,
         "inStock": true,
         "url": "https://magpul.com/ms4-dual-qd-sling-gen-2.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-bbl-aero16": {
@@ -792,7 +800,7 @@
         "price": 185,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/556-16-mid-cmv-barrel",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-hg-aero15": {
@@ -800,7 +808,7 @@
         "price": 225,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/ar15-15-atlas-s-one-m-lok-handguard-anodized-black",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-mz-sf3p": {
@@ -808,13 +816,13 @@
         "price": 152,
         "inStock": true,
         "url": "https://www.rainierarms.com/surefire-sf3p-556-1-2x28/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AT3": {
         "price": 152,
-        "inStock": true,
+        "inStock": false,
         "url": "https://www.at3tactical.com/products/surefire-socom-ar-15-flash-hider-for-5-56-1-2x28-thread",
-        "checkedAt": "2026-10-21T13:45:25.171Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-stock-prs": {
@@ -822,7 +830,7 @@
         "price": 259.95,
         "inStock": true,
         "url": "https://magpul.com/prs-gen3-precision-adjustable-stock.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-bbl-grendel20": {
@@ -830,7 +838,7 @@
         "price": 301,
         "inStock": true,
         "url": "https://faxonfirearms.com/15BG8R20FHQ-5R-NP3",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AT3": {
         "price": 312.8,
@@ -844,7 +852,7 @@
         "price": 134.95,
         "inStock": true,
         "url": "https://blackrifledepot.com/lone-wolf-alpha-wolf-m-26-threaded-9mm-barrel-for-glock-26/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-mz-vg6": {
@@ -852,13 +860,13 @@
         "price": 90,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/vg6-gamma-556",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BRD": {
         "price": 80.99,
         "inStock": false,
         "url": "https://blackrifledepot.com/vg6-gamma-556-muzzle-brake/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-bbl-ba20": {
@@ -866,13 +874,13 @@
         "price": 175,
         "inStock": false,
         "url": "https://blackrifledepot.com/ballistic-advantage-20-5-56-government-rifle-length-modern-series-barrel/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RTB": {
         "price": 175.75,
         "inStock": false,
         "url": "https://www.righttobear.com/ballistic-advantage-20-5-56-govt-profile-barrel-babl556026m/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-stock-ctr": {
@@ -880,7 +888,7 @@
         "price": 69.95,
         "inStock": true,
         "url": "https://magpul.com/ctr-carbine-stock-mil-spec.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-lower-spikes": {
@@ -888,7 +896,7 @@
         "price": 120.6,
         "inStock": false,
         "url": "https://www.kygunco.com/product/spikes-tactical-stls019-cfa-spider-stripped-lower-223-rem-5.56-nato-black",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-bcg-grendel": {
@@ -896,13 +904,13 @@
         "price": 165,
         "inStock": true,
         "url": "https://faxonfirearms.com/FF65GBCGCNITRIDE",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AT3": {
         "price": 139.84,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/faxon-firearms-6-5-grendel-type-2-bolt-carrier-group-9310-steel-black-nitride",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-gb-slr750": {
@@ -910,13 +918,13 @@
         "price": 141.54,
         "inStock": true,
         "url": "https://www.wingtactical.com/firearm-parts/ar-15/gas-systems/gas-blocks/slr-rifleworks-steel-adjustable-sentry-7-gas-block/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RTB": {
         "price": 148.99,
         "inStock": false,
         "url": "https://www.righttobear.com/SLR-Rifleworks-Sentry-7-Set-Screw-Adjustable-Gas-B-p/sa7-sm.htm",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-buf-rifle": {
@@ -924,13 +932,13 @@
         "price": 80,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/ar15-rifle-buffer-kit-1",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BRD": {
         "price": 65.95,
         "inStock": false,
         "url": "https://blackrifledepot.com/aero-precision-ar-15-rifle-buffer-kit/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-stock-ubr": {
@@ -938,7 +946,7 @@
         "price": 219.95,
         "inStock": true,
         "url": "https://magpul.com/ubr-gen2-collapsible-stock.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-bbl-ba115": {
@@ -946,13 +954,13 @@
         "price": 137.75,
         "inStock": false,
         "url": "https://blackrifledepot.com/ballistic-advantage-modern-series-5-56-barrel-gov-carbine-11-5/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RTB": {
         "price": 137.75,
         "inStock": false,
         "url": "https://www.righttobear.com/ballistic-advantage-11-5-carbine-length-barrel-babl556023m/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-bbl-300": {
@@ -960,13 +968,13 @@
         "price": 171,
         "inStock": false,
         "url": "https://www.righttobear.com/ballistic-advantage-300-blackout-modern-16-barrel-babl300011m/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AT3": {
         "price": 171,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/ballistic-advantage-300-blackout-16-barrel-pistol-length-1-7-twist-4150-cmv-nitride",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-lower-seekins": {
@@ -974,7 +982,7 @@
         "price": 269,
         "inStock": false,
         "url": "https://www.kygunco.com/product/seekins-precision-110008-sp223-gen2-billet-lower-receiver-223-rem-black",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-stock-b5": {
@@ -982,7 +990,7 @@
         "price": 57.95,
         "inStock": true,
         "url": "https://www.wingtactical.com/firearm-parts-accessories/ar-15-parts/ar-stocks-and-accessories/b5-systems-bravo-stock/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g17-bbl-faxont": {
@@ -990,7 +998,7 @@
         "price": 99,
         "inStock": true,
         "url": "https://faxonfirearms.com/faxon-barrel-threaded-4150-nitride-for-g17/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-stock-moerifle": {
@@ -998,7 +1006,7 @@
         "price": 74.95,
         "inStock": true,
         "url": "https://magpul.com/moe-rifle-stock.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-bbl-ba10": {
@@ -1006,7 +1014,7 @@
         "price": 183.83,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/ballistic-advantage-5-56-10-3-barrel-hanson-carbine-length-performance-series",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-mag-armalite": {
@@ -1014,7 +1022,7 @@
         "price": 36.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/armalite-10607002-2nd-gen-20rd-ar10-magazine",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g19-bbl-lw": {
@@ -1022,7 +1030,7 @@
         "price": 134.95,
         "inStock": false,
         "url": "https://www.righttobear.com/lone-wolf-alpha-wolf-glock-19-threaded-barrel-sb-aw-19th/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-bbl-ba75": {
@@ -1030,13 +1038,13 @@
         "price": 109.25,
         "inStock": false,
         "url": "https://blackrifledepot.com/ballistic-advantage-7-5-5-56-pistol-length-ar-15-barrel-modern-series/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RTB": {
         "price": 109.25,
         "inStock": false,
         "url": "https://www.righttobear.com/ballistic-advantage-7-5-5-56-pistol-length-barrel-babl556001m/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-hg-moecarb": {
@@ -1044,7 +1052,7 @@
         "price": 36.95,
         "inStock": true,
         "url": "https://magpul.com/moem-lokhandguard-carbine-length-ar15-m4.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-bbl-ba18spr": {
@@ -1052,7 +1060,7 @@
         "price": 237.5,
         "inStock": false,
         "url": "https://www.righttobear.com/ballistic-advantage-18-223-wylde-spr-fluted-stai-babl223021pl/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "r-mag-vmx3t": {
@@ -1060,7 +1068,7 @@
         "price": 199.99,
         "inStock": true,
         "url": "https://www.kygunco.com/product/vortex-vmx-3t-vmx-3t-magnifier-with-flip-mount",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 199.99,
@@ -1074,13 +1082,13 @@
         "price": 18,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/gas-tube-pistol-length-stainless-steel",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BRD": {
         "price": 18.25,
         "inStock": false,
         "url": "https://blackrifledepot.com/aero-precision-melonite-pistol-length-gas-tube/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-hg-moerifle": {
@@ -1088,7 +1096,7 @@
         "price": 39.95,
         "inStock": true,
         "url": "https://magpul.com/moem-lokhandguard-rifle-length-ar15-m16.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g19-bbl-faxont": {
@@ -1096,19 +1104,19 @@
         "price": 99,
         "inStock": true,
         "url": "https://faxonfirearms.com/GA910N19NGQ-T",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RTB": {
         "price": 92,
         "inStock": false,
         "url": "https://www.righttobear.com/faxon-match-series-compact-9mm-barrel-threaded-fits-g19-gen-2-5/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 83.12,
         "inStock": false,
         "url": "https://www.rainierarms.com/faxon-firearms-duty-series-barrel-for-glock-19-threaded-nitride/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-bbl-ba300-9": {
@@ -1116,13 +1124,13 @@
         "price": 152,
         "inStock": false,
         "url": "https://blackrifledepot.com/ballistic-advantage-9-300-blk-pistol-length-nitride-modern-series-barrel/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RTB": {
         "price": 152,
         "inStock": false,
         "url": "https://www.righttobear.com/Ballistic-Advantage-9-Barrel-300-Blackout-p/babl300004m.htm",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-opt-vortex": {
@@ -1130,7 +1138,7 @@
         "price": 249.99,
         "inStock": true,
         "url": "https://www.kygunco.com/product/vortex-strike-eagle-1-8x24-with-cantilever-mount",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-hg-moe": {
@@ -1138,7 +1146,7 @@
         "price": 36.95,
         "inStock": true,
         "url": "https://magpul.com/moem-lokhandguard-mid-length-ar15-m4.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-gt-mid": {
@@ -1146,13 +1154,13 @@
         "price": 20,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/gas-tube-mid-length-stainless-steel",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BRD": {
         "price": 17.95,
         "inStock": false,
         "url": "https://blackrifledepot.com/aero-precision-melonite-mid-length-gas-tube/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-bbl-arc18": {
@@ -1168,7 +1176,7 @@
         "price": 18.95,
         "inStock": true,
         "url": "https://www.kygunco.com/product/bravo-company-bcm-kag-mcmr-blk-bcm-gunfighter-kag-black-m-lok-compatible",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-bbl-criterion": {
@@ -1176,7 +1184,7 @@
         "price": 317.95,
         "inStock": true,
         "url": "https://blackrifledepot.com/criterion-barrels-18-223-wylde-hybrid-phosphate-chrome-lined-rifle-length-barrel/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-bcg-aero": {
@@ -1184,7 +1192,7 @@
         "price": 170,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/ar15-556-bolt-carrier-group-complete-black-nitride",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "r-fg-mvg": {
@@ -1192,7 +1200,7 @@
         "price": 22.95,
         "inStock": true,
         "url": "https://magpul.com/m-lok-mvg-vertical-grip.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-hg-bcm10": {
@@ -1200,7 +1208,7 @@
         "price": 214.95,
         "inStock": false,
         "url": "https://www.rainierarms.com/bcm-gunfighter-ar-15-mcmr-223-5-56mm-rail-m-lok-compatible-mounting-slots-10/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-trig-cmc": {
@@ -1208,15 +1216,15 @@
         "price": 174,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/cmc-ar-15-match-trigger-flat-sp-91503",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-trig-larue": {
       "BRD": {
         "price": 115,
-        "inStock": false,
+        "inStock": true,
         "url": "https://blackrifledepot.com/larue-tactical-mbt-2s-ar-15-trigger/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "r-fg-afg2": {
@@ -1224,7 +1232,7 @@
         "price": 34.95,
         "inStock": true,
         "url": "https://magpul.com/afg-2-angled-fore-grip.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-mag-pmag21": {
@@ -1232,13 +1240,13 @@
         "price": 14.99,
         "inStock": true,
         "url": "https://www.kygunco.com/product/magpul-mag661-blk-pmag-21rd-gl9-9mm-glock-mag-21rd-black",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "MAGPUL": {
         "price": 19.95,
         "inStock": true,
         "url": "https://magpul.com/pmag21gl9-9x19-glock.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-bbl-grendel18": {
@@ -1246,7 +1254,7 @@
         "price": 223.25,
         "inStock": true,
         "url": "https://www.righttobear.com/ballistic-advantage-18-6-5-grendel-spr-barrel-babl65g003p/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "r-fg-stop": {
@@ -1254,7 +1262,7 @@
         "price": 24.95,
         "inStock": true,
         "url": "https://magpul.com/m-lok-handstop-kit.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-mz-sf3p30": {
@@ -1262,7 +1270,7 @@
         "price": 152,
         "inStock": false,
         "url": "https://www.at3tactical.com/products/surefire-socom-ar-10-flash-hider-for-7-62-5-8x24-thread",
-        "checkedAt": "2026-10-23T13:21:55.997Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "r-rail-9": {
@@ -1270,7 +1278,7 @@
         "price": 15.95,
         "inStock": true,
         "url": "https://magpul.com/m-lokpolymerrailsection-9slots.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-mz-lantac": {
@@ -1278,7 +1286,7 @@
         "price": 128.99,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/lantac-dragon-muzzle-brake-223-5-56-nato-1-2x28",
-        "checkedAt": "2026-10-23T13:21:55.997Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-opt-exps3": {
@@ -1286,7 +1294,7 @@
         "price": 815,
         "inStock": true,
         "url": "https://www.rainierarms.com/eotech-exps3-0-holographic-weapon-sight-black/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-hg-aero9": {
@@ -1294,7 +1302,7 @@
         "price": 169.99,
         "inStock": false,
         "url": "https://www.righttobear.com/Aero-9-inch-ATLAS-S-ONE-M-LOK-p/apra500102a.htm",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-stock-ctr": {
@@ -1302,7 +1310,7 @@
         "price": 69.95,
         "inStock": true,
         "url": "https://magpul.com/ctr-carbine-stock-mil-spec.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "r-light-m600": {
@@ -1310,7 +1318,7 @@
         "price": 296,
         "inStock": false,
         "url": "https://www.rainierarms.com/surefire-m600-dual-fuel-led-scout-light/",
-        "checkedAt": "2026-10-23T13:21:55.997Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-gb-aero625": {
@@ -1318,7 +1326,7 @@
         "price": 17.95,
         "inStock": false,
         "url": "https://blackrifledepot.com/625-low-profile-gas-block-phosphate/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-gt-rifle": {
@@ -1326,7 +1334,7 @@
         "price": 16.99,
         "inStock": false,
         "url": "https://www.righttobear.com/aero-precision-melonite-gas-tubes-rifle-aprh100283c/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-mz-sf3p": {
@@ -1334,13 +1342,13 @@
         "price": 152,
         "inStock": false,
         "url": "https://www.at3tactical.com/products/surefire-socom-ar-10-flash-hider-for-7-62-5-8x24-thread",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 152,
         "inStock": true,
         "url": "https://www.rainierarms.com/surefire-flash-hider-adapter-sf3p-762-5-8x24/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "r-laser-ls117": {
@@ -1348,7 +1356,7 @@
         "price": 194.92,
         "inStock": false,
         "url": "https://www.rainierarms.com/holosun-ls117g-green-visible-laser-designator/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-gb-sa750": {
@@ -1356,7 +1364,7 @@
         "price": 94.95,
         "inStock": false,
         "url": "https://www.righttobear.com/Superlative-Arms-750-Adjustable-Gas-Block-Bleed-p/sabo-di-750sm.htm",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-gb-sa625": {
@@ -1364,7 +1372,7 @@
         "price": 94.95,
         "inStock": false,
         "url": "https://www.righttobear.com/superlative-arms-625-adjustable-gas-block-bleed-sabo-di-625sm/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-mag-oem17": {
@@ -1372,13 +1380,13 @@
         "price": 30,
         "inStock": false,
         "url": "https://www.at3tactical.com/products/glock-oem-17-round-magazine-for-g17-34-9mm",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 26.99,
         "inStock": false,
         "url": "https://www.rainierarms.com/glock-g17-g34-oem-9mm-17rd-magazine/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g17-frame-g3": {
@@ -1394,21 +1402,21 @@
         "price": 18.95,
         "inStock": true,
         "url": "https://www.rainierarms.com/bravo-company-mfg-bcm-gunfighter-vertical-grip-mlok-compatible-mod-3/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BRD": {
         "price": 20.15,
         "inStock": true,
         "url": "https://blackrifledepot.com/bcm-gunfighter-m-lok-mod-3-vertical-grip-black/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-trig-larue": {
       "BRD": {
         "price": 115,
-        "inStock": false,
+        "inStock": true,
         "url": "https://blackrifledepot.com/larue-tactical-mbt-2s-ar-15-trigger/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-bbl-criterion": {
@@ -1416,7 +1424,7 @@
         "price": 375.95,
         "inStock": true,
         "url": "https://blackrifledepot.com/criterion-barrels-20-6-5-creedmoor-hybrid-nitride-rifle-length-barrel/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-bcg-toolcraft": {
@@ -1424,7 +1432,7 @@
         "price": 159.95,
         "inStock": false,
         "url": "https://blackrifledepot.com/toolcraft-ar-10-308-6-5-creedmoor-bolt-carrier-group-black-nitride/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-opt-507k": {
@@ -1432,7 +1440,7 @@
         "price": 295.99,
         "inStock": true,
         "url": "https://blackrifledepot.com/holosun-technologies-507k-x2-red-dot-sight-2-moa/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-irons-mbus": {
@@ -1440,13 +1448,13 @@
         "price": 94.9,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/magpul-mbus-gen-3-front-and-rear-back-up-sight-kit",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BRD": {
         "price": 94.9,
         "inStock": true,
         "url": "https://blackrifledepot.com/magpul-mbus-gen-3-sight-set-black/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-irons-mbuspro": {
@@ -1460,7 +1468,7 @@
         "price": 218.4,
         "inStock": true,
         "url": "https://blackrifledepot.com/magpul-mbus-pro-sight-set/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-irons-mbusr": {
@@ -1468,31 +1476,31 @@
         "price": 59.95,
         "inStock": true,
         "url": "https://magpul.com/mbus-3-sight-rear.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AT3": {
         "price": 56.95,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/magpul-mbus-gen-3-rear-back-up-sight-mag1167",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BRD": {
         "price": 56.95,
         "inStock": true,
         "url": "https://blackrifledepot.com/magpul-mbus-3-rear-sight-black/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 37.99,
         "inStock": true,
         "url": "https://www.kygunco.com/product/magpul-mag1167-blk-mbus-3-sight-rear",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 56.95,
         "inStock": true,
         "url": "https://www.rainierarms.com/magpul-mbus-gen-3-rear-sight/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-irons-mbus": {
@@ -1506,7 +1514,7 @@
         "price": 94.9,
         "inStock": true,
         "url": "https://blackrifledepot.com/magpul-mbus-gen-3-sight-set-black/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-irons-mbuspro": {
@@ -1514,13 +1522,13 @@
         "price": 194.69,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/magpul-mbus-pro-front-and-rear-back-up-sight-kit",
-        "checkedAt": "2026-10-23T13:21:55.997Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BRD": {
         "price": 218.4,
         "inStock": true,
         "url": "https://blackrifledepot.com/magpul-mbus-pro-sight-set/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-irons-mbus": {
@@ -1528,13 +1536,13 @@
         "price": 94.9,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/magpul-mbus-gen-3-front-and-rear-back-up-sight-kit",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BRD": {
         "price": 94.9,
         "inStock": true,
         "url": "https://blackrifledepot.com/magpul-mbus-gen-3-sight-set-black/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-irons-mbuspro": {
@@ -1548,7 +1556,7 @@
         "price": 218.4,
         "inStock": true,
         "url": "https://blackrifledepot.com/magpul-mbus-pro-sight-set/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-irons-mbusr": {
@@ -1556,31 +1564,31 @@
         "price": 59.95,
         "inStock": true,
         "url": "https://magpul.com/mbus-3-sight-rear.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AT3": {
         "price": 56.95,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/magpul-mbus-gen-3-rear-back-up-sight-mag1167",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BRD": {
         "price": 56.95,
         "inStock": true,
         "url": "https://blackrifledepot.com/magpul-mbus-3-rear-sight-black/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 37.99,
         "inStock": true,
         "url": "https://www.kygunco.com/product/magpul-mag1167-blk-mbus-3-sight-rear",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 56.95,
         "inStock": true,
         "url": "https://www.rainierarms.com/magpul-mbus-gen-3-rear-sight/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-sight-nf": {
@@ -1588,7 +1596,7 @@
         "price": 99,
         "inStock": true,
         "url": "https://www.nightfision.com/product/night-fision-suppressor-height-sights-for-sig-sauer",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 105.3,
@@ -1602,25 +1610,25 @@
         "price": 39.95,
         "inStock": true,
         "url": "https://www.strikeindustries.com/si-p320-sights-sh.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "WING": {
         "price": 36.95,
         "inStock": true,
         "url": "https://www.wingtactical.com/firearm-parts/handgun/handgun-sights/strike-industries-suppressor-height-iron-sight-set-for-sig-sauer-p320/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 36.95,
         "inStock": false,
         "url": "https://www.rainierarms.com/strike-industries-strike-iron-front-rear-sights-for-sig-sauer-p320-suppressor-height/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BUDS": {
         "price": 35.49,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-sights/strike-industries-suppressor-height-iron-sights-sig-p320-144049",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-sight-xray3": {
@@ -1628,7 +1636,7 @@
         "price": 99.99,
         "inStock": true,
         "url": "https://www.kygunco.com/product/sig-sauer-sox10003-xray3-set-day-night-no-8-grn-no-8-rear-sq-notch",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-sight-xray3s": {
@@ -1636,13 +1644,13 @@
         "price": 99.99,
         "inStock": true,
         "url": "https://www.kygunco.com/product/sig-sauer-sox10009-xray3-sight-set-day-night-super-tall",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 99.99,
         "inStock": false,
         "url": "https://www.rainierarms.com/sig-sauer-xray3-day-night-super-tall-sight-set/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p365-sight-nf": {
@@ -1650,13 +1658,13 @@
         "price": 99,
         "inStock": true,
         "url": "https://www.nightfision.com/product/night-fision-suppressor-height-sights-for-sig-sauer",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 105.3,
         "inStock": true,
         "url": "https://www.rainierarms.com/night-fision-suppressor-height-sig-sauer-tritium-sight-set-square-rear/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-grip-moe": {
@@ -1664,7 +1672,7 @@
         "price": 18.95,
         "inStock": true,
         "url": "https://aerospacearms.com/magpul-industries-moe-grip-ar15-m4-black/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-grip-hogue": {
@@ -1672,13 +1680,13 @@
         "price": 25.46,
         "inStock": true,
         "url": "https://www.wingtactical.com/firearm-parts-accessories/hogue-overmolded-ar-15-rubberized-grip/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 31.2,
         "inStock": true,
         "url": "https://gritrsports.com/hogue-ar-15-overmolded-rubber-grip-15000",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-upper-bcm": {
@@ -1686,7 +1694,7 @@
         "price": 144.95,
         "inStock": false,
         "url": "https://aerospacearms.com/bravo-company-m4-upper-receiver-assembly-with-laser-t-markings/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-upper-anderson": {
@@ -1694,13 +1702,13 @@
         "price": 36.99,
         "inStock": false,
         "url": "https://gritrsports.com/anderson-am-15-stripped-upper-receiver-d2-k100-a000-0p",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AA": {
         "price": 79.95,
         "inStock": true,
         "url": "https://aerospacearms.com/anderson-am-15-stripped-upper-receiver-free-shipping/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-ch-geissele": {
@@ -1708,31 +1716,31 @@
         "price": 110,
         "inStock": true,
         "url": "https://www.rainierarms.com/geissele-airborne-ar15-charging-handle-ach/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "SPW": {
         "price": 105.99,
         "inStock": false,
         "url": "https://www.sportsmans.com/shooting-gear-gun-supplies/gun-parts-accessories/gun-parts-magazines/rifle-parts/upper-receiver-parts/geissele-airborne-556mm-nato-charging-handle-black/p/1628430",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 101.04,
         "inStock": true,
         "url": "https://www.kygunco.com/product/geissele-usasoc-airborne-charging-handle-black",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 99.99,
         "inStock": true,
         "url": "https://gritrsports.com/geissele-automatics-airborne-charging-handle-05-497b",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BUDS": {
         "price": 105,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-ar15/geissele-airborne-charging-handle-black-05-497b-184929",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-mz-a2": {
@@ -1740,19 +1748,19 @@
         "price": 8.99,
         "inStock": false,
         "url": "https://www.wingtactical.com/firearm-parts/ar-15/muzzle-devices/aero-precision-a2-birdcage-flash-hider-5-56-223/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "WC": {
         "price": 10.95,
         "inStock": true,
         "url": "https://wilsoncombat.com/flash-hider-a2-birdcage-5-56-nato.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 8.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/aero-precision-aprh100111c-ar15-a2-birdcage-flash-hider",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "r-light-rein": {
@@ -1760,13 +1768,13 @@
         "price": 309.99,
         "inStock": true,
         "url": "https://www.wingtactical.com/accessories/lights-lasers/cloud-defensive-rein-micro-weapon-light/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 349.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/cloud-defensive-rein-3.0-micro-weaponlight-95000-candela-black",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "r-case-v700": {
@@ -1774,13 +1782,13 @@
         "price": 169.95,
         "inStock": true,
         "url": "https://www.kygunco.com/product/pelican-vcv700-0000-blk-v700-vault-takedown-case-black",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 169.95,
         "inStock": true,
         "url": "https://gritrsports.com/pelican-vault-v700-takedown-plastic-gun-case-vcv700-0000-blk",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "r-case-v730": {
@@ -1788,13 +1796,13 @@
         "price": 209.99,
         "inStock": true,
         "url": "https://www.sportsmans.com/shooting-gear-gun-supplies/gun-safes-cabinets-accessories/gun-cases-locks/rifle-cases/pelican-v730-vault-44in-tactical-rifle-case/p/1524741",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 209.95,
         "inStock": true,
         "url": "https://gritrsports.com/pelican-vault-v730-tactical-plastic-rifle-case-vcv730-0000-blk",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-lower-aero": {
@@ -1802,13 +1810,13 @@
         "price": 169.99,
         "inStock": false,
         "url": "https://www.sportsmans.com/shooting-gear-gun-supplies/gun-parts-accessories/gun-parts-magazines/rifle-parts/receivers-lowers/aero-precision-epc-9-black-anodized-stripped-lower-rifle-receiver/p/1775172",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AA": {
         "price": 169.99,
         "inStock": false,
         "url": "https://aerospacearms.com/aero-precision-epc-9-lower-receiver-anodized-black-free-shipping/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-lower-spikes": {
@@ -1816,13 +1824,13 @@
         "price": 161.1,
         "inStock": false,
         "url": "https://www.kygunco.com/product/spikes-tactical-stls910-forged-colt-9mm-spider-stripped-lower-receiver",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 161.1,
         "inStock": true,
         "url": "https://gritrsports.com/spikes-tactical-9mm-colt-lower-receiver-stls910",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AT3": {
         "price": 161.1,
@@ -1836,7 +1844,7 @@
         "price": 35.95,
         "inStock": false,
         "url": "https://blackrifledepot.com/aero-precision-epc-lower-parts-kit-minus-fcg-grip/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-trig-alg": {
@@ -1844,19 +1852,19 @@
         "price": 82.95,
         "inStock": true,
         "url": "https://www.rainierarms.com/alg-defense-combat-trigger-act/",
-        "checkedAt": "2026-10-23T13:21:55.997Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BUDS": {
         "price": 75.49,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-triggers/alg-defense-combat-trigger-6-pound-pull-act-714018681",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AT3": {
         "price": 82.95,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/alg-defense-advanced-combat-trigger-act",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-trig-cmc": {
@@ -1864,7 +1872,7 @@
         "price": 167.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-triggers/cmc-triggers-9mm-pcc-drop-in-single-stage-flat-trigger-3-110608",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-buf-aero": {
@@ -1872,7 +1880,7 @@
         "price": 85.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/aero-precision-aprh101727c-epc-7.7-oz-buffer-kit",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-buf-spikes": {
@@ -1880,25 +1888,19 @@
         "price": 44.96,
         "inStock": false,
         "url": "https://www.wingtactical.com/firearm-parts/ar-15/buffer-buffer-tubes/spikes-tactical-st-9x-9mm-heavy-buffer/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 44.96,
         "inStock": false,
         "url": "https://www.kygunco.com/product/spikes-tactical-sla009x-st-9x-heavy-buffer-9mm-fits-ar-15-rifles-stainless",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 44.96,
         "inStock": false,
         "url": "https://gritrsports.com/spikes-tactical-st-9x-9mm-heavy-buffer-sla009x",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
-      },
-      "AT3": {
-        "price": 44.96,
-        "inStock": true,
-        "url": "https://www.at3tactical.com/products/spikes-tactical-st-9x-9mm-heavy-buffer",
-        "checkedAt": "2026-10-18T12:35:44.640Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BUDS": {
         "price": 43.49,
@@ -1912,13 +1914,13 @@
         "price": 61.99,
         "inStock": true,
         "url": "https://www.sportsmans.com/shooting-gear-gun-supplies/gun-parts-accessories/gun-parts-magazines/rifle-parts/stocks-recoil-pads/magpul-moe-sl-carbine-stock/p/p40103",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 66.45,
         "inStock": true,
         "url": "https://www.rainierarms.com/magpul-moe-sl-carbine-stock-mil-spec/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-stock-b5": {
@@ -1926,19 +1928,19 @@
         "price": 57.95,
         "inStock": true,
         "url": "https://www.wingtactical.com/firearm-parts-accessories/ar-15-parts/ar-stocks-and-accessories/b5-systems-bravo-stock/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 57.95,
         "inStock": true,
         "url": "https://www.rainierarms.com/b5-systems-bravo-stock/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 57.95,
         "inStock": true,
         "url": "https://www.kygunco.com/product/b5-systems-brv-1082-bravo-stock-black-mil-spec-size",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-stock-ctr": {
@@ -1946,13 +1948,13 @@
         "price": 66.45,
         "inStock": true,
         "url": "https://www.rainierarms.com/magpul-ctr-carbine-stock-mil-spec/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AA": {
         "price": 61.7,
         "inStock": true,
         "url": "https://aerospacearms.com/magpul-industries-ctr-carbine-stock-mil-spec-black-ar15-m4/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-brace-sba3": {
@@ -1960,19 +1962,19 @@
         "price": 99.99,
         "inStock": true,
         "url": "https://www.wingtactical.com/firearm-parts-accessories/sb-tactical-sba3-pistol-stabilizing-brace/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 99.99,
         "inStock": true,
         "url": "https://www.rainierarms.com/sb-tactical-sba3-pistol-stabilizing-brace/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 99.99,
         "inStock": true,
         "url": "https://gritrsports.com/sb-tactical-sba3-black-pistol-stabilizing-brace-sba3x-01-sb",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-brace-sba4": {
@@ -1980,7 +1982,7 @@
         "price": 99.99,
         "inStock": true,
         "url": "https://www.wingtactical.com/firearm-parts-accessories/sb-tactical-sba4-pistol-stabilizing-brace/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-grip-bcm": {
@@ -1988,7 +1990,7 @@
         "price": 17.95,
         "inStock": true,
         "url": "https://www.kygunco.com/product/bravo-company-bcm-gfg-mod-3-black-bcm-gunfighter-grip-mod-3-black",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-grip-k2": {
@@ -1996,7 +1998,7 @@
         "price": 21.95,
         "inStock": true,
         "url": "https://www.wingtactical.com/firearm-parts/ar-15-parts/grips-foregrips/pistol-grips/magpul-moe-k2-ar-15-grip/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-upper-aero": {
@@ -2004,13 +2006,13 @@
         "price": 167.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/aero-precision-apar620301ac-epc-9-9-40-enhanced-upper-receiver-lrbho",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AA": {
         "price": 189.99,
         "inStock": false,
         "url": "https://aerospacearms.com/aero-precision-epc-9-enhanced-upper-receiver-w-lrbho-anodized-black-free-shipping/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-upper-m4e1": {
@@ -2018,13 +2020,13 @@
         "price": 134.99,
         "inStock": true,
         "url": "https://www.wingtactical.com/firearm-parts/ar-15-parts/ar-15-upper-receiver-parts/upper-receivers/aero-precision-m4e1-threaded-ar15-upper-receiver/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 130.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/aero-precision-llc-apar700201c-m4e1-threaded-stripped-upper-receiver",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-bcg-kak": {
@@ -2032,7 +2034,7 @@
         "price": 125.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-ar15/kak-industry-ar9-enhanced-9mm-bolt-carrier-group-198376",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-bcg-faxon": {
@@ -2040,7 +2042,7 @@
         "price": 156.75,
         "inStock": true,
         "url": "https://aerospacearms.com/faxon-firearms-gen-2-9mm-pcc-blowback-full-mass-bolt-carrier-group-nitride/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-ch-radian": {
@@ -2048,19 +2050,19 @@
         "price": 104.95,
         "inStock": true,
         "url": "https://www.wingtactical.com/firearm-parts-accessories/radian-raptor-ar-15-ambidextrous-charging-handle/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "SPW": {
         "price": 99.99,
         "inStock": true,
         "url": "https://www.sportsmans.com/shooting-gear-gun-supplies/gun-parts-accessories/gun-parts-magazines/rifle-parts/upper-receiver-parts/radian-raptor-ar15-ambidextrous-charging-handle/p/p49846",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 104.95,
         "inStock": true,
         "url": "https://www.rainierarms.com/radian-raptor-ambidextrous-charging-handle-5-56mm-ar-15/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-mz-kak": {
@@ -2068,7 +2070,7 @@
         "price": 25,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/kak-industry-slimline-flash-can-1-2x28-thread",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-mag-gl9": {
@@ -2076,7 +2078,7 @@
         "price": 19.99,
         "inStock": true,
         "url": "https://www.sportsmans.com/shooting-gear-gun-supplies/gun-parts-accessories/gun-parts-magazines/magazines-clips/handgun-magazines/magpul-pmag-21-gl9-glock-9mm-luger-handgun-magazine-21-rounds/p/1440139",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 18.95,
@@ -2090,19 +2092,19 @@
         "price": 512,
         "inStock": false,
         "url": "https://www.kygunco.com/product/aimpoint-12841-patrol-rifle-optic-pro",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 482,
         "inStock": true,
         "url": "https://gritrsports.com/aimpoint-patrol-rifle-optic-pro-12841",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "MI": {
         "price": 497,
         "inStock": true,
         "url": "https://midwestindustriesinc.com/aimpoint-pro-patrol-rifle-optic/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-opt-exps3": {
@@ -2110,7 +2112,7 @@
         "price": 708.65,
         "inStock": true,
         "url": "https://www.kygunco.com/product/eotech-exps3-2-exps3-2-holographic-sight",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g17-bbl-ba": {
@@ -2126,7 +2128,7 @@
         "price": 130.5,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/ballistic-advantage-premium-glock-19-gen-3-5-threaded-barrel-1-2x28",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-sight-trijicon": {
@@ -2134,7 +2136,7 @@
         "price": 149.95,
         "inStock": false,
         "url": "https://blackrifledepot.com/trijicon-hd-xr-night-sights-for-standard-glock-og-g/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-sight-nf": {
@@ -2142,7 +2144,7 @@
         "price": 99,
         "inStock": true,
         "url": "https://www.nightfision.com/product/night-fision-suppressor-height-sights-for-glock",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-opt-sro": {
@@ -2150,7 +2152,7 @@
         "price": 617.95,
         "inStock": true,
         "url": "https://wilsoncombat.com/optic-trijicon-sro-2-5-moa.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-opt-sro": {
@@ -2158,7 +2160,7 @@
         "price": 617.95,
         "inStock": true,
         "url": "https://wilsoncombat.com/optic-trijicon-sro-2-5-moa.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-opt-epsc": {
@@ -2166,7 +2168,7 @@
         "price": 399.99,
         "inStock": true,
         "url": "https://www.rainierarms.com/holosun-eps-carry-multireticle/",
-        "checkedAt": "2026-10-23T13:21:55.997Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "hc-opt-eps": {
@@ -2174,7 +2176,7 @@
         "price": 399.99,
         "inStock": true,
         "url": "https://www.rainierarms.com/holosun-eps-carry-multireticle/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-opt-mps": {
@@ -2182,7 +2184,7 @@
         "price": 386.99,
         "inStock": true,
         "url": "https://gritrsports.com/steiner-mps-micro-pistol-sight-8700-mps",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-light-x300": {
@@ -2190,7 +2192,7 @@
         "price": 341,
         "inStock": true,
         "url": "https://gritrsports.com/surefire-x300u-a-ultra-600-lm-led-weaponlight-x300u-a",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-case-pelican": {
@@ -2198,7 +2200,7 @@
         "price": 64.95,
         "inStock": true,
         "url": "https://www.kygunco.com/product/pelican-1170-000-110-1170-wlwf-black-small-case",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gs-opt-rmsc": {
@@ -2206,7 +2208,7 @@
         "price": 386.95,
         "inStock": true,
         "url": "https://wilsoncombat.com/optic-shield-rmsc-4-moa.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p365-opt-rmsc": {
@@ -2214,7 +2216,7 @@
         "price": 386.95,
         "inStock": true,
         "url": "https://wilsoncombat.com/optic-shield-rmsc-4-moa.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "hc-opt-rmsc": {
@@ -2222,7 +2224,7 @@
         "price": 386.95,
         "inStock": true,
         "url": "https://wilsoncombat.com/optic-shield-rmsc-4-moa.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gs-opt-rmr": {
@@ -2230,7 +2232,7 @@
         "price": 566.95,
         "inStock": true,
         "url": "https://wilsoncombat.com/optic-trijicon-rmr-type-2-3-25-moa.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-opt-rmr": {
@@ -2238,7 +2240,7 @@
         "price": 566.95,
         "inStock": true,
         "url": "https://wilsoncombat.com/optic-trijicon-rmr-type-2-3-25-moa.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-opt-rmr": {
@@ -2246,7 +2248,7 @@
         "price": 566.95,
         "inStock": true,
         "url": "https://wilsoncombat.com/optic-trijicon-rmr-type-2-3-25-moa.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-sight-hdxr": {
@@ -2254,7 +2256,7 @@
         "price": 121.99,
         "inStock": true,
         "url": "https://gritrsports.com/trijicon-hd-xr-night-sight-set-glock-large-frames-gl604-c-600840",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-opt-507c": {
@@ -2268,7 +2270,7 @@
         "price": 270,
         "inStock": true,
         "url": "https://midwestindustriesinc.com/holosun-hs507c-x2-reflex-sight/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-opt-507c": {
@@ -2276,13 +2278,13 @@
         "price": 232.99,
         "inStock": true,
         "url": "https://www.rainierarms.com/holosun-hs507c-x2-circle-dot-sight/",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "MI": {
         "price": 270,
         "inStock": true,
         "url": "https://midwestindustriesinc.com/holosun-hs507c-x2-reflex-sight/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-opt-507c": {
@@ -2290,13 +2292,13 @@
         "price": 232.99,
         "inStock": true,
         "url": "https://www.rainierarms.com/holosun-hs507c-x2-circle-dot-sight/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "MI": {
         "price": 270,
         "inStock": true,
         "url": "https://midwestindustriesinc.com/holosun-hs507c-x2-reflex-sight/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-opt-407c": {
@@ -2304,7 +2306,7 @@
         "price": 185.99,
         "inStock": false,
         "url": "https://www.rainierarms.com/holosun-hs407c-x2-dot-sight-2-moa/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-opt-407c": {
@@ -2312,7 +2314,7 @@
         "price": 185.99,
         "inStock": false,
         "url": "https://www.rainierarms.com/holosun-hs407c-x2-dot-sight-2-moa/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-grip-carry": {
@@ -2320,13 +2322,13 @@
         "price": 53.99,
         "inStock": true,
         "url": "https://www.sportsmans.com/shooting-gear-gun-supplies/gun-parts-accessories/gun-parts-magazines/handgun-parts/handgun-grips-frames/sig-sauer-p320p250-carry-medium-grip-module-black/p/1695111",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 58.65,
         "inStock": true,
         "url": "https://www.kygunco.com/product/sig-sauer-grip-mod-ca-943-m-blk-320-carry-grip-module-assembly-medium-black",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-grip-axg": {
@@ -2334,7 +2336,7 @@
         "price": 322.24,
         "inStock": true,
         "url": "https://gritrsports.com/sig-sauer-p320-axg-carry-grip-module-assy-8900063",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-grip-45": {
@@ -2342,7 +2344,7 @@
         "price": 76.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/sig-sauer-grip-module-assy-p320-10mm-45-acp-medium-blk",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-bbl-20lwt": {
@@ -2350,7 +2352,7 @@
         "price": 134.95,
         "inStock": false,
         "url": "https://gritrsports.com/lone-wolf-alphawolf-10mm-barrel-for-glock-20-aw-2010th",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p365-opt-407k": {
@@ -2358,7 +2360,7 @@
         "price": 224.99,
         "inStock": true,
         "url": "https://gritrsports.com/holosun-hs407k-6-moa-reflex-sight-hs407k-x2",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-opt-407k": {
@@ -2366,7 +2368,7 @@
         "price": 224.99,
         "inStock": true,
         "url": "https://gritrsports.com/holosun-hs407k-6-moa-reflex-sight-hs407k-x2",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "hc-opt-407k": {
@@ -2374,7 +2376,7 @@
         "price": 224.99,
         "inStock": true,
         "url": "https://gritrsports.com/holosun-hs407k-6-moa-reflex-sight-hs407k-x2",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p365-opt-rmrcc": {
@@ -2382,13 +2384,13 @@
         "price": 592.95,
         "inStock": true,
         "url": "https://wilsoncombat.com/optic-trijicon-rmrcc-3-25-moa.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BRD": {
         "price": 599,
         "inStock": true,
         "url": "https://blackrifledepot.com/trijicon-rmrcc-mini-reflex-sight-adjustable-led-3-25-moa/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-trig-timney": {
@@ -2396,25 +2398,25 @@
         "price": 121.33,
         "inStock": true,
         "url": "https://www.kygunco.com/product/timney-triggers-sw-mp-alpha-glock-5-competition-series-trigger-3-lb-pull",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BUDS": {
         "price": 149.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-triggers/timney-alpha-competition-trigger-3-lbs-s-w-m-p-1-0-2-0-143094",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "WING": {
         "price": 149.99,
         "inStock": true,
         "url": "https://www.wingtactical.com/firearm-parts/handgun/pistol-trigger-parts/timney-alpha-competition-series-trigger-for-smith-wesson-m-p/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 129,
         "inStock": true,
         "url": "https://gritrsports.com/timney-triggers-alpha-competition-trigger-swmp",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-sight-sup": {
@@ -2422,7 +2424,7 @@
         "price": 83.49,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-sights/trijicon-suppressor-optic-height-s-w-m-p-night-sights-714032098",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-opt-venom": {
@@ -2430,7 +2432,7 @@
         "price": 132.99,
         "inStock": false,
         "url": "https://gritrsports.com/vortex-venom-3-m-o-a-reflex-sight-vmd-3103",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-opt-dpp": {
@@ -2438,7 +2440,7 @@
         "price": 437.95,
         "inStock": true,
         "url": "https://wilsoncombat.com/optic-leupold-deltapoint-pro-2-5-moa.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-mag-23": {
@@ -2446,7 +2448,7 @@
         "price": 45.49,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/magazines/s-w-smith-wesson-m-p9-9mm-23-round-magazine-adapter-155988",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "hc-procomp": {
@@ -2454,15 +2456,7 @@
         "price": 631.67,
         "inStock": true,
         "url": "https://www.kygunco.com/product/springfield-armory-hellcat-pro-comp-osp-9mm-3.7-15rd-black",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
-      }
-    },
-    "hc-slide-tp": {
-      "BUDS": {
-        "price": 312.49,
-        "inStock": true,
-        "url": "https://www.budsgunshop.com/products/gun-parts-miscellaneous/true-precision-axiom-pro-optic-cut-slide-hellcat-rmsc-171597",
-        "checkedAt": "2026-10-18T12:35:44.640Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "hc-bbl-tp": {
@@ -2470,19 +2464,19 @@
         "price": 179.99,
         "inStock": true,
         "url": "https://www.sportsmans.com/shooting-gear-gun-supplies/gun-parts-accessories/gun-parts-magazines/handgun-parts/handgun-barrels/true-precision-hellcat-pro-9mm-luger-threaded-handgun-barrel-37in-stainless/p/p314723",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 180.49,
         "inStock": true,
         "url": "https://www.rainierarms.com/true-precision-springfield-hellcat-pro-threaded-barrel-black-nitride/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BUDS": {
         "price": 154.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-barrels/true-precision-9mm-threaded-barrel-1-2x28-hellcat-pro-163210",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "hc-trig-apex": {
@@ -2490,13 +2484,13 @@
         "price": 85,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/apex-tactical-springfield-hellcat-hellcat-pro-action-enhancement-trigger-kit",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "WING": {
         "price": 80.75,
         "inStock": true,
         "url": "https://www.wingtactical.com/firearm-parts/handgun/pistol-trigger-parts/apex-action-enhancement-trigger-for-springfield-hellcat/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "hc-opt-507k": {
@@ -2504,7 +2498,7 @@
         "price": 295.99,
         "inStock": true,
         "url": "https://gritrsports.com/holosun-hs507k-multi-reticle-system-reflex-sight-hs507k-x2",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "hc-mag-11": {
@@ -2512,7 +2506,7 @@
         "price": 21.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/magazines/springfield-armory-hellcat-9mm-11-round-magazine-hc5911-723046040",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "hc-mag-13": {
@@ -2520,7 +2514,7 @@
         "price": 30.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/magazines/springfield-armory-hellcat-9mm-13-round-magazine-118132",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "hc-mag-15": {
@@ -2528,7 +2522,7 @@
         "price": 30.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/magazines/springfield-armory-hellcat-15-round-9mm-magazine-stainless-138136",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "hc-mag-p10": {
@@ -2536,7 +2530,7 @@
         "price": 21.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/magazines/springfield-armory-hellcat-pro-10-round-9mm-magazine-154705",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "hc-mag-p17": {
@@ -2544,7 +2538,7 @@
         "price": 30.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/magazines/springfield-armory-hellcat-pro-17-round-9mm-magazine-158888",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-lower-jp": {
@@ -2560,13 +2554,13 @@
         "price": 178.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/aero-precision-llc-aprh101200c-9mm-epc-bcg-direct-blowback-nitride",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BRD": {
         "price": 173.95,
         "inStock": false,
         "url": "https://blackrifledepot.com/aero-precision-9mm-bolt-carrier-group-direct-blowback-nitride/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-mag-g17": {
@@ -2574,13 +2568,13 @@
         "price": 29.99,
         "inStock": true,
         "url": "https://www.sportsmans.com/shooting-gear-gun-supplies/gun-parts-accessories/gun-parts-magazines/magazines-clips/handgun-magazines/glock-g17-9mm-luger-handgun-magazine-17-rounds/p/1028859",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "WC": {
         "price": 33.95,
         "inStock": true,
         "url": "https://wilsoncombat.com/magazine-glock-17-gen-5-9mm-17-round.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-opt-holosun": {
@@ -2588,7 +2582,7 @@
         "price": 309.99,
         "inStock": true,
         "url": "https://www.sportsmans.com/hunting-gear-supplies/optics-binoculars-scopes-rangefinders/red-dots/holosun-open-reflex-sight/p/p59194",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-opt-romeo5x": {
@@ -2596,13 +2590,13 @@
         "price": 143.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/optics-red-dots/sig-sauer-romeo5x-gen-ii-1x20-2-moa-red-dot-rose-192855",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BRD": {
         "price": 149.95,
         "inStock": false,
         "url": "https://blackrifledepot.com/sig-sauer-romeo5x-gen-ii-1x20-2-moa-red-dot-sight/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g17-bbl-lwm": {
@@ -2610,7 +2604,7 @@
         "price": 134.95,
         "inStock": true,
         "url": "https://blackrifledepot.com/lone-wolf-alpha-wolf-9mm-fluted-threaded-barrel-for-glock-17-nitride/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g26-bbl-lwm": {
@@ -2618,7 +2612,7 @@
         "price": 164.25,
         "inStock": false,
         "url": "https://gritrsports.com/lone-wolf-alphawolf-9mm-1-2x28-barrel-for-m-26-aw-26th",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-opt-acro": {
@@ -2626,19 +2620,19 @@
         "price": 649,
         "inStock": false,
         "url": "https://www.sportsmans.com/hunting-gear-supplies/optics-binoculars-scopes-rangefinders/red-dots/aimpoint-acro-p-2-1x-red-dot-35-moa/p/1863833",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 617,
         "inStock": true,
         "url": "https://www.rainierarms.com/aimpoint-acro-p-2-red-dot-reflex-sight/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 599,
         "inStock": false,
         "url": "https://gritrsports.com/aimpoint-acro-p-2-red-dot-reflex-sight-200691",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-opt-acro": {
@@ -2646,19 +2640,19 @@
         "price": 649,
         "inStock": false,
         "url": "https://www.sportsmans.com/hunting-gear-supplies/optics-binoculars-scopes-rangefinders/red-dots/aimpoint-acro-p-2-1x-red-dot-35-moa/p/1863833",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 617,
         "inStock": true,
         "url": "https://www.rainierarms.com/aimpoint-acro-p-2-red-dot-reflex-sight/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 599,
         "inStock": false,
         "url": "https://gritrsports.com/aimpoint-acro-p-2-red-dot-reflex-sight-200691",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-opt-acro": {
@@ -2666,7 +2660,7 @@
         "price": 649,
         "inStock": false,
         "url": "https://www.sportsmans.com/hunting-gear-supplies/optics-binoculars-scopes-rangefinders/red-dots/aimpoint-acro-p-2-1x-red-dot-35-moa/p/1863833",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 617,
@@ -2678,7 +2672,7 @@
         "price": 599,
         "inStock": false,
         "url": "https://gritrsports.com/aimpoint-acro-p-2-red-dot-reflex-sight-200691",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-plate-k": {
@@ -2686,7 +2680,7 @@
         "price": 79.99,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/ch-precision-glock-mos-adapter-plate-holosun-407k-507k",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-light-tlr7a": {
@@ -2694,7 +2688,7 @@
         "price": 139.69,
         "inStock": true,
         "url": "https://www.kygunco.com/product/streamlight-69424-tlr-7-a-flex-weapon-light-w-low-high-switch",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-light-tlr7sub-g": {
@@ -2702,13 +2696,13 @@
         "price": 166.99,
         "inStock": true,
         "url": "https://www.kygunco.com/product/streamlight-69400-tlr-7-sub-for-glock-43x48-mos-43x48-rail",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 130.99,
         "inStock": false,
         "url": "https://gritrsports.com/streamlight-tlr-7-sub-weapon-light-for-glock-43x-69400",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-mz-tp578": {
@@ -2724,7 +2718,7 @@
         "price": 17.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/lone-wolf-dist-lwd-tp9-16x24-thread-protector-9-16-x-24-40-caliber-10mm-bbl",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-mag-20": {
@@ -2732,7 +2726,7 @@
         "price": 24.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/magazines/glock-factory-magazine-g20-10mm-15-round-black-13258",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-mag-20-10": {
@@ -2740,7 +2734,7 @@
         "price": 21.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/magazines/glock-20-gen5-10mm-10-round-magazine-black-156120",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-mag-21-10": {
@@ -2748,7 +2742,7 @@
         "price": 21.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/magazines/glock-21-gen5-45-acp-10-round-magazine-156121",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-mag-21ets18": {
@@ -2756,7 +2750,7 @@
         "price": 18.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/magazines/ets-glk-21-18-45-acp-18rd-clear-detachable-magazine-117692",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-grip-wilson": {
@@ -2764,7 +2758,7 @@
         "price": 62.8,
         "inStock": true,
         "url": "https://www.kygunco.com/product/wilson-combat-320-csb-sig-sauer-p320-carry-grip-mod-black",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-slide-compor": {
@@ -2772,7 +2766,7 @@
         "price": 286.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/sig-sauer-8900958-p320-9mm-3.9-black-ss-optic-ready-slide-xray3",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-bbl-s9": {
@@ -2780,7 +2774,7 @@
         "price": 147.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/sig-sauer-barrel-p320-9mm-dlc-3.6-no-lci-blk",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p365-bbl-xlthr": {
@@ -2788,7 +2782,7 @@
         "price": 184.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/uncategorized/sig-sauer-p365xl-9mm-3-7-threaded-barrel-1-2-28-192221",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p365-opt-r0": {
@@ -2796,19 +2790,19 @@
         "price": 189.99,
         "inStock": false,
         "url": "https://www.sportsmans.com/hunting-gear-supplies/optics-binoculars-scopes-rangefinders/red-dots/sig-sauer-romeo-zero-elite-1x-red-dot-3-moa-dot/p/1814313",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 165.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/sig-sauer-sor01030-romeozero-elite-reflex-sight-3-moa-red-dot",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 132.99,
         "inStock": false,
         "url": "https://gritrsports.com/sig-sauer-romeozero-elite-red-dot-reflex-sight-sor01030",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "hc-opt-r0": {
@@ -2816,19 +2810,19 @@
         "price": 189.99,
         "inStock": false,
         "url": "https://www.sportsmans.com/hunting-gear-supplies/optics-binoculars-scopes-rangefinders/red-dots/sig-sauer-romeo-zero-elite-1x-red-dot-3-moa-dot/p/1814313",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 165.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/sig-sauer-sor01030-romeozero-elite-reflex-sight-3-moa-red-dot",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 132.99,
         "inStock": false,
         "url": "https://gritrsports.com/sig-sauer-romeozero-elite-red-dot-reflex-sight-sor01030",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-fs": {
@@ -2836,7 +2830,7 @@
         "price": 631.99,
         "inStock": true,
         "url": "https://www.kygunco.com/product/smith-wesson-13564-mp9-m2.0-full-size-9mm-4.25-17rd-or-nothumb-sfty",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-trig-apexflat": {
@@ -2844,7 +2838,7 @@
         "price": 161.45,
         "inStock": false,
         "url": "https://www.kygunco.com/product/apex-tactical-100-154-apex-flat-faced-forward-set-trigger-kit-for-mp-2",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-trig-apexcurve": {
@@ -2852,7 +2846,7 @@
         "price": 156.7,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-triggers/apex-curved-forward-set-trigger-kit-mp-m20-black-anodized-118829",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "hc-prot": {
@@ -2860,7 +2854,7 @@
         "price": 649.99,
         "inStock": false,
         "url": "https://www.sportsmans.com/shooting-gear-gun-supplies/handguns/springfield-armory-hellcat-pro-osp-threaded-gear-up-package-9mm-luger-44in-black-melonite-pistol-171-rounds/p/1935174",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "hc-bbl-3t": {
@@ -2868,13 +2862,13 @@
         "price": 169.99,
         "inStock": true,
         "url": "https://www.kygunco.com/product/springfield-armory-hc0901tb-kit-hellcat-threaded-barrel-kit-3.8-w-compensator",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 139.99,
         "inStock": true,
         "url": "https://gritrsports.com/springfield-armory-hellcat-9mm-3-8-threaded-barrel-w-self-indexing-compensator-hc0901tb-kit",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AT3": {
         "price": 181.99,
@@ -2888,13 +2882,13 @@
         "price": 143.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/springfield-armory-hellcat-pro-threaded-barrel-kit-9mm-4.4-blk",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BUDS": {
         "price": 114.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/uncategorized/springfield-armory-hellcat-pro-4-4-in-threaded-barrel-kit-729001356",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "hc-mag-10": {
@@ -2902,7 +2896,7 @@
         "price": 27.99,
         "inStock": true,
         "url": "https://www.sportsmans.com/shooting-gear-gun-supplies/gun-parts-accessories/gun-parts-magazines/magazines-clips/handgun-magazines/springfield-armory-hellcat-black-9mm-luger-handgun-magazine-10-rounds/p/1798876",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-mag-g33": {
@@ -2910,25 +2904,25 @@
         "price": 35.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/magazines/glock-oem-extended-33rd-9mm-magazine-black-17-34-144387",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AT3": {
         "price": 45.99,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/glock-oem-33-round-magazine-9mm",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 39.99,
         "inStock": true,
         "url": "https://www.rainierarms.com/glock-17-34-oem-9mm-magazine-33-rd-black/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 34.99,
         "inStock": true,
         "url": "https://gritrsports.com/glock-oem-17-34-9mm-33rd-magazine-65971",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-mag-sig45": {
@@ -2936,7 +2930,7 @@
         "price": 42.49,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/magazines/sig-sauer-p250-p320-45acp-10rd-replacement-magazine-black-97681",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p365-mag-15": {
@@ -2944,13 +2938,13 @@
         "price": 45.49,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/magazines/sig-sauer-p365-9mm-15-round-extended-magazine-black-113773",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 46,
         "inStock": true,
         "url": "https://www.kygunco.com/product/sig-sauer-mag-365-9-15-p365-micro-compact-15rd-9mm-magazine",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-mag-15": {
@@ -2958,7 +2952,7 @@
         "price": 35.69,
         "inStock": true,
         "url": "https://www.sportsmans.com/shooting-gear-gun-supplies/gun-parts-accessories/gun-parts-magazines/magazines-clips/handgun-magazines/smith-wesson-mp-9-m20-compact-black-9mm-luger-handgun-magazine-15-rounds/p/1686927",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-mag-10": {
@@ -2966,13 +2960,13 @@
         "price": 34.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/magazines/s-w-mp-9mm-10-round-black-magazine-19442-32911",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 31.99,
         "inStock": false,
         "url": "https://gritrsports.com/smith-wesson-mp-9mm-blued-10-rd-magazine-19442",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "hc-mag-p15": {
@@ -2980,7 +2974,7 @@
         "price": 30.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/magazines/springfield-armory-hellcat-pro-9mm-luger-15-rd-stainless-155104",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-bbl-eb": {
@@ -2988,7 +2982,7 @@
         "price": 199,
         "inStock": true,
         "url": "https://www.edbrown.com/product/eb-mp-barrel/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-sight-hdxr": {
@@ -2996,13 +2990,13 @@
         "price": 125.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-sights/trijicon-hd-xr-night-sight-sa637-c-600851-m-p-mp-180573",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 135.69,
         "inStock": true,
         "url": "https://www.kygunco.com/product/trijicon-600850-hd-xr-ns-set-yellow-sw-mpsd9-vesd40-ve",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-sight-truglo": {
@@ -3010,13 +3004,13 @@
         "price": 103.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-sights/truglo-tfx-pro-square-low-set-glock-fiber-optic-sight-5029",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 102.92,
         "inStock": true,
         "url": "https://www.rainierarms.com/truglo-brite-site-tfx-pro-tritium-fo-sight-for-glock/",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-mz-tcomp": {
@@ -3024,13 +3018,13 @@
         "price": 80.96,
         "inStock": true,
         "url": "https://www.wingtactical.com/firearm-parts-accessories/glock-parts/tyrant-cnc-t-comp-for-glock/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 80.96,
         "inStock": true,
         "url": "https://www.rainierarms.com/tyrant-designs-t-comp-compensator-for-glock-gen-3-black-black/",
-        "checkedAt": "2026-10-23T13:21:55.997Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-fcg-cmc": {
@@ -3038,7 +3032,7 @@
         "price": 144.99,
         "inStock": true,
         "url": "https://cmctriggers.com/product/cmc-drop-in-trigger-for-glock-gen3-45-acp-10mm/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-slide-20zp": {
@@ -3046,7 +3040,7 @@
         "price": 329.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/zaffiri-precision-zps.2-or-stripped-slide-trijicon-rmr-footprint-g20",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-bbl-faxon85": {
@@ -3054,7 +3048,7 @@
         "price": 115,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-barrels/faxon-9mm-ar-15-8-5-light-taper-1-10-black-713086631",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AT3": {
         "price": 115,
@@ -3066,7 +3060,7 @@
         "price": 119,
         "inStock": true,
         "url": "https://blackrifledepot.com/faxon-8-5-9mm-light-tapered-sammi-barrel/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-bbl-faxon105": {
@@ -3080,13 +3074,13 @@
         "price": 114.26,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/faxon-firearms-10-5-inch-light-tapered-ar15-barrel-9mm-4150-qpq",
-        "checkedAt": "2026-10-21T13:45:25.171Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AA": {
         "price": 122.55,
         "inStock": true,
         "url": "https://aerospacearms.com/faxon-firearms-10-5-light-tapered-ar15-barrel-9mm-nitrided/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-bbl-faxon16": {
@@ -3094,7 +3088,7 @@
         "price": 133.4,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-barrels/faxon-ar-15-9mm-16in-light-taper-black-nitride-713086630",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-bbl-aero16": {
@@ -3102,13 +3096,13 @@
         "price": 165,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/16in-9mm-cmv-barrel",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 148.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/aero-precision-aprh200075c-16-9mm-straight-4150cmv-blowback-110-1-2x28-qpq",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-hg-mi7": {
@@ -3124,13 +3118,13 @@
         "price": 175.49,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-furniture/bravo-company-bcm-gunfighter-mcmr-7-m-lok-black-45066",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 169.99,
         "inStock": true,
         "url": "https://gritrsports.com/bravo-company-mcmr-55-7in-rail-bcm-mcmr-7-556-blk",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-hg-bcm13": {
@@ -3138,19 +3132,19 @@
         "price": 189.95,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-furniture/bravo-company-bcm-gunfighter-mcmr-13in-m-lok-black-45070",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 192.82,
         "inStock": true,
         "url": "https://gritrsports.com/bravo-company-mcmr-556-13in-rail-bcm-mcmr-13-556-blk",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 224.95,
         "inStock": true,
         "url": "https://www.kygunco.com/product/bravo-company-bcm-mcmr-13-556-blk-bcm-gunfighter-mcmr-aluminum-rail-5.56-13-blk",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-ch-bcm": {
@@ -3158,7 +3152,7 @@
         "price": 74.95,
         "inStock": false,
         "url": "https://aerospacearms.com/bravo-company-bcmgunfighter-charging-handle-556-mod-4b-medium-latch/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-mz-odin": {
@@ -3166,7 +3160,7 @@
         "price": 103.55,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-muzzle-devices/odin-works-atlas-comp-9mm-1-2-28-muzzle-brake-166534",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AT3": {
         "price": 103.55,
@@ -3178,25 +3172,25 @@
         "price": 103.55,
         "inStock": true,
         "url": "https://www.wingtactical.com/firearm-parts-accessories/odin-works-atlas-9-compensator-9mm/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "SPW": {
         "price": 61.92,
         "inStock": false,
         "url": "https://www.sportsmans.com/shooting-gear-gun-supplies/gun-parts-accessories/gun-parts-magazines/rifle-parts/muzzle-brakes-devices/odin-works-atlas-9mm-luger-12-28-thread-compensator-silverblack/p/1667611",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 103.55,
         "inStock": true,
         "url": "https://www.kygunco.com/product/odin-works-atlas-9-muzzle-brake-9mm-1-2-28-threaded-ss",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AA": {
         "price": 103.55,
         "inStock": true,
         "url": "https://aerospacearms.com/odin-works-atlas-9-muzzle-brake-9mm-1-2-28-threaded-stainless-steel/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-buf-kak": {
@@ -3204,7 +3198,7 @@
         "price": 38.95,
         "inStock": true,
         "url": "https://kakindustry.com/9mm-carbine-buffer-extended",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-bbl-aero16": {
@@ -3212,7 +3206,7 @@
         "price": 240,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/308-16-cmv-mid-barrel",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-lpk-cmmg": {
@@ -3220,13 +3214,13 @@
         "price": 30.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-gunsmithing-tools-and-supplies/cmmg-ar-15-lower-parts-kit-gun-builders-kit-black-96787",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "WING": {
         "price": 37.95,
         "inStock": true,
         "url": "https://www.wingtactical.com/firearm-parts-accessories/cmmg-ar-15-gun-builder-s-lower-parts-kit/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-mz-a2-30": {
@@ -3234,7 +3228,7 @@
         "price": 14.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/uncategorized/noveske-a2-flash-hider-ar10-5-8x24-714037954",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 8,
@@ -3246,7 +3240,7 @@
         "price": 12.18,
         "inStock": true,
         "url": "https://www.kygunco.com/product/one-horse-.30-cal-a2-flash-hider-and-crush-washer-5-8x24",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-mz-a2-556": {
@@ -3254,25 +3248,25 @@
         "price": 9.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-gunsmithing-tools-and-supplies/wilson-combat-a2-birdcage-flash-hider-556mm-157566",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "WING": {
         "price": 8.99,
         "inStock": false,
         "url": "https://www.wingtactical.com/firearm-parts/ar-15/muzzle-devices/aero-precision-a2-birdcage-flash-hider-5-56-223/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "WC": {
         "price": 10.95,
         "inStock": true,
         "url": "https://wilsoncombat.com/flash-hider-a2-birdcage-5-56-nato.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AA": {
         "price": 8.99,
         "inStock": true,
         "url": "https://aerospacearms.com/aero-precision-ar-15-a2-birdcage-flash-hider-1-2x28/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-mz-a2": {
@@ -3280,25 +3274,25 @@
         "price": 9.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-gunsmithing-tools-and-supplies/wilson-combat-a2-birdcage-flash-hider-556mm-157566",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "WING": {
         "price": 8.99,
         "inStock": false,
         "url": "https://www.wingtactical.com/firearm-parts/ar-15/muzzle-devices/aero-precision-a2-birdcage-flash-hider-5-56-223/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "WC": {
         "price": 10.95,
         "inStock": true,
         "url": "https://wilsoncombat.com/flash-hider-a2-birdcage-5-56-nato.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AA": {
         "price": 8.99,
         "inStock": true,
         "url": "https://aerospacearms.com/aero-precision-ar-15-a2-birdcage-flash-hider-1-2x28/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g17-rsa-g4": {
@@ -3306,19 +3300,19 @@
         "price": 21.3,
         "inStock": true,
         "url": "https://copsplus.com/handgun-internals/glock-sp08284-oem-factory-guide-rod-recoil-spring-assembly-for-glock-17-34-gen4/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "TGS": {
         "price": 19.95,
         "inStock": true,
         "url": "https://www.topgunsupply.com/glock-recoil-spring-assembly-g17-g34-gen4-models-only.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "IMP": {
         "price": 18.7,
         "inStock": true,
         "url": "https://www.impactguns.com/glock-oem-recoil-spring-assembly-gen-4-for-764503055683",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g17-rsa-g45": {
@@ -3326,19 +3320,19 @@
         "price": 21.3,
         "inStock": true,
         "url": "https://copsplus.com/handgun-internals/glock-sp33786-oem-factory-guide-rod-recoil-spring-assembly-for-glock-17-g17-gen5/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RYG": {
         "price": 19.95,
         "inStock": false,
         "url": "https://rockyourglock.com/glock-oem-recoil-spring-for-g17-gen5",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "TGS": {
         "price": 17.95,
         "inStock": true,
         "url": "https://www.topgunsupply.com/glock-recoil-spring-assembly-g17-gen5-models-only.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g19-rsa-g4": {
@@ -3346,13 +3340,13 @@
         "price": 21.3,
         "inStock": true,
         "url": "https://copsplus.com/handgun-internals/glock-sp08703-oem-factory-guide-rod-recoil-spring-assembly-for-glock-19-23-gen4/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "TGS": {
         "price": 19.95,
         "inStock": false,
         "url": "https://www.topgunsupply.com/glock-recoil-spring-assembly-g19-gen4-models-only.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g26-rsa-g45": {
@@ -3360,13 +3354,13 @@
         "price": 21.3,
         "inStock": true,
         "url": "https://copsplus.com/handgun-internals/glock-sp02211-oem-guide-rod-recoil-spring-assembly-for-glock-26-27-33-39-gen-1-4/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "TGS": {
         "price": 19.95,
         "inStock": false,
         "url": "https://www.topgunsupply.com/glock-recoil-spring-assembly-g26-g27-g33.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gs-rsa-43x": {
@@ -3374,13 +3368,13 @@
         "price": 21.3,
         "inStock": true,
         "url": "https://copsplus.com/handgun-internals/glock-sp33379-oem-factory-guide-rod-recoil-spring-assembly-dual-for-43-g43-slim/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "TGS": {
         "price": 19.95,
         "inStock": false,
         "url": "https://www.topgunsupply.com/glock-recoil-spring-assembly-g43.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-rsa-g3": {
@@ -3388,13 +3382,13 @@
         "price": 9.49,
         "inStock": true,
         "url": "https://copsplus.com/handgun-internals/glock-sp05586-oem-factory-guide-rod-recoil-spring-for-20-20sf-21-21sf-gen-1-3/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "TGS": {
         "price": 9.95,
         "inStock": true,
         "url": "https://www.topgunsupply.com/glock-recoil-spring-assembly-g20-g21.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-rsa-g4": {
@@ -3402,7 +3396,7 @@
         "price": 17.75,
         "inStock": true,
         "url": "https://copsplus.com/handgun-internals/glock-sp30077-oem-guide-rod-recoil-spring-assembly-for-glock-21-g21-gen4/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g17-bbl-oem5": {
@@ -3410,7 +3404,7 @@
         "price": 169.95,
         "inStock": false,
         "url": "https://www.topgunsupply.com/glock-factory-barrel-g17-gen-5.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g19-bbl-oem34": {
@@ -3418,13 +3412,13 @@
         "price": 169.95,
         "inStock": false,
         "url": "https://www.topgunsupply.com/glock-factory-barrel-g19.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BRD": {
         "price": 189.95,
         "inStock": false,
         "url": "https://blackrifledepot.com/glock-oem-barrel-g19-9mm/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g26-bbl-oem34": {
@@ -3432,13 +3426,13 @@
         "price": 169.95,
         "inStock": true,
         "url": "https://www.topgunsupply.com/glock-factory-barrel-g26.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "CP": {
         "price": 184.5,
         "inStock": false,
         "url": "https://copsplus.com/handgun-barrels/glock-sp06012-oem-factory-3-46-barrel-9mm-for-glock-26-except-43/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g34-bbl-oem34": {
@@ -3446,13 +3440,13 @@
         "price": 189.95,
         "inStock": false,
         "url": "https://www.topgunsupply.com/glock-factory-barrel-g34.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 167.99,
         "inStock": false,
         "url": "https://gritrsports.com/glock-g34-9mm-black-barrel-sp07186",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-bbl-21oem": {
@@ -3460,7 +3454,7 @@
         "price": 169.95,
         "inStock": true,
         "url": "https://www.topgunsupply.com/glock-factory-barrel-g21.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g17-slide-ggp": {
@@ -3468,13 +3462,13 @@
         "price": 449.99,
         "inStock": true,
         "url": "https://greyghostprecision.com/ggp-17-stripped-slide-fits-glock-17-gen-3/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 413.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/271039-grey-ghost-precision-stripped-slide-for-glock-17-gen-3-black-nitride",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g19-slide-ggp": {
@@ -3482,13 +3476,13 @@
         "price": 449.99,
         "inStock": true,
         "url": "https://greyghostprecision.com/ggp-19-stripped-slide-fits-glock-19-gen-3/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 413.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/grey-ghost-precision-stripped-slide-for-glock-19-gen-3-black-nitride",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-fcg-apex34": {
@@ -3496,19 +3490,19 @@
         "price": 123.45,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-triggers/apex-action-enhancement-trigger-kit-glock-gen-3-4-black-117839",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 110.4,
         "inStock": true,
         "url": "https://www.kygunco.com/product/apex-tactical-102-115-apex-action-enhancement-kit-for-glock-pistols",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "IMP": {
         "price": 117.59,
         "inStock": true,
         "url": "https://www.impactguns.com/glock-parts/apex-tactical-specialties-action-enhancement-trigger-kit-glock-gen-3-4-gen-3-glock-factory-trig-bar-action-enhancement-trig-ultimate-safety-plunger-performance-connector-g17-g19-g22-g23-g24-g26-g27-g31-g32-g33-g34-g35-856008005826-102115",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-fcg-apex5": {
@@ -3516,19 +3510,19 @@
         "price": 118.7,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-triggers/apex-action-enhancement-trigger-kit-glock-gen5-black-117845",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 108.76,
         "inStock": true,
         "url": "https://www.kygunco.com/product/apex-tactical-102-116-apex-action-enhancement-kit-for-gen-5-glock-pistol",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 135,
         "inStock": true,
         "url": "https://www.rainierarms.com/apex-tactical-action-enhancement-kit-for-glock-gen-5-pistols-black/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-fcg-timney": {
@@ -3536,31 +3530,31 @@
         "price": 129.99,
         "inStock": true,
         "url": "https://timneytriggers.com/alpha-competition-series-for-glock-gen-3-4/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 129.99,
         "inStock": true,
         "url": "https://www.rainierarms.com/timney-triggers-alpha-competition-series-for-glock-trigger-gen-3-4-black/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AT3": {
         "price": 139.99,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/timney-alpha-competition-trigger-for-glock-gen-3-and-gen-4",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 105.14,
         "inStock": true,
         "url": "https://www.kygunco.com/product/timney-triggers-alpha-glock-3-4-alpha-glock-3-4",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BUDS": {
         "price": 149.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-triggers/timney-alpha3-4-competition-straight-trigger-glock-gen3-4-133425",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-mz-tp12": {
@@ -3568,7 +3562,7 @@
         "price": 15.95,
         "inStock": true,
         "url": "https://lonewolfdist.com/accessories/barrel-accessories/lwd-thread-protector-1-2-x-28-black-9mm-357sig/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-bbl-21lwt": {
@@ -3576,7 +3570,7 @@
         "price": 149.95,
         "inStock": false,
         "url": "https://lonewolfdist.com/barrels/glock-compatible-barrels/g20-21-40-41-full-size/alphawolf-barrel-for-m-21-45-acp-threaded-578-x-28/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-bbl-21lwdt": {
@@ -3584,7 +3578,7 @@
         "price": 124.95,
         "inStock": false,
         "url": "https://lonewolfdist.com/barrels/glock-compatible-barrels/g20-21-40-41-full-size/lwd-barrel-m-21-45-acp-threaded-578-x-28/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-spk-lw": {
@@ -3592,7 +3586,7 @@
         "price": 74.95,
         "inStock": true,
         "url": "https://lonewolfdist.com/parts/frame-and-slide-parts-kits/completion-kit-for-10mm-slides/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-bbl-20lw": {
@@ -3600,7 +3594,7 @@
         "price": 134.95,
         "inStock": true,
         "url": "https://lonewolfdist.com/barrels/glock-compatible-barrels/g20-21-40-41-full-size/alphawolf-barrel-for-m-20-10mm-stock-length/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-bbl-20lwd": {
@@ -3608,7 +3602,7 @@
         "price": 109.95,
         "inStock": true,
         "url": "https://lonewolfdist.com/barrels/glock-compatible-barrels/g20-21-40-41-full-size/lwd-barrel-m-20-10mm-stock-length/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-bbl-21lw": {
@@ -3616,7 +3610,7 @@
         "price": 134.95,
         "inStock": true,
         "url": "https://lonewolfdist.com/barrel-promotion/alphawolf-barrel-for-m-21-45-acp-stock-length/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gs-bbl-43xtp": {
@@ -3630,7 +3624,7 @@
         "price": 170.99,
         "inStock": false,
         "url": "https://gritrsports.com/true-precision-glock-43-non-threaded-barrel-tp-g43b-xbl",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-bbl-tpc": {
@@ -3638,7 +3632,7 @@
         "price": 143.49,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-barrels/true-precision-9mm-p320-compact-black-nitride-barrel-163507",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p365-bbl-tpstd": {
@@ -3652,13 +3646,13 @@
         "price": 170.99,
         "inStock": false,
         "url": "https://gritrsports.com/true-precision-non-threaded-barrel-tp-p365b-xbl",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AT3": {
         "price": 180.49,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/true-precision-p365-non-threaded-barrel",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p365-bbl-tp": {
@@ -3666,13 +3660,13 @@
         "price": 143.21,
         "inStock": true,
         "url": "https://gritrsports.com/true-precision-sig-p365-xl-9mm-barrel-tp-p365xlb-xbl",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AT3": {
         "price": 180.49,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/true-precision-sig-sauer-p365xl-non-threaded-barrel-9mm",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-mag-20ets": {
@@ -3680,31 +3674,31 @@
         "price": 10.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/magazines/ets-glk-20-10mm-auto-15rd-glock-compatible-clear-117695",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 17.05,
         "inStock": true,
         "url": "https://www.kygunco.com/product/elite-tactical-glk-20-glock-20-29-40-15rd-10mm-magazine",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "IMP": {
         "price": 18.37,
         "inStock": true,
         "url": "https://www.impactguns.com/handgun-high-cap-mag/elite-tactical-magazine-glock-20-29-40-10mm-clear-15rd-854094005683-glk-20",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "CP": {
         "price": 17.55,
         "inStock": true,
         "url": "https://copsplus.com/gun-parts-accessories/handgun-parts/handgun-magazines/elite-tactical-systems-glk-20-standard-15-round-mag-10mm-luger-magazine-for-glock-20-29-40-clear-polymer/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "CF": {
         "price": 18.11,
         "inStock": true,
         "url": "https://www.classicfirearms.com/ets-group-glk-20-glock-compatible-10mm-auto/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-case-savior": {
@@ -3712,19 +3706,19 @@
         "price": 35.97,
         "inStock": true,
         "url": "https://www.saviorequipment.com/products/specialist-pistol-case",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "TGS": {
         "price": 25.99,
         "inStock": true,
         "url": "https://www.topgunsupply.com/savior-specialist-pistol-case-black.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 29.97,
         "inStock": true,
         "url": "https://gritrsports.com/savior-equipment-specialist-pistol-bag-hc-dgsport-ws-bk",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-stock-a2": {
@@ -3732,13 +3726,13 @@
         "price": 65,
         "inStock": true,
         "url": "https://blackrifledepot.com/aero-precision-a2-fixed-stock-black/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 65.75,
         "inStock": false,
         "url": "https://www.kygunco.com/product/luth-ar-a2-fixed-stock-rifle-length-fits-ar-15-black",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BUDS": {
         "price": 68.57,
@@ -3760,19 +3754,19 @@
         "price": 40,
         "inStock": false,
         "url": "https://www.rainierarms.com/milspec-gi-f-marked-front-sight-kit/",
-        "checkedAt": "2026-10-23T13:21:55.997Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 45.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/lbe-unlimited-complete-f-marked-front-sight-base",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "WING": {
         "price": 47.95,
         "inStock": true,
         "url": "https://www.wingtactical.com/firearm-parts-accessories/cmmg-a2-front-sight-base-assembly/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "r-case-sav36": {
@@ -3780,13 +3774,13 @@
         "price": 69.97,
         "inStock": false,
         "url": "https://www.kygunco.com/product/savior-equipment-american-classic-dbl-rfl-bag-36-long-obsidian-blk",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 56.99,
         "inStock": false,
         "url": "https://gritrsports.com/savior-equipment-american-classic-36in-black-double-rifle-case-rb-3612dg-v1-bk",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "r-case-sav42": {
@@ -3794,7 +3788,7 @@
         "price": 78.97,
         "inStock": false,
         "url": "https://www.kygunco.com/product/savior-equipment-american-classic-dbl-rfl-bag-42-long-obsidian-blk",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-gt-mid": {
@@ -3802,7 +3796,7 @@
         "price": 19.57,
         "inStock": false,
         "url": "https://www.impactguns.com/ar-15-upper-receiver-parts/aero-precision-gas-tube-mid-length-black-for-ar-15-ar-10-815421021400-aprh100282c",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-gt-rifle": {
@@ -3810,13 +3804,13 @@
         "price": 19.99,
         "inStock": false,
         "url": "https://www.classicfirearms.com/aero-precision-ar-15-ar-10-rifle-length-gas-tube-melonite-aprh100283c/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "IMP": {
         "price": 20.49,
         "inStock": false,
         "url": "https://www.impactguns.com/ar-15-upper-receiver-parts/aero-precision-gas-tube-rifle-length-black-for-ar15-ar10-815421021417-aprh100283c",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-mz-a2": {
@@ -3824,25 +3818,25 @@
         "price": 14.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/uncategorized/noveske-a2-flash-hider-ar10-5-8x24-714037954",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 12.18,
         "inStock": true,
         "url": "https://www.kygunco.com/product/one-horse-.30-cal-a2-flash-hider-and-crush-washer-5-8x24",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RA": {
         "price": 8,
         "inStock": false,
         "url": "https://www.rainierarms.com/milspec-gi-a2-flash-hider-5-8x24/",
-        "checkedAt": "2026-10-23T13:21:55.997Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AA": {
         "price": 10.99,
         "inStock": false,
         "url": "https://aerospacearms.com/aero-precision-ar-308-a2-birdcage-flash-hider-5-8x24-tpi/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-opt-venom": {
@@ -3850,25 +3844,25 @@
         "price": 499,
         "inStock": true,
         "url": "https://gritrsports.com/vortex-venom-5-25x56-ffp-ebr-7c-riflescope-ven-52501",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "SPW": {
         "price": 499.99,
         "inStock": true,
         "url": "https://www.sportsmans.com/hunting-gear-supplies/optics-binoculars-scopes-rangefinders/rifle-scopes-red-dots/vortex-venom-5-25x-56mm-rifle-scope-ebr-7c/p/p244913",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 499.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/vortex-ven-52501-venom-5-25x56-ffp-ebr-7c-moa",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "TGS": {
         "price": 499.99,
         "inStock": true,
         "url": "https://www.topgunsupply.com/vortex-venom-5-25x56-ffp-ebr-7c-moa-riflescope.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-lower-nfa": {
@@ -3876,7 +3870,7 @@
         "price": 135,
         "inStock": false,
         "url": "https://www.newfrontierarmory.com/c-9-stripped-billet-lower-receiver",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-hg-aero15": {
@@ -3884,7 +3878,7 @@
         "price": 179.99,
         "inStock": false,
         "url": "https://www.topgunsupply.com/aero-precision-ar-15-atlas-s-one-m-lok-handguard-blk-15.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-bcg-jp": {
@@ -3892,7 +3886,7 @@
         "price": 249.49,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-ar15/jp-rifles-enhanced-9mm-ar-bolt-bc9mma-712017727",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AT3": {
         "price": 244.95,
@@ -3906,37 +3900,37 @@
         "price": 21.99,
         "inStock": false,
         "url": "https://aerospacearms.com/aero-precision-ar15-m4-5-56-charging-handle/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BRD": {
         "price": 21.95,
         "inStock": false,
         "url": "https://blackrifledepot.com/aero-precision-ar15-m4-5-56-charging-handle/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 22.99,
         "inStock": false,
         "url": "https://gritrsports.com/aero-precision-ar15-m4-556-charging-handle-aprh100000c",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "CF": {
         "price": 18.99,
         "inStock": false,
         "url": "https://www.classicfirearms.com/aero-precision-ar15-m4-5-56-charging-handle-aprh100000c/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 24.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/aero-precision-llc-aprh100000c-ar15-m4-5.56-charging-handle",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "TGS": {
         "price": 24,
         "inStock": false,
         "url": "https://www.topgunsupply.com/aero-precision-ar15-m4-5.56-charging-handle.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-slide-xfull": {
@@ -3944,13 +3938,13 @@
         "price": 264.99,
         "inStock": false,
         "url": "https://www.kygunco.com/product/sig-sauer-8900987-p365xl-slide-assembly-9mm-3.7-microoptics-cut-coy",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GRITR": {
         "price": 265.99,
         "inStock": false,
         "url": "https://gritrsports.com/sig-sauer-x-series-slide-assembly-for-p320-8900959",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-mag-sig12": {
@@ -3964,25 +3958,25 @@
         "price": 45.36,
         "inStock": true,
         "url": "https://gritrsports.com/sig-sauer-p250-9mm-12rd-blued-magazine-mag-mod-sc-9-12",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "CF": {
         "price": 49.35,
         "inStock": true,
         "url": "https://www.classicfirearms.com/sig-sauer-magmodsc912-p250-p320-9mm-12rd-replacement/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 39.99,
         "inStock": true,
         "url": "https://www.kygunco.com/product/sig-sauer-p250-p320-subcompact-9mm-12rd-magazine-black",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "TGS": {
         "price": 49.95,
         "inStock": true,
         "url": "https://www.topgunsupply.com/sig-sauer-p250-p320-sub-compact-9mm-12rd-magazine.html",
-        "checkedAt": "2026-10-22T13:44:52.638Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p365-slide-spectre": {
@@ -3990,7 +3984,7 @@
         "price": 389.99,
         "inStock": false,
         "url": "https://gritrsports.com/sig-sauer-p365-compensator-slide-assembly-8901047",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-c4": {
@@ -3998,7 +3992,7 @@
         "price": 626.89,
         "inStock": true,
         "url": "https://www.impactguns.com/semi-auto-handguns/smith-wesson-m-p-2-0-compact-9mm-4-barrel-armornite-black-optics-ready-no-manual-safety-flat-face-trigger-integr-trigger-safety-2x15rd-mags-022188889628-13563",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-fst": {
@@ -4006,25 +4000,25 @@
         "price": 639.95,
         "inStock": true,
         "url": "https://dkfirearms.com/product/smith-wesson-mp-m2-0-9mm-4-625-threaded-barrel-optics-ready/",
-        "checkedAt": "2026-10-23T13:21:55.997Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AT3": {
         "price": 649.99,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/smith-wesson-mp-m2-0-full-size-4-62%e2%80%b3-9mm-threaded-barrel-optic-ready-pistol-17-rounds",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "CF": {
         "price": 592.52,
         "inStock": true,
         "url": "https://www.classicfirearms.com/smith-wesson-13585-mp9-m20-4625-optic-ready17rdthreaded/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 631.99,
         "inStock": true,
         "url": "https://www.kygunco.com/product/smith-wesson-13585-mp9-m2.0-or-9mm-4.6-tb-17rd-no-thumb-safety",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-bbl-faxc": {
@@ -4032,7 +4026,7 @@
         "price": 94.99,
         "inStock": false,
         "url": "https://gritrsports.com/faxon-match-series-m-p-pistol-barrel-m-pb910nc2loq-t",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-mag-17": {
@@ -4046,31 +4040,31 @@
         "price": 35.99,
         "inStock": true,
         "url": "https://gritrsports.com/smith-wesson-mp-9mm-17rd-black-magazine-19440",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "BUDS": {
         "price": 34.99,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/magazines/smith-wesson-mp-9mm-17-round-magazine-black-19440-32913",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "CF": {
         "price": 37.47,
         "inStock": true,
         "url": "https://www.classicfirearms.com/smith-wesson-194400000-mp-9mm-17-rd-black/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "IMP": {
         "price": 40.49,
         "inStock": true,
         "url": "https://www.impactguns.com/handgun-high-cap-mag/smith-wesson-m-p-9mm-magazine-17rd-022188127942-19440",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "SPW": {
         "price": 35.69,
         "inStock": true,
         "url": "https://www.sportsmans.com/shooting-gear-gun-supplies/gun-parts-accessories/gun-parts-magazines/magazines-clips/handgun-magazines/smith-wesson-mp-9-9mm-luger-handgun-magazine-17-rounds/p/1296540",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a10-bbl-ba18": {
@@ -4078,25 +4072,25 @@
         "price": 198.49,
         "inStock": true,
         "url": "https://www.budsgunshop.com/products/gun-parts-barrels/ballistic-advantage-babl308005p-premium-308-18-bead-blasted-714027427",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "KYG": {
         "price": 256.5,
         "inStock": true,
         "url": "https://www.kygunco.com/product/ballistic-advantage-babl308005p-premium-series-barrel-308-winchester-18-bead",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "CF": {
         "price": 256.5,
         "inStock": true,
         "url": "https://www.classicfirearms.com/ballistic-advantage-premium-series-ar-10-18-308-heavy-barrel-rifle-length-gas-system-1-10-twist-babl308005p/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "AT3": {
         "price": 256.5,
         "inStock": true,
         "url": "https://www.at3tactical.com/products/ballistic-advantage-18%e2%80%b3-308-premium-stainless-ar10-barrel-rifle-length-heavy-profile",
-        "checkedAt": "2026-10-23T13:21:55.997Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g19-bbl-oem5": {
@@ -4104,13 +4098,13 @@
         "price": 184.95,
         "inStock": false,
         "url": "https://rockyourglock.com/glock-oem-barrel-fits-gen-5-g19-19x-and-45/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GS": {
         "price": 199.99,
         "inStock": true,
         "url": "https://www.glockstore.com/Glock-Factory-Gen5-Barrel",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g34-bbl-oem5": {
@@ -4118,13 +4112,13 @@
         "price": 184.95,
         "inStock": false,
         "url": "https://rockyourglock.com/glock-oem-barrel-fits-g34-gen-5/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "GS": {
         "price": 199.99,
         "inStock": true,
         "url": "https://www.glockstore.com/Glock-Factory-Gen5-Barrel",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gs-spk-oem": {
@@ -4132,7 +4126,7 @@
         "price": 119.99,
         "inStock": true,
         "url": "https://www.glockstore.com/Complete-Upper-Parts-Kit-for-Glock-43",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g26-frame-g5": {
@@ -4140,7 +4134,7 @@
         "price": 99.99,
         "inStock": false,
         "url": "https://www.glockstore.com/G26-Gen5-Frame",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g26-frame-g3": {
@@ -4148,7 +4142,7 @@
         "price": 119.99,
         "inStock": false,
         "url": "https://www.glockstore.com/Gen3-Sub-compact-Factory-Frame-Stripped",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-spk-oem": {
@@ -4156,7 +4150,7 @@
         "price": 119.99,
         "inStock": true,
         "url": "https://www.glockstore.com/Glock-Factory-Large-Frame-Upper-Parts-Kit-20SF-21SF-Fits-PF45",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gs-fcg-oem": {
@@ -4164,7 +4158,7 @@
         "price": 129.99,
         "inStock": true,
         "url": "https://www.glockstore.com/Glock-Factory-Lower-Parts-Kit-for-Glock-43X-48",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-spk-oem5": {
@@ -4172,7 +4166,7 @@
         "price": 149.99,
         "inStock": true,
         "url": "https://www.glockstore.com/Glock-Factory-Upper-Parts-Kits-for-Gen5-Glocks",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g-fcg-oem34": {
@@ -4180,7 +4174,7 @@
         "price": 89.99,
         "inStock": true,
         "url": "https://www.glockstore.com/Lower-Parts-Kit-Gen4-Glocks",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g17-slide-g3": {
@@ -4188,7 +4182,7 @@
         "price": 269.99,
         "inStock": false,
         "url": "https://blackphoenixcustoms.com/glock-17-gen-3-oem-slide-stripped.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g17-slide-mos": {
@@ -4196,7 +4190,7 @@
         "price": 419.99,
         "inStock": false,
         "url": "https://blackphoenixcustoms.com/glock-17-gen-5-mos-oem-slide-stripped.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g17-slide-g5": {
@@ -4204,7 +4198,7 @@
         "price": 289.99,
         "inStock": false,
         "url": "https://blackphoenixcustoms.com/glock-17-gen-5-oem-slide-stripped.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g19-slide-g3": {
@@ -4212,7 +4206,7 @@
         "price": 269.99,
         "inStock": false,
         "url": "https://blackphoenixcustoms.com/glock19gen3slidestripped",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g19-slide-g4": {
@@ -4220,7 +4214,7 @@
         "price": 269.99,
         "inStock": false,
         "url": "https://blackphoenixcustoms.com/glock-19-gen-4-oem-slide-stripped.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g19-slide-mos": {
@@ -4228,7 +4222,7 @@
         "price": 499.99,
         "inStock": false,
         "url": "https://blackphoenixcustoms.com/glock-19-gen-5-mos-oem-slide-stripped.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g19-slide-g5": {
@@ -4236,7 +4230,7 @@
         "price": 289.99,
         "inStock": false,
         "url": "https://blackphoenixcustoms.com/glock-19-gen-5-oem-slide-stripped.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g26-slide-g3": {
@@ -4244,7 +4238,7 @@
         "price": 269.99,
         "inStock": false,
         "url": "https://blackphoenixcustoms.com/glock-26-gen-3-oem-slide-stripped.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g34-slide-g3": {
@@ -4252,7 +4246,7 @@
         "price": 389.99,
         "inStock": false,
         "url": "https://blackphoenixcustoms.com/glock-34-gen-3-oem-slide-stripped.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gs-slide-43xmos": {
@@ -4260,7 +4254,7 @@
         "price": 309.99,
         "inStock": false,
         "url": "https://blackphoenixcustoms.com/glock-43x-mos-oem-slide-stripped.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gs-slide-48": {
@@ -4268,7 +4262,7 @@
         "price": 239.99,
         "inStock": false,
         "url": "https://blackphoenixcustoms.com/glock-48-oem-slide-stripped.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g47-slide-mos": {
@@ -4276,7 +4270,7 @@
         "price": 419.99,
         "inStock": false,
         "url": "https://blackphoenixcustoms.com/glock-47-mos-oem-slide-stripped.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "ar-bbl-bcm": {
@@ -4284,7 +4278,7 @@
         "price": 279,
         "inStock": true,
         "url": "https://bravocompanyusa.com/bcm-standard-16-mid-length-barrel-stripped/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "gl-fcg-ow": {
@@ -4292,7 +4286,7 @@
         "price": 135,
         "inStock": true,
         "url": "https://overwatchprecision.com/tac-trigger-for-glock/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "hc-bbl-3": {
@@ -4300,7 +4294,7 @@
         "price": 125,
         "inStock": true,
         "url": "https://store.springfield-armory.com/hellcat-3-0-factory-barrel-9mm/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "hc-bbl-pro": {
@@ -4308,7 +4302,7 @@
         "price": 125,
         "inStock": true,
         "url": "https://store.springfield-armory.com/hellcat-pro-3-7-factory-barrel-9mm/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-slide-fs": {
@@ -4316,7 +4310,7 @@
         "price": 299,
         "inStock": true,
         "url": "https://shop.smith-wesson.com/mp9-optic-ready-slide-for-4-25in-barrel",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-slide-c": {
@@ -4324,7 +4318,7 @@
         "price": 299,
         "inStock": true,
         "url": "https://shop.smith-wesson.com/mp9-optic-ready-slide-for-4in-barrel",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-bbl-aero55": {
@@ -4332,7 +4326,7 @@
         "price": 115,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/5pt5-9mm-cmv-barrel",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "a9-hg-aero9": {
@@ -4340,7 +4334,7 @@
         "price": 195,
         "inStock": true,
         "url": "https://www.aeroprecisionusa.com/ar15-9-atlas-s-one-m-lok-handguard-anodized-black",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "g34-bbl-faxon": {
@@ -4348,7 +4342,7 @@
         "price": 102,
         "inStock": true,
         "url": "https://faxonfirearms.com/GA910N34NGQ-N",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "mp-bbl-faxfs": {
@@ -4356,7 +4350,7 @@
         "price": 131,
         "inStock": true,
         "url": "https://faxonfirearms.com/MPB910NFLOQ-T",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-slide-zev-xfull": {
@@ -4364,7 +4358,7 @@
         "price": 418.95,
         "inStock": false,
         "url": "https://forged-armory.odoo.com/shop/zt-sld-z320-xfu-oc-r-d-zev-strppd-xfull-octane-z320-rmr-dlc-48554",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-slide-zev-xcarry": {
@@ -4372,13 +4366,13 @@
         "price": 432.18,
         "inStock": false,
         "url": "https://forged-armory.odoo.com/shop/zt-sld-z320-xcr-oc-r-d-zev-strppd-xcry-octane-z320-rmr-dlc-48550",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "RSUP": {
         "price": 466.99,
         "inStock": false,
         "url": "https://riflesupply.com/ZEV-Technologies-Z320-XCarry-Octane-Stripped-Slide-w-RMR-Cut-Slide-For-Sig-Sauer-P320-Black-SLD-Z320-XCARRY-OCTANE-RMR-DLC_p_7719.html",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p-slide-zev-xcompact": {
@@ -4386,7 +4380,7 @@
         "price": 432.18,
         "inStock": false,
         "url": "https://forged-armory.odoo.com/shop/zt-sld-z320-xcm-oc-r-d-zev-strppd-xcmp-octane-z320-rmr-dlc-48548",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p365-slide-zev": {
@@ -4400,13 +4394,13 @@
         "price": 432.18,
         "inStock": false,
         "url": "https://www.abidearmory.com/zev-technologies-slide-octane-sld-z365-octane-rmsc-d/",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       },
       "FORGE": {
         "price": 432.18,
         "inStock": false,
         "url": "https://forged-armory.odoo.com/shop/zt-sld-z365-oct-rmsc-d-zev-strppd-octane-z365-rmsc-dlc-48556",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     },
     "p365-slide-zevxl": {
@@ -4414,7 +4408,7 @@
         "price": 432.18,
         "inStock": false,
         "url": "https://forged-armory.odoo.com/shop/zt-sld-z365xl-oc-rms-d-zev-strppd-octane-z365xl-rmsc-dlc-48558",
-        "checkedAt": "2026-10-24T12:39:12.117Z"
+        "checkedAt": "2026-10-25T13:09:56.682Z"
       }
     }
   }
