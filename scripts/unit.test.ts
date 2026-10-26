@@ -7,7 +7,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { awarenessFor } from '../src/awareness';
 import { PLATFORMS } from '../src/data/index';
-import { PAUSED, SBR_MESSAGE, VERTICAL_GRIP_MESSAGE, shortBarrelStockIssue } from '../src/data/helpers';
+import { NFA_SHORT_NOTICE, PAUSED, SBR_MESSAGE, VERTICAL_GRIP_MESSAGE, shortBarrelStockIssue } from '../src/data/helpers';
 import { biggestDrops, daysAgo, hasHistory, partSeries, priceOn, recentChange, seriesOf } from '../src/data/history';
 import { baseSelection, bestOffer, candidateIssues, issuesFor, listedParts, noPriceNote, ownedOf, placementOf, presetSelection, priceRange, selectionTokens, singleRetailerCarts, toBuild, toBuyIds, unpricedCount, worst, type Selection } from '../src/engine';
 import { findParts } from '../src/find';
@@ -18,7 +18,7 @@ import { Dock, PartsList, Summary, toLegalNotice } from '../src/BuilderPage';
 import { ComparePage } from '../src/Compare';
 import { HomePage } from '../src/HomePage';
 import { BuildCard, ChangeChip, legalOnly } from '../src/ui';
-import { PAGE_VIEWS, guidePage, platformPage } from '../src/guides/render';
+import { PAGE_VIEWS, guidePage, indexPage, platformPage } from '../src/guides/render';
 import { GUIDES, type FitChart } from '../src/guides/content';
 import { RETAILERS } from '../src/data/retailers';
 import { priceIndex } from './og-index';
@@ -768,4 +768,20 @@ test('the price index leaves out parts with no price', () => {
   }
   const tiny = { ...ar15, id: 'tiny', parts: [vg6, { ...vg6, id: 'no-price', offers: [] }] };
   assert.deepEqual(Object.keys(priceIndex([tiny]).platforms.tiny.parts), ['ar-mz-vg6']);
+});
+
+/* ------------------------------------------------------------------ compliance round 1: notices and wording */
+
+/** The owner-approved short notice (2026-10-26), byte for byte. */
+const SHORT_NOTICE_TEXT = 'May be regulated under the NFA. Not legal advice: check federal, state and local law.';
+const BUILT = '2026-10-26T00:00:00Z';
+const htmlEsc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+/** The static pages' Legal notice, with the builder's own label, carrying these messages. */
+const PAGE_LEGAL_NOTICE = (messages: string[]) =>
+  `<div class="legal-notice" role="note" aria-labelledby="page-legal-title"><p class="legal-notice-title" id="page-legal-title">Legal notice</p>${messages.map((m) => `<p>${htmlEsc(m)}</p>`).join('')}</div>`;
+const hasPageNotice = (html: string) => /class="legal-notice"|Legal notice/.test(html);
+
+test('the short NFA notice is the approved wording, marked as owner-approved', () => {
+  assert.equal(NFA_SHORT_NOTICE, SHORT_NOTICE_TEXT);
+  assert.match(readFileSync('src/data/helpers.ts', 'utf8'), /\/\*\* Owner-approved wording \(2026-10-26\)\. \*\/\r?\nexport const NFA_SHORT_NOTICE = /);
 });

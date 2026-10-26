@@ -71,6 +71,10 @@ export const pick = (tier: Tier, note: string) => ({ tier, note });
 export const SBR_MESSAGE = 'A barrel under 16" with a stock may be regulated under the National Firearms Act and can require ATF approval before assembly. Some states ban it. Not legal advice: check federal, state and local law before you build.';
 /** Owner-approved wording (2026-10-23). */
 export const VERTICAL_GRIP_MESSAGE = 'A vertical foregrip on a pistol with a barrel under 16" may be regulated under the National Firearms Act and can require ATF approval. Not legal advice: check federal, state and local law before you build.';
+// The short form, for places with little room (link-preview descriptions are cut off at about 150-200 characters).
+// The full messages above stay wherever there is room.
+/** Owner-approved wording (2026-10-26). */
+export const NFA_SHORT_NOTICE = 'May be regulated under the NFA. Not legal advice: check federal, state and local law.';
 
 /**
  * A rifle barrel under 16" with a stock is a legal warning (Issue.legal), not a conflict: the site is a planning
