@@ -36,7 +36,7 @@ export interface Part {
   pick?: { tier: Tier; note: string };
   /** Maker's part number or SKU, when we have it. The "Parts I Own" search matches it. */
   mpn?: string;
-  /** Serialized part: legally the firearm, ships to an FFL */
+  /** Serialized part (marked FFL): ships to a licensed dealer */
   serialized?: boolean;
   /** Weight as sold, from data/weights.json. `published` is false when it's our typical-figure estimate. */
   weight?: { oz: number; published: boolean; src?: string };

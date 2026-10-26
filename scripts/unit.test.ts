@@ -785,3 +785,31 @@ test('the short NFA notice is the approved wording, marked as owner-approved', (
   assert.equal(NFA_SHORT_NOTICE, SHORT_NOTICE_TEXT);
   assert.match(readFileSync('src/data/helpers.ts', 'utf8'), /\/\*\* Owner-approved wording \(2026-10-26\)\. \*\/\r?\nexport const NFA_SHORT_NOTICE = /);
 });
+
+const M6_DESCRIPTION = 'Barrel length and a stock or brace can change how an AR-9 is regulated. See which barrels, stocks and braces we list, and check your federal, state and local laws.';
+const M6_LEDE = 'Many AR-9s use short barrels, and the stock or brace you pick can change how the build may be regulated. This is a general summary, not legal advice; check federal, state and local law before you build.';
+const M6_ANSWERS = [
+  'A barrel <b>16" or longer</b> with a stock is generally treated as a rifle under federal law.',
+  'A barrel <b>under 16" with a stock</b> may be regulated as a short-barreled rifle (SBR) under the National Firearms Act, which can require ATF approval before assembly (you file ATF Form 1). Some states ban them.',
+  'A barrel under 16" with <b>no stock</b> is generally built as a pistol. Pistol brace rules have changed several times, so check current federal law before using one.',
+  'Some states ban SBRs or braces, or restrict pistol builds further. Check your state and local laws.',
+];
+const FFL_FOOTER = 'Parts marked FFL are serialized and treated as the firearm under federal law, so they ship to a licensed dealer. Laws vary by state.';
+
+test('guide, FAQ and footer text state no flat legal conclusions', () => {
+  const FLAT = [/is a short-barreled rifle\b/, /decides? what the gun is/, /is built as a pistol/, /with a stock<\/b> is a rifle/, /with a stock is a rifle/, /legally the firearm/i, /are the serialized firearm/];
+  for (const f of ['src/guides/content.ts', 'src/guides/render.ts', 'src/App.tsx', 'src/types.ts']) {
+    const text = readFileSync(f, 'utf8');
+    for (const re of FLAT) assert.doesNotMatch(text, re, `${f}: ${re}`);
+  }
+  const pages = [indexPage(BUILT), ...GUIDES.map((g) => guidePage(g, BUILT)), ...PAGE_VIEWS.map((v) => platformPage(v))];
+  for (const html of pages) for (const re of FLAT) assert.doesNotMatch(html, re);
+  // The approved replacement wording.
+  const g = GUIDES.find((x) => x.slug === 'ar-9-pistol-vs-sbr')!;
+  assert.equal(g.description, M6_DESCRIPTION);
+  assert.equal(g.lede, M6_LEDE);
+  assert.deepEqual(g.answers, M6_ANSWERS);
+  assert.ok(readFileSync('src/App.tsx', 'utf8').includes(`<p>${FFL_FOOTER}</p>`), 'app footer');
+  assert.ok(pages[0].includes(htmlEsc('FFL marks the part that is serialized and treated as the firearm under federal law (a pistol frame or fire control unit, or an AR lower receiver), so it ships to a licensed dealer near you, who handles the transfer and background check.')), 'FAQ answer');
+  assert.ok(pages[0].includes('Parts that are serialized and treated as the firearm under federal law ship to a licensed dealer, and laws vary by state.'), 'static footer');
+});

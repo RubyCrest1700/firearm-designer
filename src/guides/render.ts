@@ -247,7 +247,7 @@ ${o.jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).re
 <footer class="site-footer"><div class="wrap">
   <p class="brand-name small">Drop-In <b>Builds</b></p>
   <p>Plan a build part by part, check that everything fits, and see where each part costs least. We don't sell anything.</p>
-  <p>Fit charts come from the same rules the builder uses. Prices marked Sample aren't tracked yet, List Price and dated Factory Part prices were checked by hand on that date, and undated Factory Part prices are estimates; always confirm the price and fit with the retailer and the maker. Parts that are the serialized firearm ship to a licensed dealer, and laws vary by state.</p>
+  <p>Fit charts come from the same rules the builder uses. Prices marked Sample aren't tracked yet, List Price and dated Factory Part prices were checked by hand on that date, and undated Factory Part prices are estimates; always confirm the price and fit with the retailer and the maker. Parts that are serialized and treated as the firearm under federal law ship to a licensed dealer, and laws vary by state.</p>
   <p>Some retailer links may earn us a small commission at no extra cost to you. It never changes which parts we show or how we check fit.</p>
   <p><a class="foot-link" href="/feedback/">Send Feedback</a></p>
 </div></footer>
@@ -336,7 +336,7 @@ const GENERAL_FAQ: { section: string; items: { q: string; a: string }[] }[] = [
     { q: 'What do you do with my email address?', a: "We only use it to send the price alerts you asked for. We don't sell it. Our email provider (Resend) and host (Cloudflare) process it to deliver the emails. Unsubscribing deletes it from our database; the providers may keep delivery logs for a limited time." },
   ] },
   { section: 'Buying and the Law', items: [
-    { q: 'What does FFL mean on a part?', a: 'FFL marks the serialized part, which is legally the firearm (a pistol frame or fire control unit, or an AR lower receiver). It ships to a licensed dealer near you, who handles the transfer and background check.' },
+    { q: 'What does FFL mean on a part?', a: 'FFL marks the part that is serialized and treated as the firearm under federal law (a pistol frame or fire control unit, or an AR lower receiver), so it ships to a licensed dealer near you, who handles the transfer and background check.' },
     { q: 'Can every part ship to my state?', a: 'Not always. Some states limit magazine capacity, muzzle devices or other features, and retailers will not ship restricted items there. Check your state and local laws before you buy.' },
     { q: 'Is it legal to build my own firearm?', a: "Laws vary by country, state and city, and they change. We don't give legal advice, so check the rules where you live, and buy the serialized part through a licensed dealer." },
   ] },
