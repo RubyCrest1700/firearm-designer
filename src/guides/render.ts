@@ -12,6 +12,7 @@ import { titleCase } from '../text';
 import { COMMUNITY_API, CONTENT_SECURITY_POLICY } from '../config';
 import { fontTags } from '../fonts';
 import { SBR_MESSAGE } from '../data/helpers';
+import { PRIVACY_MD, TERMS_MD, legalHtml, legalTitle } from './legal';
 
 export const SITE = 'https://dropinbuilds.com';
 const ANALYTICS_TOKEN = '00e0977ba6ee49a7b9a386502da1ef3f';
@@ -241,7 +242,7 @@ export function pageTitle(...options: string[]) {
   throw new Error(`Page title over ${TITLE_MAX} characters: ${options[options.length - 1]}`);
 }
 
-function layout(o: { title: string; description: string; path: string; body: string; jsonLd: object[]; notFound?: boolean; image?: string; current?: 'build' | 'faq' }) {
+function layout(o: { title: string; description: string; path: string; body: string; jsonLd: object[]; notFound?: boolean; image?: string; current?: 'build' | 'faq' | 'none' }) {
   const current = o.current ?? (o.notFound ? undefined : 'faq');
   return `<!doctype html>
 <html lang="en">
@@ -587,9 +588,33 @@ export function feedbackPage() {
   });
 }
 
+/**
+ * The Privacy Policy and Terms of Use: the owner-approved text in ./legal.ts, word for word. The meta description
+ * is a sentence from each page's own opening.
+ */
+function legalPage(md: string, path: string, description: string) {
+  const title = legalTitle(md);
+  const short = title.replace(/^Drop-In Builds /, '');
+  return layout({
+    title: pageTitle(short),
+    description,
+    path,
+    current: 'none',
+    body: `
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <span>${esc(short)}</span></nav>
+  <article class="legal-doc">
+${legalHtml(md)}
+  </article>`,
+    jsonLd: [{ '@context': 'https://schema.org', '@type': 'WebPage', name: title, url: SITE + path, publisher: { '@type': 'Organization', name: 'Drop-In Builds', url: SITE } }],
+  });
+}
+
+export const privacyPage = () => legalPage(PRIVACY_MD, '/privacy/', 'This policy explains what information the site collects, why, who handles it for us, how long we keep it, and the choices you have.');
+export const termsPage = () => legalPage(TERMS_MD, '/terms/', 'These terms cover your use of dropinbuilds.com and share.dropinbuilds.com (the "site"), run by Drop-In Builds ("we", "us").');
+
 export function sitemap(builtAt: string) {
   const day = builtAt.slice(0, 10);
-  const urls = ['/', '/build/', ...PAGE_VIEWS.map((p) => `/build/${platformSlug(p)}/`), '/faq/', ...GUIDES.map((g) => `/faq/${g.slug}/`)];
+  const urls = ['/', '/build/', ...PAGE_VIEWS.map((p) => `/build/${platformSlug(p)}/`), '/faq/', ...GUIDES.map((g) => `/faq/${g.slug}/`), '/privacy/', '/terms/'];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map((u) => `  <url><loc>${SITE}${u}</loc><lastmod>${day}</lastmod></url>`).join('\n')}
@@ -704,6 +729,14 @@ section{margin:0}
 .guide-list.cols{columns:2 200px}
 .site-footer{border-top:1px solid var(--line);padding:24px 0 40px;color:var(--muted);font-size:14px}
 .site-footer .foot-link{color:var(--muted)}
+.legal-doc h1{margin-bottom:8px}
+.legal-doc h2{font-size:22px;margin-top:32px}
+.legal-doc h3{font-size:18px}
+.legal-doc li{margin:4px 0}
+.legal-table{border-collapse:collapse;font-size:15px;min-width:560px}
+.legal-table th,.legal-table td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+.legal-table thead th{background:var(--surface-2)}
+.legal-table tbody th{font-weight:600}
 .feedback-form{display:grid;gap:6px;max-width:560px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;box-shadow:var(--shadow)}
 .feedback-form label{font-weight:700;font-size:15px;margin-top:8px}
 .feedback-form label:first-child{margin-top:0}

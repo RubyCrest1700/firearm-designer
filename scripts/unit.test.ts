@@ -18,7 +18,8 @@ import { Dock, PartsList, Summary, toLegalNotice } from '../src/BuilderPage';
 import { ComparePage } from '../src/Compare';
 import { HomePage } from '../src/HomePage';
 import { BuildCard, ChangeChip, legalOnly } from '../src/ui';
-import { PAGE_VIEWS, guidePage, indexPage, platformPage } from '../src/guides/render';
+import { PAGE_VIEWS, feedbackPage, guidePage, indexPage, notFoundPage, platformPage, privacyPage, sitemap, termsPage } from '../src/guides/render';
+import { PRIVACY_MD, TERMS_MD } from '../src/guides/legal';
 import { GUIDES, type FitChart } from '../src/guides/content';
 import { RETAILERS } from '../src/data/retailers';
 import { priceIndex } from './og-index';
@@ -871,4 +872,85 @@ test('the AR FAQ guides that list short barrels show the Legal notice; no other 
   assert.deepEqual(GUIDES.filter((g) => hasPageNotice(guidePage(g, BUILT))).map((g) => g.slug).sort(), withNotice);
   // Glock guides chart barrels too, but a pistol has no stock, so they carry none.
   assert.ok(!hasPageNotice(guidePage(GUIDES.find((g) => g.slug === 'glock-19-threaded-barrels')!, BUILT)));
+});
+/* ------------------------------------------------------------------ Privacy Policy and Terms of Use */
+
+/** The page without its style and scripts (the CSS has attribute selectors like [hidden], the JSON-LD has arrays). */
+const pageText = (html: string) => html.replace(/<style>[\s\S]*?<\/style>/g, '').replace(/<script[\s\S]*?<\/script>/g, '');
+/** The published document itself, between the article tags. */
+const docOf = (html: string) => html.slice(html.indexOf('<article class="legal-doc">'), html.indexOf('</article>'));
+
+test('the Privacy Policy and Terms of Use pages render with their h1, at /privacy/ and /terms/', () => {
+  const privacy = privacyPage();
+  const terms = termsPage();
+  assert.equal(privacy.match(/<h1>[^<]*<\/h1>/g)?.join(), '<h1>Drop-In Builds Privacy Policy</h1>');
+  assert.equal(terms.match(/<h1>[^<]*<\/h1>/g)?.join(), '<h1>Drop-In Builds Terms of Use</h1>');
+  assert.ok(privacy.includes('<link rel="canonical" href="https://dropinbuilds.com/privacy/" />'));
+  assert.ok(terms.includes('<link rel="canonical" href="https://dropinbuilds.com/terms/" />'));
+  assert.ok(!/noindex/.test(privacy) && !/noindex/.test(terms), 'both are indexable');
+  // Every section heading of the approved text is on the page.
+  for (const [md, html] of [[PRIVACY_MD, privacy], [TERMS_MD, terms]]) {
+    const heads = [...md.matchAll(/^#{2,3} (.+)$/gm)].map((m) => m[1]);
+    assert.ok(heads.length >= 10);
+    for (const h of heads) assert.ok(html.includes(`>${htmlEsc(h)}</h`), h);
+  }
+});
+
+test('neither page carries draft notes, counsel flags or placeholders, except "Effective: [date]"', () => {
+  for (const [name, md, html] of [['privacy', PRIVACY_MD, privacyPage()], ['terms', TERMS_MD, termsPage()]]) {
+    for (const text of [md, pageText(html)]) {
+      assert.doesNotMatch(text, /DRAFT|Notes for the owner|\[Lawyer\]|counsel|not published/i, name);
+      assert.equal(text.split('Effective: [date]').length, 2, `${name}: "Effective: [date]" exactly once`);
+      assert.deepEqual(text.replace('Effective: [date]', '').match(/\[[^\]]*\]/g), null, `${name}: no other bracket`);
+    }
+    assert.ok(docOf(html).includes('<p>Effective: [date]</p>'), name);
+  }
+});
+
+test('the policy promises automatic deletion only to match RETENTION_LIVE in the Worker', () => {
+  const live = readFileSync('worker/src/retention.js', 'utf8').match(/^export const RETENTION_LIVE = (true|false);\r?$/m);
+  assert.ok(live, 'RETENTION_LIVE is declared in worker/src/retention.js');
+  const policy = docOf(privacyPage());
+  if (live[1] === 'false') {
+    assert.ok(policy.includes('We are setting up automatic deletion for the records below. Until it is switched on, we keep these records, and we delete them when you ask (section 6).'), 'interim paragraph');
+    // Every mention of automatic deletion is one the site keeps today: the 7-day unconfirmed-signup purge (runAlerts,
+    // live whatever RETENTION_LIVE says), auto-hiding reported builds, or the interim and "not removed" wording.
+    const allowed = ['Deleted automatically after 7 days', 'is hidden automatically', 'We are setting up automatic deletion', 'once automatic deletion is running', 'votes are not removed automatically', 'reports are not removed automatically'];
+    const mentions = policy.replace(/<[^>]+>/g, ' ').split(/(?<=[.:;])\s+/).filter((s) => /automatic/i.test(s));
+    assert.ok(mentions.length >= 4);
+    for (const s of mentions) assert.ok(allowed.some((a) => s.includes(a)), s);
+  } else {
+    assert.fail('RETENTION_LIVE is true: section 5 of the Privacy Policy still says automatic deletion is being set up. Update it with the owner first.');
+  }
+});
+
+test('the Terms name the Report button and the feedback form as the way to have content removed', () => {
+  const terms = docOf(termsPage());
+  const s9 = terms.slice(terms.indexOf('<h2>9. Reporting and removal</h2>'), terms.indexOf('<h2>10.'));
+  assert.ok(s9.includes('<li><b>Report button:</b> if a community build breaks these terms, press Report on it.'), 'Report button');
+  assert.ok(s9.includes('<li><b>Feedback form:</b> to ask us to remove a build, including your own,'), 'feedback form');
+  assert.ok(s9.includes('<a href="/feedback/">dropinbuilds.com/feedback/</a>'), 'linked');
+});
+
+test('the legal pages link our own pages relatively, keep share-link examples as text, and render the retention table', () => {
+  const policy = docOf(privacyPage());
+  const terms = docOf(termsPage());
+  assert.ok(policy.includes('see our Terms of Use at <a href="/terms/">dropinbuilds.com/terms/</a>'));
+  assert.ok(terms.includes('Our Privacy Policy at <a href="/privacy/">dropinbuilds.com/privacy/</a>'));
+  assert.ok(policy.includes('(dropinbuilds.com/?b=… and share.dropinbuilds.com/b/…)'), 'share-link examples stay text');
+  assert.doesNotMatch(policy + terms, /href="https?:/, 'no absolute links');
+  const rows = policy.match(/<tr>/g)?.length;
+  assert.equal(rows, PRIVACY_MD.split('\n').filter((l) => l.startsWith('|')).length - 1, 'header and every row, no separator');
+  assert.ok(policy.includes('<th scope="row">Unconfirmed price alert signups</th><td>Deleted automatically after 7 days</td><td>Same</td>'));
+});
+
+test('the sitemap lists the Privacy Policy and the Terms of Use', () => {
+  const xml = sitemap(BUILT);
+  for (const p of ['/privacy/', '/terms/']) assert.ok(xml.includes(`<loc>https://dropinbuilds.com${p}</loc>`), p);
+});
+
+test('the only commission wording anywhere is "we earn no commission"', () => {
+  const pages = [privacyPage(), termsPage(), indexPage(BUILT), feedbackPage(), notFoundPage(), ...GUIDES.map((g) => guidePage(g, BUILT)), ...PAGE_VIEWS.map((v) => platformPage(v))];
+  for (const html of pages) for (const m of html.matchAll(/commission/gi)) assert.equal(html.slice(m.index! - 11, m.index), 'we earn no ', html.slice(m.index! - 40, m.index! + 20));
+  assert.doesNotMatch(readFileSync('src/App.tsx', 'utf8'), /commission/i);
 });
