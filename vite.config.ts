@@ -47,7 +47,9 @@ const compactPrices = (): Plugin => {
         return `export default ${JSON.stringify(packPrices(read('data/prices.json'), read('data/sources.json')))}`;
       }
       const unpack = Object.values(FILES).find((u) => id === `\0${u}`);
-      return unpack ? `import t from '${TABLE}';\nimport { ${unpack} } from '${resolve('scripts/price-table.mjs')}';\nexport default ${unpack}(t);` : null;
+      // Forward slashes: a Windows path's backslashes would be read as escapes inside the JS string. Unchanged on Linux.
+      const table = resolve('scripts/price-table.mjs').replace(/\\/g, '/');
+      return unpack ? `import t from '${TABLE}';\nimport { ${unpack} } from '${table}';\nexport default ${unpack}(t);` : null;
     },
   };
 };
