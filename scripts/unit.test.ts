@@ -832,3 +832,9 @@ test('our own spec chips, pick notes and guide text say M16 profile and linear c
   assert.equal(part(ar9, 'a9-mz-kak').name, 'Slimline Flash Can 1/2x28');
   assert.equal(part(ar15, 'ar-bcg-psa').name, 'M16 Nitride BCG');
 });
+
+test('no page or footer claims retailer commissions', () => {
+  for (const f of ['src/App.tsx', 'src/guides/render.ts']) assert.doesNotMatch(readFileSync(f, 'utf8'), /commission|make money from the links/i, f);
+  const pages = [indexPage(BUILT), guidePage(GUIDES[0], BUILT), platformPage(PAGE_VIEWS[0])];
+  for (const html of pages) assert.doesNotMatch(html, /commission|make money from the links/i);
+});

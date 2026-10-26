@@ -248,7 +248,6 @@ ${o.jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).re
   <p class="brand-name small">Drop-In <b>Builds</b></p>
   <p>Plan a build part by part, check that everything fits, and see where each part costs least. We don't sell anything.</p>
   <p>Fit charts come from the same rules the builder uses. Prices marked Sample aren't tracked yet, List Price and dated Factory Part prices were checked by hand on that date, and undated Factory Part prices are estimates; always confirm the price and fit with the retailer and the maker. Parts that are serialized and treated as the firearm under federal law ship to a licensed dealer, and laws vary by state.</p>
-  <p>Some retailer links may earn us a small commission at no extra cost to you. It never changes which parts we show or how we check fit.</p>
   <p><a class="foot-link" href="/feedback/">Send Feedback</a></p>
 </div></footer>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "${ANALYTICS_TOKEN}"}'></script>
@@ -318,7 +317,6 @@ const GENERAL_FAQ: { section: string; items: { q: string; a: string }[] }[] = [
     { q: 'Is Drop-In Builds a store?', a: "No. We don't sell anything. You plan the build here, and every buy link goes to the retailer or maker, where you check out as usual." },
     { q: 'Do I need an account?', a: 'No. Builds you save are kept in your browser, and Copy Link opens the same build on any other device. The only thing you can sign up for is optional price alert emails.' },
     { q: 'Which platforms can I build?', a: 'The AR-15, AR-10 and AR-9, the Glock 17, 19, 19X, 26, 34, 45 and 47, the Glock 43X and 48, the Glock 20 and 21, the Sig P320, the Sig P365, the S&W M&P 2.0 and the Springfield Hellcat. More platforms are on the way.' },
-    { q: 'Do you make money from the links?', a: 'Some retailer links may earn us a small commission at no extra cost to you. It never changes which parts we show or how we check fit.' },
   ] },
   { section: 'Using the Builder', items: [
     { q: 'How do you know the parts fit?', a: "Each part carries its real measurements and the maker's own fit notes, and the builder checks every part against the rest of your build. Always confirm fit with the maker before you buy." },
