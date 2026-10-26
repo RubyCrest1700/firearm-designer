@@ -90,3 +90,15 @@ test('readActiveSources and readPausedHosts read the real files and apply the fi
     process.chdir(cwd);
   }
 });
+
+test('no weight\'s source points at a paused retailer, and every published weight names its source', () => {
+  const hosts = pausedHosts(sources, retailers);
+  const weights = JSON.parse(read('data/weights.json')).parts;
+  assert.ok(Object.keys(weights).length > 100);
+  const paused = Object.entries(weights).filter(([, w]) => w.src && hosts.has(new URL(w.src).host)).map(([id, w]) => `${id}: ${w.src}`);
+  assert.deepEqual(paused, []);
+  for (const [id, w] of Object.entries(weights)) {
+    if (w.basis === 'published') assert.match(w.src ?? '', /^https:\/\//, id);
+    else assert.equal(w.src, null, id);
+  }
+});
