@@ -20,6 +20,7 @@ import { HomePage } from '../src/HomePage';
 import { BuildCard, ChangeChip, legalOnly } from '../src/ui';
 import { PAGE_VIEWS, feedbackPage, guidePage, indexPage, notFoundPage, platformPage, privacyPage, sitemap, termsPage } from '../src/guides/render';
 import { PRIVACY_MD, TERMS_MD } from '../src/guides/legal';
+import { AlertsPanel } from '../src/SavedPage';
 import { GUIDES, type FitChart } from '../src/guides/content';
 import { RETAILERS } from '../src/data/retailers';
 import { priceIndex } from './og-index';
@@ -953,4 +954,32 @@ test('the only commission wording anywhere is "we earn no commission"', () => {
   const pages = [privacyPage(), termsPage(), indexPage(BUILT), feedbackPage(), notFoundPage(), ...GUIDES.map((g) => guidePage(g, BUILT)), ...PAGE_VIEWS.map((v) => platformPage(v))];
   for (const html of pages) for (const m of html.matchAll(/commission/gi)) assert.equal(html.slice(m.index! - 11, m.index), 'we earn no ', html.slice(m.index! - 40, m.index! + 20));
   assert.doesNotMatch(readFileSync('src/App.tsx', 'utf8'), /commission/i);
+});
+const FOOT_LINKS = ['<a class="foot-link" href="/privacy/">Privacy Policy</a>', '<a class="foot-link" href="/terms/">Terms of Use</a>'];
+
+test('every static page footer and the app footer link the Privacy Policy and the Terms of Use', () => {
+  const pages = [privacyPage(), termsPage(), indexPage(BUILT), feedbackPage(), notFoundPage(), ...GUIDES.map((g) => guidePage(g, BUILT)), ...PAGE_VIEWS.map((v) => platformPage(v))];
+  for (const html of pages) {
+    const footer = html.slice(html.indexOf('<footer class="site-footer">'), html.indexOf('</footer>'));
+    for (const link of FOOT_LINKS) assert.ok(footer.includes(link), link);
+  }
+  // The app's footer (also prerendered into the home page).
+  const app = readFileSync('src/App.tsx', 'utf8');
+  const footer = app.slice(app.indexOf('<footer className="site-footer">'), app.indexOf('</footer>'));
+  for (const link of FOOT_LINKS) assert.ok(footer.includes(link.replace('class=', 'className=')), link);
+});
+
+test('the alerts signup panel, the feedback form and the FAQ email answer link the Privacy Policy', () => {
+  const panel = renderToStaticMarkup(createElement(AlertsPanel, { signup: null, hasBuilds: true, onSignUp: async () => {}, onRefresh: () => {}, onStop: async () => {} }));
+  assert.ok(panel.includes('We only use your address for these alerts. See our <a href="/privacy/">Privacy Policy</a>.'), 'alerts panel');
+  const fb = feedbackPage();
+  const form = fb.slice(fb.indexOf('<form id="feedback"'), fb.indexOf('</form>'));
+  assert.ok(form.includes('Please don&#39;t include personal details you wouldn&#39;t want stored. See our <a href="/privacy/">Privacy Policy</a>.') || form.includes("Please don't include personal details you wouldn't want stored. See our <a href=\"/privacy/\">Privacy Policy</a>."), 'feedback form');
+  const faq = indexPage(BUILT);
+  const answer = "We only use it to send the price alerts you asked for. We don't sell it. Our email provider (Resend) and host (Cloudflare) process it to deliver the emails. Unsubscribing deletes it from our database; the providers may keep delivery logs for a limited time. See our Privacy Policy.";
+  assert.ok(faq.includes(`<p>${htmlEsc(answer).replace('Privacy Policy.', '<a href="/privacy/">Privacy Policy</a>.')}</p>`), 'FAQ answer links the policy');
+  // The FAQPage structured data carries the same answer as plain text.
+  const ld = [...faq.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
+  const qa = ld.find((j) => j['@type'] === 'FAQPage').mainEntity.find((e: { name: string }) => e.name === 'What do you do with my email address?');
+  assert.equal(qa.acceptedAnswer.text, answer);
 });

@@ -275,7 +275,7 @@ ${o.jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).re
   <p class="brand-name small">Drop-In <b>Builds</b></p>
   <p>Plan a build part by part, check that everything fits, and see where each part costs least. We don't sell anything.</p>
   <p>Fit charts come from the same rules the builder uses. Prices marked Sample aren't tracked yet, List Price and dated Factory Part prices were checked by hand on that date, and undated Factory Part prices are estimates; always confirm the price and fit with the retailer and the maker. Parts that are serialized and treated as the firearm under federal law ship to a licensed dealer, and laws vary by state.</p>
-  <p><a class="foot-link" href="/feedback/">Send Feedback</a></p>
+  <p><a class="foot-link" href="/feedback/">Send Feedback</a> · <a class="foot-link" href="/privacy/">Privacy Policy</a> · <a class="foot-link" href="/terms/">Terms of Use</a></p>
 </div></footer>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "${ANALYTICS_TOKEN}"}'></script>
 </body>
@@ -338,8 +338,11 @@ function relatedHtml(g: Guide) {
   return `<section><h2>More Fit Questions</h2><ul class="guide-list">${others.map((x) => `<li><a href="/faq/${x.slug}/">${esc(x.h1)}</a></li>`).join('')}</ul></section>`;
 }
 
-/** Site questions at the top of the FAQ page, in sections. Plain text answers, also published as FAQPage structured data. */
-const GENERAL_FAQ: { section: string; items: { q: string; a: string }[] }[] = [
+/**
+ * Site questions at the top of the FAQ page, in sections. Plain text answers, also published as FAQPage structured data.
+ * `link` turns the last mention of its text in the answer into a link on the page (the structured data stays plain).
+ */
+const GENERAL_FAQ: { section: string; items: { q: string; a: string; link?: { text: string; href: string } }[] }[] = [
   { section: 'About Drop-In Builds', items: [
     { q: 'Is Drop-In Builds a store?', a: "No. We don't sell anything. You plan the build here, and every buy link goes to the retailer or maker, where you check out as usual." },
     { q: 'Do I need an account?', a: 'No. Builds you save are kept in your browser, and Copy Link opens the same build on any other device. The only thing you can sign up for is optional price alert emails.' },
@@ -358,7 +361,7 @@ const GENERAL_FAQ: { section: string; items: { q: string; a: string }[] }[] = [
     { q: 'Where do the prices come from?', a: "We check retailer and maker sites every night where they allow it, and show each part's price at every retailer we track. Prices marked Sample aren't tracked yet, List Price and dated Factory Part prices were checked by hand on that date, and undated Factory Part prices are estimates, so always confirm the price at the retailer." },
     { q: "Why isn't my favorite retailer listed?", a: "Some retailers don't allow automated price checks, and we respect that. We've also paused some retailers while we review their terms. We add retailers as they make their prices available to us." },
     { q: 'How do price alerts work?', a: 'Save a build to My Builds, then enter your email there. We send one email a day at most, only when a part in a saved build moves by $20 and 10% or more. Every email has a one-click unsubscribe link.' },
-    { q: 'What do you do with my email address?', a: "We only use it to send the price alerts you asked for. We don't sell it. Our email provider (Resend) and host (Cloudflare) process it to deliver the emails. Unsubscribing deletes it from our database; the providers may keep delivery logs for a limited time." },
+    { q: 'What do you do with my email address?', a: "We only use it to send the price alerts you asked for. We don't sell it. Our email provider (Resend) and host (Cloudflare) process it to deliver the emails. Unsubscribing deletes it from our database; the providers may keep delivery logs for a limited time. See our Privacy Policy.", link: { text: 'Privacy Policy', href: '/privacy/' } },
   ] },
   { section: 'Buying and the Law', items: [
     { q: 'What does FFL mean on a part?', a: 'FFL marks the part that is serialized and treated as the firearm under federal law (a pistol frame or fire control unit, or an AR lower receiver), so it ships to a licensed dealer near you, who handles the transfer and background check.' },
@@ -367,6 +370,14 @@ const GENERAL_FAQ: { section: string; items: { q: string; a: string }[] }[] = [
   ] },
 ];
 const FAQ_ITEMS = GENERAL_FAQ.flatMap((g) => g.items);
+const answerHtml = (f: (typeof FAQ_ITEMS)[number]) => {
+  const html = esc(f.a);
+  if (!f.link) return html;
+  const t = esc(f.link.text);
+  const at = html.lastIndexOf(t);
+  if (at < 0) throw new Error(`FAQ "${f.q}": no "${f.link.text}" to link`);
+  return `${html.slice(0, at)}<a href="${esc(f.link.href)}">${t}</a>${html.slice(at + t.length)}`;
+};
 
 export function indexPage(builtAt: string) {
   const makers = [...new Set(GUIDES.map((g) => platformOf(g.platform).maker))];
@@ -378,7 +389,7 @@ export function indexPage(builtAt: string) {
   <section>
     <h2>${esc(g.section)}</h2>
     <div class="faq">${g.items.map((f) => `
-      <details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join('')}
+      <details><summary>${esc(f.q)}</summary><p>${answerHtml(f)}</p></details>`).join('')}
     </div>
   </section>`).join('')}
   ${makers.map((m) => `
@@ -577,7 +588,7 @@ export function feedbackPage() {
     <input type="hidden" name="page" />
     <p class="form-error" role="alert" hidden></p>
     <button class="cta" type="submit">Send Feedback</button>
-    <p class="muted small-print">We only use your email to answer you. Please don't include personal details you wouldn't want stored.</p>
+    <p class="muted small-print">We only use your email to answer you. Please don't include personal details you wouldn't want stored. See our <a href="/privacy/">Privacy Policy</a>.</p>
   </form>
   <div id="feedback-sent" class="answers" hidden>
     <h2 tabindex="-1">Thanks for the Feedback</h2>
