@@ -9,8 +9,7 @@ import { ironParts, ironRules, ironsSlot } from './irons';
  * magazine (Glock or Colt SMG pattern), and last-round bolt hold-open only works with a bolt made for that
  * lower's hold-open system. Upper receivers, barrel nuts, handguards, charging handles, triggers, grips and
  * stocks are standard AR-15 parts. Barrels are threaded 1/2x28.
- * Sources: https://support.aeroprecisionusa.com/hc/en-us/articles/14130603136535-What-do-I-need-to-build-my-EPC-9,
- * https://www.80percentarms.com/blog/ar9-lrbho-explained/
+ * Source: https://support.aeroprecisionusa.com/hc/en-us/articles/14130603136535-What-do-I-need-to-build-my-EPC-9
  */
 const MAG_LABEL: Record<string, string> = { glock: 'Glock', colt: 'Colt SMG' };
 /** Who makes each lower's bolt hold-open system, as named on the bolts. */
@@ -157,7 +156,7 @@ const allParts = [
       offers: [['BRN', 89.95], ['PA', 89.99]], pick: pick('premium', 'Ambidextrous and easy to grab.') },
   ]),
   ...parts('muzzle', [
-    { id: 'a9-mz-kak', brand: 'KAK Industry', name: 'Slimline Flash Can 1/2x28', specs: ['1/2x28', 'Flash can', 'Bored for 9mm'], attrs: { thread: '1/2x28', kind: 'flash', bore: .36 },
+    { id: 'a9-mz-kak', brand: 'KAK Industry', name: 'Slimline Flash Can 1/2x28', specs: ['1/2x28', 'Linear comp', 'Bored for 9mm'], attrs: { thread: '1/2x28', kind: 'flash', bore: .36 },
       offers: [['PA', 24.99]], pick: pick('budget', 'Pushes blast forward, cheap.') },
     { id: 'a9-mz-psa', brand: 'Palmetto State Armory', name: 'AK-V 9mm Flash Can Linear Comp 1/2x28', specs: ['1/2x28', 'Linear comp', 'Bored for 9mm'], attrs: { thread: '1/2x28', kind: 'flash', bore: .36 },
       offers: [['PSA', 29.99]], pick: pick('value', 'Keeps blast off to the side, for indoor ranges.') },

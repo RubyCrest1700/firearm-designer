@@ -625,7 +625,6 @@ export const GUIDES: Guide[] = [
     ],
     picks: ['bcg', 'lower'],
     sources: [
-      { label: '80% Arms: AR-9 LRBHO explained', url: 'https://www.80percentarms.com/blog/ar9-lrbho-explained/' },
       { label: 'Aero Precision: what you need to build an EPC-9', url: 'https://support.aeroprecisionusa.com/hc/en-us/articles/14130603136535-What-do-I-need-to-build-my-EPC-9' },
     ],
   },
@@ -639,7 +638,7 @@ export const GUIDES: Guide[] = [
     answers: [
       'Use a <b>9mm buffer of about 8 oz</b> on a carbine tube. A 5.56 carbine buffer (about 3.8 oz) is too light for blowback: the bolt slams open and batters the receiver.',
       'AR-9 barrels are threaded <b>1/2x28</b>, the same as 5.56, so 5.56 devices screw on. Don\'t use them: their bore is too narrow for a 9mm bullet.',
-      'Pick a muzzle device <b>bored for 9mm</b>, such as a 9mm flash can or 9mm compensator.',
+      'Pick a muzzle device <b>bored for 9mm</b>, such as a 9mm linear compensator or 9mm compensator.',
     ],
     charts: [
       { a: 'muzzle', b: 'barrel', heading: 'Muzzle device and barrel', intro: 'Every muzzle device we list, checked against every AR-9 barrel.' },

@@ -813,3 +813,22 @@ test('guide, FAQ and footer text state no flat legal conclusions', () => {
   assert.ok(pages[0].includes(htmlEsc('FFL marks the part that is serialized and treated as the firearm under federal law (a pistol frame or fire control unit, or an AR lower receiver), so it ships to a licensed dealer near you, who handles the transfer and background check.')), 'FAQ answer');
   assert.ok(pages[0].includes('Parts that are serialized and treated as the firearm under federal law ship to a licensed dealer, and laws vary by state.'), 'static footer');
 });
+
+test('our own spec chips, pick notes and guide text say M16 profile and linear comp, not full auto or flash can; no source cites 80% Arms', () => {
+  const ours = PLATFORMS.flatMap((p) => p.parts.flatMap((x) => [...x.specs, x.pick?.note ?? '']));
+  const guideText = GUIDES.flatMap((g) => [g.title, g.h1, g.description, g.lede, ...g.answers, ...g.charts.flatMap((c) => [c.heading, c.intro])]);
+  for (const t of [...ours, ...guideText]) assert.doesNotMatch(t, /full[- ]?auto|flash can/i, t);
+  for (const f of ['src/guides/content.ts', 'src/data/ar9.ts']) assert.doesNotMatch(readFileSync(f, 'utf8'), /80percentarms|80% Arms/i, f);
+  assert.ok(GUIDES.every((g) => g.sources.every((s) => !/80percentarms/.test(s.url))));
+  // The new wording.
+  for (const id of ['ar-bcg-psa', 'ar-bcg-toolcraft', 'ar-bcg-aero']) assert.ok(part(ar15, id).specs.includes('M16 profile'), id);
+  assert.match(part(ar15, 'ar-bcg-psa').pick!.note, /^M16-profile carrier, /);
+  assert.ok(part(ar9, 'a9-mz-kak').specs.includes('Linear comp'));
+  assert.ok(GUIDES.find((g) => g.slug === 'ar-9-buffer-and-muzzle-device')!.answers.some((a) => a.includes('9mm linear compensator')));
+  // The LRBHO guide keeps its Aero source.
+  assert.deepEqual(GUIDES.find((g) => g.slug === 'ar-9-last-round-bolt-hold-open')!.sources.map((s) => s.url), ['https://support.aeroprecisionusa.com/hc/en-us/articles/14130603136535-What-do-I-need-to-build-my-EPC-9']);
+  // The makers' own product titles stay as they are.
+  assert.equal(part(ar9, 'a9-mag-g33').name, 'G18 9mm Magazine, 33 Round');
+  assert.equal(part(ar9, 'a9-mz-kak').name, 'Slimline Flash Can 1/2x28');
+  assert.equal(part(ar15, 'ar-bcg-psa').name, 'M16 Nitride BCG');
+});
