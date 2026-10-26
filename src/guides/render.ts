@@ -11,6 +11,7 @@ import { GUIDES, type AcrossChart, type FitChart, type Guide, type PairChart } f
 import { titleCase } from '../text';
 import { COMMUNITY_API, CONTENT_SECURITY_POLICY } from '../config';
 import { fontTags } from '../fonts';
+import { SBR_MESSAGE } from '../data/helpers';
 
 export const SITE = 'https://dropinbuilds.com';
 const ANALYTICS_TOKEN = '00e0977ba6ee49a7b9a386502da1ef3f';
@@ -27,6 +28,31 @@ const platformOf = (id: string): PageView => {
 const builderUrl = (platform: string, ids: string[]) => `/?b=${encodeURIComponent(`${platform}~${ids.join('.')}`)}`;
 /** Opens the builder on a page's plain factory build, so a model's page opens that model. */
 const baseUrl = (platform: Platform) => builderUrl(platform.id, Object.values(baseSelection(platform)));
+
+/* ------------------------------------------------------------------ legal notice */
+
+/**
+ * Whether any of these barrels, with any stock the platform lists, raises the builder's own short-barrel Legal notice
+ * (SBR_MESSAGE, src/data/helpers.ts). The platform's rules decide, so a pistol (no stock) never does.
+ */
+const raisesShortBarrelNotice = (platform: Platform, barrels: Part[]) => {
+  const stocks = platform.parts.filter((p) => p.slot === 'stock');
+  return barrels.some((barrel) => stocks.some((stock) => platform.rules({ barrel, stock }).some((i) => i.legal && i.message === SBR_MESSAGE)));
+};
+
+/** The Legal notice on a static page, with the builder's label and the approved message, or nothing. */
+const legalNoticeHtml = (show: boolean) =>
+  show ? `
+    <div class="legal-notice" role="note" aria-labelledby="page-legal-title"><p class="legal-notice-title" id="page-legal-title">Legal notice</p><p>${esc(SBR_MESSAGE)}</p></div>` : '';
+
+/** A guide lists barrels when a chart or its picks cover the barrel slot, or a chart checks every pair with one. */
+function guideBarrels(platform: Platform, g: Guide) {
+  const barrels = platform.parts.filter((p) => p.slot === 'barrel');
+  const slots = [...g.picks, ...g.charts.flatMap((c) => ('a' in c ? [c.a, c.b] : [c.slot]))];
+  if (slots.includes('barrel')) return barrels;
+  const withIds = g.charts.flatMap((c) => ('a' in c ? c.with ?? [] : []));
+  return barrels.filter((p) => withIds.includes(p.id));
+}
 
 /* ------------------------------------------------------------------ fit charts */
 
@@ -263,7 +289,7 @@ export function guidePage(g: Guide, builtAt: string) {
   <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="/faq/">FAQ</a> › <span>${esc(g.crumb ?? platform.name)}</span></nav>
   <article>
     <h1>${esc(g.h1)}</h1>
-    <p class="lede">${esc(g.lede)}</p>
+    <p class="lede">${esc(g.lede)}</p>${legalNoticeHtml(raisesShortBarrelNotice(platform, guideBarrels(platform, g)))}
     <section class="answers">
       <h2>The Short Answer</h2>
       <ul>${g.answers.map((a) => `<li>${a}</li>`).join('')}</ul>
@@ -455,7 +481,7 @@ export function platformPage(platform: PageView) {
   <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="/build/">Platforms</a> › <span>${esc(platform.name)}</span></nav>
   <article>
     <h1>${esc(platform.name)} Build Planner: Parts, Fit and Prices</h1>
-    <p class="lede">${esc(platform.blurb)} ${platform.parts.length} parts from ${brands} brands, each checked for fit against the rest of your build, with prices compared across retailers.</p>${includesHtml(platform)}
+    <p class="lede">${esc(platform.blurb)} ${platform.parts.length} parts from ${brands} brands, each checked for fit against the rest of your build, with prices compared across retailers.</p>${includesHtml(platform)}${legalNoticeHtml(raisesShortBarrelNotice(platform, platform.parts.filter((p) => p.slot === 'barrel')))}
     <a class="cta" href="${baseUrl(platform)}">Open the ${esc(platform.name)} Builder</a>
     <section>
       <h2>Start from a Complete Build</h2>
@@ -613,6 +639,10 @@ h3{font:700 19px/1.2 var(--f-head);margin:20px 0 8px}
 .includes{font-weight:700;color:var(--blue);margin:-6px 0 16px}
 .muted{color:var(--muted);font-size:15px}
 section{margin:0}
+.legal-notice{margin:0 0 16px;background:var(--warn-soft);color:var(--ink);border:1px solid var(--warn);border-left-width:4px;border-radius:8px;padding:10px 12px;font-size:15px;line-height:1.45}
+.legal-notice p{margin:0;overflow-wrap:anywhere}
+.legal-notice p+p{margin-top:6px}
+.legal-notice .legal-notice-title{font:700 11px/1.2 var(--f-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--warn);margin-bottom:6px}
 .answers{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--cta);border-radius:10px;padding:4px 20px 20px;box-shadow:var(--shadow)}
 .answers h2{margin-top:16px}
 .answers li{margin:6px 0}

@@ -838,3 +838,37 @@ test('no page or footer claims retailer commissions', () => {
   const pages = [indexPage(BUILT), guidePage(GUIDES[0], BUILT), platformPage(PAGE_VIEWS[0])];
   for (const html of pages) assert.doesNotMatch(html, /commission|make money from the links/i);
 });
+
+test('the AR-15 platform page shows the short-barrel Legal notice', () => {
+  const page = platformPage(PAGE_VIEWS.find((v) => v.pageId === 'ar15')!);
+  assert.ok(page.includes(PAGE_LEGAL_NOTICE([SBR_TEXT])), 'notice');
+  assert.equal(page.match(/class="legal-notice"/g)?.length, 1, 'once');
+  // Under the lede, before the button that opens the builder.
+  assert.ok(page.indexOf('class="lede"') < page.indexOf('class="legal-notice"') && page.indexOf('class="legal-notice"') < page.indexOf('class="cta"'), 'placement');
+});
+
+test('the AR-9 platform page shows it too', () => {
+  const page = platformPage(PAGE_VIEWS.find((v) => v.pageId === 'ar9')!);
+  assert.ok(page.includes(PAGE_LEGAL_NOTICE([SBR_TEXT])));
+});
+
+test('a Glock page shows none, and only the AR-15 and AR-9 pages list a short barrel with a stock today', () => {
+  for (const id of ['glock9', 'glock19', 'glock26', 'glock43x', 'glock20']) {
+    const view = PAGE_VIEWS.find((v) => v.pageId === id);
+    assert.ok(view, id);
+    assert.ok(!hasPageNotice(platformPage(view)), id);
+  }
+  assert.deepEqual(PAGE_VIEWS.filter((v) => hasPageNotice(platformPage(v))).map((v) => v.pageId).sort(), ['ar15', 'ar9']);
+});
+
+test('the AR FAQ guides that list short barrels show the Legal notice; no other guide does', () => {
+  const withNotice = ['ar-15-barrel-compatibility', 'ar-15-handguard-length-chart', 'ar-9-buffer-and-muzzle-device', 'ar-9-handguard-length-chart', 'ar-9-pistol-vs-sbr'];
+  for (const slug of withNotice) {
+    const html = guidePage(GUIDES.find((g) => g.slug === slug)!, BUILT);
+    assert.ok(html.includes(PAGE_LEGAL_NOTICE([SBR_TEXT])), slug);
+    assert.ok(html.indexOf('class="lede"') < html.indexOf('class="legal-notice"') && html.indexOf('class="legal-notice"') < html.indexOf('class="answers"'), `${slug} placement`);
+  }
+  assert.deepEqual(GUIDES.filter((g) => hasPageNotice(guidePage(g, BUILT))).map((g) => g.slug).sort(), withNotice);
+  // Glock guides chart barrels too, but a pistol has no stock, so they carry none.
+  assert.ok(!hasPageNotice(guidePage(GUIDES.find((g) => g.slug === 'glock-19-threaded-barrels')!, BUILT)));
+});
