@@ -347,6 +347,8 @@ const GENERAL_FAQ: { section: string; items: { q: string; a: string; link?: { te
     { q: 'Is Drop-In Builds a store?', a: "No. We don't sell anything. You plan the build here, and every buy link goes to the retailer or maker, where you check out as usual." },
     { q: 'Do I need an account?', a: 'No. Builds you save are kept in your browser, and Copy Link opens the same build on any other device. The only thing you can sign up for is optional price alert emails.' },
     { q: 'Which platforms can I build?', a: 'The AR-15, AR-10 and AR-9, the Glock 17, 19, 19X, 26, 34, 45 and 47, the Glock 43X and 48, the Glock 20 and 21, the Sig P320, the Sig P365, the S&W M&P 2.0 and the Springfield Hellcat. More platforms are on the way.' },
+    /** Owner-approved wording (2026-10-26). */
+    { q: 'Do you make money from the links?', a: 'No. There are no affiliate links, and we earn no commission from retailers. Retailer links carry a tag so the store can see the visit came from Drop-In Builds.' },
   ] },
   { section: 'Using the Builder', items: [
     { q: 'How do you know the parts fit?', a: "Each part carries its real measurements and the maker's own fit notes, and the builder checks every part against the rest of your build. Always confirm fit with the maker before you buy." },

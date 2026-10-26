@@ -835,10 +835,13 @@ test('our own spec chips, pick notes and guide text say M16 profile and linear c
   assert.equal(part(ar15, 'ar-bcg-psa').name, 'M16 Nitride BCG');
 });
 
+/** The old L15 claim and its parts: "Some retailer links may earn us a small commission at no extra cost to you." */
+const OLD_COMMISSION_CLAIM = /may earn us|small commission|earn us a\b|at no extra cost to you|never changes which parts we show/i;
+
 test('no page or footer claims retailer commissions', () => {
-  for (const f of ['src/App.tsx', 'src/guides/render.ts']) assert.doesNotMatch(readFileSync(f, 'utf8'), /commission|make money from the links/i, f);
+  for (const f of ['src/App.tsx', 'src/guides/render.ts']) assert.doesNotMatch(readFileSync(f, 'utf8'), OLD_COMMISSION_CLAIM, f);
   const pages = [indexPage(BUILT), guidePage(GUIDES[0], BUILT), platformPage(PAGE_VIEWS[0])];
-  for (const html of pages) assert.doesNotMatch(html, /commission|make money from the links/i);
+  for (const html of pages) assert.doesNotMatch(html, OLD_COMMISSION_CLAIM);
 });
 
 test('the AR-15 platform page shows the short-barrel Legal notice', () => {
@@ -982,4 +985,17 @@ test('the alerts signup panel, the feedback form and the FAQ email answer link t
   const ld = [...faq.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
   const qa = ld.find((j) => j['@type'] === 'FAQPage').mainEntity.find((e: { name: string }) => e.name === 'What do you do with my email address?');
   assert.equal(qa.acceptedAnswer.text, answer);
+});
+/** Owner-approved wording (2026-10-26), byte for byte. */
+const MONEY_ANSWER = 'No. There are no affiliate links, and we earn no commission from retailers. Retailer links carry a tag so the store can see the visit came from Drop-In Builds.';
+
+test('the FAQ answers "Do you make money from the links?" with the approved wording, on the page and in its structured data', () => {
+  const faq = indexPage(BUILT);
+  assert.ok(faq.includes(`<details><summary>Do you make money from the links?</summary><p>${htmlEsc(MONEY_ANSWER)}</p></details>`), 'on the page');
+  const ld = [...faq.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
+  const qa = ld.find((j) => j['@type'] === 'FAQPage').mainEntity.filter((e: { name: string }) => e.name === 'Do you make money from the links?');
+  assert.equal(qa.length, 1);
+  assert.equal(qa[0].acceptedAnswer.text, MONEY_ANSWER);
+  // Marked as approved wording in the source.
+  assert.match(readFileSync('src/guides/render.ts', 'utf8'), /\/\*\* Owner-approved wording \(2026-10-26\)\. \*\/\r?\n {4}\{ q: 'Do you make money from the links\?', a: 'No\. There are no affiliate links/);
 });
