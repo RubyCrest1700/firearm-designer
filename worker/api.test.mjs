@@ -1385,3 +1385,31 @@ test('the share page shows the price line only where the page shows the total; t
   const unnamed = await page(env(), '/b/glock19~g19-frame-g5.g-fcg-apex5.g19-slide-mos');
   assert.match(unnamed.text, /<p>Opening <a [^>]*>Glock 17 \/ 19 \/ 19X \/ 26 \/ 34 \/ 45 \/ 47 build · \$650<\/a> on Drop-In Builds…<\/p>\n<p>Prices change; confirm at the retailer\.<\/p>/);
 });
+
+test('a community AR-15 build carries the notice once on the page and opens its description with it; a Glock one has none', async () => {
+  const e = env();
+  const ar = await share(e, { platform: 'ar15', name: 'Short AR', note: 'Range day', parts: ['ar-lower-aero', 'ar-bbl-ba10', 'ar-grip-k2'] });
+  assert.equal(ar.status, 201);
+  const r = await page(e, `/c/${ar.body.build.id}`, AR_INDEX);
+  assert.equal(r.status, 200);
+  assert.equal(r.text.split(SHORT_NOTICE_TEXT).length, 5, 'once on the page, plus the description, og and twitter tags');
+  assert.equal(r.text.split(`<p>${SHORT_NOTICE_TEXT}</p>`).length, 2, 'once in the page body');
+  for (const prop of ['og:description', 'twitter:description', 'description']) assert.ok(meta(r.text, prop).startsWith(`${SHORT_NOTICE_TEXT} Range day AR-15 · 2 parts · $300`), prop);
+  const glock = await share(e);
+  const g = await page(e, `/c/${glock.body.build.id}`, AR_INDEX);
+  assert.equal(g.status, 200);
+  assert.doesNotMatch(g.text, /regulated under the NFA/);
+});
+
+test('AR-9 and AR-10 share pages with prices open their description with the notice, then the priced summary', async () => {
+  const index = { platforms: {
+    ar9: { name: 'AR-9', parts: { 'a9-lower': ['9mm lower', 150], 'a9-bbl': ['9mm barrel', 120] } },
+    ar10: { name: 'AR-10', parts: { 'a10-lower': ['.308 lower', 180], 'a10-bbl': ['.308 barrel', 250] } },
+  } };
+  for (const [id, name, total] of [['ar9', 'AR-9', '$270'], ['ar10', 'AR-10', '$430']]) {
+    const r = await page(env(), `/b/${id}~${id === 'ar9' ? 'a9-lower.a9-bbl' : 'a10-lower.a10-bbl'}`, index);
+    assert.equal(r.status, 200, id);
+    assert.ok(meta(r.text, 'og:description').startsWith(`${SHORT_NOTICE_TEXT} ${name} · 2 parts · ${total} at the best prices we found. Prices change; confirm at the retailer.`), id);
+    assert.equal(r.text.split(`<p>${SHORT_NOTICE_TEXT}</p>`).length, 2, `${id}: once in the page body`);
+  }
+});
