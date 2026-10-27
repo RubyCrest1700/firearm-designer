@@ -1216,3 +1216,37 @@ test('a re-baseline whose batch fails changes nothing and runs again the next da
   for (const row of await allSeen(e)) assert.deepEqual(JSON.parse(row.seen), MIXED_BUILDS[parseInt(row.token, 16) % MIXED_BUILDS.length][1]);
   assert.equal((await e.DB.prepare("SELECT value FROM meta WHERE key = 'rebaseline'").first()).value, REBASELINE);
 });
+
+/* ------------------------------------------------------------- compliance round 1: re-baseline, NFA notice, prices, privacy */
+
+
+const PRIVACY = 'https://dropinbuilds.com/privacy/';
+const SHORT_NOTICE_TEXT = 'May be regulated under the NFA. Not legal advice: check federal, state and local law.';
+const CONFIRM_PRICE = 'Prices change; confirm at the retailer.';
+const privacyLink = (html) => (html.match(new RegExp(`<a [^>]*href="${PRIVACY.replace(/[.]/g, '\\.')}"[^>]*>Privacy Policy</a>`, 'g')) ?? []).length;
+
+test('the re-baseline mark is the 2026-10-26 pause', () => {
+  assert.equal(REBASELINE, '2026-10-26-pause');
+});
+
+test('a run with a stale re-baseline mark re-baselines every signup quietly, and the next run stays quiet too', async () => {
+  const e = alertEnv({ rebaselined: false });
+  e.DB.exec("INSERT INTO meta (key, value) VALUES ('rebaseline', '2026-10-pause')");
+  const now = Date.now();
+  // Last told $150 for the apex and $300 for the slide; the frame was in the index then.
+  const seen = { 'glock9/g-fcg-apex5': 150, 'glock9/g19-slide-mos': 300, 'glock9/g19-frame-g5': 200 };
+  for (const [i, confirmed] of [[1, 1], [2, 1], [3, 0]])
+    await e.DB.prepare('INSERT INTO alerts (token, email, builds, seen, confirmed, created_at, ip_hash) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .bind(String(i).repeat(32), `pause${i}@example.com`, JSON.stringify([G19]), JSON.stringify(seen), confirmed, now - DAY, 'x').run();
+  // After the pause the apex rose $50 (over $20 and 10%) and the frame has no price left, so it's out of the index.
+  const index = { platforms: { glock9: { name: 'Glock', parts: { 'g-fcg-apex5': ['Apex trigger', 200], 'g19-slide-mos': ['Glock MOS slide', 300] } } } };
+  assert.deepEqual(await withIndex(index, () => runAlerts(e, now)), { sent: 0, rebaselined: 3 });
+  assert.equal(e.outbox.length, 0);
+  for (const row of (await e.DB.prepare('SELECT seen FROM alerts').all()).results)
+    assert.deepEqual(JSON.parse(row.seen), { 'glock9/g-fcg-apex5': 200, 'glock9/g19-slide-mos': 300 });
+  assert.equal((await e.DB.prepare("SELECT value FROM meta WHERE key = 'rebaseline'").first()).value, '2026-10-26-pause');
+  // The next run with the same index: nothing moved, nothing sent.
+  assert.deepEqual(await withIndex(index, () => runAlerts(e, now + DAY)), { sent: 0, deferred: 0, failed: 0, watched: 2 });
+  assert.equal(e.outbox.length, 0);
+});
+

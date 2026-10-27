@@ -36,9 +36,10 @@ export const SUPPRESS_FOR = 90 * DAY;
 /**
  * The current one-time quiet re-baseline. When the value stored in meta differs, the next daily run sets every
  * signup's last reported prices to today's without emailing anyone, then stores this. 2026-10-pause: three
- * retailers were paused, which raised some best prices for no reason a subscriber cares about.
+ * retailers were paused, which raised some best prices for no reason a subscriber cares about. 2026-10-26-pause:
+ * three more (AT3 Tactical, Rainier Arms, MidwayUSA), whose robots.txt refuses the price bot.
  */
-export const REBASELINE = '2026-10-pause';
+export const REBASELINE = '2026-10-26-pause';
 /** Signups updated per re-baseline statement: 3 bound parameters each keeps a statement within D1's 100. */
 const REBASELINE_ROWS = 33;
 
