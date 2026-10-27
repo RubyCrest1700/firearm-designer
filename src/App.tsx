@@ -276,13 +276,12 @@ export default function App() {
           <div>
             <p className="brand-name small">Drop-In <b>Builds</b></p>
             <p>Plan a build part by part, check that everything fits, and see where each part costs least. We don't sell anything.</p>
-            <p><a className="foot-link" href={`/feedback/?from=${encodeURIComponent(location.pathname + location.hash)}`}>Send Feedback</a></p>
+            <p><a className="foot-link" href={`/feedback/?from=${encodeURIComponent(location.pathname + location.hash)}`}>Send Feedback</a> · <a className="foot-link" href="/privacy/">Privacy Policy</a> · <a className="foot-link" href="/terms/">Terms of Use</a></p>
           </div>
           <div>
             <p className="foot-title">Good to Know</p>
             <p>Prices marked Sample aren't tracked yet. List Price and dated Factory Part prices were checked by hand on that date; undated Factory Part prices are estimates. A From price is a holster before its light option. Always confirm the price at the retailer.</p>
-            <p>Parts marked FFL are serialized. They are legally the firearm and ship to a licensed dealer. Laws vary by state.</p>
-            <p>Some retailer links may earn us a small commission at no extra cost to you. It never changes which parts we show or how we check fit.</p>
+            <p>Parts marked FFL are serialized and treated as the firearm under federal law, so they ship to a licensed dealer. Laws vary by state.</p>
           </div>
         </div>
       </footer>

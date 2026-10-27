@@ -10,6 +10,11 @@ import { selectionFromParts } from '../src/store';
 import { buildWeight, formatWeight } from '../src/weight';
 import type { Issue } from '../src/types';
 import sources from '../data/sources.json';
+import PRICES from '../data/prices.json';
+import HISTORY from '../data/price-history.json';
+import { pausedPriceProblems } from './pause-guard.mjs';
+
+const SOURCES = sources as unknown as { paused?: Record<string, { since: string }> };
 
 let bad = 0;
 for (const p of PLATFORMS) {
@@ -306,6 +311,8 @@ for (const [id, e] of Object.entries((sources as unknown as { paused?: Record<st
       if (!part.offers.length) unpriced.add(part.id);
       if (part.pausedThrough) pausedHistory.add(part.id);
     }
+  // No price was read from a paused store after its pause date (scripts/pause-guard.mjs): if one was, move "since" on.
+  for (const problem of pausedPriceProblems(SOURCES.paused, PRICES, HISTORY)) { console.log(problem); bad++; }
   console.log(`Paused retailers: ${[...PAUSED].join(', ') || 'none'}. Parts with no price left: ${unpriced.size} (${[...unpriced].join(', ')}). Parts whose older price history is ignored: ${pausedHistory.size}.`);
 }
 // The home page's FAQ links keep their own copy of each guide's question.

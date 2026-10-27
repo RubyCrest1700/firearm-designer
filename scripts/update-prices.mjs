@@ -7,7 +7,8 @@
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { extractPrice, implausiblePrice } from './extract-price.mjs';
-import { parseRobots, isAllowed } from './robots.mjs';
+import { robotsGate } from './robots.mjs';
+import { readPage } from './robots.mjs';
 import { recordHistory, formatHistory } from './price-history.mjs';
 import { readActiveSources } from './sources.mjs';
 
@@ -22,44 +23,38 @@ const sources = readActiveSources();
 const previous = JSON.parse(readFileSync('data/prices.json', 'utf8'));
 const now = new Date();
 
-const robotsCache = new Map();
 const lastHit = new Map();
 
-async function politeFetch(url) {
+/** One request per host every HOST_DELAY_MS, every redirect hop and robots.txt included. robotsGate sets `redirect`. */
+async function politeFetch(url, init = {}) {
   const u = new URL(url);
   // A loop, since a busy event loop can fire a timer a few ms early.
   for (let wait; (wait = (lastHit.get(u.host) ?? 0) + HOST_DELAY_MS - Date.now()) > 0; ) await new Promise((r) => setTimeout(r, wait));
   lastHit.set(u.host, Date.now());
-  return fetch(url, { headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,application/xhtml+xml' }, redirect: 'follow', signal: AbortSignal.timeout(20000) });
+  return fetch(url, { headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,application/xhtml+xml' }, ...init, signal: AbortSignal.timeout(20000) });
 }
 
-async function allowedByRobots(url) {
-  const u = new URL(url);
-  if (!robotsCache.has(u.origin)) {
-    let rules = [];
-    try {
-      const res = await politeFetch(`${u.origin}/robots.txt`);
-      if (res.ok) rules = parseRobots(await res.text(), USER_AGENT);
-    } catch {
-      /* unreachable robots.txt: treat as no rules */
-    }
-    robotsCache.set(u.origin, rules);
-  }
-  return isAllowed(robotsCache.get(u.origin), u.pathname + u.search);
-}
+// robots.txt is checked for every page and every redirect hop before it's requested; an unreadable robots.txt (5xx,
+// 401, 403, 429, unreachable, timeout) blocks the host (scripts/robots.mjs).
+const { safeGet } = robotsGate({ get: politeFetch, agent: USER_AGENT });
 
-const report = { ok: 0, blocked: 0, failed: 0, kept: 0, rejected: 0 };
+const report = { ok: 0, blocked: 0, offsite: 0, failed: 0, kept: 0, rejected: 0 };
 
 async function readOffer(partId, retailer, url) {
   let entry = null;
   try {
-    if (!(await allowedByRobots(url))) {
+    const got = await safeGet(url);
+    if (got.blocked) {
       report.blocked++;
-      console.log(`robots.txt disallows ${url}`);
+      console.log(`${got.why}: ${got.blocked}${got.blocked !== url ? ` (redirected from ${url})` : ''}`);
+    } else if (got.offsite) {
+      // Another site's page isn't this retailer's price: nothing is recorded from it.
+      report.offsite++;
+      console.log(`${partId} @ ${retailer}: ${got.why} (${got.offsite}), not read`);
     } else {
-      const res = await politeFetch(url);
+      const { res } = got;
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const found = extractPrice(await res.text());
+      const found = extractPrice(await readPage(res));
       if (!found) throw new Error('no price found on page');
       const before = previous.offers?.[partId] ?? {};
       const odd = implausiblePrice(found.price, {
@@ -105,7 +100,7 @@ const offers = {};
 for (const { partId, retailer, entry } of jobs) if (entry) (offers[partId] ??= {})[retailer] = entry;
 
 const out = { updatedAt: report.ok ? now.toISOString() : previous.updatedAt ?? null, offers };
-console.log(`\nDone: ${report.ok} updated, ${report.kept} kept from last run, ${report.failed} failed (${report.rejected} of them ignored as likely misreads), ${report.blocked} blocked by robots.txt`);
+console.log(`\nDone: ${report.ok} updated, ${report.kept} kept from last run, ${report.failed} failed (${report.rejected} of them ignored as likely misreads), ${report.blocked} blocked by robots.txt, ${report.offsite} redirected off-site`);
 if (!dryRun) {
   writeFileSync('data/prices.json', JSON.stringify(out, null, 2) + '\n');
   // History records what the site shows: the lowest over every offer written, kept ones included. Leaving out a

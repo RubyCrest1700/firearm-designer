@@ -6,7 +6,8 @@
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { extractWeight } from './extract-price.mjs';
-import { parseRobots, isAllowed } from './robots.mjs';
+import { robotsGate } from './robots.mjs';
+import { readPage } from './robots.mjs';
 import { readActiveSources } from './sources.mjs';
 
 const USER_AGENT = 'FirearmDesignerPriceBot/0.1 (+https://github.com/RubyCrest1700/firearm-designer)';
@@ -15,37 +16,29 @@ const HOST_DELAY_MS = 5000;
 const sources = readActiveSources();
 const current = JSON.parse(readFileSync('data/weights.json', 'utf8')).parts ?? {};
 
-const robotsCache = new Map();
 const lastHit = new Map();
-async function politeFetch(url) {
+/** One request per host every HOST_DELAY_MS, redirect hops and robots.txt included. robotsGate sets `redirect`. */
+async function politeFetch(url, init = {}) {
   const u = new URL(url);
   const wait = (lastHit.get(u.host) ?? 0) + HOST_DELAY_MS - Date.now();
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
   lastHit.set(u.host, Date.now());
-  return fetch(url, { headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,application/xhtml+xml' }, redirect: 'follow', signal: AbortSignal.timeout(20000) });
+  return fetch(url, { headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,application/xhtml+xml' }, ...init, signal: AbortSignal.timeout(20000) });
 }
-async function allowed(url) {
-  const u = new URL(url);
-  if (!robotsCache.has(u.origin)) {
-    let rules = [];
-    try {
-      const res = await politeFetch(`${u.origin}/robots.txt`);
-      if (res.ok) rules = parseRobots(await res.text(), USER_AGENT);
-    } catch { /* no robots.txt */ }
-    robotsCache.set(u.origin, rules);
-  }
-  return isAllowed(robotsCache.get(u.origin), u.pathname + u.search);
-}
+// robots.txt is checked for every page and redirect hop; an unreadable one blocks the host (scripts/robots.mjs).
+const { safeGet } = robotsGate({ get: politeFetch, agent: USER_AGENT });
 
 const found = {};
 for (const [partId, byRetailer] of Object.entries(sources)) {
   for (const url of Object.values(byRetailer)) {
     if (found[partId]) break;
     try {
-      if (!(await allowed(url))) { console.log(`${partId}\tblocked by robots.txt\t${url}`); continue; }
-      const res = await politeFetch(url);
+      const got = await safeGet(url);
+      if (got.blocked) { console.log(`${partId}\tblocked (${got.why})\t${got.blocked}${got.blocked !== url ? ` (redirected from ${url})` : ''}`); continue; }
+      if (got.offsite) { console.log(`${partId}\t${got.why}, not read\t${url}`); continue; }
+      const { res } = got;
       if (!res.ok) { console.log(`${partId}\tHTTP ${res.status}\t${url}`); continue; }
-      const oz = extractWeight(await res.text());
+      const oz = extractWeight(await readPage(res));
       if (oz) found[partId] = { oz, basis: 'published', src: url };
       console.log(`${partId}\t${oz ? `${oz} oz (estimate was ${current[partId]?.oz ?? '?'})` : 'no weight on page'}\t${url}`);
     } catch (err) {

@@ -625,7 +625,6 @@ export const GUIDES: Guide[] = [
     ],
     picks: ['bcg', 'lower'],
     sources: [
-      { label: '80% Arms: AR-9 LRBHO explained', url: 'https://www.80percentarms.com/blog/ar9-lrbho-explained/' },
       { label: 'Aero Precision: what you need to build an EPC-9', url: 'https://support.aeroprecisionusa.com/hc/en-us/articles/14130603136535-What-do-I-need-to-build-my-EPC-9' },
     ],
   },
@@ -639,7 +638,7 @@ export const GUIDES: Guide[] = [
     answers: [
       'Use a <b>9mm buffer of about 8 oz</b> on a carbine tube. A 5.56 carbine buffer (about 3.8 oz) is too light for blowback: the bolt slams open and batters the receiver.',
       'AR-9 barrels are threaded <b>1/2x28</b>, the same as 5.56, so 5.56 devices screw on. Don\'t use them: their bore is too narrow for a 9mm bullet.',
-      'Pick a muzzle device <b>bored for 9mm</b>, such as a 9mm flash can or 9mm compensator.',
+      'Pick a muzzle device <b>bored for 9mm</b>, such as a 9mm linear compensator or 9mm compensator.',
     ],
     charts: [
       { a: 'muzzle', b: 'barrel', heading: 'Muzzle device and barrel', intro: 'Every muzzle device we list, checked against every AR-9 barrel.' },
@@ -653,14 +652,14 @@ export const GUIDES: Guide[] = [
     slug: 'ar-9-pistol-vs-sbr',
     title: 'AR-9 Pistol vs SBR: Barrel Length, Stocks and Braces',
     h1: 'Is a short AR-9 a pistol or an SBR?',
-    description: 'An AR-9 with a barrel under 16" and a stock is a short-barreled rifle. See how barrel length and stock or brace choice decide what you are building.',
+    description: 'Barrel length and a stock or brace can change how an AR-9 is regulated. See which barrels, stocks and braces we list, and check your federal, state and local laws.',
     platform: 'ar9',
-    lede: 'Many AR-9s use short barrels, so the stock choice decides what the gun is under federal law. This is a summary, not legal advice; check federal and state law before you build.',
+    lede: 'Many AR-9s use short barrels, and the stock or brace you pick can change how the build may be regulated. This is a general summary, not legal advice; check federal, state and local law before you build.',
     answers: [
-      'A barrel <b>16" or longer</b> with a stock is a rifle.',
-      'A barrel <b>under 16" with a stock</b> is a short-barreled rifle (SBR). Federal law generally requires ATF approval first (you file ATF Form 1). Some states ban them.',
-      'A barrel under 16" with <b>no stock</b>, or with a pistol brace, is built as a pistol. Brace rules have changed several times, so check current law first.',
-      'Some states ban SBRs or braces, or restrict pistol builds further.',
+      'A barrel <b>16" or longer</b> with a stock is generally treated as a rifle under federal law.',
+      'A barrel <b>under 16" with a stock</b> may be regulated as a short-barreled rifle (SBR) under the National Firearms Act, which can require ATF approval before assembly (you file ATF Form 1). Some states ban them.',
+      'A barrel under 16" with <b>no stock</b> is generally built as a pistol. Pistol brace rules have changed several times, so check current federal law before using one.',
+      'Some states ban SBRs or braces, or restrict pistol builds further. Check your state and local laws.',
     ],
     charts: [
       { a: 'barrel', b: 'stock', heading: 'Barrel and stock or brace', intro: 'Every AR-9 barrel we list, checked against every stock and brace.' },

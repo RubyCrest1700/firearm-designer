@@ -42,7 +42,7 @@ export function AlertsPanel({ signup, hasBuilds, onSignUp, onRefresh, onStop }: 
     <section className="alerts-panel card">
       <div>
         <h2>Get Price Alerts by Email</h2>
-        <p>{hasBuilds ? 'We\'ll email you when parts in your saved builds get cheaper or more expensive.' : 'Save a build, then get an email when its parts get cheaper or more expensive.'} One email a day at most, only when something changed. We only use your address for these alerts.</p>
+        <p>{hasBuilds ? 'We\'ll email you when parts in your saved builds get cheaper or more expensive.' : 'Save a build, then get an email when its parts get cheaper or more expensive.'} One email a day at most, only when something changed. We only use your address for these alerts. See our <a href="/privacy/">Privacy Policy</a>.</p>
       </div>
       <form onSubmit={async (e) => {
         e.preventDefault();

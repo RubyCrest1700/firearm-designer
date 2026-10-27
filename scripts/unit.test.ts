@@ -7,7 +7,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { awarenessFor } from '../src/awareness';
 import { PLATFORMS } from '../src/data/index';
-import { PAUSED, SBR_MESSAGE, VERTICAL_GRIP_MESSAGE, shortBarrelStockIssue } from '../src/data/helpers';
+import { NFA_SHORT_NOTICE, PAUSED, SBR_MESSAGE, VERTICAL_GRIP_MESSAGE, shortBarrelStockIssue } from '../src/data/helpers';
 import { biggestDrops, daysAgo, hasHistory, partSeries, priceOn, recentChange, seriesOf } from '../src/data/history';
 import { baseSelection, bestOffer, candidateIssues, issuesFor, listedParts, noPriceNote, ownedOf, placementOf, presetSelection, priceRange, selectionTokens, singleRetailerCarts, toBuild, toBuyIds, unpricedCount, worst, type Selection } from '../src/engine';
 import { findParts } from '../src/find';
@@ -18,10 +18,13 @@ import { Dock, PartsList, Summary, toLegalNotice } from '../src/BuilderPage';
 import { ComparePage } from '../src/Compare';
 import { HomePage } from '../src/HomePage';
 import { BuildCard, ChangeChip, legalOnly } from '../src/ui';
-import { PAGE_VIEWS, guidePage, platformPage } from '../src/guides/render';
+import { PAGE_VIEWS, feedbackPage, guidePage, indexPage, notFoundPage, platformPage, privacyPage, sitemap, termsPage } from '../src/guides/render';
+import { PRIVACY_MD, TERMS_MD, legalHtml } from '../src/guides/legal';
+import { AlertsPanel } from '../src/SavedPage';
 import { GUIDES, type FitChart } from '../src/guides/content';
 import { RETAILERS } from '../src/data/retailers';
 import { priceIndex } from './og-index';
+import { cardNotice } from './og-notice';
 import history from '../data/price-history.json';
 import type { Issue, Part, Platform } from '../src/types';
 
@@ -262,7 +265,7 @@ test('an old Glock 19 link opens in the Glock builder; an unknown platform opens
 
 /* ------------------------------------------------------------------ paused retailers */
 
-const PAUSED_IDS = ['ARD', 'PA', 'VED'];
+const PAUSED_IDS = ['ARD', 'AT3', 'MID', 'PA', 'RA', 'VED'];
 
 test('no part offers a paused retailer, so no best price, total or cart counts one', () => {
   assert.deepEqual([...PAUSED].sort(), PAUSED_IDS);
@@ -356,15 +359,26 @@ test('a part that got cheaper since saving shows as a drop, owned parts left out
 const RAW_HISTORY = (history as unknown as { parts: Record<string, [string, number][]> }).parts;
 const everyPart = () => PLATFORMS.flatMap((p) => p.parts);
 const PAUSE_DAY = '2026-10-24';
+/**
+ * AT3 Tactical, Rainier Arms and MidwayUSA, paused later (robots.txt refuses the price bot). If it moves at merge, change
+ * it here, in ROBOTS_PAUSE_DAY (scripts/sources.test.mjs) and in data/sources.json.
+ */
+const PAUSE_DAY_2 = '2026-10-26';
 /** Midnight UTC, `days` after the pause date. */
 const afterPause = (days: number) => new Date(Date.parse(PAUSE_DAY) + days * 86_400_000).toISOString();
 
 test('a part any paused retailer priced carries the pause date; one none of them priced does not', () => {
-  // Primary Arms sample prices only (the 10.3" barrel), a Primary Arms live price (the MI handguard), and a part no paused store sells.
-  assert.equal(part(ar15, 'ar-bbl-ba10').pausedThrough, PAUSE_DAY);
+  // Primary Arms prices only (the SLx scope), a Primary Arms live price (the MI handguard), and a part no paused store sells.
+  assert.equal(part(ar15, 'ar-opt-slx16').pausedThrough, PAUSE_DAY);
+  // The 10.3" barrel: a Primary Arms sample price and an AT3 link, so the later of the two dates.
+  assert.equal(part(ar15, 'ar-bbl-ba10').pausedThrough, PAUSE_DAY_2);
   assert.equal(part(ar15, 'ar-hg-mi9').pausedThrough, PAUSE_DAY);
   assert.equal(part(ar15, 'ar-gt-pistol').pausedThrough, undefined);
-  assert.ok(everyPart().filter((x) => x.pausedThrough).every((x) => x.pausedThrough === PAUSE_DAY));
+  // A part an AT3, Rainier or Midway store priced carries the later date: the latest pause among the stores that priced it.
+  assert.equal(part(ar15, 'ar-bcg-grendel').pausedThrough, PAUSE_DAY_2);
+  const dates = everyPart().filter((x) => x.pausedThrough).map((x) => x.pausedThrough);
+  assert.ok(dates.every((d) => d === PAUSE_DAY || d === PAUSE_DAY_2));
+  assert.ok(dates.includes(PAUSE_DAY) && dates.includes(PAUSE_DAY_2), 'both pause dates are in use');
 });
 
 test('price history from on or before a paused retailer\'s pause date is never shown for the parts it priced', () => {
@@ -443,18 +457,20 @@ test('a part still sold elsewhere: its old paused-store low is dropped from the 
 
 test('a saved build\'s price from before a pause isn\'t compared with today\'s; one saved after it is', () => {
   storage.clear();
-  const x = ar15.parts.find((p) => p.pausedThrough && bestOffer(p) && p.slot === 'handguard')!;
-  assert.ok(x, 'an AR-15 handguard a paused retailer priced');
+  const x = ar15.parts.find((p) => p.pausedThrough === PAUSE_DAY && bestOffer(p) && p.slot === 'handguard')!;
+  assert.ok(x, 'an AR-15 handguard a retailer paused on PAUSE_DAY priced');
   const sel = { ...baseSelection(ar15), handguard: x.id };
   const now = priceSnapshot('ar15', sel);
   const cheaper = { ...now, [x.id]: now[x.id] - 30 };
   const before: SavedBuild = { id: 'p', name: 'Before', platform: 'ar15', selection: sel, savedAt: '2026-10-01T00:00:00Z', prices: cheaper };
   assert.deepEqual(priceChanges(before), { changes: [], drop: 0 });
-  const after: SavedBuild = { ...before, id: 'q', savedAt: afterPause(1) };
+  // Saved after both pauses (2026-10-24 and PAUSE_DAY_2), so no price in it predates a pause of a store that priced it.
+  const after: SavedBuild = { ...before, id: 'q', savedAt: afterPause(3) };
+  assert.ok(after.savedAt.slice(0, 10) > PAUSE_DAY_2);
   assert.deepEqual(priceChanges(after).changes.map((c) => [c.part.id, c.was, c.now]), [[x.id, now[x.id] - 30, now[x.id]]]);
   // Loading resets that one price to today's and notes when, so later changes show again; other parts keep theirs.
-  // "Today" is fixed at two days after the pause, so the test doesn't depend on the date it runs.
-  mock.timers.enable({ apis: ['Date'], now: Date.parse(afterPause(2)) });
+  // "Today" is fixed at four days after the first pause (two after the second), so the test doesn't depend on the date it runs.
+  mock.timers.enable({ apis: ['Date'], now: Date.parse(afterPause(4)) });
   try {
     storeSavedBuilds([before]);
     const [loaded] = loadSavedBuilds();
@@ -768,4 +784,349 @@ test('the price index leaves out parts with no price', () => {
   }
   const tiny = { ...ar15, id: 'tiny', parts: [vg6, { ...vg6, id: 'no-price', offers: [] }] };
   assert.deepEqual(Object.keys(priceIndex([tiny]).platforms.tiny.parts), ['ar-mz-vg6']);
+});
+
+/* ------------------------------------------------------------------ compliance round 1: notices and wording */
+
+/** The owner-approved short notice (2026-10-26), byte for byte. */
+const SHORT_NOTICE_TEXT = 'May be regulated under the NFA. Not legal advice: check federal, state and local law.';
+const BUILT = '2026-10-26T00:00:00Z';
+const htmlEsc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+/** The static pages' Legal notice, with the builder's own label, carrying these messages. */
+const PAGE_LEGAL_NOTICE = (messages: string[]) =>
+  `<div class="legal-notice" role="note" aria-labelledby="page-legal-title"><p class="legal-notice-title" id="page-legal-title">Legal notice</p>${messages.map((m) => `<p>${htmlEsc(m)}</p>`).join('')}</div>`;
+const hasPageNotice = (html: string) => /class="legal-notice"|Legal notice/.test(html);
+
+test('the short NFA notice is the approved wording, marked as owner-approved', () => {
+  assert.equal(NFA_SHORT_NOTICE, SHORT_NOTICE_TEXT);
+  assert.match(readFileSync('src/data/helpers.ts', 'utf8'), /\/\*\* Owner-approved wording \(2026-10-26\)\. \*\/\r?\nexport const NFA_SHORT_NOTICE = /);
+});
+
+const M6_DESCRIPTION = 'Barrel length and a stock or brace can change how an AR-9 is regulated. See which barrels, stocks and braces we list, and check your federal, state and local laws.';
+const M6_LEDE = 'Many AR-9s use short barrels, and the stock or brace you pick can change how the build may be regulated. This is a general summary, not legal advice; check federal, state and local law before you build.';
+const M6_ANSWERS = [
+  'A barrel <b>16" or longer</b> with a stock is generally treated as a rifle under federal law.',
+  'A barrel <b>under 16" with a stock</b> may be regulated as a short-barreled rifle (SBR) under the National Firearms Act, which can require ATF approval before assembly (you file ATF Form 1). Some states ban them.',
+  'A barrel under 16" with <b>no stock</b> is generally built as a pistol. Pistol brace rules have changed several times, so check current federal law before using one.',
+  'Some states ban SBRs or braces, or restrict pistol builds further. Check your state and local laws.',
+];
+const FFL_FOOTER = 'Parts marked FFL are serialized and treated as the firearm under federal law, so they ship to a licensed dealer. Laws vary by state.';
+
+test('guide, FAQ and footer text state no flat legal conclusions', () => {
+  const FLAT = [/is a short-barreled rifle\b/, /decides? what the gun is/, /is built as a pistol/, /with a stock<\/b> is a rifle/, /with a stock is a rifle/, /legally the firearm/i, /are the serialized firearm/];
+  for (const f of ['src/guides/content.ts', 'src/guides/render.ts', 'src/App.tsx', 'src/types.ts']) {
+    const text = readFileSync(f, 'utf8');
+    for (const re of FLAT) assert.doesNotMatch(text, re, `${f}: ${re}`);
+  }
+  const pages = [indexPage(BUILT), ...GUIDES.map((g) => guidePage(g, BUILT)), ...PAGE_VIEWS.map((v) => platformPage(v))];
+  for (const html of pages) for (const re of FLAT) assert.doesNotMatch(html, re);
+  // The approved replacement wording.
+  const g = GUIDES.find((x) => x.slug === 'ar-9-pistol-vs-sbr')!;
+  assert.equal(g.description, M6_DESCRIPTION);
+  assert.equal(g.lede, M6_LEDE);
+  assert.deepEqual(g.answers, M6_ANSWERS);
+  assert.ok(readFileSync('src/App.tsx', 'utf8').includes(`<p>${FFL_FOOTER}</p>`), 'app footer');
+  assert.ok(pages[0].includes(htmlEsc('FFL marks the part that is serialized and treated as the firearm under federal law (a pistol frame or fire control unit, or an AR lower receiver), so it ships to a licensed dealer near you, who handles the transfer and background check.')), 'FAQ answer');
+  assert.ok(pages[0].includes('Parts that are serialized and treated as the firearm under federal law ship to a licensed dealer, and laws vary by state.'), 'static footer');
+});
+
+test('our own spec chips, pick notes and guide text say M16 profile and linear comp, not full auto or flash can; no source cites 80% Arms', () => {
+  const ours = PLATFORMS.flatMap((p) => p.parts.flatMap((x) => [...x.specs, x.pick?.note ?? '']));
+  const guideText = GUIDES.flatMap((g) => [g.title, g.h1, g.description, g.lede, ...g.answers, ...g.charts.flatMap((c) => [c.heading, c.intro])]);
+  for (const t of [...ours, ...guideText]) assert.doesNotMatch(t, /full[- ]?auto|flash can/i, t);
+  for (const f of ['src/guides/content.ts', 'src/data/ar9.ts']) assert.doesNotMatch(readFileSync(f, 'utf8'), /80percentarms|80% Arms/i, f);
+  assert.ok(GUIDES.every((g) => g.sources.every((s) => !/80percentarms/.test(s.url))));
+  // The new wording.
+  for (const id of ['ar-bcg-psa', 'ar-bcg-toolcraft', 'ar-bcg-aero']) assert.ok(part(ar15, id).specs.includes('M16 profile'), id);
+  assert.match(part(ar15, 'ar-bcg-psa').pick!.note, /^M16-profile carrier, /);
+  assert.ok(part(ar9, 'a9-mz-kak').specs.includes('Linear comp'));
+  assert.ok(GUIDES.find((g) => g.slug === 'ar-9-buffer-and-muzzle-device')!.answers.some((a) => a.includes('9mm linear compensator')));
+  // The LRBHO guide keeps its Aero source.
+  assert.deepEqual(GUIDES.find((g) => g.slug === 'ar-9-last-round-bolt-hold-open')!.sources.map((s) => s.url), ['https://support.aeroprecisionusa.com/hc/en-us/articles/14130603136535-What-do-I-need-to-build-my-EPC-9']);
+  // The makers' own product titles stay as they are.
+  assert.equal(part(ar9, 'a9-mag-g33').name, 'G18 9mm Magazine, 33 Round');
+  assert.equal(part(ar9, 'a9-mz-kak').name, 'Slimline Flash Can 1/2x28');
+  assert.equal(part(ar15, 'ar-bcg-psa').name, 'M16 Nitride BCG');
+});
+
+/** The old L15 claim and its parts: "Some retailer links may earn us a small commission at no extra cost to you." */
+const OLD_COMMISSION_CLAIM = /may earn us|small commission|earn us a\b|at no extra cost to you|never changes which parts we show/i;
+
+test('no page or footer claims retailer commissions', () => {
+  for (const f of ['src/App.tsx', 'src/guides/render.ts']) assert.doesNotMatch(readFileSync(f, 'utf8'), OLD_COMMISSION_CLAIM, f);
+  const pages = [indexPage(BUILT), guidePage(GUIDES[0], BUILT), platformPage(PAGE_VIEWS[0])];
+  for (const html of pages) assert.doesNotMatch(html, OLD_COMMISSION_CLAIM);
+});
+
+test('the AR-15 platform page shows the short-barrel Legal notice', () => {
+  const page = platformPage(PAGE_VIEWS.find((v) => v.pageId === 'ar15')!);
+  assert.ok(page.includes(PAGE_LEGAL_NOTICE([SBR_TEXT])), 'notice');
+  assert.equal(page.match(/class="legal-notice"/g)?.length, 1, 'once');
+  // Under the lede, before the button that opens the builder.
+  assert.ok(page.indexOf('class="lede"') < page.indexOf('class="legal-notice"') && page.indexOf('class="legal-notice"') < page.indexOf('class="cta"'), 'placement');
+});
+
+test('the AR-9 platform page shows it too', () => {
+  const page = platformPage(PAGE_VIEWS.find((v) => v.pageId === 'ar9')!);
+  assert.ok(page.includes(PAGE_LEGAL_NOTICE([SBR_TEXT])));
+});
+
+test('a Glock page shows none, and only the AR-15 and AR-9 pages list a short barrel with a stock today', () => {
+  for (const id of ['glock9', 'glock19', 'glock26', 'glock43x', 'glock20']) {
+    const view = PAGE_VIEWS.find((v) => v.pageId === id);
+    assert.ok(view, id);
+    assert.ok(!hasPageNotice(platformPage(view)), id);
+  }
+  assert.deepEqual(PAGE_VIEWS.filter((v) => hasPageNotice(platformPage(v))).map((v) => v.pageId).sort(), ['ar15', 'ar9']);
+});
+
+test('the AR FAQ guides that list short barrels show the Legal notice; no other guide does', () => {
+  const withNotice = ['ar-15-barrel-compatibility', 'ar-15-handguard-length-chart', 'ar-9-buffer-and-muzzle-device', 'ar-9-handguard-length-chart', 'ar-9-pistol-vs-sbr'];
+  for (const slug of withNotice) {
+    const html = guidePage(GUIDES.find((g) => g.slug === slug)!, BUILT);
+    assert.ok(html.includes(PAGE_LEGAL_NOTICE([SBR_TEXT])), slug);
+    assert.ok(html.indexOf('class="lede"') < html.indexOf('class="legal-notice"') && html.indexOf('class="legal-notice"') < html.indexOf('class="answers"'), `${slug} placement`);
+  }
+  assert.deepEqual(GUIDES.filter((g) => hasPageNotice(guidePage(g, BUILT))).map((g) => g.slug).sort(), withNotice);
+  // Glock guides chart barrels too, but a pistol has no stock, so they carry none.
+  assert.ok(!hasPageNotice(guidePage(GUIDES.find((g) => g.slug === 'glock-19-threaded-barrels')!, BUILT)));
+});
+/* ------------------------------------------------------------------ Privacy Policy and Terms of Use */
+
+/** The page without its style and scripts (the CSS has attribute selectors like [hidden], the JSON-LD has arrays). */
+const pageText = (html: string) => html.replace(/<style>[\s\S]*?<\/style>/g, '').replace(/<script[\s\S]*?<\/script>/g, '');
+/** The published document itself, between the article tags. */
+const docOf = (html: string) => html.slice(html.indexOf('<article class="legal-doc">'), html.indexOf('</article>'));
+
+test('the Privacy Policy and Terms of Use pages render with their h1, at /privacy/ and /terms/', () => {
+  const privacy = privacyPage();
+  const terms = termsPage();
+  assert.equal(privacy.match(/<h1>[^<]*<\/h1>/g)?.join(), '<h1>Drop-In Builds Privacy Policy</h1>');
+  assert.equal(terms.match(/<h1>[^<]*<\/h1>/g)?.join(), '<h1>Drop-In Builds Terms of Use</h1>');
+  assert.ok(privacy.includes('<link rel="canonical" href="https://dropinbuilds.com/privacy/" />'));
+  assert.ok(terms.includes('<link rel="canonical" href="https://dropinbuilds.com/terms/" />'));
+  assert.ok(!/noindex/.test(privacy) && !/noindex/.test(terms), 'both are indexable');
+  // Every section heading of the approved text is on the page.
+  for (const [md, html] of [[PRIVACY_MD, privacy], [TERMS_MD, terms]]) {
+    const heads = [...md.matchAll(/^#{2,3} (.+)$/gm)].map((m) => m[1]);
+    assert.ok(heads.length >= 10);
+    for (const h of heads) assert.ok(html.includes(`>${htmlEsc(h)}</h`), h);
+  }
+});
+
+test('neither page carries draft notes, counsel flags or any placeholder, and each says "Effective: October 26, 2026" once', () => {
+  for (const [name, md, html] of [['privacy', PRIVACY_MD, privacyPage()], ['terms', TERMS_MD, termsPage()]]) {
+    for (const text of [md, pageText(html)]) {
+      assert.doesNotMatch(text, /DRAFT|Notes for the owner|\[Lawyer\]|counsel|not published/i, name);
+      assert.equal(text.split('Effective: October 26, 2026').length, 2, `${name}: "Effective: October 26, 2026" exactly once`);
+      assert.equal(text.match(/Effective:/g)?.length, 1, `${name}: one effective date`);
+      assert.deepEqual(text.match(/\[[^\]]*\]/g), null, `${name}: no bracket placeholder`);
+    }
+    assert.ok(docOf(html).includes('<p>Effective: October 26, 2026</p>'), name);
+  }
+});
+
+test('the policy promises automatic deletion only to match RETENTION_LIVE in the Worker', () => {
+  const live = readFileSync('worker/src/retention.js', 'utf8').match(/^export const RETENTION_LIVE = (true|false);\r?$/m);
+  assert.ok(live, 'RETENTION_LIVE is declared in worker/src/retention.js');
+  const policy = docOf(privacyPage());
+  if (live[1] === 'false') {
+    assert.ok(policy.includes('We are setting up automatic deletion for the records below. Until it is switched on, we keep these records, and we delete them when you ask (section 6).'), 'interim paragraph');
+    // Every mention of automatic deletion is one the site keeps today: the 7-day unconfirmed-signup purge (runAlerts,
+    // live whatever RETENTION_LIVE says), auto-hiding reported builds, or the interim and "not removed" wording.
+    const allowed = ['Deleted automatically after 7 days', 'is hidden automatically', 'We are setting up automatic deletion', 'once automatic deletion is running', 'votes are not removed automatically', 'reports are not removed automatically'];
+    const mentions = policy.replace(/<[^>]+>/g, ' ').split(/(?<=[.:;])\s+/).filter((s) => /automatic/i.test(s));
+    assert.ok(mentions.length >= 4);
+    for (const s of mentions) assert.ok(allowed.some((a) => s.includes(a)), s);
+  } else {
+    assert.fail('RETENTION_LIVE is true: section 5 of the Privacy Policy still says automatic deletion is being set up. Update it with the owner first.');
+  }
+});
+
+test('the Terms name the Report button and the feedback form as the way to have content removed', () => {
+  const terms = docOf(termsPage());
+  const s9 = terms.slice(terms.indexOf('<h2>9. Reporting and removal</h2>'), terms.indexOf('<h2>10.'));
+  assert.ok(s9.includes('<li><b>Report button:</b> if a community build breaks these terms, press Report on it.'), 'Report button');
+  assert.ok(s9.includes('<li><b>Feedback form:</b> to ask us to remove a build, including your own,'), 'feedback form');
+  assert.ok(s9.includes('<a href="/feedback/">dropinbuilds.com/feedback/</a>'), 'linked');
+});
+
+test('the legal pages link our own pages relatively, keep share-link examples as text, and render the retention table', () => {
+  const policy = docOf(privacyPage());
+  const terms = docOf(termsPage());
+  assert.ok(policy.includes('see our Terms of Use at <a href="/terms/">dropinbuilds.com/terms/</a>'));
+  assert.ok(terms.includes('Our Privacy Policy at <a href="/privacy/">dropinbuilds.com/privacy/</a>'));
+  assert.ok(policy.includes('(dropinbuilds.com/?b=… and share.dropinbuilds.com/b/…)'), 'share-link examples stay text');
+  assert.doesNotMatch(policy + terms, /href="https?:/, 'no absolute links');
+  const rows = policy.match(/<tr>/g)?.length;
+  assert.equal(rows, PRIVACY_MD.split('\n').filter((l) => l.startsWith('|')).length - 1, 'header and every row, no separator');
+  assert.ok(policy.includes('<th scope="row">Unconfirmed price alert signups</th><td>Deleted automatically after 7 days</td><td>Same</td>'));
+});
+
+test('the sitemap lists the Privacy Policy and the Terms of Use', () => {
+  const xml = sitemap(BUILT);
+  for (const p of ['/privacy/', '/terms/']) assert.ok(xml.includes(`<loc>https://dropinbuilds.com${p}</loc>`), p);
+});
+
+test('the only commission wording anywhere is "we earn no commission"', () => {
+  const pages = [privacyPage(), termsPage(), indexPage(BUILT), feedbackPage(), notFoundPage(), ...GUIDES.map((g) => guidePage(g, BUILT)), ...PAGE_VIEWS.map((v) => platformPage(v))];
+  for (const html of pages) for (const m of html.matchAll(/commission/gi)) assert.equal(html.slice(m.index! - 11, m.index), 'we earn no ', html.slice(m.index! - 40, m.index! + 20));
+  assert.doesNotMatch(readFileSync('src/App.tsx', 'utf8'), /commission/i);
+});
+const FOOT_LINKS = ['<a class="foot-link" href="/privacy/">Privacy Policy</a>', '<a class="foot-link" href="/terms/">Terms of Use</a>'];
+
+test('every static page footer and the app footer link the Privacy Policy and the Terms of Use', () => {
+  const pages = [privacyPage(), termsPage(), indexPage(BUILT), feedbackPage(), notFoundPage(), ...GUIDES.map((g) => guidePage(g, BUILT)), ...PAGE_VIEWS.map((v) => platformPage(v))];
+  for (const html of pages) {
+    const footer = html.slice(html.indexOf('<footer class="site-footer">'), html.indexOf('</footer>'));
+    for (const link of FOOT_LINKS) assert.ok(footer.includes(link), link);
+  }
+  // The app's footer (also prerendered into the home page).
+  const app = readFileSync('src/App.tsx', 'utf8');
+  const footer = app.slice(app.indexOf('<footer className="site-footer">'), app.indexOf('</footer>'));
+  for (const link of FOOT_LINKS) assert.ok(footer.includes(link.replace('class=', 'className=')), link);
+});
+
+test('the alerts signup panel, the feedback form and the FAQ email answer link the Privacy Policy', () => {
+  const panel = renderToStaticMarkup(createElement(AlertsPanel, { signup: null, hasBuilds: true, onSignUp: async () => {}, onRefresh: () => {}, onStop: async () => {} }));
+  assert.ok(panel.includes('We only use your address for these alerts. See our <a href="/privacy/">Privacy Policy</a>.'), 'alerts panel');
+  const fb = feedbackPage();
+  const form = fb.slice(fb.indexOf('<form id="feedback"'), fb.indexOf('</form>'));
+  assert.ok(form.includes('Please don&#39;t include personal details you wouldn&#39;t want stored. See our <a href="/privacy/">Privacy Policy</a>.') || form.includes("Please don't include personal details you wouldn't want stored. See our <a href=\"/privacy/\">Privacy Policy</a>."), 'feedback form');
+  const faq = indexPage(BUILT);
+  const answer = "We only use it to send the price alerts you asked for. We don't sell it. Our email provider (Resend) and host (Cloudflare) process it to deliver the emails. Unsubscribing deletes it from our database; the providers may keep delivery logs for a limited time. See our Privacy Policy.";
+  assert.ok(faq.includes(`<p>${htmlEsc(answer).replace('Privacy Policy.', '<a href="/privacy/">Privacy Policy</a>.')}</p>`), 'FAQ answer links the policy');
+  // The FAQPage structured data carries the same answer as plain text.
+  const ld = [...faq.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
+  const qa = ld.find((j) => j['@type'] === 'FAQPage').mainEntity.find((e: { name: string }) => e.name === 'What do you do with my email address?');
+  assert.equal(qa.acceptedAnswer.text, answer);
+});
+/** Owner-approved wording (2026-10-26), byte for byte. */
+const MONEY_ANSWER = 'No. There are no affiliate links, and we earn no commission from retailers. Retailer links carry a tag so the store can see the visit came from Drop-In Builds.';
+
+test('the FAQ answers "Do you make money from the links?" with the approved wording, on the page and in its structured data', () => {
+  const faq = indexPage(BUILT);
+  assert.ok(faq.includes(`<details><summary>Do you make money from the links?</summary><p>${htmlEsc(MONEY_ANSWER)}</p></details>`), 'on the page');
+  const ld = [...faq.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
+  const qa = ld.find((j) => j['@type'] === 'FAQPage').mainEntity.filter((e: { name: string }) => e.name === 'Do you make money from the links?');
+  assert.equal(qa.length, 1);
+  assert.equal(qa[0].acceptedAnswer.text, MONEY_ANSWER);
+  // Marked as approved wording in the source.
+  assert.match(readFileSync('src/guides/render.ts', 'utf8'), /\/\*\* Owner-approved wording \(2026-10-26\)\. \*\/\r?\n {4}\{ q: 'Do you make money from the links\?', a: 'No\. There are no affiliate links/);
+});
+
+/* ------------------------------------------------------------------ community build preview cards */
+
+test('AR-15, AR-9 and AR-10 community build and platform cards carry the short NFA notice; pistol cards do not', () => {
+  for (const id of ['ar15', 'ar9', 'ar10']) assert.equal(cardNotice(id), NFA_SHORT_NOTICE, id);
+  const pistols = PLATFORMS.map((p) => p.id).filter((id) => !['ar15', 'ar9', 'ar10'].includes(id));
+  assert.ok(pistols.length >= 7 && pistols.includes('glock9'));
+  for (const id of pistols) assert.equal(cardNotice(id), '', id);
+  assert.equal(cardNotice('glock19'), '', 'an old Glock id too');
+  // The card drawing uses the helper for each community build, and neither file retypes the wording.
+  const og = readFileSync('scripts/og-cards.tsx', 'utf8');
+  assert.match(og, /^import \{ cardNotice \} from '\.\/og-notice';$/m);
+  assert.match(og, /function buildCard\([^)]*\) \{[\s\S]*?cardNotice\(platform\.id\)[\s\S]*?\n\}/);
+  // The platform cards too (og/ar15.png and the rest: the preview for shared builds without their own picture).
+  assert.match(og, /function platformCard\([^)]*\) \{[\s\S]*?cardNotice\(platform\.id\)\);\r?\n\}/);
+  assert.equal(og.match(/cardNotice\(/g)?.length, 2, 'used by the build and platform cards only (the site card has none)');
+  for (const f of ['scripts/og-cards.tsx', 'scripts/og-notice.ts']) assert.doesNotMatch(readFileSync(f, 'utf8'), /May be regulated/, f);
+  assert.match(readFileSync('scripts/og-notice.ts', 'utf8'), /^import \{ NFA_SHORT_NOTICE \} from '\.\.\/src\/data\/helpers';$/m);
+});
+
+/* ------------------------------------------------------------------ the alert price index after the 2026-10-26 pause */
+
+test('the price index the alert emails read carries no AT3 Tactical, Rainier Arms or MidwayUSA price', () => {
+  const later = ['AT3', 'RA', 'MID'];
+  const index = priceIndex(PLATFORMS);
+  for (const p of PLATFORMS)
+    for (const x of p.parts) {
+      const entry = index.platforms[p.id].parts[x.id];
+      const best = bestOffer(x);
+      assert.ok(!x.offers.some((o) => later.includes(o.retailer)), `${p.id}/${x.id} offers`);
+      if (best) assert.equal(entry[1], best.price, `${p.id}/${x.id}`);
+      else assert.equal(entry, undefined, `${p.id}/${x.id}`);
+    }
+  // The Faxon Grendel BCG was cheapest at AT3 ($139.84). Its best price is now Faxon's own (FAX), the same figure the
+  // published og/index.json carries. Faxon's live price moves nightly, so its value is read from the catalog, not fixed.
+  const grendel = part(ar15, 'ar-bcg-grendel');
+  assert.equal(bestOffer(grendel)!.retailer, 'FAX');
+  assert.notEqual(bestOffer(grendel)!.price, 139.84);
+  assert.deepEqual(index.platforms.ar15.parts['ar-bcg-grendel'], [`${grendel.brand} ${grendel.name}`, bestOffer(grendel)!.price]);
+});
+
+/* ------------------------------------------------------------------ the legal-text converter */
+
+test('the legal-text converter refuses Markdown it does not support, wherever it appears', () => {
+  const bad: [string, RegExp][] = [
+    ['  An indented line.', /leading whitespace/],
+    ['Text.\n\tTabbed on.', /leading whitespace/],
+    ['A paragraph\n* a star list item', /unsupported Markdown/],
+    ['A paragraph\n> a quote', /unsupported Markdown/],
+    ['A paragraph\n1. a numbered item', /unsupported Markdown/],
+    ['A paragraph\n#### a deep heading', /unsupported Markdown/],
+    ['#### A deep heading', /unsupported Markdown/],
+    ['---', /unsupported Markdown/],
+    ['```\ncode\n```', /unsupported Markdown/],
+    ['See [our policy](/privacy/).', /Markdown link/],
+    ['- a list item with [a link](https://example.com)', /Markdown link/],
+    ['Read https://dropinbuilds.com/privacy/ now.', /full dropinbuilds\.com address/],
+    ['- See http://www.dropinbuilds.com/terms/', /full dropinbuilds\.com address/],
+    ['Some *single star* emphasis.', /stray \* or `/],
+    ['Some `code`.', /stray \* or `/],
+    ['An **unclosed bold.', /stray \* or `/],
+    ['| A | B |\n|---|---|\n| 1 |', /2 cells/],
+    ['| A | B |\n|---|---|\n| 1 | 2 | 3 |', /2 cells/],
+    ['| A | B |\n| 1 | 2 |', /bad table/],
+  ];
+  for (const [md, why] of bad) assert.throws(() => legalHtml(md), why, JSON.stringify(md));
+  // What it does support still renders.
+  assert.equal(legalHtml('# T\n\nA **b** c.\n\n- x\n- y\n\n| A | B |\n|---|---|\n| 1 | 2 |'),
+    '<h1>T</h1>\n<p>A <b>b</b> c.</p>\n<ul><li>x</li><li>y</li></ul>\n<div class="grid-wrap"><table class="legal-table"><thead><tr><th scope="col">A</th><th scope="col">B</th></tr></thead><tbody><tr><th scope="row">1</th><td>2</td></tr></tbody></table></div>');
+});
+
+test('the legal-text converter escapes HTML and links only our own page addresses', () => {
+  assert.equal(legalHtml('A <script>alert("x")</script> & \'q\' > z.'), '<p>A &lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt; &amp; \'q\' &gt; z.</p>');
+  assert.equal(legalHtml('See dropinbuilds.com/privacy/, dropinbuilds.com/faq/ and share.dropinbuilds.com/b/x.'),
+    '<p>See <a href="/privacy/">dropinbuilds.com/privacy/</a>, dropinbuilds.com/faq/ and share.dropinbuilds.com/b/x.</p>');
+  assert.equal(legalHtml('**<i>**'), '<p><b>&lt;i&gt;</b></p>');
+});
+
+test('each legal page says exactly the approved text: its words, tags stripped and entities decoded, match the Markdown', () => {
+  const decode = (s: string) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+  const pageWords = (html: string) => decode(docOf(html).replace(/<\/?(?:a|b)\b[^>]*>/g, '').replace(/<[^>]+>/g, ' ')).split(/\s+/).filter(Boolean);
+  const mdWords = (md: string) => md.split('\n')
+    .filter((l) => !/^\|[-| ]+\|$/.test(l.trim()))
+    .map((l) => l.replace(/^#{1,3} /, '').replace(/^- /, '').replace(/\*\*/g, '').replace(/^\|(.*)\|$/, (_, cells: string) => cells.split('|').join(' ')))
+    .join(' ').split(/\s+/).filter(Boolean);
+  for (const [md, html] of [[PRIVACY_MD, privacyPage()], [TERMS_MD, termsPage()]]) {
+    const want = mdWords(md);
+    assert.ok(want.length > 900);
+    assert.deepEqual(pageWords(html), want);
+  }
+});
+
+/* ------------------------------------------------------------------ a build saved between the two pause dates */
+
+test('a build saved between the two pauses: the part paused later resets, the part paused earlier is compared', () => {
+  storage.clear();
+  const early = ar15.parts.find((p) => p.pausedThrough === PAUSE_DAY && bestOffer(p) && p.slot === 'handguard')!;
+  const late = ar15.parts.find((p) => p.pausedThrough === PAUSE_DAY_2 && bestOffer(p) && p.slot === 'bcg')!;
+  assert.ok(early && late, 'a handguard paused on PAUSE_DAY and a BCG paused on PAUSE_DAY_2');
+  const sel = { ...baseSelection(ar15), handguard: early.id, bcg: late.id };
+  const now = priceSnapshot('ar15', sel);
+  const saved: SavedBuild = { id: 'm', name: 'Between', platform: 'ar15', selection: sel, savedAt: '2026-10-25T12:00:00Z', prices: { ...now, [early.id]: now[early.id] - 30, [late.id]: now[late.id] - 30 } };
+  assert.ok(saved.savedAt.slice(0, 10) > PAUSE_DAY && saved.savedAt.slice(0, 10) < PAUSE_DAY_2);
+  // Only the part paused before the save is compared; the later pause makes the other's saved price untrustworthy.
+  assert.deepEqual(priceChanges(saved).changes.map((c) => c.part.id), [early.id]);
+  mock.timers.enable({ apis: ['Date'], now: Date.parse('2026-10-28T00:00:00Z') });
+  try {
+    storeSavedBuilds([saved]);
+    const [loaded] = loadSavedBuilds();
+    assert.equal(loaded.prices![late.id], now[late.id], 'reset to today');
+    assert.equal(loaded.prices![early.id], now[early.id] - 30, 'kept');
+    assert.ok(loaded.pricesAt && loaded.pricesAt.slice(0, 10) > PAUSE_DAY_2);
+  } finally {
+    mock.timers.reset();
+  }
 });

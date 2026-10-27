@@ -182,9 +182,9 @@
       "src": null
     },
     "a10-opt-slx16": {
-      "oz": 17.9,
-      "basis": "published",
-      "src": "https://www.primaryarms.com/KIT-PA-SLX-1-6X24S-NOVA-PADLXSM"
+      "oz": 18.0,
+      "basis": "estimate",
+      "src": null
     },
     "a10-opt-venom": {
       "oz": 39.0,
@@ -202,9 +202,9 @@
       "src": null
     },
     "a10-stock-moesl": {
-      "oz": 9.6,
+      "oz": 9.3,
       "basis": "published",
-      "src": "https://www.primaryarms.com/magpul-moe-slim-line-carbine-stock-mil-spec-black-mag347-blk"
+      "src": "https://magpul.com/moe-sl-carbine-stock-mil-spec.html"
     },
     "a10-stock-psa": {
       "oz": 7.5,
@@ -214,7 +214,7 @@
     "a10-stock-ubr": {
       "oz": 21.3,
       "basis": "published",
-      "src": "https://www.primaryarms.com/Magpul-UBR-GEN2-Collapsible-Stock-Black"
+      "src": "https://magpul.com/ubr-gen2-collapsible-stock.html"
     },
     "a10-trig-alg": {
       "oz": 2.0,
@@ -359,7 +359,7 @@
     "a9-grip-k2": {
       "oz": 3.1,
       "basis": "published",
-      "src": "https://www.primaryarms.com/magpul-moe-k2-plus-pistol-grip-black"
+      "src": "https://magpul.com/moe-k2-plus-grip-ar15-m4.html"
     },
     "a9-grip-moe": {
       "oz": 2.6,
@@ -598,8 +598,8 @@
     },
     "ar-bbl-ba16": {
       "oz": 28.0,
-      "basis": "published",
-      "src": "https://www.primaryarms.com/ballistic-advantage-ar-15-5-56-nato-16-mid-length-barrel-1-2x28-babl556015m"
+      "basis": "estimate",
+      "src": null
     },
     "ar-bbl-ba18spr": {
       "oz": 31.0,
@@ -759,7 +759,7 @@
     "ar-grip-k2": {
       "oz": 3.1,
       "basis": "published",
-      "src": "https://www.primaryarms.com/magpul-moe-k2-plus-pistol-grip-black"
+      "src": "https://magpul.com/moe-k2-plus-grip-ar15-m4.html"
     },
     "ar-grip-moe": {
       "oz": 2.6,
@@ -819,7 +819,7 @@
     "ar-hg-mi": {
       "oz": 11.4,
       "basis": "published",
-      "src": "https://www.primaryarms.com/midwest-industries-15in-combat-rail-m-lok-ar-15-handguard-black"
+      "src": "https://midwestindustriesinc.com/mi-combat-rail-one-piece-free-float-handguard-m-lok-tm/"
     },
     "ar-hg-mi7": {
       "oz": 7.5,
@@ -829,7 +829,7 @@
     "ar-hg-mi9": {
       "oz": 8.0,
       "basis": "published",
-      "src": "https://www.primaryarms.com/midwest-industries-9.25in-combat-rail-m-lok-ar-15-handguard-black"
+      "src": "https://midwestindustriesinc.com/mi-combat-rail-one-piece-free-float-handguard-m-lok-tm/"
     },
     "ar-hg-moe": {
       "oz": 7.5,
@@ -942,9 +942,9 @@
       "src": null
     },
     "ar-mz-vg6": {
-      "oz": 2.1,
-      "basis": "published",
-      "src": "https://www.at3tactical.com/products/vg6-precision-gamma-556-muzzle-brake"
+      "oz": 2.5,
+      "basis": "estimate",
+      "src": null
     },
     "ar-mz-warcomp": {
       "oz": 2.7,
@@ -972,9 +972,9 @@
       "src": "https://www.sigsauer.com/romeo5x-1x20-mm.html"
     },
     "ar-opt-slx16": {
-      "oz": 17.9,
-      "basis": "published",
-      "src": "https://www.primaryarms.com/KIT-PA-SLX-1-6X24S-NOVA-PADLXSM"
+      "oz": 18.0,
+      "basis": "estimate",
+      "src": null
     },
     "ar-opt-vortex": {
       "oz": 24.5,
@@ -1024,7 +1024,7 @@
     "ar-stock-ubr": {
       "oz": 21.3,
       "basis": "published",
-      "src": "https://www.primaryarms.com/Magpul-UBR-GEN2-Collapsible-Stock-Black"
+      "src": "https://magpul.com/ubr-gen2-collapsible-stock.html"
     },
     "ar-trig-alg": {
       "oz": 2.3,
@@ -1164,7 +1164,7 @@
     "g-opt-507c": {
       "oz": 1.5,
       "basis": "published",
-      "src": "https://www.primaryarms.com/holosun-hs507c-x2-pistol-red-dot-sight-2-moa"
+      "src": "https://www.holosun.com/products/hs507c-x2"
     },
     "g-opt-507k": {
       "oz": 1.0,
@@ -1984,7 +1984,7 @@
     "gs-opt-507k": {
       "oz": 1.0,
       "basis": "published",
-      "src": "https://www.primaryarms.com/holosun-hs507k-x2-compact-pistol-red-dot-sight-2-moa"
+      "src": "https://www.holosun.com/products/hs507k-x2"
     },
     "gs-opt-epsc": {
       "oz": 1.2,
@@ -2759,12 +2759,12 @@
     "p365-opt-507k": {
       "oz": 1.0,
       "basis": "published",
-      "src": "https://www.primaryarms.com/holosun-hs507k-x2-compact-pistol-red-dot-sight-2-moa"
+      "src": "https://www.holosun.com/products/hs507k-x2"
     },
     "p365-opt-eps": {
-      "oz": 1.0,
+      "oz": 1.2,
       "basis": "published",
-      "src": "https://www.primaryarms.com/holosun-eps-carry-mrs-enclosed-pistol-sight-multiple-reticle-red-reticle"
+      "src": "https://www.holosun.com/products/eps-carry-rd-mrs"
     },
     "p365-opt-r0": {
       "oz": 1.0,
@@ -2879,7 +2879,7 @@
     "r-light-hlx": {
       "oz": 6.4,
       "basis": "published",
-      "src": "https://www.primaryarms.com/streamlight-protac-rail-mount-hl-x-1000-lumen-weapon-light-tapeswitch"
+      "src": "https://www.streamlight.com/products/detail/protac-rail-mount-hl-x"
     },
     "r-light-m600": {
       "oz": 7.5,
@@ -2894,7 +2894,7 @@
     "r-mag-hm3x": {
       "oz": 9.8,
       "basis": "published",
-      "src": "https://www.primaryarms.com/holosun-hm3x-3x-magnifier"
+      "src": "https://holosun.com/products/accessories/magnifier/hm3x.html"
     },
     "r-mag-vmx3t": {
       "oz": 15.0,

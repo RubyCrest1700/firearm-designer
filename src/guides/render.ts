@@ -11,6 +11,8 @@ import { GUIDES, type AcrossChart, type FitChart, type Guide, type PairChart } f
 import { titleCase } from '../text';
 import { COMMUNITY_API, CONTENT_SECURITY_POLICY } from '../config';
 import { fontTags } from '../fonts';
+import { SBR_MESSAGE } from '../data/helpers';
+import { PRIVACY_MD, TERMS_MD, legalHtml, legalTitle } from './legal';
 
 export const SITE = 'https://dropinbuilds.com';
 const ANALYTICS_TOKEN = '00e0977ba6ee49a7b9a386502da1ef3f';
@@ -27,6 +29,31 @@ const platformOf = (id: string): PageView => {
 const builderUrl = (platform: string, ids: string[]) => `/?b=${encodeURIComponent(`${platform}~${ids.join('.')}`)}`;
 /** Opens the builder on a page's plain factory build, so a model's page opens that model. */
 const baseUrl = (platform: Platform) => builderUrl(platform.id, Object.values(baseSelection(platform)));
+
+/* ------------------------------------------------------------------ legal notice */
+
+/**
+ * Whether any of these barrels, with any stock the platform lists, raises the builder's own short-barrel Legal notice
+ * (SBR_MESSAGE, src/data/helpers.ts). The platform's rules decide, so a pistol (no stock) never does.
+ */
+const raisesShortBarrelNotice = (platform: Platform, barrels: Part[]) => {
+  const stocks = platform.parts.filter((p) => p.slot === 'stock');
+  return barrels.some((barrel) => stocks.some((stock) => platform.rules({ barrel, stock }).some((i) => i.legal && i.message === SBR_MESSAGE)));
+};
+
+/** The Legal notice on a static page, with the builder's label and the approved message, or nothing. */
+const legalNoticeHtml = (show: boolean) =>
+  show ? `
+    <div class="legal-notice" role="note" aria-labelledby="page-legal-title"><p class="legal-notice-title" id="page-legal-title">Legal notice</p><p>${esc(SBR_MESSAGE)}</p></div>` : '';
+
+/** A guide lists barrels when a chart or its picks cover the barrel slot, or a chart checks every pair with one. */
+function guideBarrels(platform: Platform, g: Guide) {
+  const barrels = platform.parts.filter((p) => p.slot === 'barrel');
+  const slots = [...g.picks, ...g.charts.flatMap((c) => ('a' in c ? [c.a, c.b] : [c.slot]))];
+  if (slots.includes('barrel')) return barrels;
+  const withIds = g.charts.flatMap((c) => ('a' in c ? c.with ?? [] : []));
+  return barrels.filter((p) => withIds.includes(p.id));
+}
 
 /* ------------------------------------------------------------------ fit charts */
 
@@ -215,7 +242,7 @@ export function pageTitle(...options: string[]) {
   throw new Error(`Page title over ${TITLE_MAX} characters: ${options[options.length - 1]}`);
 }
 
-function layout(o: { title: string; description: string; path: string; body: string; jsonLd: object[]; notFound?: boolean; image?: string; current?: 'build' | 'faq' }) {
+function layout(o: { title: string; description: string; path: string; body: string; jsonLd: object[]; notFound?: boolean; image?: string; current?: 'build' | 'faq' | 'none' }) {
   const current = o.current ?? (o.notFound ? undefined : 'faq');
   return `<!doctype html>
 <html lang="en">
@@ -247,9 +274,8 @@ ${o.jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).re
 <footer class="site-footer"><div class="wrap">
   <p class="brand-name small">Drop-In <b>Builds</b></p>
   <p>Plan a build part by part, check that everything fits, and see where each part costs least. We don't sell anything.</p>
-  <p>Fit charts come from the same rules the builder uses. Prices marked Sample aren't tracked yet, List Price and dated Factory Part prices were checked by hand on that date, and undated Factory Part prices are estimates; always confirm the price and fit with the retailer and the maker. Parts that are the serialized firearm ship to a licensed dealer, and laws vary by state.</p>
-  <p>Some retailer links may earn us a small commission at no extra cost to you. It never changes which parts we show or how we check fit.</p>
-  <p><a class="foot-link" href="/feedback/">Send Feedback</a></p>
+  <p>Fit charts come from the same rules the builder uses. Prices marked Sample aren't tracked yet, List Price and dated Factory Part prices were checked by hand on that date, and undated Factory Part prices are estimates; always confirm the price and fit with the retailer and the maker. Parts that are serialized and treated as the firearm under federal law ship to a licensed dealer, and laws vary by state.</p>
+  <p><a class="foot-link" href="/feedback/">Send Feedback</a> · <a class="foot-link" href="/privacy/">Privacy Policy</a> · <a class="foot-link" href="/terms/">Terms of Use</a></p>
 </div></footer>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "${ANALYTICS_TOKEN}"}'></script>
 </body>
@@ -264,7 +290,7 @@ export function guidePage(g: Guide, builtAt: string) {
   <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="/faq/">FAQ</a> › <span>${esc(g.crumb ?? platform.name)}</span></nav>
   <article>
     <h1>${esc(g.h1)}</h1>
-    <p class="lede">${esc(g.lede)}</p>
+    <p class="lede">${esc(g.lede)}</p>${legalNoticeHtml(raisesShortBarrelNotice(platform, guideBarrels(platform, g)))}
     <section class="answers">
       <h2>The Short Answer</h2>
       <ul>${g.answers.map((a) => `<li>${a}</li>`).join('')}</ul>
@@ -312,13 +338,17 @@ function relatedHtml(g: Guide) {
   return `<section><h2>More Fit Questions</h2><ul class="guide-list">${others.map((x) => `<li><a href="/faq/${x.slug}/">${esc(x.h1)}</a></li>`).join('')}</ul></section>`;
 }
 
-/** Site questions at the top of the FAQ page, in sections. Plain text answers, also published as FAQPage structured data. */
-const GENERAL_FAQ: { section: string; items: { q: string; a: string }[] }[] = [
+/**
+ * Site questions at the top of the FAQ page, in sections. Plain text answers, also published as FAQPage structured data.
+ * `link` turns the last mention of its text in the answer into a link on the page (the structured data stays plain).
+ */
+const GENERAL_FAQ: { section: string; items: { q: string; a: string; link?: { text: string; href: string } }[] }[] = [
   { section: 'About Drop-In Builds', items: [
     { q: 'Is Drop-In Builds a store?', a: "No. We don't sell anything. You plan the build here, and every buy link goes to the retailer or maker, where you check out as usual." },
     { q: 'Do I need an account?', a: 'No. Builds you save are kept in your browser, and Copy Link opens the same build on any other device. The only thing you can sign up for is optional price alert emails.' },
     { q: 'Which platforms can I build?', a: 'The AR-15, AR-10 and AR-9, the Glock 17, 19, 19X, 26, 34, 45 and 47, the Glock 43X and 48, the Glock 20 and 21, the Sig P320, the Sig P365, the S&W M&P 2.0 and the Springfield Hellcat. More platforms are on the way.' },
-    { q: 'Do you make money from the links?', a: 'Some retailer links may earn us a small commission at no extra cost to you. It never changes which parts we show or how we check fit.' },
+    /** Owner-approved wording (2026-10-26). */
+    { q: 'Do you make money from the links?', a: 'No. There are no affiliate links, and we earn no commission from retailers. Retailer links carry a tag so the store can see the visit came from Drop-In Builds.' },
   ] },
   { section: 'Using the Builder', items: [
     { q: 'How do you know the parts fit?', a: "Each part carries its real measurements and the maker's own fit notes, and the builder checks every part against the rest of your build. Always confirm fit with the maker before you buy." },
@@ -333,15 +363,23 @@ const GENERAL_FAQ: { section: string; items: { q: string; a: string }[] }[] = [
     { q: 'Where do the prices come from?', a: "We check retailer and maker sites every night where they allow it, and show each part's price at every retailer we track. Prices marked Sample aren't tracked yet, List Price and dated Factory Part prices were checked by hand on that date, and undated Factory Part prices are estimates, so always confirm the price at the retailer." },
     { q: "Why isn't my favorite retailer listed?", a: "Some retailers don't allow automated price checks, and we respect that. We've also paused some retailers while we review their terms. We add retailers as they make their prices available to us." },
     { q: 'How do price alerts work?', a: 'Save a build to My Builds, then enter your email there. We send one email a day at most, only when a part in a saved build moves by $20 and 10% or more. Every email has a one-click unsubscribe link.' },
-    { q: 'What do you do with my email address?', a: "We only use it to send the price alerts you asked for. We don't sell it. Our email provider (Resend) and host (Cloudflare) process it to deliver the emails. Unsubscribing deletes it from our database; the providers may keep delivery logs for a limited time." },
+    { q: 'What do you do with my email address?', a: "We only use it to send the price alerts you asked for. We don't sell it. Our email provider (Resend) and host (Cloudflare) process it to deliver the emails. Unsubscribing deletes it from our database; the providers may keep delivery logs for a limited time. See our Privacy Policy.", link: { text: 'Privacy Policy', href: '/privacy/' } },
   ] },
   { section: 'Buying and the Law', items: [
-    { q: 'What does FFL mean on a part?', a: 'FFL marks the serialized part, which is legally the firearm (a pistol frame or fire control unit, or an AR lower receiver). It ships to a licensed dealer near you, who handles the transfer and background check.' },
+    { q: 'What does FFL mean on a part?', a: 'FFL marks the part that is serialized and treated as the firearm under federal law (a pistol frame or fire control unit, or an AR lower receiver), so it ships to a licensed dealer near you, who handles the transfer and background check.' },
     { q: 'Can every part ship to my state?', a: 'Not always. Some states limit magazine capacity, muzzle devices or other features, and retailers will not ship restricted items there. Check your state and local laws before you buy.' },
     { q: 'Is it legal to build my own firearm?', a: "Laws vary by country, state and city, and they change. We don't give legal advice, so check the rules where you live, and buy the serialized part through a licensed dealer." },
   ] },
 ];
 const FAQ_ITEMS = GENERAL_FAQ.flatMap((g) => g.items);
+const answerHtml = (f: (typeof FAQ_ITEMS)[number]) => {
+  const html = esc(f.a);
+  if (!f.link) return html;
+  const t = esc(f.link.text);
+  const at = html.lastIndexOf(t);
+  if (at < 0) throw new Error(`FAQ "${f.q}": no "${f.link.text}" to link`);
+  return `${html.slice(0, at)}<a href="${esc(f.link.href)}">${t}</a>${html.slice(at + t.length)}`;
+};
 
 export function indexPage(builtAt: string) {
   const makers = [...new Set(GUIDES.map((g) => platformOf(g.platform).maker))];
@@ -353,7 +391,7 @@ export function indexPage(builtAt: string) {
   <section>
     <h2>${esc(g.section)}</h2>
     <div class="faq">${g.items.map((f) => `
-      <details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join('')}
+      <details><summary>${esc(f.q)}</summary><p>${answerHtml(f)}</p></details>`).join('')}
     </div>
   </section>`).join('')}
   ${makers.map((m) => `
@@ -457,7 +495,7 @@ export function platformPage(platform: PageView) {
   <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="/build/">Platforms</a> › <span>${esc(platform.name)}</span></nav>
   <article>
     <h1>${esc(platform.name)} Build Planner: Parts, Fit and Prices</h1>
-    <p class="lede">${esc(platform.blurb)} ${platform.parts.length} parts from ${brands} brands, each checked for fit against the rest of your build, with prices compared across retailers.</p>${includesHtml(platform)}
+    <p class="lede">${esc(platform.blurb)} ${platform.parts.length} parts from ${brands} brands, each checked for fit against the rest of your build, with prices compared across retailers.</p>${includesHtml(platform)}${legalNoticeHtml(raisesShortBarrelNotice(platform, platform.parts.filter((p) => p.slot === 'barrel')))}
     <a class="cta" href="${baseUrl(platform)}">Open the ${esc(platform.name)} Builder</a>
     <section>
       <h2>Start from a Complete Build</h2>
@@ -552,7 +590,7 @@ export function feedbackPage() {
     <input type="hidden" name="page" />
     <p class="form-error" role="alert" hidden></p>
     <button class="cta" type="submit">Send Feedback</button>
-    <p class="muted small-print">We only use your email to answer you. Please don't include personal details you wouldn't want stored.</p>
+    <p class="muted small-print">We only use your email to answer you. Please don't include personal details you wouldn't want stored. See our <a href="/privacy/">Privacy Policy</a>.</p>
   </form>
   <div id="feedback-sent" class="answers" hidden>
     <h2 tabindex="-1">Thanks for the Feedback</h2>
@@ -563,9 +601,33 @@ export function feedbackPage() {
   });
 }
 
+/**
+ * The Privacy Policy and Terms of Use: the owner-approved text in ./legal.ts, word for word. The meta description
+ * is a sentence from each page's own opening.
+ */
+function legalPage(md: string, path: string, description: string) {
+  const title = legalTitle(md);
+  const short = title.replace(/^Drop-In Builds /, '');
+  return layout({
+    title: pageTitle(short),
+    description,
+    path,
+    current: 'none',
+    body: `
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <span>${esc(short)}</span></nav>
+  <article class="legal-doc">
+${legalHtml(md)}
+  </article>`,
+    jsonLd: [{ '@context': 'https://schema.org', '@type': 'WebPage', name: title, url: SITE + path, publisher: { '@type': 'Organization', name: 'Drop-In Builds', url: SITE } }],
+  });
+}
+
+export const privacyPage = () => legalPage(PRIVACY_MD, '/privacy/', 'This policy explains what information the site collects, why, who handles it for us, how long we keep it, and the choices you have.');
+export const termsPage = () => legalPage(TERMS_MD, '/terms/', 'These terms cover your use of dropinbuilds.com and share.dropinbuilds.com (the "site"), run by Drop-In Builds ("we", "us").');
+
 export function sitemap(builtAt: string) {
   const day = builtAt.slice(0, 10);
-  const urls = ['/', '/build/', ...PAGE_VIEWS.map((p) => `/build/${platformSlug(p)}/`), '/faq/', ...GUIDES.map((g) => `/faq/${g.slug}/`)];
+  const urls = ['/', '/build/', ...PAGE_VIEWS.map((p) => `/build/${platformSlug(p)}/`), '/faq/', ...GUIDES.map((g) => `/faq/${g.slug}/`), '/privacy/', '/terms/'];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map((u) => `  <url><loc>${SITE}${u}</loc><lastmod>${day}</lastmod></url>`).join('\n')}
@@ -615,6 +677,10 @@ h3{font:700 19px/1.2 var(--f-head);margin:20px 0 8px}
 .includes{font-weight:700;color:var(--blue);margin:-6px 0 16px}
 .muted{color:var(--muted);font-size:15px}
 section{margin:0}
+.legal-notice{margin:0 0 16px;background:var(--warn-soft);color:var(--ink);border:1px solid var(--warn);border-left-width:4px;border-radius:8px;padding:10px 12px;font-size:15px;line-height:1.45}
+.legal-notice p{margin:0;overflow-wrap:anywhere}
+.legal-notice p+p{margin-top:6px}
+.legal-notice .legal-notice-title{font:700 11px/1.2 var(--f-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--warn);margin-bottom:6px}
 .answers{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--cta);border-radius:10px;padding:4px 20px 20px;box-shadow:var(--shadow)}
 .answers h2{margin-top:16px}
 .answers li{margin:6px 0}
@@ -676,6 +742,14 @@ section{margin:0}
 .guide-list.cols{columns:2 200px}
 .site-footer{border-top:1px solid var(--line);padding:24px 0 40px;color:var(--muted);font-size:14px}
 .site-footer .foot-link{color:var(--muted)}
+.legal-doc h1{margin-bottom:8px}
+.legal-doc h2{font-size:22px;margin-top:32px}
+.legal-doc h3{font-size:18px}
+.legal-doc li{margin:4px 0}
+.legal-table{border-collapse:collapse;font-size:15px;min-width:560px}
+.legal-table th,.legal-table td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+.legal-table thead th{background:var(--surface-2)}
+.legal-table tbody th{font-weight:600}
 .feedback-form{display:grid;gap:6px;max-width:560px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;box-shadow:var(--shadow)}
 .feedback-form label{font-weight:700;font-size:15px;margin-top:8px}
 .feedback-form label:first-child{margin-top:0}

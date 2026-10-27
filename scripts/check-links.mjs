@@ -9,7 +9,8 @@
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { parseRobots, isAllowed } from './robots.mjs';
+import { robotsGate } from './robots.mjs';
+import { blockedKind } from './robots.mjs';
 import { readPausedHosts } from './sources.mjs';
 
 const USER_AGENT = 'FirearmDesignerLinkCheck/0.1 (+https://github.com/RubyCrest1700/firearm-designer)';
@@ -40,29 +41,20 @@ for (const f of [...files('src'), ...files('data')].filter((f) => /\.(ts|tsx|jso
 for (const f of files('dist').filter((f) => f.endsWith('.html')))
   for (const m of readFileSync(f, 'utf8').matchAll(/href="(https:\/\/[^"]+)"/g)) add(m[1], f.replace(/^dist/, 'site'));
 
-const robotsCache = new Map();
 const lastHit = new Map();
-async function politeFetch(url, method = 'GET') {
+/** One request per host every HOST_DELAY_MS, redirect hops and robots.txt included. robotsGate sets `redirect`. */
+async function politeFetch(url, init = {}) {
   const u = new URL(url);
-  const wait = (lastHit.get(u.host) ?? 0) + HOST_DELAY_MS - Date.now();
-  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  // A loop, since a busy event loop can fire a timer a few ms early.
+  for (let wait; (wait = (lastHit.get(u.host) ?? 0) + HOST_DELAY_MS - Date.now()) > 0; ) await new Promise((r) => setTimeout(r, wait));
   lastHit.set(u.host, Date.now());
-  return fetch(url, { method, headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,*/*' }, redirect: 'follow', signal: AbortSignal.timeout(20000) });
+  return fetch(url, { method: 'GET', headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,*/*' }, ...init, signal: AbortSignal.timeout(20000) });
 }
-async function allowed(url) {
-  const u = new URL(url);
-  if (!robotsCache.has(u.origin)) {
-    let rules = [];
-    try {
-      const res = await politeFetch(`${u.origin}/robots.txt`);
-      if (res.ok) rules = parseRobots(await res.text(), USER_AGENT);
-    } catch { /* no robots.txt: no rules */ }
-    robotsCache.set(u.origin, rules);
-  }
-  return isAllowed(robotsCache.get(u.origin), u.pathname + u.search);
-}
+// robots.txt is checked for every link and redirect hop; an unreadable one (5xx, 401, 403, 429, unreachable, timeout)
+// means the link is skipped, not fetched (scripts/robots.mjs).
+const { safeGet } = robotsGate({ get: politeFetch, agent: USER_AGENT });
 
-const result = { ok: [], broken: [], home: [], blocked: [], skipped: [] };
+const result = { ok: [], broken: [], home: [], blocked: [], unreadable: [], offsite: [], skipped: [] };
 // One queue per host, run side by side.
 const byHost = new Map();
 for (const url of where.keys()) {
@@ -72,16 +64,26 @@ for (const url of where.keys()) {
 await Promise.all([...byHost.values()].map(async (urls) => {
   for (const url of urls) {
     try {
-      if (!(await allowed(url))) { result.skipped.push(url); continue; }
-      const res = await politeFetch(url);
+      const got = await safeGet(url);
+      if (got.blocked) {
+        // A host that no longer exists can't serve robots.txt either: that link is broken, not skipped. A robots.txt
+        // that can't be read (403, 5xx, timeout) is listed apart from a plain Disallow.
+        const kind = blockedKind(got);
+        if (kind === 'broken') result.broken.push([url, 'site no longer exists']);
+        else if (kind === 'unreadable') result.unreadable.push([url, `${new URL(got.blocked).host}: ${got.why}`]);
+        else result.skipped.push(url);
+        continue;
+      }
+      if (got.offsite) { result.offsite.push([url, `${got.why} (${got.offsite})`]); continue; }
+      const { res } = got;
       res.body?.cancel();
-      const landed = new URL(res.url);
+      const landed = new URL(got.url);
       if ((res.status === 404 || res.status === 410) && !isSearch(url)) result.broken.push([url, `HTTP ${res.status}`]);
       else if (!res.ok) result.blocked.push([url, `HTTP ${res.status}`]);
       else if (landed.pathname === '/' && new URL(url).pathname !== '/') result.home.push([url, `lands on ${landed.origin}/`]);
       else result.ok.push(url);
     } catch (err) {
-      const code = err.cause?.code ?? err.name;
+      const code = err.cause?.code ?? (err.name === 'Error' ? err.message : err.name);
       if (code === 'ENOTFOUND') result.broken.push([url, 'site no longer exists']);
       else result.blocked.push([url, String(code)]);
     }
@@ -94,10 +96,12 @@ const show = (title, list) => {
   for (const [url, why] of list) console.log(`  ${url}\n    ${why}; used in ${[...where.get(url)].join(', ')}`);
 };
 console.log(`Not checked, paused in data/sources.json: ${[...PAUSED_HOSTS].join(', ') || 'none'}.`);
-console.log(`Checked ${where.size} outbound links: ${result.ok.length} work, ${result.broken.length} broken, ${result.home.length} land on a home page, ${result.blocked.length} couldn't be checked (site blocks bots or timed out), ${result.skipped.length} skipped by robots.txt.`);
+console.log(`Checked ${where.size} outbound links: ${result.ok.length} work, ${result.broken.length} broken, ${result.home.length} land on a home page, ${result.blocked.length} couldn't be checked (site blocks bots or timed out), ${result.unreadable.length} not checked because robots.txt couldn't be read, ${result.offsite.length} redirect off-site, ${result.skipped.length} skipped by robots.txt.`);
 show('Broken', result.broken);
 show('Land on the home page (product may be gone)', result.home);
 show("Couldn't check", result.blocked);
+show("robots.txt couldn't be read (treated as Disallow)", result.unreadable);
+show('Redirect to another site (not followed)', result.offsite);
 if (result.skipped.length) console.log(`\nSkipped by robots.txt (${result.skipped.length}): mostly retailer search links, which open fine for people.`);
 // On GitHub, also list each broken link as an error on the run, so it shows on the pull request itself.
 if (process.env.GITHUB_ACTIONS) for (const [url, why] of result.broken) console.log(`::error title=Broken link::${url} (${why}) used in ${[...where.get(url)].slice(0, 3).join(', ')}`);

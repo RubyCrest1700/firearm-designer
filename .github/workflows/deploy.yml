@@ -29,6 +29,8 @@ jobs:
   prices:
     if: github.event_name == 'schedule' || inputs.update_prices
     runs-on: ubuntu-latest
+    # A stuck price run stops here instead of holding the runner for GitHub's 6-hour default.
+    timeout-minutes: 45
     permissions:
       contents: write
     outputs:

@@ -4,7 +4,10 @@
   "paused": {
     "ARD": { "since": "2026-10-24", "reason": "paused pending review of the retailer's terms on automated price collection" },
     "PA": { "since": "2026-10-24", "reason": "paused pending review of the retailer's terms on automated price collection" },
-    "VED": { "since": "2026-10-24", "reason": "paused pending review of the retailer's terms on automated price collection" }
+    "VED": { "since": "2026-10-24", "reason": "paused pending review of the retailer's terms on automated price collection" },
+    "AT3": { "since": "2026-10-26", "reason": "robots.txt refuses the price bot" },
+    "RA": { "since": "2026-10-26", "reason": "robots.txt refuses the price bot" },
+    "MID": { "since": "2026-10-26", "reason": "robots.txt refuses the price bot" }
   },
   "parts": {
     "a10-bcg-jp": {
@@ -589,7 +592,8 @@
       "PA": "https://www.primaryarms.com/magpul-moe-fixed-rifle-stock-black-mag404-blk"
     },
     "ar-bbl-ba10": {
-      "AT3": "https://www.at3tactical.com/products/ballistic-advantage-5-56-10-3-barrel-hanson-carbine-length-performance-series"
+      "AT3": "https://www.at3tactical.com/products/ballistic-advantage-5-56-10-3-barrel-hanson-carbine-length-performance-series",
+      "RTB": "https://www.righttobear.com/ballistic-advantage-10-3-5-56-hanson-carbine-barr-babl556023f/"
     },
     "a10-mag-armalite": {
       "KYG": "https://www.kygunco.com/product/armalite-10607002-2nd-gen-20rd-ar10-magazine"
