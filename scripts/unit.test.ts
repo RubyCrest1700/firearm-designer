@@ -914,14 +914,15 @@ test('the Privacy Policy and Terms of Use pages render with their h1, at /privac
   }
 });
 
-test('neither page carries draft notes, counsel flags or placeholders, except "Effective: [date]"', () => {
+test('neither page carries draft notes, counsel flags or any placeholder, and each says "Effective: October 26, 2026" once', () => {
   for (const [name, md, html] of [['privacy', PRIVACY_MD, privacyPage()], ['terms', TERMS_MD, termsPage()]]) {
     for (const text of [md, pageText(html)]) {
       assert.doesNotMatch(text, /DRAFT|Notes for the owner|\[Lawyer\]|counsel|not published/i, name);
-      assert.equal(text.split('Effective: [date]').length, 2, `${name}: "Effective: [date]" exactly once`);
-      assert.deepEqual(text.replace('Effective: [date]', '').match(/\[[^\]]*\]/g), null, `${name}: no other bracket`);
+      assert.equal(text.split('Effective: October 26, 2026').length, 2, `${name}: "Effective: October 26, 2026" exactly once`);
+      assert.equal(text.match(/Effective:/g)?.length, 1, `${name}: one effective date`);
+      assert.deepEqual(text.match(/\[[^\]]*\]/g), null, `${name}: no bracket placeholder`);
     }
-    assert.ok(docOf(html).includes('<p>Effective: [date]</p>'), name);
+    assert.ok(docOf(html).includes('<p>Effective: October 26, 2026</p>'), name);
   }
 });
 

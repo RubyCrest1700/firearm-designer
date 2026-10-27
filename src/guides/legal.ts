@@ -1,7 +1,8 @@
 /**
  * The Privacy Policy (/privacy/) and Terms of Use (/terms/). The text is the owner-approved wording (2026-10-26),
  * copied exactly from the approved drafts' published bodies; their owner notes are never part of the site. Edit the
- * wording only with the owner's approval. "Effective: [date]" is filled in by the owner at merge.
+ * wording only with the owner's approval. The effective date (October 26, 2026) was set on merge day; change it
+ * only with a change of the text the owner approves.
  *
  * The text is kept as simple Markdown and turned into HTML here, so it stays word for word what was approved:
  * headings (#, ##, ###), paragraphs, "- " lists, **bold**, one table, and dropinbuilds.com page addresses, which
@@ -11,7 +12,7 @@
 /** Owner-approved wording (2026-10-26). */
 export const PRIVACY_MD = `# Drop-In Builds Privacy Policy
 
-Effective: [date]
+Effective: October 26, 2026
 
 Drop-In Builds ("we", "us") runs dropinbuilds.com and share.dropinbuilds.com (the "site"). The site helps you plan firearm part builds and compare retailer prices. We don't sell anything and we don't run a store. The site is for adults 18 and over (see our Terms of Use at dropinbuilds.com/terms/).
 
@@ -153,7 +154,7 @@ Contact us through the feedback form at dropinbuilds.com/feedback/. To report a 
 /** Owner-approved wording (2026-10-26). */
 export const TERMS_MD = `# Drop-In Builds Terms of Use
 
-Effective: [date]
+Effective: October 26, 2026
 
 These terms cover your use of dropinbuilds.com and share.dropinbuilds.com (the "site"), run by Drop-In Builds ("we", "us"). By using the site, you agree to these terms. If you don't agree, please don't use the site.
 
