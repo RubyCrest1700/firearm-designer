@@ -19,7 +19,7 @@ import { ComparePage } from '../src/Compare';
 import { HomePage } from '../src/HomePage';
 import { BuildCard, ChangeChip, legalOnly } from '../src/ui';
 import { PAGE_VIEWS, feedbackPage, guidePage, indexPage, notFoundPage, platformPage, privacyPage, sitemap, termsPage } from '../src/guides/render';
-import { PRIVACY_MD, TERMS_MD } from '../src/guides/legal';
+import { PRIVACY_MD, TERMS_MD, legalHtml } from '../src/guides/legal';
 import { AlertsPanel } from '../src/SavedPage';
 import { GUIDES, type FitChart } from '../src/guides/content';
 import { RETAILERS } from '../src/data/retailers';
@@ -1052,4 +1052,55 @@ test('the price index the alert emails read carries no AT3 Tactical, Rainier Arm
   assert.equal(bestOffer(grendel)!.retailer, 'FAX');
   assert.notEqual(bestOffer(grendel)!.price, 139.84);
   assert.deepEqual(index.platforms.ar15.parts['ar-bcg-grendel'], [`${grendel.brand} ${grendel.name}`, bestOffer(grendel)!.price]);
+});
+
+/* ------------------------------------------------------------------ the legal-text converter */
+
+test('the legal-text converter refuses Markdown it does not support, wherever it appears', () => {
+  const bad: [string, RegExp][] = [
+    ['  An indented line.', /leading whitespace/],
+    ['Text.\n\tTabbed on.', /leading whitespace/],
+    ['A paragraph\n* a star list item', /unsupported Markdown/],
+    ['A paragraph\n> a quote', /unsupported Markdown/],
+    ['A paragraph\n1. a numbered item', /unsupported Markdown/],
+    ['A paragraph\n#### a deep heading', /unsupported Markdown/],
+    ['#### A deep heading', /unsupported Markdown/],
+    ['---', /unsupported Markdown/],
+    ['```\ncode\n```', /unsupported Markdown/],
+    ['See [our policy](/privacy/).', /Markdown link/],
+    ['- a list item with [a link](https://example.com)', /Markdown link/],
+    ['Read https://dropinbuilds.com/privacy/ now.', /full dropinbuilds\.com address/],
+    ['- See http://www.dropinbuilds.com/terms/', /full dropinbuilds\.com address/],
+    ['Some *single star* emphasis.', /stray \* or `/],
+    ['Some `code`.', /stray \* or `/],
+    ['An **unclosed bold.', /stray \* or `/],
+    ['| A | B |\n|---|---|\n| 1 |', /2 cells/],
+    ['| A | B |\n|---|---|\n| 1 | 2 | 3 |', /2 cells/],
+    ['| A | B |\n| 1 | 2 |', /bad table/],
+  ];
+  for (const [md, why] of bad) assert.throws(() => legalHtml(md), why, JSON.stringify(md));
+  // What it does support still renders.
+  assert.equal(legalHtml('# T\n\nA **b** c.\n\n- x\n- y\n\n| A | B |\n|---|---|\n| 1 | 2 |'),
+    '<h1>T</h1>\n<p>A <b>b</b> c.</p>\n<ul><li>x</li><li>y</li></ul>\n<div class="grid-wrap"><table class="legal-table"><thead><tr><th scope="col">A</th><th scope="col">B</th></tr></thead><tbody><tr><th scope="row">1</th><td>2</td></tr></tbody></table></div>');
+});
+
+test('the legal-text converter escapes HTML and links only our own page addresses', () => {
+  assert.equal(legalHtml('A <script>alert("x")</script> & \'q\' > z.'), '<p>A &lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt; &amp; \'q\' &gt; z.</p>');
+  assert.equal(legalHtml('See dropinbuilds.com/privacy/, dropinbuilds.com/faq/ and share.dropinbuilds.com/b/x.'),
+    '<p>See <a href="/privacy/">dropinbuilds.com/privacy/</a>, dropinbuilds.com/faq/ and share.dropinbuilds.com/b/x.</p>');
+  assert.equal(legalHtml('**<i>**'), '<p><b>&lt;i&gt;</b></p>');
+});
+
+test('each legal page says exactly the approved text: its words, tags stripped and entities decoded, match the Markdown', () => {
+  const decode = (s: string) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+  const pageWords = (html: string) => decode(docOf(html).replace(/<\/?(?:a|b)\b[^>]*>/g, '').replace(/<[^>]+>/g, ' ')).split(/\s+/).filter(Boolean);
+  const mdWords = (md: string) => md.split('\n')
+    .filter((l) => !/^\|[-| ]+\|$/.test(l.trim()))
+    .map((l) => l.replace(/^#{1,3} /, '').replace(/^- /, '').replace(/\*\*/g, '').replace(/^\|(.*)\|$/, (_, cells: string) => cells.split('|').join(' ')))
+    .join(' ').split(/\s+/).filter(Boolean);
+  for (const [md, html] of [[PRIVACY_MD, privacyPage()], [TERMS_MD, termsPage()]]) {
+    const want = mdWords(md);
+    assert.ok(want.length > 900);
+    assert.deepEqual(pageWords(html), want);
+  }
 });

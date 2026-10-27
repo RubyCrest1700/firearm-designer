@@ -237,14 +237,28 @@ const inline = (s: string) =>
 
 const cells = (row: string) => row.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
 
+/** Block syntax this converter doesn't handle: star or plus lists, numbered lists, quotes, deeper headings, rules, code. */
+const UNSUPPORTED_BLOCK = /^(?:[*+] |\d+[.)] |>|#{4,}|#(?!#{0,2} )|-{3,}\s*$|```|~~~)/;
+
+/** Refuses anything in a line the converter would otherwise pass through as text. */
+function checkLine(line: string) {
+  if (/^\s+\S/.test(line)) throw new Error(`legal text: leading whitespace at "${line}"`);
+  if (UNSUPPORTED_BLOCK.test(line)) throw new Error(`legal text: unsupported Markdown at "${line}"`);
+  if (/\[[^\]]*\]\([^)]*\)/.test(line)) throw new Error(`legal text: Markdown link at "${line}"`);
+  if (/https?:\/\/(?:[\w-]+\.)*dropinbuilds\.com/i.test(line)) throw new Error(`legal text: full dropinbuilds.com address at "${line}" (write dropinbuilds.com/page/)`);
+  if (/[*`]/.test(line.replace(/\*\*(.+?)\*\*/g, '$1'))) throw new Error(`legal text: stray * or \` at "${line}"`);
+}
+
 /** The Markdown subset above, as HTML. Throws on anything else, so a pasted change can't render wrongly unnoticed. */
 export function legalHtml(md: string) {
   const lines = md.replace(/\r\n/g, '\n').split('\n');
+  for (const line of lines) if (line.trim()) checkLine(line);
   const out: string[] = [];
   for (let i = 0; i < lines.length; ) {
     const line = lines[i];
     const h = line.match(/^(#{1,3}) (.+)$/);
     if (!line.trim()) { i++; continue; }
+    if (UNSUPPORTED_BLOCK.test(line)) throw new Error(`legal text: unsupported Markdown at "${line}"`);
     if (h) { out.push(`<h${h[1].length}>${inline(h[2])}</h${h[1].length}>`); i++; continue; }
     if (line.startsWith('- ')) {
       const items: string[] = [];
@@ -257,12 +271,15 @@ export function legalHtml(md: string) {
       for (; i < lines.length && lines[i].startsWith('|'); i++) rows.push(cells(lines[i]));
       if (rows.length < 3 || !rows[1].every((c) => /^-+$/.test(c))) throw new Error(`legal text: bad table at "${line}"`);
       const [head, , ...body] = rows;
+      for (const r of [rows[1], ...body]) if (r.length !== head.length) throw new Error(`legal text: a table row has ${r.length} cells, the header ${head.length} cells (want ${head.length} cells) at "${line}"`);
       out.push(`<div class="grid-wrap"><table class="legal-table"><thead><tr>${head.map((c) => `<th scope="col">${inline(c)}</th>`).join('')}</tr></thead><tbody>${body.map((r) => `<tr>${r.map((c, k) => (k ? `<td>${inline(c)}</td>` : `<th scope="row">${inline(c)}</th>`)).join('')}</tr>`).join('')}</tbody></table></div>`);
       continue;
     }
-    if (/^(#|\* |\d+\. |>|---)/.test(line)) throw new Error(`legal text: unsupported Markdown at "${line}"`);
     const para: string[] = [];
-    for (; i < lines.length && lines[i].trim() && !/^(#{1,3} |- |\|)/.test(lines[i]); i++) para.push(lines[i].trim());
+    for (; i < lines.length && lines[i].trim() && !/^(#{1,3} |- |\|)/.test(lines[i]); i++) {
+      if (UNSUPPORTED_BLOCK.test(lines[i])) throw new Error(`legal text: unsupported Markdown at "${lines[i]}"`);
+      para.push(lines[i]);
+    }
     out.push(`<p>${inline(para.join(' '))}</p>`);
   }
   return out.join('\n');
