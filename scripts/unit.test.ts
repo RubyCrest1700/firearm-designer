@@ -1104,3 +1104,28 @@ test('each legal page says exactly the approved text: its words, tags stripped a
     assert.deepEqual(pageWords(html), want);
   }
 });
+
+/* ------------------------------------------------------------------ a build saved between the two pause dates */
+
+test('a build saved between the two pauses: the part paused later resets, the part paused earlier is compared', () => {
+  storage.clear();
+  const early = ar15.parts.find((p) => p.pausedThrough === PAUSE_DAY && bestOffer(p) && p.slot === 'handguard')!;
+  const late = ar15.parts.find((p) => p.pausedThrough === PAUSE_DAY_2 && bestOffer(p) && p.slot === 'bcg')!;
+  assert.ok(early && late, 'a handguard paused on PAUSE_DAY and a BCG paused on PAUSE_DAY_2');
+  const sel = { ...baseSelection(ar15), handguard: early.id, bcg: late.id };
+  const now = priceSnapshot('ar15', sel);
+  const saved: SavedBuild = { id: 'm', name: 'Between', platform: 'ar15', selection: sel, savedAt: '2026-10-25T12:00:00Z', prices: { ...now, [early.id]: now[early.id] - 30, [late.id]: now[late.id] - 30 } };
+  assert.ok(saved.savedAt.slice(0, 10) > PAUSE_DAY && saved.savedAt.slice(0, 10) < PAUSE_DAY_2);
+  // Only the part paused before the save is compared; the later pause makes the other's saved price untrustworthy.
+  assert.deepEqual(priceChanges(saved).changes.map((c) => c.part.id), [early.id]);
+  mock.timers.enable({ apis: ['Date'], now: Date.parse('2026-10-28T00:00:00Z') });
+  try {
+    storeSavedBuilds([saved]);
+    const [loaded] = loadSavedBuilds();
+    assert.equal(loaded.prices![late.id], now[late.id], 'reset to today');
+    assert.equal(loaded.prices![early.id], now[early.id] - 30, 'kept');
+    assert.ok(loaded.pricesAt && loaded.pricesAt.slice(0, 10) > PAUSE_DAY_2);
+  } finally {
+    mock.timers.reset();
+  }
+});
