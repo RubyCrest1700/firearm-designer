@@ -6,6 +6,7 @@
 // "paused" to resume.
 
 import { readFileSync } from 'node:fs';
+import { registrableDomain } from './domains.mjs';
 
 /** Retailer ids and search-link templates, read from src/data/retailers.ts (the scripts don't bundle TypeScript). */
 export function retailersFrom(text) {
@@ -43,10 +44,23 @@ export function activeSources(sources, retailers) {
   return out;
 }
 
-/** Hosts of the paused retailers: their search links and every product link we hold for them. */
+/**
+ * The hosts we hold links for, where `has(host)` is also true for any other host on the same registrable domain, so a
+ * paused retailer's blog or help pages (blog.primaryarms.com) are skipped like its store.
+ */
+class SiteHosts extends Set {
+  has(host) {
+    if (super.has(host)) return true;
+    const site = registrableDomain(host);
+    for (const h of this) if (registrableDomain(h) === site) return true;
+    return false;
+  }
+}
+
+/** Hosts of the paused retailers: their search links and every product link we hold for them, and their whole sites. */
 export function pausedHosts(sources, retailers) {
   const paused = pausedIds(sources, retailers);
-  const hosts = new Set([...paused].map((id) => new URL(retailers[id].search).host));
+  const hosts = new SiteHosts([...paused].map((id) => new URL(retailers[id].search).host));
   for (const byRetailer of Object.values(sources.parts ?? {}))
     for (const [r, url] of Object.entries(byRetailer)) if (paused.has(r)) hosts.add(new URL(url).host);
   return hosts;

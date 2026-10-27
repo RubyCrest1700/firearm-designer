@@ -116,3 +116,12 @@ test('no weight\'s source points at a paused retailer, and every published weigh
     else assert.equal(w.src, null, id);
   }
 });
+
+test('the link check skips every host on a paused retailer\'s site, such as blog.primaryarms.com', () => {
+  const hosts = pausedHosts(sources, retailers);
+  for (const h of ['blog.primaryarms.com', 'primaryarms.com', 'www.primaryarms.com', 'help.ar15discounts.com', 'at3tactical.com', 'cdn.rainierarms.com', 'www.midwayusa.com', 'VedderHolsters.com'])
+    assert.ok(hosts.has(h), h);
+  for (const h of ['www.brownells.com', 'primaryarms.com.example.net', 'notprimaryarms.com', 'magpul.com']) assert.ok(!hosts.has(h), h);
+  // The list itself is still the hosts we hold links for.
+  assert.ok([...hosts].includes('www.primaryarms.com') && ![...hosts].includes('blog.primaryarms.com'));
+});
