@@ -14,6 +14,7 @@ import { PLATFORMS, canonicalPlatform } from '../src/data/index';
 import { baseSelection, partIds, type Selection } from '../src/engine';
 import { buildOf, selectionFromParts, totalOf } from '../src/store';
 import { priceIndex } from './og-index';
+import { cardNotice } from './og-notice';
 import type { Platform } from '../src/types';
 
 const OUT = 'dist/og';
@@ -62,7 +63,8 @@ function titleSize(text: string, max: number, width: number) {
   return Math.max(30, Math.min(max, Math.floor(width / (text.length * 0.56))));
 }
 
-function card(title: string, line: string, art: string) {
+/** `notice`: an optional small line under the drawing (the short NFA notice on AR community builds). */
+function card(title: string, line: string, art: string, notice = '') {
   const ts = titleSize(title, 60, W - 120);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <defs>
@@ -78,6 +80,7 @@ function card(title: string, line: string, art: string) {
   <rect x="40" y="250" width="${W - 80}" height="${H - 290}" rx="14" fill="${C.bp}"/>
   <rect x="40" y="250" width="${W - 80}" height="${H - 290}" rx="14" fill="url(#grid)"/>
   ${art}
+  ${notice ? `<text x="60" y="${H - 19}" font-family="IBM Plex Mono" font-weight="500" font-size="17" fill="${C.muted}">${esc(notice)}</text>` : ''}
   <rect x="0" y="${H - 12}" width="${W}" height="12" fill="${C.cta}"/>
 </svg>`;
 }
@@ -88,7 +91,7 @@ function buildCard(title: string, platform: Platform, sel: Selection) {
   const { build } = buildOf(platform.id, sel);
   const n = partIds(sel).length;
   const line = `${esc(platform.name.toUpperCase())} · ${n} PARTS · <tspan fill="${C.cta}">${money(totalOf(platform, build))}</tspan> BEST-PRICE TOTAL`;
-  return card(title, line, drawing(platform, sel, ART.x, ART.y, ART.w, ART.h));
+  return card(title, line, drawing(platform, sel, ART.x, ART.y, ART.w, ART.h), cardNotice(platform.id));
 }
 
 /** For shared builds without their own picture: the platform drawing, with no parts count or total to get wrong. */

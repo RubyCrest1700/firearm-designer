@@ -24,6 +24,7 @@ import { AlertsPanel } from '../src/SavedPage';
 import { GUIDES, type FitChart } from '../src/guides/content';
 import { RETAILERS } from '../src/data/retailers';
 import { priceIndex } from './og-index';
+import { cardNotice } from './og-notice';
 import history from '../data/price-history.json';
 import type { Issue, Part, Platform } from '../src/types';
 
@@ -998,4 +999,19 @@ test('the FAQ answers "Do you make money from the links?" with the approved word
   assert.equal(qa[0].acceptedAnswer.text, MONEY_ANSWER);
   // Marked as approved wording in the source.
   assert.match(readFileSync('src/guides/render.ts', 'utf8'), /\/\*\* Owner-approved wording \(2026-10-26\)\. \*\/\r?\n {4}\{ q: 'Do you make money from the links\?', a: 'No\. There are no affiliate links/);
+});
+/* ------------------------------------------------------------------ community build preview cards */
+
+test('AR-15, AR-9 and AR-10 community build cards carry the short NFA notice; pistol cards do not', () => {
+  for (const id of ['ar15', 'ar9', 'ar10']) assert.equal(cardNotice(id), NFA_SHORT_NOTICE, id);
+  const pistols = PLATFORMS.map((p) => p.id).filter((id) => !['ar15', 'ar9', 'ar10'].includes(id));
+  assert.ok(pistols.length >= 7 && pistols.includes('glock9'));
+  for (const id of pistols) assert.equal(cardNotice(id), '', id);
+  assert.equal(cardNotice('glock19'), '', 'an old Glock id too');
+  // The card drawing uses the helper for each community build, and neither file retypes the wording.
+  const og = readFileSync('scripts/og-cards.tsx', 'utf8');
+  assert.match(og, /^import \{ cardNotice \} from '\.\/og-notice';$/m);
+  assert.match(og, /function buildCard\([^)]*\) \{[\s\S]*?cardNotice\(platform\.id\)[\s\S]*?\n\}/);
+  for (const f of ['scripts/og-cards.tsx', 'scripts/og-notice.ts']) assert.doesNotMatch(readFileSync(f, 'utf8'), /May be regulated/, f);
+  assert.match(readFileSync('scripts/og-notice.ts', 'utf8'), /^import \{ NFA_SHORT_NOTICE \} from '\.\.\/src\/data\/helpers';$/m);
 });
