@@ -8,6 +8,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { extractPrice, implausiblePrice } from './extract-price.mjs';
 import { robotsGate } from './robots.mjs';
+import { readPage } from './robots.mjs';
 import { recordHistory, formatHistory } from './price-history.mjs';
 import { readActiveSources } from './sources.mjs';
 
@@ -37,7 +38,7 @@ async function politeFetch(url, init = {}) {
 // 401, 403, 429, unreachable, timeout) blocks the host (scripts/robots.mjs).
 const { safeGet } = robotsGate({ get: politeFetch, agent: USER_AGENT });
 
-const report = { ok: 0, blocked: 0, failed: 0, kept: 0, rejected: 0 };
+const report = { ok: 0, blocked: 0, offsite: 0, failed: 0, kept: 0, rejected: 0 };
 
 async function readOffer(partId, retailer, url) {
   let entry = null;
@@ -46,10 +47,14 @@ async function readOffer(partId, retailer, url) {
     if (got.blocked) {
       report.blocked++;
       console.log(`${got.why}: ${got.blocked}${got.blocked !== url ? ` (redirected from ${url})` : ''}`);
+    } else if (got.offsite) {
+      // Another site's page isn't this retailer's price: nothing is recorded from it.
+      report.offsite++;
+      console.log(`${partId} @ ${retailer}: ${got.why} (${got.offsite}), not read`);
     } else {
       const { res } = got;
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const found = extractPrice(await res.text());
+      const found = extractPrice(await readPage(res));
       if (!found) throw new Error('no price found on page');
       const before = previous.offers?.[partId] ?? {};
       const odd = implausiblePrice(found.price, {
@@ -95,7 +100,7 @@ const offers = {};
 for (const { partId, retailer, entry } of jobs) if (entry) (offers[partId] ??= {})[retailer] = entry;
 
 const out = { updatedAt: report.ok ? now.toISOString() : previous.updatedAt ?? null, offers };
-console.log(`\nDone: ${report.ok} updated, ${report.kept} kept from last run, ${report.failed} failed (${report.rejected} of them ignored as likely misreads), ${report.blocked} blocked by robots.txt`);
+console.log(`\nDone: ${report.ok} updated, ${report.kept} kept from last run, ${report.failed} failed (${report.rejected} of them ignored as likely misreads), ${report.blocked} blocked by robots.txt, ${report.offsite} redirected off-site`);
 if (!dryRun) {
   writeFileSync('data/prices.json', JSON.stringify(out, null, 2) + '\n');
   // History records what the site shows: the lowest over every offer written, kept ones included. Leaving out a

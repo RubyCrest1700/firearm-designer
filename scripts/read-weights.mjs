@@ -7,6 +7,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { extractWeight } from './extract-price.mjs';
 import { robotsGate } from './robots.mjs';
+import { readPage } from './robots.mjs';
 import { readActiveSources } from './sources.mjs';
 
 const USER_AGENT = 'FirearmDesignerPriceBot/0.1 (+https://github.com/RubyCrest1700/firearm-designer)';
@@ -34,9 +35,10 @@ for (const [partId, byRetailer] of Object.entries(sources)) {
     try {
       const got = await safeGet(url);
       if (got.blocked) { console.log(`${partId}\tblocked (${got.why})\t${got.blocked}${got.blocked !== url ? ` (redirected from ${url})` : ''}`); continue; }
+      if (got.offsite) { console.log(`${partId}\t${got.why}, not read\t${url}`); continue; }
       const { res } = got;
       if (!res.ok) { console.log(`${partId}\tHTTP ${res.status}\t${url}`); continue; }
-      const oz = extractWeight(await res.text());
+      const oz = extractWeight(await readPage(res));
       if (oz) found[partId] = { oz, basis: 'published', src: url };
       console.log(`${partId}\t${oz ? `${oz} oz (estimate was ${current[partId]?.oz ?? '?'})` : 'no weight on page'}\t${url}`);
     } catch (err) {
