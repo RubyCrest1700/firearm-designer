@@ -131,7 +131,8 @@ const allParts = [
       offers: [['BRN', 279.0], ['PA', 284.99]] },
     { id: 'ar-bbl-ba10', brand: 'Ballistic Advantage', name: '10.3" 5.56 Carbine Hanson', specs: ['10.3"', '5.56 NATO', 'Carbine gas', '.750 journal', '1/2x28 thread'],
       attrs: { caliber: '5.56', bolt: '5.56', bullet: .224, length: 10.3, gas: 'carbine', journal: '.750', thread: '1/2x28' },
-      offers: [['PA', 164.99], ['OP', 169.99]] },
+      // RTB: read from the Right To Bear product page by hand on 2026-10-26 ($194.75, out of stock).
+      offers: [['PA', 164.99], ['OP', 169.99], ['RTB', 194.75, false]] },
     { id: 'ar-bbl-300', brand: 'Ballistic Advantage', name: '16" .300 BLK Pistol-Length', specs: ['16"', '.300 Blackout', 'Pistol gas', '.750 journal', '5/8x24'],
       attrs: { caliber: '.300 BLK', bolt: '5.56', bullet: .308, length: 16, gas: 'pistol', journal: '.750', thread: '5/8x24' },
       offers: [['PA', 164.99], ['BRN', 174.99]] },
