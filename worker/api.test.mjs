@@ -5,6 +5,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { createHash } from 'node:crypto';
 import { cleanText, handle, networkOf, visitorOf } from './src/api.js';
+import { NFA_SHORT_NOTICE } from './src/share.js';
 
 /**
  * `statements` counts every query the code runs (each statement in a batch counts as one), to check D1's
@@ -1218,9 +1219,6 @@ test('a re-baseline whose batch fails changes nothing and runs again the next da
 });
 
 /* ------------------------------------------------------------- compliance round 1: re-baseline, NFA notice, prices, privacy */
-
-import { NFA_SHORT_NOTICE } from './src/share.js';
-
 
 const PRIVACY = 'https://dropinbuilds.com/privacy/';
 const SHORT_NOTICE_TEXT = 'May be regulated under the NFA. Not legal advice: check federal, state and local law.';
