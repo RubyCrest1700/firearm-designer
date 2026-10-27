@@ -1265,14 +1265,16 @@ const AR_INDEX = {
   },
 };
 
-test('AR-15, AR-9 and AR-10 share pages carry the short NFA notice, on the page and at the end of the description; pistol pages do not', async () => {
+test('AR-15, AR-9 and AR-10 share pages carry the short NFA notice, on the page and at the start of the description; pistol pages do not', async () => {
   const ar = await page(env(), '/b/ar15~ar-lower-aero.ar-bbl-ba10', AR_INDEX);
   assert.equal(ar.status, 200);
-  for (const prop of ['og:description', 'twitter:description', 'description']) assert.ok(meta(ar.text, prop).endsWith(` ${SHORT_NOTICE_TEXT}`), prop);
+  for (const prop of ['og:description', 'twitter:description', 'description']) assert.ok(meta(ar.text, prop).startsWith(`${SHORT_NOTICE_TEXT} `), prop);
+  // Then the usual description, in its usual order.
+  assert.equal(meta(ar.text, 'og:description'), `${SHORT_NOTICE_TEXT} AR-15 · 2 parts · $300 at the best prices we found. Prices change; confirm at the retailer. Includes Aero lower, BA 10.3&#34; barrel. Open it to check the fit and compare retailers.`);
   assert.equal(ar.text.split(`<p>${SHORT_NOTICE_TEXT}</p>`).length, 2, 'once on the page');
   for (const id of ['ar9', 'ar10']) {
     const r = await page(env(), `/b/${id}~x-part`, null);
-    assert.ok(meta(r.text, 'og:description').endsWith(` ${SHORT_NOTICE_TEXT}`), id);
+    assert.ok(meta(r.text, 'og:description').startsWith(`${SHORT_NOTICE_TEXT} `), id);
     assert.ok(r.text.includes(`<p>${SHORT_NOTICE_TEXT}</p>`), id);
   }
   for (const path of ['/b/glock19~g19-frame-g5.g-fcg-apex5', '/b/p365~x-part', '/b/hellcat~x-part']) {
@@ -1280,6 +1282,9 @@ test('AR-15, AR-9 and AR-10 share pages carry the short NFA notice, on the page 
     assert.equal(r.status, 200, path);
     assert.doesNotMatch(r.text, /regulated under the NFA/, path);
   }
+  // A pistol description is exactly as before.
+  const glock = await page(env(), '/b/glock19~g19-frame-g5.g-fcg-apex5');
+  assert.equal(meta(glock.text, 'og:description'), 'Glock 17 / 19 / 19X / 26 / 34 / 45 / 47 · 2 parts · $350 at the best prices we found. Prices change; confirm at the retailer. Includes Glock Gen 5 frame, Apex trigger. Open it to check the fit and compare retailers.');
 });
 
 test('share-page totals say to confirm the price at the retailer; no total, no price line', async () => {

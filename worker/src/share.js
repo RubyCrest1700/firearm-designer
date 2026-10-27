@@ -63,7 +63,8 @@ export function describe(index, platform, parts, name, note) {
   const names = known.map(([label]) => label);
   const highlights = names.length ? ` Includes ${names.slice(0, 3).join(', ')}${names.length > 3 ? ` and ${names.length - 3} more` : ''}.` : '';
   const notice = nfaNoticeFor(platform);
-  const description = `${note ? `${note} ` : ''}${facts}${highlights} Open it to check the fit and compare retailers.${notice ? ` ${notice}` : ''}`;
+  // On AR builds the notice opens the description, so link previews that cut it short still show it (owner, 2026-10-26).
+  const description = `${notice ? `${notice} ` : ''}${note ? `${note} ` : ''}${facts}${highlights} Open it to check the fit and compare retailers.`;
   return { title, description, priced: known.length > 0, notice };
 }
 
