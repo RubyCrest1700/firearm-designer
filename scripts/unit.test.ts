@@ -265,7 +265,7 @@ test('an old Glock 19 link opens in the Glock builder; an unknown platform opens
 
 /* ------------------------------------------------------------------ paused retailers */
 
-const PAUSED_IDS = ['ARD', 'PA', 'VED'];
+const PAUSED_IDS = ['ARD', 'AT3', 'MID', 'PA', 'RA', 'VED'];
 
 test('no part offers a paused retailer, so no best price, total or cart counts one', () => {
   assert.deepEqual([...PAUSED].sort(), PAUSED_IDS);
@@ -359,15 +359,23 @@ test('a part that got cheaper since saving shows as a drop, owned parts left out
 const RAW_HISTORY = (history as unknown as { parts: Record<string, [string, number][]> }).parts;
 const everyPart = () => PLATFORMS.flatMap((p) => p.parts);
 const PAUSE_DAY = '2026-10-24';
+/** AT3 Tactical, Rainier Arms and MidwayUSA, paused later (robots.txt refuses the price bot). */
+const PAUSE_DAY_2 = '2026-10-26';
 /** Midnight UTC, `days` after the pause date. */
 const afterPause = (days: number) => new Date(Date.parse(PAUSE_DAY) + days * 86_400_000).toISOString();
 
 test('a part any paused retailer priced carries the pause date; one none of them priced does not', () => {
-  // Primary Arms sample prices only (the 10.3" barrel), a Primary Arms live price (the MI handguard), and a part no paused store sells.
-  assert.equal(part(ar15, 'ar-bbl-ba10').pausedThrough, PAUSE_DAY);
+  // Primary Arms prices only (the SLx scope), a Primary Arms live price (the MI handguard), and a part no paused store sells.
+  assert.equal(part(ar15, 'ar-opt-slx16').pausedThrough, PAUSE_DAY);
+  // The 10.3" barrel: a Primary Arms sample price and an AT3 link, so the later of the two dates.
+  assert.equal(part(ar15, 'ar-bbl-ba10').pausedThrough, PAUSE_DAY_2);
   assert.equal(part(ar15, 'ar-hg-mi9').pausedThrough, PAUSE_DAY);
   assert.equal(part(ar15, 'ar-gt-pistol').pausedThrough, undefined);
-  assert.ok(everyPart().filter((x) => x.pausedThrough).every((x) => x.pausedThrough === PAUSE_DAY));
+  // A part an AT3, Rainier or Midway store priced carries the later date: the latest pause among the stores that priced it.
+  assert.equal(part(ar15, 'ar-bcg-grendel').pausedThrough, PAUSE_DAY_2);
+  const dates = everyPart().filter((x) => x.pausedThrough).map((x) => x.pausedThrough);
+  assert.ok(dates.every((d) => d === PAUSE_DAY || d === PAUSE_DAY_2));
+  assert.ok(dates.includes(PAUSE_DAY) && dates.includes(PAUSE_DAY_2), 'both pause dates are in use');
 });
 
 test('price history from on or before a paused retailer\'s pause date is never shown for the parts it priced', () => {
@@ -446,18 +454,20 @@ test('a part still sold elsewhere: its old paused-store low is dropped from the 
 
 test('a saved build\'s price from before a pause isn\'t compared with today\'s; one saved after it is', () => {
   storage.clear();
-  const x = ar15.parts.find((p) => p.pausedThrough && bestOffer(p) && p.slot === 'handguard')!;
-  assert.ok(x, 'an AR-15 handguard a paused retailer priced');
+  const x = ar15.parts.find((p) => p.pausedThrough === PAUSE_DAY && bestOffer(p) && p.slot === 'handguard')!;
+  assert.ok(x, 'an AR-15 handguard a retailer paused on PAUSE_DAY priced');
   const sel = { ...baseSelection(ar15), handguard: x.id };
   const now = priceSnapshot('ar15', sel);
   const cheaper = { ...now, [x.id]: now[x.id] - 30 };
   const before: SavedBuild = { id: 'p', name: 'Before', platform: 'ar15', selection: sel, savedAt: '2026-10-01T00:00:00Z', prices: cheaper };
   assert.deepEqual(priceChanges(before), { changes: [], drop: 0 });
-  const after: SavedBuild = { ...before, id: 'q', savedAt: afterPause(1) };
+  // Saved after both pauses (2026-10-24 and PAUSE_DAY_2), so no price in it predates a pause of a store that priced it.
+  const after: SavedBuild = { ...before, id: 'q', savedAt: afterPause(3) };
+  assert.ok(after.savedAt.slice(0, 10) > PAUSE_DAY_2);
   assert.deepEqual(priceChanges(after).changes.map((c) => [c.part.id, c.was, c.now]), [[x.id, now[x.id] - 30, now[x.id]]]);
   // Loading resets that one price to today's and notes when, so later changes show again; other parts keep theirs.
-  // "Today" is fixed at two days after the pause, so the test doesn't depend on the date it runs.
-  mock.timers.enable({ apis: ['Date'], now: Date.parse(afterPause(2)) });
+  // "Today" is fixed at four days after the first pause (two after the second), so the test doesn't depend on the date it runs.
+  mock.timers.enable({ apis: ['Date'], now: Date.parse(afterPause(4)) });
   try {
     storeSavedBuilds([before]);
     const [loaded] = loadSavedBuilds();
@@ -1000,6 +1010,7 @@ test('the FAQ answers "Do you make money from the links?" with the approved word
   // Marked as approved wording in the source.
   assert.match(readFileSync('src/guides/render.ts', 'utf8'), /\/\*\* Owner-approved wording \(2026-10-26\)\. \*\/\r?\n {4}\{ q: 'Do you make money from the links\?', a: 'No\. There are no affiliate links/);
 });
+
 /* ------------------------------------------------------------------ community build preview cards */
 
 test('AR-15, AR-9 and AR-10 community build and platform cards carry the short NFA notice; pistol cards do not', () => {
@@ -1017,4 +1028,25 @@ test('AR-15, AR-9 and AR-10 community build and platform cards carry the short N
   assert.equal(og.match(/cardNotice\(/g)?.length, 2, 'used by the build and platform cards only (the site card has none)');
   for (const f of ['scripts/og-cards.tsx', 'scripts/og-notice.ts']) assert.doesNotMatch(readFileSync(f, 'utf8'), /May be regulated/, f);
   assert.match(readFileSync('scripts/og-notice.ts', 'utf8'), /^import \{ NFA_SHORT_NOTICE \} from '\.\.\/src\/data\/helpers';$/m);
+});
+
+/* ------------------------------------------------------------------ the alert price index after the 2026-10-26 pause */
+
+test('the price index the alert emails read carries no AT3 Tactical, Rainier Arms or MidwayUSA price', () => {
+  const later = ['AT3', 'RA', 'MID'];
+  const index = priceIndex(PLATFORMS);
+  for (const p of PLATFORMS)
+    for (const x of p.parts) {
+      const entry = index.platforms[p.id].parts[x.id];
+      const best = bestOffer(x);
+      assert.ok(!x.offers.some((o) => later.includes(o.retailer)), `${p.id}/${x.id} offers`);
+      if (best) assert.equal(entry[1], best.price, `${p.id}/${x.id}`);
+      else assert.equal(entry, undefined, `${p.id}/${x.id}`);
+    }
+  // The Faxon Grendel BCG was cheapest at AT3 ($139.84). Its best price is now Faxon's own (FAX), the same figure the
+  // published og/index.json carries. Faxon's live price moves nightly, so its value is read from the catalog, not fixed.
+  const grendel = part(ar15, 'ar-bcg-grendel');
+  assert.equal(bestOffer(grendel)!.retailer, 'FAX');
+  assert.notEqual(bestOffer(grendel)!.price, 139.84);
+  assert.deepEqual(index.platforms.ar15.parts['ar-bcg-grendel'], [`${grendel.brand} ${grendel.name}`, bestOffer(grendel)!.price]);
 });

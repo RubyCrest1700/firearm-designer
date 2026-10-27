@@ -14,12 +14,25 @@ test('reads every retailer in src/data/retailers.ts', () => {
   assert.equal(retailers.BUDS.search, 'https://www.budsgunshop.com/search.php?q=');
 });
 
-test('AR15Discounts, Primary Arms and Vedder Holsters are paused, with a pause date and a reason', () => {
-  assert.deepEqual([...pausedIds(sources, retailers)].sort(), ['ARD', 'PA', 'VED']);
-  for (const entry of Object.values(sources.paused)) {
-    assert.deepEqual(Object.keys(entry).sort(), ['reason', 'since']);
-    assert.equal(entry.since, '2026-10-24');
-    assert.match(entry.reason, /^paused pending review of the retailer's terms on automated price collection$/);
+/** Every paused retailer, with its own pause date and reason, exactly as data/sources.json must have them. */
+const PAUSES = {
+  ARD: ['2026-10-24', "paused pending review of the retailer's terms on automated price collection"],
+  PA: ['2026-10-24', "paused pending review of the retailer's terms on automated price collection"],
+  VED: ['2026-10-24', "paused pending review of the retailer's terms on automated price collection"],
+  AT3: ['2026-10-26', 'robots.txt refuses the price bot'],
+  MID: ['2026-10-26', 'robots.txt refuses the price bot'],
+  RA: ['2026-10-26', 'robots.txt refuses the price bot'],
+};
+const PAUSED_NOW = Object.keys(PAUSES).sort();
+
+test('AR15Discounts, Primary Arms and Vedder Holsters are paused since 2026-10-24, and AT3 Tactical, MidwayUSA and Rainier Arms since 2026-10-26, each with its reason', () => {
+  assert.deepEqual(PAUSED_NOW, ['ARD', 'AT3', 'MID', 'PA', 'RA', 'VED']);
+  assert.deepEqual([...pausedIds(sources, retailers)].sort(), PAUSED_NOW);
+  assert.deepEqual(Object.keys(sources.paused).sort(), PAUSED_NOW);
+  for (const [id, entry] of Object.entries(sources.paused)) {
+    assert.deepEqual(Object.keys(entry).sort(), ['reason', 'since'], id);
+    assert.equal(entry.since, PAUSES[id][0], id);
+    assert.equal(entry.reason, PAUSES[id][1], id);
   }
 });
 
@@ -28,13 +41,14 @@ test('paused retailers are left out of the links the scripts read, and everyone 
   let kept = 0;
   for (const [partId, byRetailer] of Object.entries(sources.parts))
     for (const [r, url] of Object.entries(byRetailer)) {
-      if (['ARD', 'PA', 'VED'].includes(r)) assert.equal(active[partId]?.[r], undefined, `${partId} @ ${r}`);
+      if (PAUSED_NOW.includes(r)) assert.equal(active[partId]?.[r], undefined, `${partId} @ ${r}`);
       else { assert.equal(active[partId][r], url); kept++; }
     }
   assert.equal(Object.values(active).reduce((n, b) => n + Object.keys(b).length, 0), kept);
   assert.ok(Object.values(active).every((b) => Object.keys(b).length > 0), 'no part is left with an empty list');
   // The links themselves stay in the file, so resuming is one line.
   assert.ok(Object.values(sources.parts).some((b) => b.PA) && Object.values(sources.parts).some((b) => b.ARD));
+  for (const id of ['AT3', 'RA', 'MID']) assert.ok(Object.values(sources.parts).some((b) => b[id]), `${id} links stay in the file`);
 });
 
 test('a small example: only the paused retailer drops out', () => {
@@ -57,8 +71,8 @@ test('a paused entry without a real pause date or a reason fails, so the site al
 
 test('the link check skips the paused retailers\' sites, search links included, and no one else', () => {
   const hosts = pausedHosts(sources, retailers);
-  for (const h of ['ar15discounts.com', 'www.primaryarms.com', 'www.vedderholsters.com']) assert.ok(hosts.has(h), h);
-  for (const id of Object.keys(retailers).filter((id) => !['ARD', 'PA', 'VED'].includes(id))) assert.ok(!hosts.has(new URL(retailers[id].search).host), id);
+  for (const h of ['ar15discounts.com', 'www.primaryarms.com', 'www.vedderholsters.com', 'www.at3tactical.com', 'www.rainierarms.com', 'rainierarms.com', 'www.midwayusa.com']) assert.ok(hosts.has(h), h);
+  for (const id of Object.keys(retailers).filter((id) => !PAUSED_NOW.includes(id))) assert.ok(!hosts.has(new URL(retailers[id].search).host), id);
 });
 
 // The scripts that fetch retailer pages run network code on import, so they're checked as text: each reads its
