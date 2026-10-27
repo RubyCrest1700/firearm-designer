@@ -130,11 +130,11 @@ function layout(env, token, inner, why) {
 <tr><td style="background:#0e2a47;color:#fff;padding:16px 24px;font-size:18px;letter-spacing:.5px">DROP-IN <b style="color:#e8853a">BUILDS</b></td></tr>
 <tr><td style="padding:24px">${inner}</td></tr>
 <tr><td style="padding:16px 24px;background:#f7f6f3;color:#6b7684;font-size:12px;line-height:1.6">${why}<br>
-<a href="${stop}" style="color:#6b7684">Unsubscribe</a> from all Drop-In Builds emails.<br>${esc(env.MAILING_ADDRESS)}</td></tr>
+<a href="${stop}" style="color:#6b7684">Unsubscribe</a> from all Drop-In Builds emails.<br><a href="${SITE}/privacy/" style="color:#6b7684">Privacy Policy</a><br>${esc(env.MAILING_ADDRESS)}</td></tr>
 </table></td></tr></table></body></html>`;
 }
 
-const footerText = (env, token, why) => `\n\n--\n${why}\nUnsubscribe: ${API_BASE}/alerts/stop?t=${token}\n${env.MAILING_ADDRESS}\n`;
+const footerText = (env, token, why) => `\n\n--\n${why}\nUnsubscribe: ${API_BASE}/alerts/stop?t=${token}\nPrivacy Policy: ${SITE}/privacy/\n${env.MAILING_ADDRESS}\n`;
 
 /** `code` is the one-time confirmation code; it appears only in this email, in the confirm and "Not you?" links. */
 async function sendConfirm(env, row, code) {
@@ -198,7 +198,7 @@ function digest(env, token, moved) {
 const PAGE_CSP = "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
 const page = (title, body, homeButton = true) => new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)} | Drop-In Builds</title>
 <style>body{margin:0;font-family:system-ui,Arial,sans-serif;background:#f2f1ee;color:#1c2430}header{background:#0e2a47;color:#fff;padding:16px 24px;font-size:18px}header b{color:#e8853a}main{max-width:520px;margin:32px auto;padding:0 16px}a.btn,button.btn{display:inline-block;background:#d4691e;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:bold;font-size:16px;border:0;cursor:pointer}</style></head>
-<body><header>DROP-IN <b>BUILDS</b></header><main><h1>${esc(title)}</h1>${body}${homeButton ? `<p><a class="btn" href="${SITE}/#saved">Go to My Builds</a></p>` : ''}</main></body></html>`, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'content-security-policy': PAGE_CSP } });
+<body><header>DROP-IN <b>BUILDS</b></header><main><h1>${esc(title)}</h1>${body}${homeButton ? `<p><a class="btn" href="${SITE}/#saved">Go to My Builds</a></p>` : ''}<p><a href="${SITE}/privacy/">Privacy Policy</a></p></main></body></html>`, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'content-security-policy': PAGE_CSP } });
 
 /** Puts an address on the suppression list. Unsubscribing must always work, so a missing salt only skips this. */
 const suppress = async (db, salt, email, now) => {

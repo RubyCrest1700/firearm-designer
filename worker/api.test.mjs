@@ -1318,3 +1318,43 @@ test('an alert email carries the short NFA notice once when it lists an AR build
   assert.ok(!quiet.outbox.at(-1).html.includes(SHORT_NOTICE_TEXT));
 });
 
+test('confirmation and alert emails link the Privacy Policy, in html and text', async () => {
+  const e = alertEnv();
+  await signup(e, 'privacy@example.com');
+  const confirm = e.outbox[0];
+  assert.equal(privacyLink(confirm.html), 1);
+  assert.ok(confirm.text.includes(`\nPrivacy Policy: ${PRIVACY}\n`));
+  await confirmMail(e, confirm);
+  await withIndex(ALERT_INDEX(120), () => runAlerts(e));
+  const alert = e.outbox[1];
+  assert.equal(privacyLink(alert.html), 1);
+  assert.ok(alert.text.includes(`\nPrivacy Policy: ${PRIVACY}\n`));
+  // The mailing address and unsubscribe link are still there.
+  assert.match(alert.html, /PO Box 1/);
+  assert.match(alert.text, /Unsubscribe: https:\/\/share\.dropinbuilds\.com\/alerts\/stop\?t=/);
+});
+
+test('the confirm, unsubscribe and "Not you?" pages link the Privacy Policy', async () => {
+  const e = alertEnv();
+  const { token } = (await signup(e, 'pages@example.com')).body;
+  const code = codeIn(e.outbox[0]);
+  const pages = [
+    await (await visit(e, 'GET', `/alerts/confirm?c=${code}`)).text(),
+    await (await visit(e, 'GET', `/alerts/block?c=${code}`)).text(),
+    await (await visit(e, 'GET', '/alerts/confirm?c=bad')).text(),
+    await (await visit(e, 'GET', '/alerts/block?c=bad')).text(),
+    await (await pressConfirm(e, code)).text(),
+    await (await visit(e, 'GET', `/alerts/stop?t=${token}`)).text(),
+    await (await handle(form(`/alerts/stop?t=${token}`, 'from=page'), e)).text(),
+    await (await visit(e, 'GET', `/alerts/stop?t=${token}`)).text(),
+  ];
+  assert.match(pages[4], /Price Alerts Are On/);
+  assert.match(pages[6], /You&#39;re Unsubscribed/);
+  for (const [i, html] of pages.entries()) assert.equal(privacyLink(html), 1, `page ${i}`);
+  // A "Not you?" result page too.
+  const b = alertEnv();
+  await signup(b, 'notme@example.com');
+  const done = await (await handle(form('/alerts/block', `c=${codeIn(b.outbox[0])}`), b)).text();
+  assert.match(done, /We Won&#39;t Email You Again/);
+  assert.equal(privacyLink(done), 1);
+});
