@@ -9,6 +9,14 @@
 import { LIVE_PLATFORMS, canonical, isPlatform } from './api.js';
 
 export const SITE = 'https://dropinbuilds.com';
+/** Owner-approved wording (2026-10-26). Same text as NFA_SHORT_NOTICE in src/data/helpers.ts. */
+export const NFA_SHORT_NOTICE = 'May be regulated under the NFA. Not legal advice: check federal, state and local law.';
+/** The AR builders, where a build can pair a short barrel with a stock. Their share pages and alert emails carry the notice. */
+const NOTICE_PLATFORMS = new Set(['ar15', 'ar9', 'ar10']);
+/** The short NFA notice for a build on this platform (any id, old or current), or '' for none. */
+export const nfaNoticeFor = (platform) => (NOTICE_PLATFORMS.has(canonical(platform)) ? NFA_SHORT_NOTICE : '');
+/** Shown next to a best-price total. */
+const CONFIRM_PRICE = 'Prices change; confirm at the retailer.';
 const PART_ID = /^[a-z0-9][a-z0-9-]{0,47}$/;
 const MAX_PARTS = 40;
 /** Used when the price index can't be reached. */
@@ -51,16 +59,17 @@ export function describe(index, platform, parts, name, note) {
   const known = parts.map((id) => p?.parts?.[id]).filter(Boolean);
   const total = known.reduce((sum, [, price]) => sum + price, 0);
   const title = name || `${platformName} build${total ? ` · ${money(total)}` : ''}`;
-  const facts = known.length ? `${platformName} · ${known.length} parts · ${money(total)} at the best prices we found.` : `A ${platformName} build.`;
+  const facts = known.length ? `${platformName} · ${known.length} parts · ${money(total)} at the best prices we found. ${CONFIRM_PRICE}` : `A ${platformName} build.`;
   const names = known.map(([label]) => label);
   const highlights = names.length ? ` Includes ${names.slice(0, 3).join(', ')}${names.length > 3 ? ` and ${names.length - 3} more` : ''}.` : '';
-  const description = `${note ? `${note} ` : ''}${facts}${highlights} Open it to check the fit and compare retailers.`;
-  return { title, description };
+  const notice = nfaNoticeFor(platform);
+  const description = `${note ? `${note} ` : ''}${facts}${highlights} Open it to check the fit and compare retailers.${notice ? ` ${notice}` : ''}`;
+  return { title, description, priced: known.length > 0, notice };
 }
 
 const redirect = (target) => `location.replace(${JSON.stringify(target).replace(/</g, '\\u003c')})`;
 
-function page({ title, description, image, url, target }) {
+function page({ title, description, image, url, target, priced = false, notice = '' }) {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -88,7 +97,7 @@ function page({ title, description, image, url, target }) {
 </head>
 <body style="font-family: system-ui, sans-serif; background: #0e2a47; color: #e8eef5; padding: 32px;">
 <p>Opening <a style="color: #ec8a45" href="${esc(target)}">${esc(title)}</a> on Drop-In Builds…</p>
-<script>${redirect(target)}</script>
+${priced ? `<p>${esc(CONFIRM_PRICE)}</p>\n` : ''}${notice ? `<p>${esc(notice)}</p>\n` : ''}<script>${redirect(target)}</script>
 </body>
 </html>`;
 }
@@ -140,7 +149,7 @@ export async function sharePage(request, env) {
   }
 
   const index = await priceIndex();
-  const { title, description } = describe(index, platform, parts, name, note);
+  const { title, description, priced, notice } = describe(index, platform, parts, name, note);
   const target = `${SITE}/?b=${encodeURIComponent(`${platform}~${parts.join('.')}`)}`;
-  return html({ title, description, image, url: url.href, target });
+  return html({ title, description, image, url: url.href, target, priced, notice });
 }

@@ -1219,6 +1219,8 @@ test('a re-baseline whose batch fails changes nothing and runs again the next da
 
 /* ------------------------------------------------------------- compliance round 1: re-baseline, NFA notice, prices, privacy */
 
+import { NFA_SHORT_NOTICE } from './src/share.js';
+
 
 const PRIVACY = 'https://dropinbuilds.com/privacy/';
 const SHORT_NOTICE_TEXT = 'May be regulated under the NFA. Not legal advice: check federal, state and local law.';
@@ -1248,5 +1250,43 @@ test('a run with a stale re-baseline mark re-baselines every signup quietly, and
   // The next run with the same index: nothing moved, nothing sent.
   assert.deepEqual(await withIndex(index, () => runAlerts(e, now + DAY)), { sent: 0, deferred: 0, failed: 0, watched: 2 });
   assert.equal(e.outbox.length, 0);
+});
+
+test('the Worker\'s short NFA notice is the approved wording, marked as the same text as the site\'s', () => {
+  assert.equal(NFA_SHORT_NOTICE, SHORT_NOTICE_TEXT);
+  assert.match(readFileSync(new URL('./src/share.js', import.meta.url), 'utf8'),
+    /\/\*\* Owner-approved wording \(2026-10-26\)\. Same text as NFA_SHORT_NOTICE in src\/data\/helpers\.ts\. \*\/\r?\nexport const NFA_SHORT_NOTICE = /);
+});
+
+const AR_INDEX = {
+  platforms: {
+    ...INDEX.platforms,
+    ar15: { name: 'AR-15', parts: { 'ar-lower-aero': ['Aero lower', 100], 'ar-bbl-ba10': ['BA 10.3" barrel', 200] } },
+  },
+};
+
+test('AR-15, AR-9 and AR-10 share pages carry the short NFA notice, on the page and at the end of the description; pistol pages do not', async () => {
+  const ar = await page(env(), '/b/ar15~ar-lower-aero.ar-bbl-ba10', AR_INDEX);
+  assert.equal(ar.status, 200);
+  for (const prop of ['og:description', 'twitter:description', 'description']) assert.ok(meta(ar.text, prop).endsWith(` ${SHORT_NOTICE_TEXT}`), prop);
+  assert.equal(ar.text.split(`<p>${SHORT_NOTICE_TEXT}</p>`).length, 2, 'once on the page');
+  for (const id of ['ar9', 'ar10']) {
+    const r = await page(env(), `/b/${id}~x-part`, null);
+    assert.ok(meta(r.text, 'og:description').endsWith(` ${SHORT_NOTICE_TEXT}`), id);
+    assert.ok(r.text.includes(`<p>${SHORT_NOTICE_TEXT}</p>`), id);
+  }
+  for (const path of ['/b/glock19~g19-frame-g5.g-fcg-apex5', '/b/p365~x-part', '/b/hellcat~x-part']) {
+    const r = await page(env(), path);
+    assert.equal(r.status, 200, path);
+    assert.doesNotMatch(r.text, /regulated under the NFA/, path);
+  }
+});
+
+test('share-page totals say to confirm the price at the retailer; no total, no price line', async () => {
+  const priced = await page(env(), '/b/glock19~g19-frame-g5.g-fcg-apex5.g19-slide-mos');
+  for (const prop of ['og:description', 'twitter:description']) assert.match(meta(priced.text, prop), /3 parts · \$650 at the best prices we found\. Prices change; confirm at the retailer\. Includes /, prop);
+  assert.ok(priced.text.includes(`<p>${CONFIRM_PRICE}</p>`), 'next to the total on the page too');
+  const unpriced = await page(env(), '/b/glock19~g19-frame-g5', null);
+  assert.ok(!unpriced.text.includes(CONFIRM_PRICE));
 });
 
