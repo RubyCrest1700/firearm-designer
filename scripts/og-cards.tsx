@@ -97,7 +97,7 @@ function buildCard(title: string, platform: Platform, sel: Selection) {
 /** For shared builds without their own picture: the platform drawing, with no parts count or total to get wrong. */
 function platformCard(platform: Platform) {
   const line = `CHECKED FOR FIT · <tspan fill="${C.cta}">BEST PRICES</tspan> ACROSS RETAILERS`;
-  return card(`${platform.name} build`, line, drawing(platform, baseSelection(platform), ART.x, ART.y, ART.w, ART.h));
+  return card(`${platform.name} build`, line, drawing(platform, baseSelection(platform), ART.x, ART.y, ART.w, ART.h), cardNotice(platform.id));
 }
 
 function siteCard() {

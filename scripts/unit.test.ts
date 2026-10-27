@@ -1002,7 +1002,7 @@ test('the FAQ answers "Do you make money from the links?" with the approved word
 });
 /* ------------------------------------------------------------------ community build preview cards */
 
-test('AR-15, AR-9 and AR-10 community build cards carry the short NFA notice; pistol cards do not', () => {
+test('AR-15, AR-9 and AR-10 community build and platform cards carry the short NFA notice; pistol cards do not', () => {
   for (const id of ['ar15', 'ar9', 'ar10']) assert.equal(cardNotice(id), NFA_SHORT_NOTICE, id);
   const pistols = PLATFORMS.map((p) => p.id).filter((id) => !['ar15', 'ar9', 'ar10'].includes(id));
   assert.ok(pistols.length >= 7 && pistols.includes('glock9'));
@@ -1012,6 +1012,9 @@ test('AR-15, AR-9 and AR-10 community build cards carry the short NFA notice; pi
   const og = readFileSync('scripts/og-cards.tsx', 'utf8');
   assert.match(og, /^import \{ cardNotice \} from '\.\/og-notice';$/m);
   assert.match(og, /function buildCard\([^)]*\) \{[\s\S]*?cardNotice\(platform\.id\)[\s\S]*?\n\}/);
+  // The platform cards too (og/ar15.png and the rest: the preview for shared builds without their own picture).
+  assert.match(og, /function platformCard\([^)]*\) \{[\s\S]*?cardNotice\(platform\.id\)\);\r?\n\}/);
+  assert.equal(og.match(/cardNotice\(/g)?.length, 2, 'used by the build and platform cards only (the site card has none)');
   for (const f of ['scripts/og-cards.tsx', 'scripts/og-notice.ts']) assert.doesNotMatch(readFileSync(f, 'utf8'), /May be regulated/, f);
   assert.match(readFileSync('scripts/og-notice.ts', 'utf8'), /^import \{ NFA_SHORT_NOTICE \} from '\.\.\/src\/data\/helpers';$/m);
 });

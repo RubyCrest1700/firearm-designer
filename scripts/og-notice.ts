@@ -1,4 +1,4 @@
-// The notice line on community build preview cards (scripts/og-cards.tsx). Kept apart so the tests can import it:
+// The notice line on community build and platform preview cards (scripts/og-cards.tsx). Kept apart so the tests can import it:
 // og-cards.tsx draws every card as soon as it's loaded.
 import { NFA_SHORT_NOTICE } from '../src/data/helpers';
 
