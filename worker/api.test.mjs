@@ -1372,3 +1372,16 @@ test('the unsubscribe result page uses the owner-approved wording', async () => 
   assert.ok(done.includes("<h1>You&#39;re Unsubscribed</h1><p>We won't send price alerts to this address unless it signs up again. Your saved builds are still on the site.</p>"));
   assert.doesNotMatch(done, /won't email this address again/);
 });
+
+test('the share page shows the price line only where the page shows the total; the description keeps it with any total', async () => {
+  // A named community build: the page shows the name, not the total, so the line stays in the description only.
+  const e = env();
+  const s = await share(e, { name: 'Carry G19', note: '' });
+  const named = await page(e, `/c/${s.body.build.id}`);
+  assert.equal(meta(named.text, 'og:title'), 'Carry G19');
+  assert.match(meta(named.text, 'og:description'), /\$650 at the best prices we found\. Prices change; confirm at the retailer\./);
+  assert.ok(!named.text.includes(`<p>${CONFIRM_PRICE}</p>`), 'no total on the page, no line');
+  // An unnamed /b/ build: the page's title carries the total, so the line follows it.
+  const unnamed = await page(env(), '/b/glock19~g19-frame-g5.g-fcg-apex5.g19-slide-mos');
+  assert.match(unnamed.text, /<p>Opening <a [^>]*>Glock 17 \/ 19 \/ 19X \/ 26 \/ 34 \/ 45 \/ 47 build · \$650<\/a> on Drop-In Builds…<\/p>\n<p>Prices change; confirm at the retailer\.<\/p>/);
+});

@@ -65,7 +65,8 @@ export function describe(index, platform, parts, name, note) {
   const notice = nfaNoticeFor(platform);
   // On AR builds the notice opens the description, so link previews that cut it short still show it (owner, 2026-10-26).
   const description = `${notice ? `${notice} ` : ''}${note ? `${note} ` : ''}${facts}${highlights} Open it to check the fit and compare retailers.`;
-  return { title, description, priced: known.length > 0, notice };
+  // `priced`: the page shows the total (in the default title), so the price line goes next to it there too.
+  return { title, description, priced: !name && total > 0, notice };
 }
 
 const redirect = (target) => `location.replace(${JSON.stringify(target).replace(/</g, '\\u003c')})`;
