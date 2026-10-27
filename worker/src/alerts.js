@@ -194,6 +194,10 @@ function digest(env, token, moved) {
 
 /* ------------------------------------------------------------------ requests */
 
+// The unsubscribe result page's first sentence.
+/** Owner-approved wording (2026-10-26). */
+const UNSUBSCRIBED = "We won't send price alerts to this address unless it signs up again.";
+
 /** No scripts or outside files; the one form posts back here. */
 const PAGE_CSP = "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
 const page = (title, body, homeButton = true) => new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)} | Drop-In Builds</title>
@@ -345,7 +349,7 @@ ${names ? `<p>Builds you'll get alerts for:</p><ul>${names}</ul>` : ''}
     }
     // Turn Off on the site reads this answer cross-origin, so it needs the CORS headers.
     if (!fromPage) return noContent();
-    return page('You\'re Unsubscribed', '<p>We won\'t email this address again. Your saved builds are still on the site.</p>');
+    return page('You\'re Unsubscribed', `<p>${UNSUBSCRIBED} Your saved builds are still on the site.</p>`);
   }
 
   return null;

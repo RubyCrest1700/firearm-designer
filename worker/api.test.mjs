@@ -438,7 +438,7 @@ test('unsubscribing removes every signup for the address, including one-click', 
   assert.match(ask, /Stop Price Alerts\?[\s\S]*me@example\.com[\s\S]*<form method="post"/);
   assert.equal((await call(e, 'GET', `/api/alerts/${b}`)).status, 200);
   const pressed = await handle(new Request(`https://share.example/alerts/stop?t=${a}`, { method: 'POST', body: 'from=page', headers: { 'content-type': 'application/x-www-form-urlencoded' } }), e);
-  assert.match(await pressed.text(), /We won't email this address again/);
+  assert.match(await pressed.text(), /We won't send price alerts to this address unless it signs up again\./);
   assert.equal((await call(e, 'GET', `/api/alerts/${b}`)).status, 404);
   assert.match(await (await visit(e, 'GET', `/alerts/stop?t=${a}`)).text(), /isn't getting price alerts/);
   const c = (await signup(e, 'you@example.com', [G19], '1.0.0.3')).body.token;
@@ -956,7 +956,7 @@ test('the Unsubscribe page button still gets its page, and the Worker entry keep
   const pressed = await unsubscribe(e, first.body.token);
   assert.equal(pressed.status, 200);
   assert.match(pressed.headers.get('content-type'), /^text\/html/);
-  assert.match(await pressed.text(), /<h1>You&#39;re Unsubscribed<\/h1><p>We won't email this address again/);
+  assert.match(await pressed.text(), /<h1>You&#39;re Unsubscribed<\/h1><p>We won't send price alerts to this address unless it signs up again\./);
   // Through the full fetch entry (index.js, with withSecurityHeaders) the 204 keeps its CORS headers.
   const { default: worker } = await import('./src/index.js');
   const second = await signupAt(e, now, 'site@example.com', '2.0.0.1');
@@ -1092,7 +1092,7 @@ test('without the private salt, confirming and unsubscribing still work', async 
   assert.equal(await confirmedOf(e, 'a'.repeat(32)), 1);
   const stop = await handle(form(`/alerts/stop?t=${'b'.repeat(32)}`, 'from=page'), e, now);
   assert.equal(stop.status, 200);
-  assert.match(await stop.text(), /<h1>You&#39;re Unsubscribed<\/h1><p>We won't email this address again/);
+  assert.match(await stop.text(), /<h1>You&#39;re Unsubscribed<\/h1><p>We won't send price alerts to this address unless it signs up again\./);
   assert.equal(await confirmedOf(e, 'f'.repeat(32)), undefined);
   assert.equal((await oneClick(e, 'a'.repeat(32), now)).status, 204);
   assert.equal(await count(e, 'alerts'), 0);
@@ -1362,4 +1362,13 @@ test('the confirm, unsubscribe and "Not you?" pages link the Privacy Policy', as
   const done = await (await handle(form('/alerts/block', `c=${codeIn(b.outbox[0])}`), b)).text();
   assert.match(done, /We Won&#39;t Email You Again/);
   assert.equal(privacyLink(done), 1);
+});
+
+test('the unsubscribe result page uses the owner-approved wording', async () => {
+  assert.match(readFileSync(new URL('./src/alerts.js', import.meta.url), 'utf8'), /\/\*\* Owner-approved wording \(2026-10-26\)\. \*\/\r?\nconst UNSUBSCRIBED = "We won't send price alerts to this address unless it signs up again\.";/);
+  const e = alertEnv();
+  const { token } = (await signup(e, 'wording@example.com')).body;
+  const done = await (await handle(form(`/alerts/stop?t=${token}`, 'from=page'), e)).text();
+  assert.ok(done.includes("<h1>You&#39;re Unsubscribed</h1><p>We won't send price alerts to this address unless it signs up again. Your saved builds are still on the site.</p>"));
+  assert.doesNotMatch(done, /won't email this address again/);
 });
