@@ -359,7 +359,10 @@ test('a part that got cheaper since saving shows as a drop, owned parts left out
 const RAW_HISTORY = (history as unknown as { parts: Record<string, [string, number][]> }).parts;
 const everyPart = () => PLATFORMS.flatMap((p) => p.parts);
 const PAUSE_DAY = '2026-10-24';
-/** AT3 Tactical, Rainier Arms and MidwayUSA, paused later (robots.txt refuses the price bot). */
+/**
+ * AT3 Tactical, Rainier Arms and MidwayUSA, paused later (robots.txt refuses the price bot). If it moves at merge, change
+ * it here, in ROBOTS_PAUSE_DAY (scripts/sources.test.mjs) and in data/sources.json.
+ */
 const PAUSE_DAY_2 = '2026-10-26';
 /** Midnight UTC, `days` after the pause date. */
 const afterPause = (days: number) => new Date(Date.parse(PAUSE_DAY) + days * 86_400_000).toISOString();

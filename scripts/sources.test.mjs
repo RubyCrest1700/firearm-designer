@@ -14,18 +14,20 @@ test('reads every retailer in src/data/retailers.ts', () => {
   assert.equal(retailers.BUDS.search, 'https://www.budsgunshop.com/search.php?q=');
 });
 
+/** The robots.txt pauses' date. If it moves at merge, change it here, in PAUSE_DAY_2 (scripts/unit.test.ts) and in data/sources.json. */
+const ROBOTS_PAUSE_DAY = '2026-10-26';
 /** Every paused retailer, with its own pause date and reason, exactly as data/sources.json must have them. */
 const PAUSES = {
   ARD: ['2026-10-24', "paused pending review of the retailer's terms on automated price collection"],
   PA: ['2026-10-24', "paused pending review of the retailer's terms on automated price collection"],
   VED: ['2026-10-24', "paused pending review of the retailer's terms on automated price collection"],
-  AT3: ['2026-10-26', 'robots.txt refuses the price bot'],
-  MID: ['2026-10-26', 'robots.txt refuses the price bot'],
-  RA: ['2026-10-26', 'robots.txt refuses the price bot'],
+  AT3: [ROBOTS_PAUSE_DAY, 'robots.txt refuses the price bot'],
+  MID: [ROBOTS_PAUSE_DAY, 'robots.txt refuses the price bot'],
+  RA: [ROBOTS_PAUSE_DAY, 'robots.txt refuses the price bot'],
 };
 const PAUSED_NOW = Object.keys(PAUSES).sort();
 
-test('AR15Discounts, Primary Arms and Vedder Holsters are paused since 2026-10-24, and AT3 Tactical, MidwayUSA and Rainier Arms since 2026-10-26, each with its reason', () => {
+test(`AR15Discounts, Primary Arms and Vedder Holsters are paused since 2026-10-24, and AT3 Tactical, MidwayUSA and Rainier Arms since ${ROBOTS_PAUSE_DAY}, each with its reason`, () => {
   assert.deepEqual(PAUSED_NOW, ['ARD', 'AT3', 'MID', 'PA', 'RA', 'VED']);
   assert.deepEqual([...pausedIds(sources, retailers)].sort(), PAUSED_NOW);
   assert.deepEqual(Object.keys(sources.paused).sort(), PAUSED_NOW);
