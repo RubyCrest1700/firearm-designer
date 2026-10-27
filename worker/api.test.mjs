@@ -1290,3 +1290,31 @@ test('share-page totals say to confirm the price at the retailer; no total, no p
   assert.ok(!unpriced.text.includes(CONFIRM_PRICE));
 });
 
+const AR_ALERT_INDEX = (barrel = 200) => ({ platforms: { ...ALERT_INDEX().platforms, ar15: { name: 'AR-15', parts: { 'ar-bbl-ba10': ['BA 10.3" barrel', barrel] } } } });
+const AR_BUILD = { name: 'Short AR', platform: 'ar15', parts: ['ar-bbl-ba10'] };
+
+test('an alert email carries the short NFA notice once when it lists an AR build, and none for pistols only', async () => {
+  const e = alertEnv();
+  await withIndex(AR_ALERT_INDEX(), () => call(e, 'POST', '/api/alerts', { email: 'ar@example.com', builds: [AR_BUILD, G19] }));
+  await confirmMail(e, e.outbox[0]);
+  // Both builds move: the AR barrel and the Glock apex.
+  const index = { platforms: { ...ALERT_INDEX(120).platforms, ar15: { name: 'AR-15', parts: { 'ar-bbl-ba10': ['BA 10.3" barrel', 150] } } } };
+  assert.equal((await withIndex(index, () => runAlerts(e))).sent, 1);
+  const mail = e.outbox.at(-1);
+  assert.equal(mail.html.split(SHORT_NOTICE_TEXT).length, 2, 'once in the html');
+  assert.equal(mail.text.split(SHORT_NOTICE_TEXT).length, 2, 'once in the text');
+  // A Glock-only email has none.
+  const g = alertEnv();
+  await signup(g, 'glock@example.com');
+  await confirmMail(g, g.outbox[0]);
+  await withIndex(ALERT_INDEX(120), () => runAlerts(g));
+  assert.equal(g.outbox.length, 2);
+  assert.ok(!g.outbox[1].html.includes(SHORT_NOTICE_TEXT) && !g.outbox[1].text.includes(SHORT_NOTICE_TEXT));
+  // An AR build that didn't move isn't in the email, so a Glock-only move carries none either.
+  const quiet = alertEnv();
+  await withIndex(AR_ALERT_INDEX(), () => call(quiet, 'POST', '/api/alerts', { email: 'mixed@example.com', builds: [AR_BUILD, G19] }));
+  await confirmMail(quiet, quiet.outbox[0]);
+  await withIndex({ platforms: { ...ALERT_INDEX(120).platforms, ...AR_ALERT_INDEX().platforms } }, () => runAlerts(quiet));
+  assert.ok(!quiet.outbox.at(-1).html.includes(SHORT_NOTICE_TEXT));
+});
+

@@ -12,7 +12,7 @@
 //   ALERTS_FROM      optional sender, default "Drop-In Builds <alerts@dropinbuilds.com>"
 
 import { canonical, errorText, isPlatform } from './api.js';
-import { SITE } from './share.js';
+import { SITE, nfaNoticeFor } from './share.js';
 
 export const API_BASE = 'https://share.dropinbuilds.com';
 const DAY = 86_400_000;
@@ -186,7 +186,10 @@ function digest(env, token, moved) {
 <td style="padding:6px 0 6px 8px;border-top:1px solid #eee;text-align:right;white-space:nowrap;font-weight:bold;color:${c.now < c.was ? '#2e7d4f' : '#b06d00'}">${c.now < c.was ? '↓' : '↑'} ${money(c.now)}</td></tr>`).join('')}</table>
 <p style="margin:0 0 24px"><a href="${buildLink(build)}" style="color:#d4691e;font-weight:bold">Open This Build</a></p>`).join('');
   const text = moved.map(({ build, changes, total }) => `${build.name} (now ${money(total)})\n${changes.map((c) => `  ${c.name}: ${money(c.was)} -> ${money(c.now)}`).join('\n')}\n  ${buildLink(build)}`).join('\n\n');
-  return { subject, html: layout(env, token, html, why), text: text + footerText(env, token, why) };
+  // Once per email, when any build in it is an AR (the short NFA notice).
+  const notice = moved.map((m) => nfaNoticeFor(m.build.platform)).find(Boolean) ?? '';
+  const noticeHtml = notice ? `<p style="margin:0 0 16px;color:#6b7684;font-size:13px">${esc(notice)}</p>` : '';
+  return { subject, html: layout(env, token, html + noticeHtml, why), text: text + (notice ? `\n\n${notice}` : '') + footerText(env, token, why) };
 }
 
 /* ------------------------------------------------------------------ requests */
