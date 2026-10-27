@@ -5,6 +5,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { createHash } from 'node:crypto';
 import { cleanText, handle, networkOf, visitorOf } from './src/api.js';
+import { NFA_SHORT_NOTICE } from './src/share.js';
 
 /**
  * `statements` counts every query the code runs (each statement in a batch counts as one), to check D1's
@@ -438,7 +439,7 @@ test('unsubscribing removes every signup for the address, including one-click', 
   assert.match(ask, /Stop Price Alerts\?[\s\S]*me@example\.com[\s\S]*<form method="post"/);
   assert.equal((await call(e, 'GET', `/api/alerts/${b}`)).status, 200);
   const pressed = await handle(new Request(`https://share.example/alerts/stop?t=${a}`, { method: 'POST', body: 'from=page', headers: { 'content-type': 'application/x-www-form-urlencoded' } }), e);
-  assert.match(await pressed.text(), /We won't email this address again/);
+  assert.match(await pressed.text(), /We won't send price alerts to this address unless it signs up again\./);
   assert.equal((await call(e, 'GET', `/api/alerts/${b}`)).status, 404);
   assert.match(await (await visit(e, 'GET', `/alerts/stop?t=${a}`)).text(), /isn't getting price alerts/);
   const c = (await signup(e, 'you@example.com', [G19], '1.0.0.3')).body.token;
@@ -956,7 +957,7 @@ test('the Unsubscribe page button still gets its page, and the Worker entry keep
   const pressed = await unsubscribe(e, first.body.token);
   assert.equal(pressed.status, 200);
   assert.match(pressed.headers.get('content-type'), /^text\/html/);
-  assert.match(await pressed.text(), /<h1>You&#39;re Unsubscribed<\/h1><p>We won't email this address again/);
+  assert.match(await pressed.text(), /<h1>You&#39;re Unsubscribed<\/h1><p>We won't send price alerts to this address unless it signs up again\./);
   // Through the full fetch entry (index.js, with withSecurityHeaders) the 204 keeps its CORS headers.
   const { default: worker } = await import('./src/index.js');
   const second = await signupAt(e, now, 'site@example.com', '2.0.0.1');
@@ -1092,7 +1093,7 @@ test('without the private salt, confirming and unsubscribing still work', async 
   assert.equal(await confirmedOf(e, 'a'.repeat(32)), 1);
   const stop = await handle(form(`/alerts/stop?t=${'b'.repeat(32)}`, 'from=page'), e, now);
   assert.equal(stop.status, 200);
-  assert.match(await stop.text(), /<h1>You&#39;re Unsubscribed<\/h1><p>We won't email this address again/);
+  assert.match(await stop.text(), /<h1>You&#39;re Unsubscribed<\/h1><p>We won't send price alerts to this address unless it signs up again\./);
   assert.equal(await confirmedOf(e, 'f'.repeat(32)), undefined);
   assert.equal((await oneClick(e, 'a'.repeat(32), now)).status, 204);
   assert.equal(await count(e, 'alerts'), 0);
@@ -1215,4 +1216,198 @@ test('a re-baseline whose batch fails changes nothing and runs again the next da
   assert.deepEqual(await withIndex(ALERT_INDEX(180, 360), () => runAlerts(e, now + DAY)), { sent: 0, rebaselined: 100 });
   for (const row of await allSeen(e)) assert.deepEqual(JSON.parse(row.seen), MIXED_BUILDS[parseInt(row.token, 16) % MIXED_BUILDS.length][1]);
   assert.equal((await e.DB.prepare("SELECT value FROM meta WHERE key = 'rebaseline'").first()).value, REBASELINE);
+});
+
+/* ------------------------------------------------------------- compliance round 1: re-baseline, NFA notice, prices, privacy */
+
+const PRIVACY = 'https://dropinbuilds.com/privacy/';
+const SHORT_NOTICE_TEXT = 'May be regulated under the NFA. Not legal advice: check federal, state and local law.';
+const CONFIRM_PRICE = 'Prices change; confirm at the retailer.';
+const privacyLink = (html) => (html.match(new RegExp(`<a [^>]*href="${PRIVACY.replace(/[.]/g, '\\.')}"[^>]*>Privacy Policy</a>`, 'g')) ?? []).length;
+
+test('the re-baseline mark is the 2026-10-26 pause', () => {
+  assert.equal(REBASELINE, '2026-10-26-pause');
+});
+
+test('a run with a stale re-baseline mark re-baselines every signup quietly, and the next run stays quiet too', async () => {
+  const e = alertEnv({ rebaselined: false });
+  e.DB.exec("INSERT INTO meta (key, value) VALUES ('rebaseline', '2026-10-pause')");
+  const now = Date.now();
+  // Last told $150 for the apex and $300 for the slide; the frame was in the index then.
+  const seen = { 'glock9/g-fcg-apex5': 150, 'glock9/g19-slide-mos': 300, 'glock9/g19-frame-g5': 200 };
+  for (const [i, confirmed] of [[1, 1], [2, 1], [3, 0]])
+    await e.DB.prepare('INSERT INTO alerts (token, email, builds, seen, confirmed, created_at, ip_hash) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .bind(String(i).repeat(32), `pause${i}@example.com`, JSON.stringify([G19]), JSON.stringify(seen), confirmed, now - DAY, 'x').run();
+  // After the pause the apex rose $50 (over $20 and 10%) and the frame has no price left, so it's out of the index.
+  const index = { platforms: { glock9: { name: 'Glock', parts: { 'g-fcg-apex5': ['Apex trigger', 200], 'g19-slide-mos': ['Glock MOS slide', 300] } } } };
+  assert.deepEqual(await withIndex(index, () => runAlerts(e, now)), { sent: 0, rebaselined: 3 });
+  assert.equal(e.outbox.length, 0);
+  for (const row of (await e.DB.prepare('SELECT seen FROM alerts').all()).results)
+    assert.deepEqual(JSON.parse(row.seen), { 'glock9/g-fcg-apex5': 200, 'glock9/g19-slide-mos': 300 });
+  assert.equal((await e.DB.prepare("SELECT value FROM meta WHERE key = 'rebaseline'").first()).value, '2026-10-26-pause');
+  // The next run with the same index: nothing moved, nothing sent.
+  assert.deepEqual(await withIndex(index, () => runAlerts(e, now + DAY)), { sent: 0, deferred: 0, failed: 0, watched: 2 });
+  assert.equal(e.outbox.length, 0);
+});
+
+test('the Worker\'s short NFA notice is the approved wording, marked as the same text as the site\'s', () => {
+  assert.equal(NFA_SHORT_NOTICE, SHORT_NOTICE_TEXT);
+  assert.match(readFileSync(new URL('./src/share.js', import.meta.url), 'utf8'),
+    /\/\*\* Owner-approved wording \(2026-10-26\)\. Same text as NFA_SHORT_NOTICE in src\/data\/helpers\.ts\. \*\/\r?\nexport const NFA_SHORT_NOTICE = /);
+});
+
+const AR_INDEX = {
+  platforms: {
+    ...INDEX.platforms,
+    ar15: { name: 'AR-15', parts: { 'ar-lower-aero': ['Aero lower', 100], 'ar-bbl-ba10': ['BA 10.3" barrel', 200] } },
+  },
+};
+
+test('AR-15, AR-9 and AR-10 share pages carry the short NFA notice, on the page and at the start of the description; pistol pages do not', async () => {
+  const ar = await page(env(), '/b/ar15~ar-lower-aero.ar-bbl-ba10', AR_INDEX);
+  assert.equal(ar.status, 200);
+  for (const prop of ['og:description', 'twitter:description', 'description']) assert.ok(meta(ar.text, prop).startsWith(`${SHORT_NOTICE_TEXT} `), prop);
+  // Then the usual description, in its usual order.
+  assert.equal(meta(ar.text, 'og:description'), `${SHORT_NOTICE_TEXT} AR-15 · 2 parts · $300 at the best prices we found. Prices change; confirm at the retailer. Includes Aero lower, BA 10.3&#34; barrel. Open it to check the fit and compare retailers.`);
+  assert.equal(ar.text.split(`<p>${SHORT_NOTICE_TEXT}</p>`).length, 2, 'once on the page');
+  for (const id of ['ar9', 'ar10']) {
+    const r = await page(env(), `/b/${id}~x-part`, null);
+    assert.ok(meta(r.text, 'og:description').startsWith(`${SHORT_NOTICE_TEXT} `), id);
+    assert.ok(r.text.includes(`<p>${SHORT_NOTICE_TEXT}</p>`), id);
+  }
+  for (const path of ['/b/glock19~g19-frame-g5.g-fcg-apex5', '/b/p365~x-part', '/b/hellcat~x-part']) {
+    const r = await page(env(), path);
+    assert.equal(r.status, 200, path);
+    assert.doesNotMatch(r.text, /regulated under the NFA/, path);
+  }
+  // A pistol description is exactly as before.
+  const glock = await page(env(), '/b/glock19~g19-frame-g5.g-fcg-apex5');
+  assert.equal(meta(glock.text, 'og:description'), 'Glock 17 / 19 / 19X / 26 / 34 / 45 / 47 · 2 parts · $350 at the best prices we found. Prices change; confirm at the retailer. Includes Glock Gen 5 frame, Apex trigger. Open it to check the fit and compare retailers.');
+});
+
+test('share-page totals say to confirm the price at the retailer; no total, no price line', async () => {
+  const priced = await page(env(), '/b/glock19~g19-frame-g5.g-fcg-apex5.g19-slide-mos');
+  for (const prop of ['og:description', 'twitter:description']) assert.match(meta(priced.text, prop), /3 parts · \$650 at the best prices we found\. Prices change; confirm at the retailer\. Includes /, prop);
+  assert.ok(priced.text.includes(`<p>${CONFIRM_PRICE}</p>`), 'next to the total on the page too');
+  const unpriced = await page(env(), '/b/glock19~g19-frame-g5', null);
+  assert.ok(!unpriced.text.includes(CONFIRM_PRICE));
+});
+
+const AR_ALERT_INDEX = (barrel = 200) => ({ platforms: { ...ALERT_INDEX().platforms, ar15: { name: 'AR-15', parts: { 'ar-bbl-ba10': ['BA 10.3" barrel', barrel] } } } });
+const AR_BUILD = { name: 'Short AR', platform: 'ar15', parts: ['ar-bbl-ba10'] };
+
+test('an alert email carries the short NFA notice once when it lists an AR build, and none for pistols only', async () => {
+  const e = alertEnv();
+  await withIndex(AR_ALERT_INDEX(), () => call(e, 'POST', '/api/alerts', { email: 'ar@example.com', builds: [AR_BUILD, G19] }));
+  await confirmMail(e, e.outbox[0]);
+  // Both builds move: the AR barrel and the Glock apex.
+  const index = { platforms: { ...ALERT_INDEX(120).platforms, ar15: { name: 'AR-15', parts: { 'ar-bbl-ba10': ['BA 10.3" barrel', 150] } } } };
+  assert.equal((await withIndex(index, () => runAlerts(e))).sent, 1);
+  const mail = e.outbox.at(-1);
+  assert.equal(mail.html.split(SHORT_NOTICE_TEXT).length, 2, 'once in the html');
+  assert.equal(mail.text.split(SHORT_NOTICE_TEXT).length, 2, 'once in the text');
+  // A Glock-only email has none.
+  const g = alertEnv();
+  await signup(g, 'glock@example.com');
+  await confirmMail(g, g.outbox[0]);
+  await withIndex(ALERT_INDEX(120), () => runAlerts(g));
+  assert.equal(g.outbox.length, 2);
+  assert.ok(!g.outbox[1].html.includes(SHORT_NOTICE_TEXT) && !g.outbox[1].text.includes(SHORT_NOTICE_TEXT));
+  // An AR build that didn't move isn't in the email, so a Glock-only move carries none either.
+  const quiet = alertEnv();
+  await withIndex(AR_ALERT_INDEX(), () => call(quiet, 'POST', '/api/alerts', { email: 'mixed@example.com', builds: [AR_BUILD, G19] }));
+  await confirmMail(quiet, quiet.outbox[0]);
+  await withIndex({ platforms: { ...ALERT_INDEX(120).platforms, ...AR_ALERT_INDEX().platforms } }, () => runAlerts(quiet));
+  assert.ok(!quiet.outbox.at(-1).html.includes(SHORT_NOTICE_TEXT));
+});
+
+test('confirmation and alert emails link the Privacy Policy, in html and text', async () => {
+  const e = alertEnv();
+  await signup(e, 'privacy@example.com');
+  const confirm = e.outbox[0];
+  assert.equal(privacyLink(confirm.html), 1);
+  assert.ok(confirm.text.includes(`\nPrivacy Policy: ${PRIVACY}\n`));
+  await confirmMail(e, confirm);
+  await withIndex(ALERT_INDEX(120), () => runAlerts(e));
+  const alert = e.outbox[1];
+  assert.equal(privacyLink(alert.html), 1);
+  assert.ok(alert.text.includes(`\nPrivacy Policy: ${PRIVACY}\n`));
+  // The mailing address and unsubscribe link are still there.
+  assert.match(alert.html, /PO Box 1/);
+  assert.match(alert.text, /Unsubscribe: https:\/\/share\.dropinbuilds\.com\/alerts\/stop\?t=/);
+});
+
+test('the confirm, unsubscribe and "Not you?" pages link the Privacy Policy', async () => {
+  const e = alertEnv();
+  const { token } = (await signup(e, 'pages@example.com')).body;
+  const code = codeIn(e.outbox[0]);
+  const pages = [
+    await (await visit(e, 'GET', `/alerts/confirm?c=${code}`)).text(),
+    await (await visit(e, 'GET', `/alerts/block?c=${code}`)).text(),
+    await (await visit(e, 'GET', '/alerts/confirm?c=bad')).text(),
+    await (await visit(e, 'GET', '/alerts/block?c=bad')).text(),
+    await (await pressConfirm(e, code)).text(),
+    await (await visit(e, 'GET', `/alerts/stop?t=${token}`)).text(),
+    await (await handle(form(`/alerts/stop?t=${token}`, 'from=page'), e)).text(),
+    await (await visit(e, 'GET', `/alerts/stop?t=${token}`)).text(),
+  ];
+  assert.match(pages[4], /Price Alerts Are On/);
+  assert.match(pages[6], /You&#39;re Unsubscribed/);
+  for (const [i, html] of pages.entries()) assert.equal(privacyLink(html), 1, `page ${i}`);
+  // A "Not you?" result page too.
+  const b = alertEnv();
+  await signup(b, 'notme@example.com');
+  const done = await (await handle(form('/alerts/block', `c=${codeIn(b.outbox[0])}`), b)).text();
+  assert.match(done, /We Won&#39;t Email You Again/);
+  assert.equal(privacyLink(done), 1);
+});
+
+test('the unsubscribe result page uses the owner-approved wording', async () => {
+  assert.match(readFileSync(new URL('./src/alerts.js', import.meta.url), 'utf8'), /\/\*\* Owner-approved wording \(2026-10-26\)\. \*\/\r?\nconst UNSUBSCRIBED = "We won't send price alerts to this address unless it signs up again\.";/);
+  const e = alertEnv();
+  const { token } = (await signup(e, 'wording@example.com')).body;
+  const done = await (await handle(form(`/alerts/stop?t=${token}`, 'from=page'), e)).text();
+  assert.ok(done.includes("<h1>You&#39;re Unsubscribed</h1><p>We won't send price alerts to this address unless it signs up again. Your saved builds are still on the site.</p>"));
+  assert.doesNotMatch(done, /won't email this address again/);
+});
+
+test('the share page shows the price line only where the page shows the total; the description keeps it with any total', async () => {
+  // A named community build: the page shows the name, not the total, so the line stays in the description only.
+  const e = env();
+  const s = await share(e, { name: 'Carry G19', note: '' });
+  const named = await page(e, `/c/${s.body.build.id}`);
+  assert.equal(meta(named.text, 'og:title'), 'Carry G19');
+  assert.match(meta(named.text, 'og:description'), /\$650 at the best prices we found\. Prices change; confirm at the retailer\./);
+  assert.ok(!named.text.includes(`<p>${CONFIRM_PRICE}</p>`), 'no total on the page, no line');
+  // An unnamed /b/ build: the page's title carries the total, so the line follows it.
+  const unnamed = await page(env(), '/b/glock19~g19-frame-g5.g-fcg-apex5.g19-slide-mos');
+  assert.match(unnamed.text, /<p>Opening <a [^>]*>Glock 17 \/ 19 \/ 19X \/ 26 \/ 34 \/ 45 \/ 47 build · \$650<\/a> on Drop-In Builds…<\/p>\n<p>Prices change; confirm at the retailer\.<\/p>/);
+});
+
+test('a community AR-15 build carries the notice once on the page and opens its description with it; a Glock one has none', async () => {
+  const e = env();
+  const ar = await share(e, { platform: 'ar15', name: 'Short AR', note: 'Range day', parts: ['ar-lower-aero', 'ar-bbl-ba10', 'ar-grip-k2'] });
+  assert.equal(ar.status, 201);
+  const r = await page(e, `/c/${ar.body.build.id}`, AR_INDEX);
+  assert.equal(r.status, 200);
+  assert.equal(r.text.split(SHORT_NOTICE_TEXT).length, 5, 'once on the page, plus the description, og and twitter tags');
+  assert.equal(r.text.split(`<p>${SHORT_NOTICE_TEXT}</p>`).length, 2, 'once in the page body');
+  for (const prop of ['og:description', 'twitter:description', 'description']) assert.ok(meta(r.text, prop).startsWith(`${SHORT_NOTICE_TEXT} Range day AR-15 · 2 parts · $300`), prop);
+  const glock = await share(e);
+  const g = await page(e, `/c/${glock.body.build.id}`, AR_INDEX);
+  assert.equal(g.status, 200);
+  assert.doesNotMatch(g.text, /regulated under the NFA/);
+});
+
+test('AR-9 and AR-10 share pages with prices open their description with the notice, then the priced summary', async () => {
+  const index = { platforms: {
+    ar9: { name: 'AR-9', parts: { 'a9-lower': ['9mm lower', 150], 'a9-bbl': ['9mm barrel', 120] } },
+    ar10: { name: 'AR-10', parts: { 'a10-lower': ['.308 lower', 180], 'a10-bbl': ['.308 barrel', 250] } },
+  } };
+  for (const [id, name, total] of [['ar9', 'AR-9', '$270'], ['ar10', 'AR-10', '$430']]) {
+    const r = await page(env(), `/b/${id}~${id === 'ar9' ? 'a9-lower.a9-bbl' : 'a10-lower.a10-bbl'}`, index);
+    assert.equal(r.status, 200, id);
+    assert.ok(meta(r.text, 'og:description').startsWith(`${SHORT_NOTICE_TEXT} ${name} · 2 parts · ${total} at the best prices we found. Prices change; confirm at the retailer.`), id);
+    assert.equal(r.text.split(`<p>${SHORT_NOTICE_TEXT}</p>`).length, 2, `${id}: once in the page body`);
+  }
 });

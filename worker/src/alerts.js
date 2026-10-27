@@ -12,7 +12,7 @@
 //   ALERTS_FROM      optional sender, default "Drop-In Builds <alerts@dropinbuilds.com>"
 
 import { canonical, errorText, isPlatform } from './api.js';
-import { SITE } from './share.js';
+import { SITE, nfaNoticeFor } from './share.js';
 
 export const API_BASE = 'https://share.dropinbuilds.com';
 const DAY = 86_400_000;
@@ -36,9 +36,10 @@ export const SUPPRESS_FOR = 90 * DAY;
 /**
  * The current one-time quiet re-baseline. When the value stored in meta differs, the next daily run sets every
  * signup's last reported prices to today's without emailing anyone, then stores this. 2026-10-pause: three
- * retailers were paused, which raised some best prices for no reason a subscriber cares about.
+ * retailers were paused, which raised some best prices for no reason a subscriber cares about. 2026-10-26-pause:
+ * three more (AT3 Tactical, Rainier Arms, MidwayUSA), whose robots.txt refuses the price bot.
  */
-export const REBASELINE = '2026-10-pause';
+export const REBASELINE = '2026-10-26-pause';
 /** Signups updated per re-baseline statement: 3 bound parameters each keeps a statement within D1's 100. */
 const REBASELINE_ROWS = 33;
 
@@ -129,11 +130,11 @@ function layout(env, token, inner, why) {
 <tr><td style="background:#0e2a47;color:#fff;padding:16px 24px;font-size:18px;letter-spacing:.5px">DROP-IN <b style="color:#e8853a">BUILDS</b></td></tr>
 <tr><td style="padding:24px">${inner}</td></tr>
 <tr><td style="padding:16px 24px;background:#f7f6f3;color:#6b7684;font-size:12px;line-height:1.6">${why}<br>
-<a href="${stop}" style="color:#6b7684">Unsubscribe</a> from all Drop-In Builds emails.<br>${esc(env.MAILING_ADDRESS)}</td></tr>
+<a href="${stop}" style="color:#6b7684">Unsubscribe</a> from all Drop-In Builds emails.<br><a href="${SITE}/privacy/" style="color:#6b7684">Privacy Policy</a><br>${esc(env.MAILING_ADDRESS)}</td></tr>
 </table></td></tr></table></body></html>`;
 }
 
-const footerText = (env, token, why) => `\n\n--\n${why}\nUnsubscribe: ${API_BASE}/alerts/stop?t=${token}\n${env.MAILING_ADDRESS}\n`;
+const footerText = (env, token, why) => `\n\n--\n${why}\nUnsubscribe: ${API_BASE}/alerts/stop?t=${token}\nPrivacy Policy: ${SITE}/privacy/\n${env.MAILING_ADDRESS}\n`;
 
 /** `code` is the one-time confirmation code; it appears only in this email, in the confirm and "Not you?" links. */
 async function sendConfirm(env, row, code) {
@@ -185,16 +186,23 @@ function digest(env, token, moved) {
 <td style="padding:6px 0 6px 8px;border-top:1px solid #eee;text-align:right;white-space:nowrap;font-weight:bold;color:${c.now < c.was ? '#2e7d4f' : '#b06d00'}">${c.now < c.was ? '↓' : '↑'} ${money(c.now)}</td></tr>`).join('')}</table>
 <p style="margin:0 0 24px"><a href="${buildLink(build)}" style="color:#d4691e;font-weight:bold">Open This Build</a></p>`).join('');
   const text = moved.map(({ build, changes, total }) => `${build.name} (now ${money(total)})\n${changes.map((c) => `  ${c.name}: ${money(c.was)} -> ${money(c.now)}`).join('\n')}\n  ${buildLink(build)}`).join('\n\n');
-  return { subject, html: layout(env, token, html, why), text: text + footerText(env, token, why) };
+  // Once per email, when any build in it is an AR (the short NFA notice).
+  const notice = moved.map((m) => nfaNoticeFor(m.build.platform)).find(Boolean) ?? '';
+  const noticeHtml = notice ? `<p style="margin:0 0 16px;color:#6b7684;font-size:13px">${esc(notice)}</p>` : '';
+  return { subject, html: layout(env, token, html + noticeHtml, why), text: text + (notice ? `\n\n${notice}` : '') + footerText(env, token, why) };
 }
 
 /* ------------------------------------------------------------------ requests */
+
+// The unsubscribe result page's first sentence.
+/** Owner-approved wording (2026-10-26). */
+const UNSUBSCRIBED = "We won't send price alerts to this address unless it signs up again.";
 
 /** No scripts or outside files; the one form posts back here. */
 const PAGE_CSP = "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
 const page = (title, body, homeButton = true) => new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)} | Drop-In Builds</title>
 <style>body{margin:0;font-family:system-ui,Arial,sans-serif;background:#f2f1ee;color:#1c2430}header{background:#0e2a47;color:#fff;padding:16px 24px;font-size:18px}header b{color:#e8853a}main{max-width:520px;margin:32px auto;padding:0 16px}a.btn,button.btn{display:inline-block;background:#d4691e;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:bold;font-size:16px;border:0;cursor:pointer}</style></head>
-<body><header>DROP-IN <b>BUILDS</b></header><main><h1>${esc(title)}</h1>${body}${homeButton ? `<p><a class="btn" href="${SITE}/#saved">Go to My Builds</a></p>` : ''}</main></body></html>`, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'content-security-policy': PAGE_CSP } });
+<body><header>DROP-IN <b>BUILDS</b></header><main><h1>${esc(title)}</h1>${body}${homeButton ? `<p><a class="btn" href="${SITE}/#saved">Go to My Builds</a></p>` : ''}<p><a href="${SITE}/privacy/">Privacy Policy</a></p></main></body></html>`, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'content-security-policy': PAGE_CSP } });
 
 /** Puts an address on the suppression list. Unsubscribing must always work, so a missing salt only skips this. */
 const suppress = async (db, salt, email, now) => {
@@ -341,7 +349,7 @@ ${names ? `<p>Builds you'll get alerts for:</p><ul>${names}</ul>` : ''}
     }
     // Turn Off on the site reads this answer cross-origin, so it needs the CORS headers.
     if (!fromPage) return noContent();
-    return page('You\'re Unsubscribed', '<p>We won\'t email this address again. Your saved builds are still on the site.</p>');
+    return page('You\'re Unsubscribed', `<p>${UNSUBSCRIBED} Your saved builds are still on the site.</p>`);
   }
 
   return null;
