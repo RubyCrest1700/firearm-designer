@@ -914,15 +914,19 @@ test('the Privacy Policy and Terms of Use pages render with their h1, at /privac
   }
 });
 
-test('neither page carries draft notes, counsel flags or any placeholder, and each says "Effective: October 26, 2026" once', () => {
-  for (const [name, md, html] of [['privacy', PRIVACY_MD, privacyPage()], ['terms', TERMS_MD, termsPage()]]) {
+/** Each legal page's own effective date, pinned word for word. */
+const EFFECTIVE = { privacy: 'October 26, 2026', terms: 'October 26, 2026' } as const;
+
+test('neither page carries draft notes, counsel flags or any placeholder, and each says its own effective date once', () => {
+  for (const [name, md, html] of [['privacy', PRIVACY_MD, privacyPage()], ['terms', TERMS_MD, termsPage()]] as const) {
+    const effective = `Effective: ${EFFECTIVE[name]}`;
     for (const text of [md, pageText(html)]) {
       assert.doesNotMatch(text, /DRAFT|Notes for the owner|\[Lawyer\]|counsel|not published/i, name);
-      assert.equal(text.split('Effective: October 26, 2026').length, 2, `${name}: "Effective: October 26, 2026" exactly once`);
+      assert.equal(text.split(effective).length, 2, `${name}: "${effective}" exactly once`);
       assert.equal(text.match(/Effective:/g)?.length, 1, `${name}: one effective date`);
       assert.deepEqual(text.match(/\[[^\]]*\]/g), null, `${name}: no bracket placeholder`);
     }
-    assert.ok(docOf(html).includes('<p>Effective: October 26, 2026</p>'), name);
+    assert.ok(docOf(html).includes(`<p>${effective}</p>`), name);
   }
 });
 
