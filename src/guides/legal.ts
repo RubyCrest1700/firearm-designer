@@ -10,10 +10,12 @@
  * become links to the same page on this site.
  */
 
-/** Owner-approved wording (2026-10-26; section 5 2026-10-29). */
+/** Owner-approved wording (2026-10-26; section 5 2026-10-29; section 5 wording fixes and the "Updated" line 2026-10-29). */
 export const PRIVACY_MD = `# Drop-In Builds Privacy Policy
 
 Effective: October 30, 2026
+
+Updated October 30, 2026: automatic deletion is now running (see section 5).
 
 Drop-In Builds ("we", "us") runs dropinbuilds.com and share.dropinbuilds.com (the "site"). The site helps you plan firearm part builds and compare retailer prices. We don't sell anything and we don't run a store. The site is for adults 18 and over (see our Terms of Use at dropinbuilds.com/terms/).
 
@@ -105,7 +107,7 @@ These providers may process data in the United States and other countries.
 We may also disclose information if the law requires it, or to protect the site and its users from abuse.
 
 ## 5. How long we keep it
-We delete the records below automatically, or remove the personal details from them, once they reach the age shown. This runs once a day, so a record can be kept a little longer than shown. You can also ask us to delete your data sooner (section 6).
+We delete the records below automatically, or remove the personal details from them, once they reach the period shown in the table; rows without a period follow the rule in that row. This runs once a day, so a record can be kept a little longer than shown. You can also ask us to delete your data sooner (section 6).
 
 | Data | Kept for |
 |---|---|
@@ -115,7 +117,7 @@ We delete the records below automatically, or remove the personal details from t
 | Signup limit records (hashed) | Deleted after 30 days |
 | Feedback email address | Removed 30 days after the feedback is emailed to us; if it is never emailed, deleted with the message |
 | Feedback message | Deleted 90 days after it is emailed to us, or 180 days after you sent it if it was never emailed |
-| Hashed network identifiers on alert signups, feedback and community builds | Removed after 30 days |
+| Hashed network identifiers on alert signups, feedback and posted community builds (not those on votes and reports, which are kept as their rows say) | Removed after 30 days |
 | Retailer clicks on community builds | Deleted after 30 days (each build's click total stays, with no visitor data) |
 | Votes on community builds | Kept until you remove your vote; votes are not removed automatically |
 | Reports on community builds | Kept; reports are not removed automatically |

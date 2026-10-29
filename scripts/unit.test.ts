@@ -930,9 +930,21 @@ test('neither page carries draft notes, counsel flags or any placeholder, and ea
   }
 });
 
-/** Owner-approved wording (2026-10-29): section 5 of the Privacy Policy once retention is live, typed out word for word. */
-const RETENTION_INTRO = 'We delete the records below automatically, or remove the personal details from them, once they reach the age shown. This runs once a day, so a record can be kept a little longer than shown. You can also ask us to delete your data sooner (section 6).';
-/** Owner-approved wording (2026-10-29): every row of the section 5 "Data | Kept for" table, in order. */
+/** Owner-approved wording (2026-10-29): the privacy page's "Updated" line, its own paragraph under the effective date. */
+const PRIVACY_UPDATED = 'Updated October 30, 2026: automatic deletion is now running (see section 5).';
+
+test('the privacy page says once, under its effective date, that automatic deletion is running; the Terms have no Updated line', () => {
+  const policy = docOf(privacyPage());
+  const line = `<p>${htmlEsc(PRIVACY_UPDATED)}</p>`;
+  assert.equal(policy.split(line).length, 2, 'Updated line exactly once, as its own paragraph');
+  assert.ok(policy.includes(`<p>Effective: ${EFFECTIVE.privacy}</p>\n${line}`), 'directly under the effective date');
+  assert.ok(PRIVACY_MD.includes(`\n\nEffective: ${EFFECTIVE.privacy}\n\n${PRIVACY_UPDATED}\n\n`), 'its own Markdown paragraph');
+  for (const text of [TERMS_MD, pageText(termsPage())]) assert.doesNotMatch(text, /Updated/, 'terms');
+});
+
+/** Owner-approved wording (2026-10-29, with the owner's 2026-10-29 wording fixes to the intro and the hashed-identifier row): section 5 of the Privacy Policy once retention is live, typed out word for word. */
+const RETENTION_INTRO = 'We delete the records below automatically, or remove the personal details from them, once they reach the period shown in the table; rows without a period follow the rule in that row. This runs once a day, so a record can be kept a little longer than shown. You can also ask us to delete your data sooner (section 6).';
+/** Owner-approved wording (2026-10-29, with the owner's 2026-10-29 wording fix to the hashed-identifier row): every row of the section 5 "Data | Kept for" table, in order. */
 const RETENTION_ROWS: [string, string][] = [
   ['Unconfirmed price alert signups', 'Deleted automatically after 7 days'],
   ['Confirmed price alerts (email address, watched builds)', 'Deleted from our database when you unsubscribe or turn off alerts'],
@@ -940,7 +952,7 @@ const RETENTION_ROWS: [string, string][] = [
   ['Signup limit records (hashed)', 'Deleted after 30 days'],
   ['Feedback email address', 'Removed 30 days after the feedback is emailed to us; if it is never emailed, deleted with the message'],
   ['Feedback message', 'Deleted 90 days after it is emailed to us, or 180 days after you sent it if it was never emailed'],
-  ['Hashed network identifiers on alert signups, feedback and community builds', 'Removed after 30 days'],
+  ['Hashed network identifiers on alert signups, feedback and posted community builds (not those on votes and reports, which are kept as their rows say)', 'Removed after 30 days'],
   ['Retailer clicks on community builds', 'Deleted after 30 days (each build\'s click total stays, with no visitor data)'],
   ['Votes on community builds', 'Kept until you remove your vote; votes are not removed automatically'],
   ['Reports on community builds', 'Kept; reports are not removed automatically'],
@@ -968,7 +980,7 @@ test('the policy promises automatic deletion only to match RETENTION_LIVE in the
     for (const text of [PRIVACY_MD, pageText(privacyPage())]) assert.doesNotMatch(text, /setting up|\bPlanned\b|switched on|once automatic deletion is running|update this policy when it starts|\|\s*Now\s*\||>Now</i);
     // Every mention of automatic deletion is one the code does: the live intro, the 7-day unconfirmed-signup purge,
     // auto-hiding reported builds, or the "not removed" wording.
-    const allowed = ['Deleted automatically after 7 days', 'is hidden automatically', 'We delete the records below automatically, or remove the personal details from them, once they reach the age shown', 'votes are not removed automatically', 'reports are not removed automatically'];
+    const allowed = ['Deleted automatically after 7 days', 'is hidden automatically', 'We delete the records below automatically, or remove the personal details from them, once they reach the period shown in the table', 'automatic deletion is now running', 'votes are not removed automatically', 'reports are not removed automatically'];
     const mentions = policy.replace(/<[^>]+>/g, ' ').split(/(?<=[.:;])\s+/).filter((s) => /automatic/i.test(s));
     assert.ok(mentions.length >= 4);
     for (const s of mentions) assert.ok(allowed.some((a) => s.includes(a)), s);
