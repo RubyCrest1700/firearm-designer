@@ -754,22 +754,34 @@ const EXPECTED_COUNTS = {
   alertIpHashesBlanked: 2, buildIpHashesBlanked: 2, clicksDeleted: 2, suppressedDeleted: 1, signupsDeleted: 2,
 };
 
-test('retention ships as a dry run that only counts', async () => {
-  assert.equal(RETENTION_LIVE, false);
+test('retention runs live from the daily job; the dry run still only counts', async () => {
+  assert.equal(RETENTION_LIVE, true);
   const e = env(); // no Resend settings: retention runs anyway
   const now = Date.now();
   await seedRetention(e, now);
   const before = await snapshot(e);
-  const { result, lines } = await captureLogs(() => runRetention(e, now));
-  assert.deepEqual(result, { live: false, ...EXPECTED_COUNTS });
+  // Dry run: counts, changes nothing, logs nothing.
+  const dry = await captureLogs(() => runRetention(e, now, false));
+  assert.deepEqual(dry.result, { live: false, ...EXPECTED_COUNTS });
   assert.deepEqual(await snapshot(e), before);
-  assert.equal(lines.length, 0);
-  // The daily job runs it and logs only the counts.
+  assert.equal(dry.lines.length, 0);
+  // Expected end state: the same seed after a direct live run, in a separate DB.
+  const ref = env();
+  await seedRetention(ref, now);
+  await runRetention(ref, now, true);
+  const after = await snapshot(ref);
+  assert.notDeepEqual(after, before);
+  // The daily job runs it live and logs only the counts.
   const { runDaily } = await import('./src/index.js');
   const daily = await captureLogs(() => withIndex(ALERT_INDEX(), () => runDaily(e, now)));
-  assert.ok(daily.lines.includes(`Retention ${JSON.stringify({ live: false, ...EXPECTED_COUNTS })}`), daily.lines.join('\n'));
+  assert.ok(daily.lines.includes(`Retention ${JSON.stringify({ live: true, ...EXPECTED_COUNTS })}`), daily.lines.join('\n'));
   for (const line of daily.lines) assert.doesNotMatch(line, /@/);
-  assert.deepEqual(await snapshot(e), before);
+  assert.deepEqual(await snapshot(e), after);
+  // A second daily run finds nothing left.
+  const again = await captureLogs(() => withIndex(ALERT_INDEX(), () => runDaily(e, now)));
+  assert.ok(again.lines.includes(`Retention ${JSON.stringify({ live: true, ...Object.fromEntries(Object.keys(EXPECTED_COUNTS).map((k) => [k, 0])) })}`), again.lines.join('\n'));
+  for (const line of again.lines) assert.doesNotMatch(line, /@/);
+  assert.deepEqual(await snapshot(e), after);
 });
 
 test('live retention deletes and blanks old data and keeps recent data', async () => {

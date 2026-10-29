@@ -1,18 +1,21 @@
 /**
  * The Privacy Policy (/privacy/) and Terms of Use (/terms/). The text is the owner-approved wording (2026-10-26),
  * copied exactly from the approved drafts' published bodies; their owner notes are never part of the site. Edit the
- * wording only with the owner's approval. The effective date (October 26, 2026) was set on merge day; change it
- * only with a change of the text the owner approves.
+ * wording only with the owner's approval. Each page has its own effective date, set on merge day: the Privacy Policy
+ * October 30, 2026 (section 5, when retention went live), the Terms October 26, 2026. Change a date only with a
+ * change of that page's text the owner approves.
  *
  * The text is kept as simple Markdown and turned into HTML here, so it stays word for word what was approved:
  * headings (#, ##, ###), paragraphs, "- " lists, **bold**, one table, and dropinbuilds.com page addresses, which
  * become links to the same page on this site.
  */
 
-/** Owner-approved wording (2026-10-26). */
+/** Owner-approved wording (2026-10-26; section 5 2026-10-29; section 5 wording fixes and the "Updated" line 2026-10-29). */
 export const PRIVACY_MD = `# Drop-In Builds Privacy Policy
 
-Effective: October 26, 2026
+Effective: October 30, 2026
+
+Updated October 30, 2026: automatic deletion is now running (see section 5).
 
 Drop-In Builds ("we", "us") runs dropinbuilds.com and share.dropinbuilds.com (the "site"). The site helps you plan firearm part builds and compare retailer prices. We don't sell anything and we don't run a store. The site is for adults 18 and over (see our Terms of Use at dropinbuilds.com/terms/).
 
@@ -104,21 +107,21 @@ These providers may process data in the United States and other countries.
 We may also disclose information if the law requires it, or to protect the site and its users from abuse.
 
 ## 5. How long we keep it
-We are setting up automatic deletion for the records below. Until it is switched on, we keep these records, and we delete them when you ask (section 6). The "Planned" column shows the periods we intend to use once automatic deletion is running. We'll update this policy when it starts.
+We delete the records below automatically, or remove the personal details from them, once they reach the period shown in the table; rows without a period follow the rule in that row. This runs once a day, so a record can be kept a little longer than shown. You can also ask us to delete your data sooner (section 6).
 
-| Data | Now | Planned |
-|---|---|---|
-| Unconfirmed price alert signups | Deleted automatically after 7 days | Same |
-| Confirmed price alerts (email address, watched builds) | Deleted from our database when you unsubscribe or turn off alerts | Same |
-| Record that an address unsubscribed or used "Not you?" (hashed, no readable address) | Stops blocking new signups after 90 days; the record is kept | Deleted after 90 days |
-| Signup limit records (hashed) | Kept | Deleted after 30 days |
-| Feedback email address | Kept | Removed 30 days after the feedback is emailed to us |
-| Feedback message | Kept | Deleted 90 days after it is emailed to us, or 180 days after you sent it if it was never emailed |
-| Hashed network identifiers on alert signups, feedback and community builds | Kept | Removed after 30 days |
-| Retailer clicks on community builds | Kept | Deleted after 30 days (each build's click total stays, with no visitor data) |
-| Votes on community builds | Kept until you remove your vote | Same: votes are not removed automatically |
-| Reports on community builds | Kept | Same: reports are not removed automatically |
-| Community builds, including hidden ones | Kept until we remove them | Same |
+| Data | Kept for |
+|---|---|
+| Unconfirmed price alert signups | Deleted automatically after 7 days |
+| Confirmed price alerts (email address, watched builds) | Deleted from our database when you unsubscribe or turn off alerts |
+| Record that an address unsubscribed or used "Not you?" (hashed, no readable address) | Deleted after 90 days |
+| Signup limit records (hashed) | Deleted after 30 days |
+| Feedback email address | Removed 30 days after the feedback is emailed to us; if it is never emailed, deleted with the message |
+| Feedback message | Deleted 90 days after it is emailed to us, or 180 days after you sent it if it was never emailed |
+| Hashed network identifiers on alert signups, feedback and posted community builds (not those on votes and reports, which are kept as their rows say) | Removed after 30 days |
+| Retailer clicks on community builds | Deleted after 30 days (each build's click total stays, with no visitor data) |
+| Votes on community builds | Kept until you remove your vote; votes are not removed automatically |
+| Reports on community builds | Kept; reports are not removed automatically |
+| Community builds, including hidden ones | Kept until we remove them |
 
 Some copies sit outside these periods:
 - Feedback emails in our inbox are kept until we delete them.
