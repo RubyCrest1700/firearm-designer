@@ -915,7 +915,7 @@ test('the Privacy Policy and Terms of Use pages render with their h1, at /privac
 });
 
 /** Each legal page's own effective date, pinned word for word. */
-const EFFECTIVE = { privacy: 'October 26, 2026', terms: 'October 26, 2026' } as const;
+const EFFECTIVE = { privacy: 'October 30, 2026', terms: 'October 26, 2026' } as const;
 
 test('neither page carries draft notes, counsel flags or any placeholder, and each says its own effective date once', () => {
   for (const [name, md, html] of [['privacy', PRIVACY_MD, privacyPage()], ['terms', TERMS_MD, termsPage()]] as const) {
@@ -930,6 +930,23 @@ test('neither page carries draft notes, counsel flags or any placeholder, and ea
   }
 });
 
+/** Owner-approved wording (2026-10-29): section 5 of the Privacy Policy once retention is live, typed out word for word. */
+const RETENTION_INTRO = 'We delete the records below automatically, or remove the personal details from them, once they reach the age shown. This runs once a day, so a record can be kept a little longer than shown. You can also ask us to delete your data sooner (section 6).';
+/** Owner-approved wording (2026-10-29): every row of the section 5 "Data | Kept for" table, in order. */
+const RETENTION_ROWS: [string, string][] = [
+  ['Unconfirmed price alert signups', 'Deleted automatically after 7 days'],
+  ['Confirmed price alerts (email address, watched builds)', 'Deleted from our database when you unsubscribe or turn off alerts'],
+  ['Record that an address unsubscribed or used "Not you?" (hashed, no readable address)', 'Deleted after 90 days'],
+  ['Signup limit records (hashed)', 'Deleted after 30 days'],
+  ['Feedback email address', 'Removed 30 days after the feedback is emailed to us; if it is never emailed, deleted with the message'],
+  ['Feedback message', 'Deleted 90 days after it is emailed to us, or 180 days after you sent it if it was never emailed'],
+  ['Hashed network identifiers on alert signups, feedback and community builds', 'Removed after 30 days'],
+  ['Retailer clicks on community builds', 'Deleted after 30 days (each build\'s click total stays, with no visitor data)'],
+  ['Votes on community builds', 'Kept until you remove your vote; votes are not removed automatically'],
+  ['Reports on community builds', 'Kept; reports are not removed automatically'],
+  ['Community builds, including hidden ones', 'Kept until we remove them'],
+];
+
 test('the policy promises automatic deletion only to match RETENTION_LIVE in the Worker', () => {
   const live = readFileSync('worker/src/retention.js', 'utf8').match(/^export const RETENTION_LIVE = (true|false);\r?$/m);
   assert.ok(live, 'RETENTION_LIVE is declared in worker/src/retention.js');
@@ -943,7 +960,18 @@ test('the policy promises automatic deletion only to match RETENTION_LIVE in the
     assert.ok(mentions.length >= 4);
     for (const s of mentions) assert.ok(allowed.some((a) => s.includes(a)), s);
   } else {
-    assert.fail('RETENTION_LIVE is true: section 5 of the Privacy Policy still says automatic deletion is being set up. Update it with the owner first.');
+    const s5 = policy.slice(policy.indexOf('<h2>5. How long we keep it</h2>'), policy.indexOf('<h2>6.'));
+    assert.ok(s5.includes(`<p>${htmlEsc(RETENTION_INTRO)}</p>`), 'live intro');
+    assert.ok(s5.includes('<thead><tr><th scope="col">Data</th><th scope="col">Kept for</th></tr></thead>'), '2-column header');
+    for (const [data, kept] of RETENTION_ROWS) assert.ok(s5.includes(`<tr><th scope="row">${htmlEsc(data)}</th><td>${htmlEsc(kept)}</td></tr>`), data);
+    assert.equal(s5.match(/<tr>/g)?.length, RETENTION_ROWS.length + 1, 'header plus exactly these rows');
+    for (const text of [PRIVACY_MD, pageText(privacyPage())]) assert.doesNotMatch(text, /setting up|\bPlanned\b|switched on|once automatic deletion is running|update this policy when it starts|\|\s*Now\s*\||>Now</i);
+    // Every mention of automatic deletion is one the code does: the live intro, the 7-day unconfirmed-signup purge,
+    // auto-hiding reported builds, or the "not removed" wording.
+    const allowed = ['Deleted automatically after 7 days', 'is hidden automatically', 'We delete the records below automatically, or remove the personal details from them, once they reach the age shown', 'votes are not removed automatically', 'reports are not removed automatically'];
+    const mentions = policy.replace(/<[^>]+>/g, ' ').split(/(?<=[.:;])\s+/).filter((s) => /automatic/i.test(s));
+    assert.ok(mentions.length >= 4);
+    for (const s of mentions) assert.ok(allowed.some((a) => s.includes(a)), s);
   }
 });
 
@@ -964,7 +992,7 @@ test('the legal pages link our own pages relatively, keep share-link examples as
   assert.doesNotMatch(policy + terms, /href="https?:/, 'no absolute links');
   const rows = policy.match(/<tr>/g)?.length;
   assert.equal(rows, PRIVACY_MD.split('\n').filter((l) => l.startsWith('|')).length - 1, 'header and every row, no separator');
-  assert.ok(policy.includes('<th scope="row">Unconfirmed price alert signups</th><td>Deleted automatically after 7 days</td><td>Same</td>'));
+  assert.ok(policy.includes('<th scope="row">Unconfirmed price alert signups</th><td>Deleted automatically after 7 days</td></tr>'));
 });
 
 test('the sitemap lists the Privacy Policy and the Terms of Use', () => {

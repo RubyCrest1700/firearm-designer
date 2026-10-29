@@ -13,10 +13,11 @@ import { SUPPRESS_FOR } from './alerts.js';
 const DAY = 86_400_000;
 
 /**
- * Dry run while false: the job only counts what it would delete or blank, and logs the counts. A follow-up
- * commit flips this to true once the owner has checked the logged counts from a few live runs.
+ * Live: the daily job deletes and blanks what the rules match and logs only the counts. `runRetention(env, now, false)`
+ * is the dry run, which only counts. The Privacy Policy section 5 table (src/guides/legal.ts) states these periods and
+ * a unit test ties it to this flag. Change them together.
  */
-export const RETENTION_LIVE = false;
+export const RETENTION_LIVE = true;
 
 /** What gets deleted or blanked as of `now`. Blanking skips rows that are about to be deleted, so dry-run counts match a live run. */
 function rules(now) {
