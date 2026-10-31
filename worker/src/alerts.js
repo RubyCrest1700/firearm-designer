@@ -12,7 +12,7 @@
 //   ALERTS_FROM      optional sender, default "Drop-In Builds <alerts@dropinbuilds.com>"
 
 import { canonical, errorText, isPlatform } from './api.js';
-import { SITE, estimateIds, includingEstimates, nfaNoticeFor } from './share.js';
+import { SITE, estimateIds, includingEstimates, indexPart, nfaNoticeFor } from './share.js';
 
 export const API_BASE = 'https://share.dropinbuilds.com';
 const DAY = 86_400_000;
@@ -97,7 +97,7 @@ const currentSeen = (seen) => Object.fromEntries(Object.entries(seen).map(([k, v
 function pricesFor(index, builds) {
   const out = {};
   for (const b of builds) for (const id of b.parts) {
-    const p = index?.platforms?.[b.platform]?.parts?.[id];
+    const p = indexPart(index?.platforms?.[b.platform], id);
     if (p) out[`${b.platform}/${id}`] = p[1];
   }
   return out;
@@ -156,13 +156,13 @@ async function sendConfirm(env, row, code) {
 export function changesFor(index, builds, seen) {
   const out = [];
   for (const b of builds) {
-    const parts = index?.platforms?.[b.platform]?.parts ?? {};
-    const estimates = estimateIds(index?.platforms?.[b.platform]);
+    const platform = index?.platforms?.[b.platform];
+    const estimates = estimateIds(platform);
     const changes = [];
     let total = 0;
     let estimated = 0;
     for (const id of b.parts) {
-      const p = parts[id];
+      const p = indexPart(platform, id);
       if (!p) continue;
       total += p[1];
       if (estimates.has(id)) estimated++;

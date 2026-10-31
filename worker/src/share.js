@@ -19,6 +19,8 @@ export const nfaNoticeFor = (platform) => (NOTICE_PLATFORMS.has(canonical(platfo
 const CONFIRM_PRICE = 'Prices change; confirm at the retailer.';
 /** The parts whose best price on this platform is an estimate. An older or cached index has no list: none are marked. */
 export const estimateIds = (platform) => new Set(Array.isArray(platform?.estimates) ? platform.estimates : []);
+/** A part's [name, price] in the price index. Own keys only: `constructor` is a valid part id and would find Object's built-in. */
+export const indexPart = (platform, id) => (platform?.parts && Object.hasOwn(platform.parts, id) ? platform.parts[id] : undefined);
 /** Follows a best-price total that includes estimates, or '' when it includes none. */
 export const includingEstimates = (n) => (n > 0 ? `, including ${n} estimate${n === 1 ? '' : 's'}` : '');
 const PART_ID = /^[a-z0-9][a-z0-9-]{0,47}$/;
@@ -60,11 +62,11 @@ export function parseCode(code) {
 export function describe(index, platform, parts, name, note) {
   const p = index?.platforms?.[platform];
   const platformName = p?.name ?? PLATFORM_NAMES[platform] ?? platform;
-  const known = parts.map((id) => p?.parts?.[id]).filter(Boolean);
+  const known = parts.map((id) => indexPart(p, id)).filter(Boolean);
   const total = known.reduce((sum, [, price]) => sum + price, 0);
   // Counted as the total is: only parts with a price.
   const estimates = estimateIds(p);
-  const estimated = includingEstimates(parts.filter((id) => p?.parts?.[id] && estimates.has(id)).length);
+  const estimated = includingEstimates(parts.filter((id) => indexPart(p, id) && estimates.has(id)).length);
   const title = name || `${platformName} build${total ? ` · ${money(total)}${estimated}` : ''}`;
   const facts = known.length ? `${platformName} · ${known.length} parts · ${money(total)} at the best prices we found${estimated}. ${CONFIRM_PRICE}` : `A ${platformName} build.`;
   const names = known.map(([label]) => label);

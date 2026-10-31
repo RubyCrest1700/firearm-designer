@@ -1,6 +1,6 @@
 # Builds the site and publishes it to GitHub Pages (free for public repos).
 # Pull requests only build and test; nothing is published until they merge.
-# On the nightly schedule (or a manual run) it first refreshes data/prices.json
+# On the nightly schedule (or a manual run from main) it first refreshes data/prices.json
 # from retailer product pages and commits the change. Only that job may push;
 # pull request runs get read-only access.
 name: Build, update prices, deploy
@@ -36,6 +36,14 @@ jobs:
     outputs:
       sha: ${{ steps.commit.outputs.sha }}
     steps:
+      # "Commit updated prices" pushes to main, so a branch's commits must never reach it. This fails instead of
+      # skipping the job: a skip would let build run from the branch, and a deploy would then rely only on the
+      # github-pages environment's main-only policy, which rejects it.
+      - name: Refuse to run from a branch
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Prices can only be refreshed from main. Run this from main."
+          exit 1
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
