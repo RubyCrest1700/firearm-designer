@@ -17,7 +17,7 @@ import CHECKS from '../data/retailer-checks.json';
 import { pausedPriceProblems } from './pause-guard.mjs';
 import { advanceChecks, renderRetailerList, retailerListProblems } from './retailer-list.mjs';
 
-const SOURCES = sources as unknown as { parts?: Record<string, Record<string, string>>; paused?: Record<string, { since: string; reason: string }> };
+const SOURCES = sources as unknown as { parts?: Record<string, Record<string, string>>; paused?: Record<string, { since: string; reason: string }>; linksOnly?: Record<string, { since: string; reason: string }> };
 
 let bad = 0;
 for (const p of PLATFORMS) {

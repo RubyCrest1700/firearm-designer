@@ -2,9 +2,9 @@
 
 Generated file, do not edit by hand. Regenerate it with `npm run retailers`.
 Built from src/data/retailers.ts, data/sources.json and data/retailer-checks.json.
-In the Status column, "active" only means the retailer is not paused.
+In the Status column, "active" only means the retailer is neither paused nor links only. "Links only" means we keep its links and Sample prices but don't request its pages.
 
-| Retailer | Domain | Status | Paused since | Reason | Links | Last price check |
+| Retailer | Domain | Status | Since | Reason | Links | Last price check |
 |---|---|---|---|---|---|---|
 | Abide Armory | abidearmory.com | active | - | - | 1 | 2026-10-30 |
 | Aero Precision | aeroprecisionusa.com | active | - | - | 24 | 2026-10-30 |

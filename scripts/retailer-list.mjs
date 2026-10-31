@@ -1,4 +1,4 @@
-// RETAILERS.md: one table of every retailer, its pause state, how many product links we hold and when we last read a
+// RETAILERS.md: one table of every retailer, its status, how many product links we hold and when we last read a
 // price from it. data/retailer-checks.json is the ledger behind the last column, because data/prices.json forgets a
 // store once its offers lapse. `npm run retailers` refreshes both files; the nightly job does the same after it commits
 // prices. check-data (scripts/check-presets.ts) fails if any column but the last differs from what would be generated.
@@ -14,9 +14,9 @@ const HEADER = `# Retailers
 
 Generated file, do not edit by hand. Regenerate it with \`${COMMAND}\`.
 Built from src/data/retailers.ts, data/sources.json and data/retailer-checks.json.
-In the Status column, "active" only means the retailer is not paused.
+In the Status column, "active" only means the retailer is neither paused nor links only. "Links only" means we keep its links and Sample prices but don't request its pages.
 `;
-const COLUMNS = ['Retailer', 'Domain', 'Status', 'Paused since', 'Reason', 'Links', 'Last price check'];
+const COLUMNS = ['Retailer', 'Domain', 'Status', 'Since', 'Reason', 'Links', 'Last price check'];
 
 const byKey = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 
@@ -46,12 +46,14 @@ export function renderRetailerList(retailers, sources, checks) {
   const sorted = Object.values(retailers).sort((a, b) => byKey(a.name.toLowerCase(), b.name.toLowerCase()) || byKey(a.id, b.id));
   const rows = sorted.map((r) => {
     const pause = sources.paused?.[r.id];
+    const linksOnly = sources.linksOnly?.[r.id];
+    const entry = pause ?? linksOnly;
     return row([
       r.name,
       new URL(r.search).host.replace(/^www\./, ''),
-      pause ? 'paused' : 'active',
-      pause?.since ?? '-',
-      pause?.reason ?? '-',
+      pause ? 'paused' : linksOnly ? 'links only' : 'active',
+      entry?.since ?? '-',
+      entry?.reason ?? '-',
       links[r.id] ?? 0,
       checks[r.id] ?? 'none recorded',
     ]);

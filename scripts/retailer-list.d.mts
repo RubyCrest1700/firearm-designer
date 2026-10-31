@@ -5,7 +5,11 @@ export function advanceChecks(
 ): Record<string, string>;
 export function renderRetailerList(
   retailers: Record<string, { id: string; name: string; search: string }>,
-  sources: { parts?: Record<string, Record<string, string>>; paused?: Record<string, { since: string; reason: string }> },
+  sources: {
+    parts?: Record<string, Record<string, string>>;
+    paused?: Record<string, { since: string; reason: string }>;
+    linksOnly?: Record<string, { since: string; reason: string }>;
+  },
   checks: Record<string, string>,
 ): string;
 export function retailerListProblems(rendered: string, committed: string | null): string[];
