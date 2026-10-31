@@ -1423,3 +1423,162 @@ test('AR-9 and AR-10 share pages with prices open their description with the not
     assert.equal(r.text.split(`<p>${SHORT_NOTICE_TEXT}</p>`).length, 2, `${id}: once in the page body`);
   }
 });
+
+/* ------------------------------------------------------------- estimates in totals */
+
+const GLOCK_PATH = '/b/glock19~g19-frame-g5.g-fcg-apex5.g19-slide-mos';
+/** The share index with an `estimates` list; call with no argument for an index from before the list existed. */
+const ESTIMATE_INDEX = (...args) => ({ platforms: { glock9: { ...INDEX.platforms.glock9, ...(args.length ? { estimates: args[0] } : {}) } } });
+const GLOCK_NAME = 'Glock 17 / 19 / 19X / 26 / 34 / 45 / 47';
+const facts = (phrase) => `${GLOCK_NAME} · 3 parts · $650 at the best prices we found${phrase}. Prices change; confirm at the retailer. Includes Glock Gen 5 frame, Apex trigger, Glock MOS slide. Open it to check the fit and compare retailers.`;
+
+test('a share page counts the estimates in its total, in the description and the title', async () => {
+  const several = await page(env(), GLOCK_PATH, ESTIMATE_INDEX(['g19-frame-g5', 'g-fcg-apex5', 'g19-slide-mos']));
+  for (const prop of ['og:description', 'twitter:description', 'description']) assert.equal(meta(several.text, prop), facts(', including 3 estimates'), prop);
+  for (const prop of ['og:title', 'twitter:title']) assert.equal(meta(several.text, prop), `${GLOCK_NAME} build · $650, including 3 estimates`, prop);
+  assert.ok(several.text.includes(`<title>${GLOCK_NAME} build · $650, including 3 estimates | Drop-In Builds</title>`));
+  assert.match(several.text, />Glock 17 [^<]* build · \$650, including 3 estimates<\/a> on Drop-In Builds…<\/p>\n<p>Prices change; confirm at the retailer\.<\/p>/);
+
+  const one = await page(env(), GLOCK_PATH, ESTIMATE_INDEX(['g-fcg-apex5']));
+  assert.equal(meta(one.text, 'og:description'), facts(', including 1 estimate'));
+  assert.equal(meta(one.text, 'og:title'), `${GLOCK_NAME} build · $650, including 1 estimate`);
+});
+
+test('a share page counts only estimates in the build that have a price', async () => {
+  // Priced estimate in the build, priced estimate not in it, and an unpriced part on the list that is in it.
+  const index = ESTIMATE_INDEX(['g-fcg-apex5', 'g19-slide-mos', 'g-unpriced']);
+  const r = await page(env(), '/b/glock19~g19-frame-g5.g-fcg-apex5.g-unpriced', index);
+  assert.match(meta(r.text, 'og:description'), /· 2 parts · \$350 at the best prices we found, including 1 estimate\. Prices/);
+  // Only estimates of parts this build doesn't have, or that have no price: the old text.
+  const none = await page(env(), '/b/glock19~g19-frame-g5.g-unpriced', index);
+  assert.doesNotMatch(none.text, /estimate/);
+  // A repeated part is in the total twice, so it is counted twice.
+  const twice = await page(env(), '/b/glock19~g-fcg-apex5.g-fcg-apex5', index);
+  assert.match(meta(twice.text, 'og:description'), /· 2 parts · \$301 at the best prices we found, including 2 estimates\. Prices/);
+});
+
+test('a share page with no estimates, or an index with no list, reads exactly as before', async () => {
+  const absent = await page(env(), GLOCK_PATH, ESTIMATE_INDEX());
+  assert.equal(meta(absent.text, 'og:description'), facts(''));
+  assert.equal(meta(absent.text, 'og:title'), `${GLOCK_NAME} build · $650`);
+  assert.doesNotMatch(absent.text, /estimate/);
+  // Byte for byte, whichever way "no estimates" arrives.
+  for (const list of [[], ['g-not-in-this-build'], null, 'g-fcg-apex5', { 'g-fcg-apex5': true }]) assert.equal((await page(env(), GLOCK_PATH, ESTIMATE_INDEX(list))).text, absent.text, JSON.stringify(list));
+  assert.equal((await page(env(), GLOCK_PATH, INDEX)).text, absent.text);
+  // No index at all: no total, no phrase.
+  const noIndex = await page(env(), GLOCK_PATH, null);
+  assert.equal(noIndex.status, 200);
+  assert.doesNotMatch(noIndex.text, /estimate|best prices/);
+});
+
+test('a named community build keeps its name as the title; the description counts the estimates, and escaping is unchanged', async () => {
+  const e = env();
+  const s = await share(e, { name: 'Carry G19', note: '' });
+  const named = await page(e, `/c/${s.body.build.id}`, ESTIMATE_INDEX(['g-fcg-apex5', 'g19-slide-mos']));
+  assert.equal(meta(named.text, 'og:title'), 'Carry G19');
+  assert.match(meta(named.text, 'og:description'), /\$650 at the best prices we found, including 2 estimates\. Prices change; confirm at the retailer\./);
+
+  const ar = await page(env(), '/b/ar15~ar-lower-aero.ar-bbl-ba10', { platforms: { ar15: { ...AR_INDEX.platforms.ar15, estimates: ['ar-bbl-ba10'] } } });
+  assert.equal(meta(ar.text, 'og:description'), `${SHORT_NOTICE_TEXT} AR-15 · 2 parts · $300 at the best prices we found, including 1 estimate. Prices change; confirm at the retailer. Includes Aero lower, BA 10.3&#34; barrel. Open it to check the fit and compare retailers.`);
+});
+
+const ALERT_FOOTER = 'Prices are checked every night at the stores we track; always confirm the price at the retailer.';
+/** A Carry G19 subscriber whose apex trigger falls from $150 to $120, under this index entry. Returns the alert email. */
+const movedMail = async (extra = {}, base = ALERT_INDEX(120)) => {
+  const e = alertEnv();
+  await signup(e, 'estimates@example.com');
+  await confirmMail(e, e.outbox[0]);
+  const result = await withIndex({ platforms: { glock9: { ...base.platforms.glock9, ...extra } } }, () => runAlerts(e));
+  assert.equal(result.sent, 1);
+  return e.outbox.at(-1);
+};
+
+test('an alert email counts the estimates in the total and marks a change to an estimate, in html and text', async () => {
+  const mail = await movedMail({ estimates: ['g-fcg-apex5'] });
+  assert.ok(mail.html.includes('Now $620.00 at the best prices we found, including 1 estimate</p>'));
+  assert.ok(mail.html.includes('↓ $120.00 (estimate)</td>'));
+  assert.ok(mail.text.includes('Carry G19 (now $620.00 at the best prices we found, including 1 estimate)\n'));
+  assert.ok(mail.text.includes('  Apex trigger: $150.00 -> $120.00 (estimate)\n'));
+});
+
+test('an alert email marks only the changed parts that are estimates, and counts the build\'s others in the total', async () => {
+  // The two estimates didn't move; the part that moved has a live price.
+  const mail = await movedMail({ estimates: ['g19-frame-g5', 'g19-slide-mos'] });
+  assert.ok(mail.html.includes('Now $620.00 at the best prices we found, including 2 estimates</p>'));
+  assert.ok(mail.text.includes('(now $620.00 at the best prices we found, including 2 estimates)\n'));
+  assert.ok(!mail.html.includes('(estimate)') && !mail.text.includes('(estimate)'));
+  // A price that went up is marked the same way, among others that aren't.
+  const up = await movedMail({ estimates: ['g-fcg-apex5'] }, ALERT_INDEX(200, 200));
+  assert.ok(up.html.includes('↑ $200.00 (estimate)</td>'));
+  assert.ok(up.html.includes('↓ $200.00</td>'));
+  assert.ok(up.text.includes('  Glock MOS slide: $300.00 -> $200.00\n'));
+  assert.ok(up.text.includes('  Apex trigger: $150.00 -> $200.00 (estimate)\n'));
+});
+
+test('an alert email counts only estimates with a price, build by build', async () => {
+  // The slide is on the list but has dropped out of the index: it isn't in the total, so it isn't counted.
+  const { platforms: { glock9 } } = ALERT_INDEX(120);
+  const { 'g19-slide-mos': _gone, ...parts } = glock9.parts;
+  const mail = await movedMail({ parts, estimates: ['g-fcg-apex5', 'g19-slide-mos'] });
+  assert.ok(mail.text.includes('(now $320.00 at the best prices we found, including 1 estimate)\n'));
+
+  // Two builds in one email: the phrase follows the build with the estimate only.
+  const e = alertEnv();
+  await withIndex(AR_ALERT_INDEX(), () => call(e, 'POST', '/api/alerts', { email: 'two@example.com', builds: [AR_BUILD, G19] }));
+  await confirmMail(e, e.outbox[0]);
+  const index = { platforms: { ...ALERT_INDEX(120).platforms, ar15: { name: 'AR-15', parts: { 'ar-bbl-ba10': ['BA 10.3" barrel', 150] }, estimates: ['ar-bbl-ba10'] } } };
+  assert.equal((await withIndex(index, () => runAlerts(e))).sent, 1);
+  const two = e.outbox.at(-1);
+  assert.ok(two.text.includes('Short AR (now $150.00 at the best prices we found, including 1 estimate)\n'));
+  assert.ok(two.text.includes('Carry G19 (now $620.00)\n'));
+  assert.ok(two.html.includes('Now $620.00 at the best prices we found</p>'));
+  assert.equal(two.html.split('(estimate)').length, 2, 'the one estimate row');
+});
+
+test('an alert email with no estimates, or an index with no list, has the old total and rows', async () => {
+  for (const extra of [{}, { estimates: [] }, { estimates: ['g-not-in-this-build'] }, { estimates: null }, { estimates: 'g-fcg-apex5' }]) {
+    const label = JSON.stringify(extra);
+    const mail = await movedMail(extra);
+    assert.ok(mail.html.includes('Now $620.00 at the best prices we found</p>'), label);
+    assert.ok(mail.html.includes('↓ $120.00</td>'), label);
+    assert.ok(mail.text.includes('Carry G19 (now $620.00)\n  Apex trigger: $150.00 -> $120.00\n'), label);
+    assert.doesNotMatch(mail.html + mail.text, /estimate/, label);
+    assert.equal(mail.subject, 'Price drop on "Carry G19"', label);
+  }
+  // No index at all: nothing is sent, as before.
+  const e = alertEnv();
+  await signup(e, 'noindex@example.com');
+  await confirmMail(e, e.outbox[0]);
+  assert.deepEqual(await withIndex(null, () => runAlerts(e)), { sent: 0, skipped: 'price index unreachable' });
+  assert.equal(e.outbox.length, 1);
+});
+
+test('the alert email footer says where prices are checked, once, in html and text, with or without estimates', async () => {
+  for (const extra of [{}, { estimates: ['g-fcg-apex5'] }]) {
+    const mail = await movedMail(extra);
+    assert.equal(mail.html.split(ALERT_FOOTER).length, 2);
+    assert.equal(mail.text.split(ALERT_FOOTER).length, 2);
+  }
+  // Nothing in the Worker still has the old sentence, including share pages.
+  for (const file of readdirSync(new URL('./src/', import.meta.url)))
+    assert.doesNotMatch(readFileSync(new URL(`./src/${file}`, import.meta.url), 'utf8'), /checked every night;/, file);
+});
+
+test('estimates leave an email\'s escaping and the prices it remembers as they were', async () => {
+  const name = 'Apex "Flat" & Co';
+  const { platforms: { glock9 } } = ALERT_INDEX(120);
+  const mail = await movedMail({ parts: { ...glock9.parts, 'g-fcg-apex5': [name, 120] }, estimates: ['g-fcg-apex5'] });
+  assert.ok(mail.html.includes('Apex &#34;Flat&#34; &#38; Co'));
+  assert.ok(!mail.html.includes(name));
+  assert.ok(mail.text.includes(`  ${name}: $150.00 -> $120.00 (estimate)\n`));
+
+  // The same run with and without the list stores the same last-reported prices.
+  const seenAfter = async (extra) => {
+    const e = alertEnv();
+    await signup(e, 'seen@example.com');
+    await confirmMail(e, e.outbox[0]);
+    await withIndex({ platforms: { glock9: { ...glock9, ...extra } } }, () => runAlerts(e));
+    return JSON.parse((await e.DB.prepare('SELECT seen FROM alerts').first()).seen);
+  };
+  assert.deepEqual(await seenAfter({ estimates: ['g-fcg-apex5', 'g19-slide-mos'] }), await seenAfter({}));
+});

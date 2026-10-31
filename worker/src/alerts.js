@@ -12,7 +12,7 @@
 //   ALERTS_FROM      optional sender, default "Drop-In Builds <alerts@dropinbuilds.com>"
 
 import { canonical, errorText, isPlatform } from './api.js';
-import { SITE, nfaNoticeFor } from './share.js';
+import { SITE, estimateIds, includingEstimates, nfaNoticeFor } from './share.js';
 
 export const API_BASE = 'https://share.dropinbuilds.com';
 const DAY = 86_400_000;
@@ -152,24 +152,29 @@ async function sendConfirm(env, row, code) {
   });
 }
 
-/** Builds whose parts moved, each with its changes (biggest drop first) and today's total. */
+/** Builds whose parts moved, each with its changes (biggest drop first), today's total and how many of the prices in it are estimates. */
 export function changesFor(index, builds, seen) {
   const out = [];
   for (const b of builds) {
     const parts = index?.platforms?.[b.platform]?.parts ?? {};
+    const estimates = estimateIds(index?.platforms?.[b.platform]);
     const changes = [];
     let total = 0;
+    let estimated = 0;
     for (const id of b.parts) {
       const p = parts[id];
       if (!p) continue;
       total += p[1];
+      if (estimates.has(id)) estimated++;
       const was = seen[`${b.platform}/${id}`];
-      if (was !== undefined && worthTelling(was, p[1])) changes.push({ name: p[0], was, now: p[1] });
+      if (was !== undefined && worthTelling(was, p[1])) changes.push({ name: p[0], was, now: p[1], estimate: estimates.has(id) });
     }
-    if (changes.length) out.push({ build: b, changes: changes.sort((x, y) => (y.was - y.now) - (x.was - x.now)), total });
+    if (changes.length) out.push({ build: b, changes: changes.sort((x, y) => (y.was - y.now) - (x.was - x.now)), total, estimated });
   }
   return out;
 }
+
+const estimateTag = (change) => (change.estimate ? ' (estimate)' : '');
 
 function digest(env, token, moved) {
   const down = moved.flatMap((m) => m.changes).filter((c) => c.now < c.was).length;
@@ -177,15 +182,15 @@ function digest(env, token, moved) {
   const subject = down && !up ? `Price drop on ${moved.length === 1 ? `"${moved[0].build.name}"` : `${moved.length} of your builds`}`
     : up && !down ? `Price increase on ${moved.length === 1 ? `"${moved[0].build.name}"` : `${moved.length} of your builds`}`
     : `Prices changed on ${moved.length === 1 ? `"${moved[0].build.name}"` : `${moved.length} of your builds`}`;
-  const why = 'You get these emails because you turned on price alerts on dropinbuilds.com. Prices are checked every night; always confirm the price at the retailer.';
-  const html = moved.map(({ build, changes, total }) => `<h2 style="font-size:17px;margin:0 0 4px">${esc(build.name)}</h2>
-<p style="margin:0 0 10px;color:#6b7684;font-size:13px">Now ${money(total)} at the best prices we found</p>
+  const why = 'You get these emails because you turned on price alerts on dropinbuilds.com. Prices are checked every night at the stores we track; always confirm the price at the retailer.';
+  const html = moved.map(({ build, changes, total, estimated }) => `<h2 style="font-size:17px;margin:0 0 4px">${esc(build.name)}</h2>
+<p style="margin:0 0 10px;color:#6b7684;font-size:13px">Now ${money(total)} at the best prices we found${includingEstimates(estimated)}</p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;margin-bottom:12px">${changes.map((c) => `<tr>
 <td style="padding:6px 0;border-top:1px solid #eee">${esc(c.name)}</td>
 <td style="padding:6px 0 6px 8px;border-top:1px solid #eee;text-align:right;white-space:nowrap;color:#8a939e"><s>${money(c.was)}</s></td>
-<td style="padding:6px 0 6px 8px;border-top:1px solid #eee;text-align:right;white-space:nowrap;font-weight:bold;color:${c.now < c.was ? '#2e7d4f' : '#b06d00'}">${c.now < c.was ? '↓' : '↑'} ${money(c.now)}</td></tr>`).join('')}</table>
+<td style="padding:6px 0 6px 8px;border-top:1px solid #eee;text-align:right;white-space:nowrap;font-weight:bold;color:${c.now < c.was ? '#2e7d4f' : '#b06d00'}">${c.now < c.was ? '↓' : '↑'} ${money(c.now)}${estimateTag(c)}</td></tr>`).join('')}</table>
 <p style="margin:0 0 24px"><a href="${buildLink(build)}" style="color:#d4691e;font-weight:bold">Open This Build</a></p>`).join('');
-  const text = moved.map(({ build, changes, total }) => `${build.name} (now ${money(total)})\n${changes.map((c) => `  ${c.name}: ${money(c.was)} -> ${money(c.now)}`).join('\n')}\n  ${buildLink(build)}`).join('\n\n');
+  const text = moved.map(({ build, changes, total, estimated }) => `${build.name} (now ${money(total)}${estimated ? ` at the best prices we found${includingEstimates(estimated)}` : ''})\n${changes.map((c) => `  ${c.name}: ${money(c.was)} -> ${money(c.now)}${estimateTag(c)}`).join('\n')}\n  ${buildLink(build)}`).join('\n\n');
   // Once per email, when any build in it is an AR (the short NFA notice).
   const notice = moved.map((m) => nfaNoticeFor(m.build.platform)).find(Boolean) ?? '';
   const noticeHtml = notice ? `<p style="margin:0 0 16px;color:#6b7684;font-size:13px">${esc(notice)}</p>` : '';
