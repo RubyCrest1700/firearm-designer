@@ -1582,3 +1582,75 @@ test('estimates leave an email\'s escaping and the prices it remembers as they w
   };
   assert.deepEqual(await seenAfter({ estimates: ['g-fcg-apex5', 'g19-slide-mos'] }), await seenAfter({}));
 });
+
+/* ------------------------------------------------- part ids Object already has */
+
+import { changesFor } from './src/alerts.js';
+
+// `constructor` passes the part id check, and on a plain object it finds Object's built-in, not a part.
+const WITH_CONSTRUCTOR = { ...G19, parts: [...G19.parts, 'constructor'] };
+const seenOf = async (e) => JSON.parse((await e.DB.prepare('SELECT seen FROM alerts').first()).seen);
+
+test('a share link for a part id Object already has opens as a build with no parts', async () => {
+  const r = await page(env(), '/b/glock19~constructor');
+  assert.equal(r.status, 200);
+  assert.equal(meta(r.text, 'og:title'), `${GLOCK_NAME} build`);
+  assert.equal(meta(r.text, 'og:description'), `A ${GLOCK_NAME} build. Open it to check the fit and compare retailers.`);
+});
+
+test('a share link counts only the known part alongside a part id Object already has', async () => {
+  const r = await page(env(), '/b/glock19~g19-frame-g5.constructor');
+  assert.equal(r.status, 200);
+  assert.equal(meta(r.text, 'og:title'), `${GLOCK_NAME} build · $200`);
+  assert.match(meta(r.text, 'og:description'), /· 1 parts · \$200 at the best prices we found\. /);
+  assert.match(meta(r.text, 'og:description'), /Includes Glock Gen 5 frame\. /);
+  assert.doesNotMatch(r.text, /NaN/);
+  // Nor is it counted as an estimate, even when the list names it.
+  const listed = await page(env(), '/b/glock19~g19-frame-g5.constructor', ESTIMATE_INDEX(['constructor', 'g19-frame-g5']));
+  assert.equal(meta(listed.text, 'og:title'), `${GLOCK_NAME} build · $200, including 1 estimate`);
+});
+
+test('an alert for a build with a part id Object already has shows a real total', async () => {
+  const seen = { 'glock9/g-fcg-apex5': 150, 'glock9/constructor': 100 };
+  const build = { ...WITH_CONSTRUCTOR, platform: 'glock9' };
+  const [moved] = changesFor(ALERT_INDEX(120), [build], seen);
+  assert.equal(moved.total, 620);
+  assert.deepEqual(moved.changes.map((c) => c.name), ['Apex trigger']);
+
+  const e = alertEnv();
+  await signup(e, 'partid@example.com', [WITH_CONSTRUCTOR]);
+  await confirmMail(e, e.outbox[0]);
+  assert.equal((await withIndex(ALERT_INDEX(120), () => runAlerts(e))).sent, 1);
+  const mail = e.outbox.at(-1);
+  assert.ok(mail.html.includes('Now $620.00 at the best prices we found</p>'));
+  assert.ok(mail.text.includes('Carry G19 (now $620.00)\n'));
+  assert.doesNotMatch(mail.html + mail.text, /NaN/);
+  assert.equal(mail.html.split('<s>').length, 2, 'one row, the apex trigger');
+});
+
+test('a part id Object already has is never stored as a last reported price', async () => {
+  const known = ['glock9/g-fcg-apex5', 'glock9/g19-frame-g5', 'glock9/g19-slide-mos'];
+  const e = alertEnv();
+  const { token } = (await signup(e, 'partid@example.com', [WITH_CONSTRUCTOR])).body;
+  assert.deepEqual(Object.keys(await seenOf(e)).sort(), known);
+  assert.equal((await withIndex(ALERT_INDEX(), () => call(e, 'PUT', `/api/alerts/${token}`, { builds: [WITH_CONSTRUCTOR] }))).status, 200);
+  assert.deepEqual(Object.keys(await seenOf(e)).sort(), known);
+});
+
+test('a build with a part id Object already has still works when the price index is unreachable', async () => {
+  for (const index of [null, {}, { platforms: {} }, { platforms: { glock9: {} } }]) {
+    const label = JSON.stringify(index);
+    const r = await page(env(), '/b/glock19~g19-frame-g5.constructor', index);
+    assert.equal(r.status, 200, label);
+    assert.equal(meta(r.text, 'og:title'), `${GLOCK_NAME} build`, label);
+    assert.deepEqual(changesFor(index, [{ ...WITH_CONSTRUCTOR, platform: 'glock9' }], { 'glock9/g-fcg-apex5': 150 }), [], label);
+
+    const e = alertEnv();
+    const signed = await withIndex(index, () => call(e, 'POST', '/api/alerts', { email: 'noindex@example.com', builds: [WITH_CONSTRUCTOR] }));
+    assert.equal(signed.status, 201, label);
+    assert.deepEqual(await seenOf(e), {}, label);
+    const put = await withIndex(index, () => call(e, 'PUT', `/api/alerts/${signed.body.token}`, { builds: [WITH_CONSTRUCTOR] }));
+    assert.equal(put.status, 200, label);
+    assert.deepEqual(await seenOf(e), {}, label);
+  }
+});
