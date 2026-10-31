@@ -336,6 +336,9 @@ h1 { font: 700 clamp(28px, 4.2vw, 40px)/1.08 var(--f-head); letter-spacing: -.00
 .chip-amt { color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; margin-left: 2px; }
 .chip-tag { margin-left: 2px; padding: 1px 6px; border-radius: 99px; background: var(--note-soft); color: var(--note); font-size: 11px; font-weight: 600; vertical-align: 1px; }
 .tb-note { flex-basis: 100%; margin: 2px 0 0; font-size: 12.5px; color: var(--muted); }
+/* A starter chip carries a price and up to three tags: wrap between the tags when it won't fit its line, never mid-tag. */
+.bp-toolbar .chip { white-space: normal; border-radius: 18px; }
+.chip-amt, .chip-tag { white-space: nowrap; }
 @media (max-width: 719px) {
   /* Wrap instead of scrolling sideways, so every starter build shows without swiping. */
   .bp-toolbar .tb-label { flex-basis: 100%; margin-bottom: 2px; }
@@ -395,6 +398,10 @@ h1 { font: 700 clamp(28px, 4.2vw, 40px)/1.08 var(--f-head); letter-spacing: -.00
   .part-row.empty .part-price { display: none; }
   .part-slot { flex-wrap: wrap; row-gap: 3px; }
   .src { font-size: 12.5px; }
+}
+@media (min-width: 600px) and (max-width: 979px) {
+  /* The same 130px for the price as on phones and in the side column, so a long store and label stay short. */
+  .parts-head, .part-row { grid-template-columns: 34px minmax(0, 1fr) 130px 96px; }
 }
 @media (pointer: coarse) {
   .x { min-width: 36px; min-height: 36px; font-size: 22px; margin: -6px -8px -6px 0; }
@@ -485,6 +492,9 @@ tr:first-child td { border-top: 0; }
   .dock { display: flex; position: sticky; bottom: 0; z-index: 20; justify-content: space-between; align-items: center; gap: 12px;
     background: var(--surface); border-top: 1px solid var(--line); padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); box-shadow: 0 -4px 14px rgba(16,30,45,.08); }
   .dock-total { font: 700 22px/1 var(--f-head); font-variant-numeric: tabular-nums; }
+  /* Each piece wraps whole with the separator after it, so no line starts with one. */
+  .dock-lead, .dock-note { display: inline-block; }
+  .dock-lead { white-space: nowrap; }
   .dock .status { font-size: 13px; margin-top: 3px; }
   .dock .btn { padding: 11px 18px; }
 }

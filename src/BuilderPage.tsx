@@ -484,7 +484,7 @@ export function Dock({ total, status, toBuy, noPrice, estimates = '', legal }: {
   return (
     <div className="dock" role="region" aria-label="Build total">
       <div>
-        <div className="dock-total">{money(total)}{toBuy && <small> to buy</small>}{estimates && <small> · {estimates}</small>}{noPrice && <small> · {noPrice}</small>}</div>
+        <div className="dock-total"><span className="dock-lead">{money(total)}{toBuy && <small> to buy</small>}{(estimates || noPrice) && <small> ·</small>}</span>{estimates && <> <small className="dock-note">{estimates}{noPrice && ' ·'}</small></>}{noPrice && <> <small className="dock-note">{noPrice}</small></>}</div>
         <p className={'status ' + status.cls}>{status.text}{legal && <> <button className="dock-legal" aria-label="Legal notice: see the summary" aria-controls={SUMMARY_LEGAL_ID} onClick={() => toLegalNotice()}>Legal</button></>}</p>
       </div>
       <button className="btn" onClick={toSummary}>Summary</button>

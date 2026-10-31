@@ -1377,7 +1377,12 @@ test('each total shows the estimate note exactly when it has an estimate', () =>
   assert.ok(n > 1);
   // Dock: beside the no-price note, and nothing when there's nothing to say.
   const dock = (estimates?: string) => strip(renderToStaticMarkup(createElement(Dock, { total: 100, status: { cls: 'ok', text: 'x' }, toBuy: false, noPrice: '1 part has no price', estimates, legal: false })));
-  assert.match(dock(estimateNote(4)), /<small> · 4 prices are estimates<\/small><small> · 1 part has no price<\/small>/);
+  const dockHtml = dock(estimateNote(4));
+  assert.match(dockHtml, /<span class="dock-lead">\$100\.00<small> ·<\/small><\/span> <small class="dock-note">4 prices are estimates ·<\/small> <small class="dock-note">1 part has no price<\/small>/);
+  // Same text as ever, and a separator never leads a piece that can wrap to a new line.
+  assert.ok(dockHtml.replace(/<[^>]*>/g, '').includes('$100.00 · 4 prices are estimates · 1 part has no price'));
+  assert.doesNotMatch(dockHtml, /class="dock-note">\s*·/);
+  assert.doesNotMatch(renderToStaticMarkup(createElement(Dock, { total: 100, status: { cls: 'ok', text: 'x' }, toBuy: true, noPrice: '', legal: false })), /·/);
   assert.doesNotMatch(dock(), EST_NOTE);
   assert.doesNotMatch(dock(''), EST_NOTE);
   // Chips, on a made-up catalog and on every real starter build.
@@ -1402,7 +1407,7 @@ test('each total shows the estimate note exactly when it has an estimate', () =>
     const np = noPriceNote(unpricedOf(p, budget));
     assert.ok(home.includes(`Starter builds from <b>${money(totalOf(p, budget))}</b>${k ? ` · ${estimateNote(k)}` : ''}${np ? ` · ${np}` : ''}</span>`), p.id);
   }
-  // Compare: the rows, an owned part left out of Left to Buy, the part cells, and the dropdown.
+  // Compare: the rows, the part cells, and the dropdown. The owned case has its own test below.
   const fb = FEATURED.find((x) => x.platform.id === 'ar15' && x.tier === 'budget')!;
   const compare = (a: Selection, b: Selection) => strip(renderToStaticMarkup(createElement(ComparePage, {
     items: [{ kind: 'A', name: 'A', platform: 'ar15', selection: a }, { kind: 'B', name: 'B', platform: 'ar15', selection: b }], onSet: noop, saved: [], current: null, lastPlatform: 'ar15', onOpen: noop,
@@ -1420,6 +1425,51 @@ test('each total shows the estimate note exactly when it has an estimate', () =>
     const notes = totalNotes(estimateNote(estimatedOf(ar15, b)), noPriceNote(unpricedOf(ar15, b)));
     assert.ok(chooser.includes(`${ar15.name} · ${money(totalOf(ar15, b))}${notes ? ` (${notes})` : ''}`), x.id);
   }
+});
+
+test('an owned part drops out of the estimate count on Compare and build cards', () => {
+  const fb = FEATURED.find((x) => x.platform.id === 'ar15' && x.tier === 'budget')!;
+  const est = ar15.parts.find((x) => bestOffer(x) && isEstimate(bestOffer(x)!))!;
+  assert.ok(est, 'a real estimate to own');
+  const plain: Selection = { ...fb.selection, [est.slot]: est.id };
+  const sel: Selection = { ...plain, ['+' + est.slot]: 'own' };
+  const build = toBuild(ar15, sel);
+  const { owned } = ownedOf(sel);
+  assert.deepEqual([...owned], [est.slot]);
+  const whole = estimatedOf(ar15, build);
+  const left = estimatedOf(ar15, build, owned);
+  assert.equal(left, whole - 1);
+
+  const html = strip(renderToStaticMarkup(createElement(ComparePage, {
+    items: [{ kind: 'A', name: 'A', platform: 'ar15', selection: sel }, { kind: 'B', name: 'B', platform: 'ar15', selection: plain }], onSet: noop, saved: [], current: null, lastPlatform: 'ar15', onOpen: noop,
+  })));
+  assert.match(html, /Left to Buy/);
+  assert.ok(html.includes('You Own It'));
+  assert.ok(html.includes(money(totalOf(ar15, build, owned))));
+  // One side's owned part shows no Estimate tag; the other side still does.
+  assert.equal(html.split('<small class="to-buy"> Estimate</small>').length - 1, left + whole);
+  const facts = totalNotes(estimateNote(left), noPriceNote(unpricedOf(ar15, build, owned)));
+  if (facts) assert.ok(html.includes(`<small class="dim">${facts}</small>`));
+
+  const card = strip(renderToStaticMarkup(createElement(BuildCard, { platformId: 'ar15', selection: sel, title: 'T', meta: 'M', actions: null })));
+  assert.ok(card.includes(`${money(totalOf(ar15, build, owned))}<small class="to-buy"> to buy</small>`));
+  if (left) assert.ok(card.includes(`<small class="to-buy"> · ${estimateNote(left)}</small>`));
+  else assert.doesNotMatch(card, EST_NOTE);
+  assert.ok(!card.includes(`<small class="to-buy"> · ${estimateNote(whole)}</small>`));
+});
+
+test('the builder hands the estimate note to the dock and the drawing title, and the layout keeps it on screen', () => {
+  const src = readFileSync('src/BuilderPage.tsx', 'utf8');
+  assert.match(src, /<Dock [^>]*\bestimates=\{estimates\}/);
+  assert.match(src, /<figcaption[\s\S]*?<b title=\{totalNotes\(estimates, noPrice\) \|\| undefined\}>\{money\(total\)\}<\/b>[\s\S]*?<\/figcaption>/);
+  const css = readFileSync('src/styles.css', 'utf8');
+  assert.match(css, /\.bp-toolbar \.chip \{ white-space: normal;/);
+  assert.match(css, /\.chip-amt, \.chip-tag \{ white-space: nowrap; \}/);
+  assert.match(css, /\.dock-lead, \.dock-note \{ display: inline-block; \}/);
+  assert.match(css, /@media \(min-width: 600px\) and \(max-width: 979px\) \{[^}]*\.parts-head, \.part-row \{ grid-template-columns: 34px minmax\(0, 1fr\) 130px 96px; \}/);
+  const app = readFileSync('src/App.tsx', 'utf8');
+  assert.ok(app.includes('<>Estimated prices</>'));
+  assert.doesNotMatch(app, /Sample prices/);
 });
 
 test('the one-store table says its cart has estimates, and its note is the approved wording', () => {
