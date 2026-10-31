@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { PLATFORMS } from './data';
-import { money, ownedOf, ownsAny, partIds } from './engine';
+import { ESTIMATE_LABEL, bestOffer, isEstimate, money, ownedOf, ownsAny, partIds } from './engine';
 import { buildOf, priceChanges, type SavedBuild } from './store';
 import { totalSeries } from './data/history';
 import { PriceChart } from './PriceChart';
@@ -72,7 +72,7 @@ function PriceSinceSaved({ s }: { s: SavedBuild }) {
       <p className="since-total">{drop > 0 ? <>↓ {money(drop)} less than when you saved it</> : <>↑ {money(-drop)} more than when you saved it</>}</p>
       <ul>
         {changes.slice(0, 3).map((c) => (
-          <li key={c.part.id}><span>{c.part.brand} {c.part.name}</span><s>{money(c.was)}</s><b>{money(c.now)}</b></li>
+          <li key={c.part.id}><span>{c.part.brand} {c.part.name}</span><s>{money(c.was)}</s><b>{money(c.now)}{isEstimate(bestOffer(c.part)!) && <small className="to-buy"> {ESTIMATE_LABEL}</small>}</b></li>
         ))}
         {changes.length > 3 && <li className="more">and {changes.length - 3} more</li>}
       </ul>
@@ -93,7 +93,7 @@ export function SavedPage({ saved, alerts, onOpen, onRename, onDuplicate, onDele
       <div className="page-head">
         <p className="kicker">My Builds</p>
         <h1>Your Saved Builds</h1>
-        <p className="lede">Builds are saved in this browser. We check prices every night, and each build shows what changed since you saved it. Use Copy Link to open one on another device or send it to someone.</p>
+        <p className="lede">Builds are saved in this browser. We check prices every night at the stores we track, and each build shows what changed since you saved it. Use Copy Link to open one on another device or send it to someone.</p>
         {saved.length > 0 && <button className="btn" onClick={onCompareAll}>Compare Two Builds</button>}
       </div>
       {alerts}

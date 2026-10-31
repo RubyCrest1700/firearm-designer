@@ -318,6 +318,7 @@ h1 { font: 700 clamp(28px, 4.2vw, 40px)/1.08 var(--f-head); letter-spacing: -.00
   .workbench > .parts .part-main { grid-area: main; }
   .workbench > .parts .part-fit { grid-area: fit; }
   .workbench > .parts .part-price { grid-area: price; }
+  .workbench > .parts .part-price .src { max-width: 130px; }
   .workbench > .parts .part-name { font-size: 14px; }
   .workbench > .parts .parts-group-title { padding: 14px 12px 6px; }
   .builder-head { padding: 18px 0 12px; }
@@ -389,6 +390,7 @@ h1 { font: 700 clamp(28px, 4.2vw, 40px)/1.08 var(--f-head); letter-spacing: -.00
   .part-main { grid-area: main; }
   .part-fit { grid-area: fit; }
   .part-price { grid-area: price; }
+  .part-price .src { max-width: 130px; }
   .part-row.empty { grid-template-areas: 'no main fit'; }
   .part-row.empty .part-price { display: none; }
   .part-slot { flex-wrap: wrap; row-gap: 3px; }
@@ -547,6 +549,8 @@ tr:first-child td { border-top: 0; }
 .offers td, .offers th { padding-right: 10px; }
 .offers tr.best td:first-child { font-weight: 700; }
 .offers tr.best td:first-child::after { content: 'Best'; font-size: 10px; font-weight: 700; color: var(--ok); background: var(--ok-soft); border-radius: 4px; padding: 1px 5px; margin-left: 6px; }
+/* Owner-approved wording (2026-10-31). */
+.offers tr.best.est td:first-child::after { content: 'Lowest (estimate)'; white-space: nowrap; }
 .offers a { font-weight: 600; text-decoration: none; white-space: nowrap; }
 .oos { color: var(--err); }
 .cand-empty { color: var(--muted); padding: 20px; text-align: center; }

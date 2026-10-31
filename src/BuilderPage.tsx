@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { PLATFORMS } from './data';
 import { RETAILERS } from './data/retailers';
-import { bestOffer, encodeMount, money, noPriceNote, ownedOf, placementOf, presetSelection, baseSelection, priceRange, singleRetailerCarts, toBuild, unpricedCount, type Owned, type Selection } from './engine';
+import { bestOffer, encodeMount, estimateNote, estimatedCount, money, noPriceNote, ownedOf, placementOf, presetSelection, baseSelection, priceLabel, priceRange, singleRetailerCarts, toBuild, totalNotes, unpricedCount, type Owned, type Selection } from './engine';
 import type { RegionState } from './Blueprint';
 import { Blueprint, useDrawings } from './drawings';
 import { buildStatus, statesFor } from './status';
-import { TIER_LABEL, totalOf, unpricedOf, type SavedBuild } from './store';
+import { TIER_LABEL, estimatedOf, totalOf, unpricedOf, type SavedBuild } from './store';
 import { type CommunityBuild } from './community';
 import { awarenessFor, type Aware } from './awareness';
 import { buildWeight, formatWeight } from './weight';
@@ -46,6 +46,7 @@ export function BuilderPage({ platformId, startPart, setPlatformId, selection, s
   const status = buildStatus(platform, build, issues, owned.other);
   const total = totalOf(platform, build, owned.owned);
   const noPrice = noPriceNote(unpricedOf(platform, build, owned.owned));
+  const estimates = estimateNote(estimatedOf(platform, build, owned.owned));
   const ownsSome = owned.owned.size + owned.other.size > 0;
   const chosen = platform.slots.filter((s) => build[s.id] || owned.other.has(s.id)).length;
   const rifle = platform.family === 'Rifle';
@@ -148,7 +149,7 @@ export function BuilderPage({ platformId, startPart, setPlatformId, selection, s
                 <div><span>Parts</span><b>{chosen} of {platform.slots.length}</b></div>
                 <div><span>Status</span><b className={'tb-' + status.cls}>{status.text}</b></div>
                 <div><span>Weight</span><b title={weightTitle}>{chosen ? `${weight.estimated ? '≈ ' : ''}${formatWeight(weight.oz, rifle)}` : '—'}</b></div>
-                <div><span>{ownsSome ? 'To Buy' : 'Total'}</span><b title={noPrice || undefined}>{money(total)}</b></div>
+                <div><span>{ownsSome ? 'To Buy' : 'Total'}</span><b title={totalNotes(estimates, noPrice) || undefined}>{money(total)}</b></div>
               </figcaption>
             </figure>
             <p className="hint">{zoom ? 'Zoomed in. Swipe the drawing sideways to see the rest, or tap a part to change it. ' : ''}{chosen === 0 ? 'Blank build. Pick parts from the list or click any part on the drawing, or start from a ready-made build above.' : Object.keys(mounts).length ? 'Select any part to change it. Drag a light, laser or grip along the rail to move it; pick its side in the parts list. Parts on the left side show as dashed lines.' : 'Select any part on the drawing or in the list to change it. The drawing updates with every part you choose.'}</p>
@@ -163,7 +164,7 @@ export function BuilderPage({ platformId, startPart, setPlatformId, selection, s
         </div>
       </div>
 
-      <Dock total={total} status={status} toBuy={ownsSome} noPrice={noPrice} legal={issues.some((i) => i.legal)} />
+      <Dock total={total} status={status} toBuy={ownsSome} noPrice={noPrice} estimates={estimates} legal={issues.some((i) => i.legal)} />
 
       {openSlotObj && (
         <Picker
@@ -197,11 +198,12 @@ export function BuilderPage({ platformId, startPart, setPlatformId, selection, s
   );
 }
 
-/** A starter build's total on its chip, with a note when some of its parts have no price. */
-function ChipTotal({ platform, sel }: { platform: Platform; sel: Selection }) {
+/** A starter build's total on its chip, with notes when some of its prices are estimates or some of its parts have no price. */
+export function ChipTotal({ platform, sel }: { platform: Platform; sel: Selection }) {
   const build = toBuild(platform, sel);
   const note = noPriceNote(unpricedOf(platform, build));
-  return <><span className="chip-amt">{money(totalOf(platform, build))}</span>{note && <> <span className="chip-tag">{note}</span></>}</>;
+  const estimates = estimateNote(estimatedOf(platform, build));
+  return <><span className="chip-amt">{money(totalOf(platform, build))}</span>{estimates && <> <span className="chip-tag">{estimates}</span></>}{note && <> <span className="chip-tag">{note}</span></>}</>;
 }
 
 /** The tag on a starter build's chip saying what optic it comes with, if any. */
@@ -234,6 +236,7 @@ export function PartsList({ platform, build, issues, states, hover, onHover, onO
             {slots.map((slot) => {
               const part = build[slot.id];
               const offer = part && bestOffer(part);
+              const label = offer ? priceLabel(offer) : '';
               const own = owned.owned.has(slot.id);
               const other = owned.other.has(slot.id);
               const rowIssues = issues.filter((i) => i.severity === 'info' ? i.slots[0] === slot.id : i.slots.includes(slot.id));
@@ -255,7 +258,7 @@ export function PartsList({ platform, build, issues, states, hover, onHover, onO
                   <span className="part-price">
                     {other ? <span className="src owned-note">You Own It</span>
                       : own && offer ? <><s className="amt dim">{money(offer.price)}</s><span className="src owned-note">You Own It</span></>
-                      : offer ? <><span className="amt">{money(offer.price)}</span><span className="src">{RETAILERS[offer.retailer].name}</span>{part && <ChangeChip part={part} />}</> : <span className="amt dim">—</span>}
+                      : offer ? <><span className="amt">{money(offer.price)}</span><span className="src">{RETAILERS[offer.retailer].name}{label ? ` · ${label}` : ''}</span>{part && <ChangeChip part={part} />}</> : <span className="amt dim">—</span>}
                     {part && (
                       <button className={'own-btn' + (own ? ' on' : '')} aria-pressed={own} onClick={() => onToggleOwn(slot.id)}
                         title={own ? "Count this part's price in the total again" : 'Already have this part? It stays in the fit checks but leaves the total.'}>
@@ -335,6 +338,7 @@ export function Summary({ platform, build, issues, aware, states, status, total,
   // A part with no price has no retailer, so it isn't counted as one.
   const retailers = new Set(chosen.map((p) => bestOffer(p)?.retailer).filter(Boolean)).size;
   const noPrice = noPriceNote(unpricedCount(chosen));
+  const estimates = estimateNote(estimatedCount(chosen));
   const carts = singleRetailerCarts(chosen).slice(0, 4);
   const [dollars, cents] = money(total).split('.');
 
@@ -357,6 +361,7 @@ export function Summary({ platform, build, issues, aware, states, status, total,
         <p className="total-sub">
           {chosen.length} part{chosen.length === 1 ? '' : 's'}{ownedCount ? ' to buy' : ''} from {retailers} retailer{retailers === 1 ? '' : 's'}
           {highest > total && <> · {money(highest - total)} below the highest prices</>}
+          {estimates && <> · <span className="est-note">{estimates}</span></>}
           {noPrice && <> · <span className="no-price">{noPrice}</span></>}
         </p>
         {ownedCount > 0 && (
@@ -448,12 +453,12 @@ export function Summary({ platform, build, issues, aware, states, status, total,
 
       {chosen.length > 0 && <section className="card">
         <h2 className="card-title">Buy It All from One Store</h2>
-        <p className="card-note">Fewer shipments can beat a lower parts total. In-stock parts only.</p>
+        <p className="card-note">Fewer shipments can beat a lower parts total. Leaves out parts shown as out of stock.</p>
         <table className="carts">
           <tbody>
             {carts.map((c) => (
               <tr key={c.retailer}>
-                <td>{RETAILERS[c.retailer].name}</td>
+                <td>{RETAILERS[c.retailer].name}{c.estimates > 0 && <small className="to-buy"> Includes estimates</small>}</td>
                 <td className="num dim">{c.carried} of {chosen.length}</td>
                 <td className="num">{money(c.total)}</td>
               </tr>
@@ -474,12 +479,12 @@ export function toLegalNotice(doc: Pick<Document, 'getElementById'> = document) 
 }
 
 /** The phone's bottom bar. `legal`: the build has a Legal notice, so a small badge leads to it in the summary. */
-export function Dock({ total, status, toBuy, noPrice, legal }: { total: number; status: { cls: string; text: string }; toBuy: boolean; noPrice: string; legal: boolean }) {
+export function Dock({ total, status, toBuy, noPrice, estimates = '', legal }: { total: number; status: { cls: string; text: string }; toBuy: boolean; noPrice: string; estimates?: string; legal: boolean }) {
   const toSummary = () => document.getElementById('summary')?.scrollIntoView({ behavior: 'smooth' });
   return (
     <div className="dock" role="region" aria-label="Build total">
       <div>
-        <div className="dock-total">{money(total)}{toBuy && <small> to buy</small>}{noPrice && <small> · {noPrice}</small>}</div>
+        <div className="dock-total">{money(total)}{toBuy && <small> to buy</small>}{estimates && <small> · {estimates}</small>}{noPrice && <small> · {noPrice}</small>}</div>
         <p className={'status ' + status.cls}>{status.text}{legal && <> <button className="dock-legal" aria-label="Legal notice: see the summary" aria-controls={SUMMARY_LEGAL_ID} onClick={() => toLegalNotice()}>Legal</button></>}</p>
       </div>
       <button className="btn" onClick={toSummary}>Summary</button>

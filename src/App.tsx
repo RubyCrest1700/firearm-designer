@@ -280,7 +280,7 @@ export default function App() {
           </div>
           <div>
             <p className="foot-title">Good to Know</p>
-            <p>Prices marked Sample aren't tracked yet. List Price and dated Factory Part prices were checked by hand on that date; undated Factory Part prices are estimates. A From price is a holster before its light option. Always confirm the price at the retailer.</p>
+            <p>Prices marked Estimate are rough figures, not current store prices. List Price and dated Factory Part prices were checked by hand on that date; undated Factory Part prices are also estimates. A From price is a holster before its light option. Always confirm the price at the retailer.</p>
             <p>Parts marked FFL are serialized and treated as the firearm under federal law, so they ship to a licensed dealer. Laws vary by state.</p>
           </div>
         </div>

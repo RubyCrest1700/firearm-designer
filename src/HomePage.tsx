@@ -1,10 +1,10 @@
 import { PLATFORMS } from './data';
 import { RETAILERS } from './data/retailers';
 import { PAUSED } from './data/helpers';
-import { bestOffer, money, noPriceNote, presetSelection, baseSelection, toBuild } from './engine';
+import { bestOffer, estimateNote, money, noPriceNote, presetSelection, baseSelection, toBuild } from './engine';
 import { Blueprint } from './drawings';
 import { statesFor } from './status';
-import { buildOf, totalOf, unpricedOf } from './store';
+import { buildOf, estimatedOf, totalOf, unpricedOf } from './store';
 import { biggestDrops } from './data/history';
 import { FAQ_PICKS } from './guides/picks';
 import type { Part } from './types';
@@ -49,6 +49,7 @@ export function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string, p
                   const budget = toBuild(p, presetSelection(p, 'budget'));
                   const from = totalOf(p, budget);
                   const noPrice = noPriceNote(unpricedOf(p, budget));
+                  const estimates = estimateNote(estimatedOf(p, budget));
                   return (
                     <button className="tile card" key={p.id} onClick={() => onPick(p.id)}>
                       <span className="thumb">
@@ -58,7 +59,7 @@ export function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string, p
                         <span className="tile-maker">{p.maker}</span>
                         <span className="tile-name">{p.name}</span>
                         <span className="tile-blurb">{p.blurb}</span>
-                        <span className="tile-from">Starter builds from <b>{money(from)}</b>{noPrice && <> · {noPrice}</>}</span>
+                        <span className="tile-from">Starter builds from <b>{money(from)}</b>{estimates && <> · {estimates}</>}{noPrice && <> · {noPrice}</>}</span>
                       </span>
                     </button>
                   );
@@ -97,7 +98,7 @@ export function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string, p
           <ol className="steps">
             <li className="card"><b>Pick a Platform</b><span>Start blank, or from a budget, value or premium build that already fits together.</span></li>
             <li className="card"><b>Choose Your Parts</b><span>Every part is checked against the rest of the build. Anything that won't fit, or needs a second look, is flagged before you buy.</span></li>
-            <li className="card"><b>Buy at the Best Price</b><span>See each part's price at every retailer we track, save the build, and get an email if a part drops in price.</span></li>
+            <li className="card"><b>Buy at the Best Price</b><span>See each part's price at every retailer we list, save the build, and get an email if a part drops in price.</span></li>
           </ol>
         </section>
 

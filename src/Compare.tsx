@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { PLATFORMS, canonicalPlatform } from './data';
 import type { RegionState } from './Blueprint';
 import { Blueprint } from './drawings';
-import { bestOffer, money, noPriceNote, ownedOf, partIds, type Selection } from './engine';
-import { FEATURED, buildOf, selectionFromParts, totalOf, unpricedOf, type SavedBuild } from './store';
+import { ESTIMATE_LABEL, bestOffer, estimateNote, isEstimate, money, noPriceNote, ownedOf, partIds, totalNotes, type Selection } from './engine';
+import { FEATURED, buildOf, estimatedOf, selectionFromParts, totalOf, unpricedOf, type SavedBuild } from './store';
 import { getBuild, listBuilds, type CommunityBuild } from './community';
 import { buildStatus, statesFor } from './status';
 import { buildWeight, formatWeight } from './weight';
@@ -57,8 +57,8 @@ function factsOf(item: CompareItem) {
     status: buildStatus(platform, build, issues, owned.other),
     toBuy: totalOf(platform, build, owned.owned),
     full: totalOf(platform, build),
-    toBuyNote: noPriceNote(unpricedOf(platform, build, owned.owned)),
-    fullNote: noPriceNote(unpricedOf(platform, build)),
+    toBuyNote: totalNotes(estimateNote(estimatedOf(platform, build, owned.owned)), noPriceNote(unpricedOf(platform, build, owned.owned))),
+    fullNote: totalNotes(estimateNote(estimatedOf(platform, build)), noPriceNote(unpricedOf(platform, build))),
     weight: buildWeight(platform, build),
     parts: partIds(item.selection).length + owned.other.size,
     ownedCount: owned.owned.size + owned.other.size,
@@ -156,7 +156,7 @@ function weightDiff(fa: Facts, fb: Facts): [ReactNode, ReactNode] | undefined {
   return d < 0 ? [t, null] : [null, t];
 }
 
-/** A total, with the note when some of its parts have no price. */
+/** A total, with its notes when some of its prices are estimates or some of its parts have no price. */
 const withNote = (total: number, note: string): ReactNode => (note ? <>{money(total)} <small className="dim">{note}</small></> : money(total));
 
 function FactRow({ label, a, b, diff }: { label: string; a: ReactNode; b: ReactNode; diff?: [ReactNode, ReactNode] }) {
@@ -215,7 +215,7 @@ function PartCell({ f, slot }: { f: Facts; slot: Slot }) {
     <span className="cmp-cell">
       <span><span className="brand-dim">{part.brand}</span> {part.name}</span>
       <span className="cmp-price">
-        {f.owned.owned.has(slot.id) ? <span className="owned-note">You Own It</span> : best ? money(best.price) : '—'}
+        {f.owned.owned.has(slot.id) ? <span className="owned-note">You Own It</span> : best ? <span>{money(best.price)}{isEstimate(best) && <small className="to-buy"> {ESTIMATE_LABEL}</small>}</span> : '—'}
         {fit && <span className={'fit-tag ' + f.states[slot.id]}>{fit}</span>}
       </span>
     </span>
@@ -256,7 +256,7 @@ function Chooser({ label, saved, current, other, lastPlatform, skipCurrent, onPi
   );
   const totalText = (pid: string, sel: Selection) => {
     const { platform: p, build } = buildOf(pid, sel);
-    const note = noPriceNote(unpricedOf(p, build, ownedOf(sel).owned));
+    const note = totalNotes(estimateNote(estimatedOf(p, build, ownedOf(sel).owned)), noPriceNote(unpricedOf(p, build, ownedOf(sel).owned)));
     return `${p.name} · ${money(totalOf(p, build, ownedOf(sel).owned))}${note ? ` (${note})` : ''}`;
   };
 
