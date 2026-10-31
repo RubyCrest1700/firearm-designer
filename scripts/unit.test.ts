@@ -24,6 +24,7 @@ import { AlertsPanel } from '../src/SavedPage';
 import { GUIDES, type FitChart } from '../src/guides/content';
 import { RETAILERS } from '../src/data/retailers';
 import { priceIndex } from './og-index';
+import { retailersFrom } from './sources.mjs';
 import { cardNotice } from './og-notice';
 import history from '../data/price-history.json';
 import type { Issue, Part, Platform } from '../src/types';
@@ -1179,4 +1180,12 @@ test('a build saved between the two pauses: the part paused later resets, the pa
   } finally {
     mock.timers.reset();
   }
+});
+
+/* ------------------------------------------------------------------ retailers the scripts read */
+
+test('the scripts read every retailer in src/data/retailers.ts, so a new entry their regex misses fails here', () => {
+  const read = retailersFrom(readFileSync('src/data/retailers.ts', 'utf8'));
+  assert.deepEqual(Object.keys(read).sort(), Object.keys(RETAILERS).sort());
+  for (const r of Object.values(RETAILERS)) assert.equal(read[r.id].name, r.name, r.id);
 });

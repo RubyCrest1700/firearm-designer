@@ -7,8 +7,7 @@
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { basename } from 'node:path';
-import { registrableDomain } from './domains.mjs';
-import { readRetailers, readSources } from './sources.mjs';
+import { isDay, readRetailers, readSources } from './sources.mjs';
 
 const COMMAND = 'npm run retailers';
 const HEADER = `# Retailers
@@ -18,7 +17,6 @@ Built from src/data/retailers.ts, data/sources.json and data/retailer-checks.jso
 `;
 const COLUMNS = ['Retailer', 'Domain', 'Status', 'Paused since', 'Reason', 'Links', 'Last price check'];
 
-const isDay = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
 const byKey = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 
 /**
@@ -49,12 +47,12 @@ export function renderRetailerList(retailers, sources, checks) {
     const pause = sources.paused?.[r.id];
     return row([
       r.name,
-      registrableDomain(new URL(r.search).host),
+      new URL(r.search).host.replace(/^www\./, ''),
       pause ? 'paused' : 'active',
       pause?.since ?? '-',
       pause?.reason ?? '-',
       links[r.id] ?? 0,
-      checks[r.id] ?? 'never',
+      checks[r.id] ?? 'none recorded',
     ]);
   });
   return `${HEADER}\n${row(COLUMNS)}\n|${COLUMNS.map(() => '---').join('|')}|\n${rows.join('\n')}\n`;

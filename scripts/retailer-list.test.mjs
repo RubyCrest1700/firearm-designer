@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { advanceChecks, renderRetailerList, retailerListProblems } from './retailer-list.mjs';
-import { retailersFrom } from './sources.mjs';
+import { isDay, retailersFrom } from './sources.mjs';
 
 const retailers = {
   ZED: { id: 'ZED', name: 'Zed Arms', search: 'https://www.zedarms.example/search?q=' },
@@ -36,6 +36,15 @@ test('an offer with no usable date moves nothing, and the input ledger is left a
   assert.deepEqual(ledger, { BUD: '2026-10-21' });
 });
 
+test('an impossible day moves nothing, even when it would sort newest', () => {
+  for (const day of ['2026-99-99', '2026-13-01', '2026-02-30', '2026-00-10']) {
+    assert.equal(isDay(day), false, day);
+    assert.deepEqual(advanceChecks({ BUD: '2026-10-21' }, { offers: { a: { BUD: offer(`${day}T08:00:00.000Z`), ZED: offer(`${day}T08:00:00.000Z`) } } }), { BUD: '2026-10-21' }, day);
+  }
+  assert.equal(isDay('2028-02-29'), true);
+  assert.deepEqual(advanceChecks({}, { offers: { a: { BUD: offer('2028-02-29T08:00:00.000Z') } } }), { BUD: '2028-02-29' });
+});
+
 test('the ledger comes back sorted by id', () => {
   const out = advanceChecks({ ZED: '2026-10-23', AB: '2026-10-23' }, { offers: { a: { BUD: offer('2026-10-30T08:00:00.000Z') } } });
   assert.deepEqual(Object.keys(out), ['AB', 'BUD', 'ZED']);
@@ -43,7 +52,7 @@ test('the ledger comes back sorted by id', () => {
 
 test('a table sorted by name, ignoring case, with each column filled in', () => {
   assert.deepEqual(rows(render()), [
-    '| abel Supply | abel.co.uk | active | - | - | 0 | never |',
+    '| abel Supply | shop.abel.co.uk | active | - | - | 0 | none recorded |',
     "| Bud's Parts | budsparts.example | active | - | - | 1 | 2026-10-30 |",
     '| Zed Arms | zedarms.example | paused | 2026-10-24 | robots.txt refuses the price bot | 2 | 2026-10-23 |',
   ]);
@@ -56,9 +65,15 @@ test('the header says the file is generated and how to regenerate it, and the la
   assert.match(text, /^\| Retailer \| Domain \| Status \| Paused since \| Reason \| Links \| Last price check \|$/m);
 });
 
-test('a retailer with no check date reads "never", and one with no links reads 0', () => {
+test('the domain is the search link host without a leading www., so a store on a shared platform shows its own host', () => {
+  const forge = { FORGE: { id: 'FORGE', name: 'Forged Armory', search: 'https://forged-armory.odoo.com/shop?search=' } };
+  assert.equal(rows(render({ retailers: forge, sources: { parts: {} }, checks: {} }))[0], '| Forged Armory | forged-armory.odoo.com | active | - | - | 0 | none recorded |');
+  assert.ok(rows(render()).find((r) => r.startsWith('| Zed Arms')).startsWith('| Zed Arms | zedarms.example |'));
+});
+
+test('a retailer with no check date reads "none recorded", and one with no links reads 0', () => {
   const row = rows(render({ checks: {}, sources: { parts: {} } })).find((r) => r.startsWith('| Zed Arms'));
-  assert.equal(row, '| Zed Arms | zedarms.example | active | - | - | 0 | never |');
+  assert.equal(row, '| Zed Arms | zedarms.example | active | - | - | 0 | none recorded |');
 });
 
 test('a paused retailer\'s links still count', () => {

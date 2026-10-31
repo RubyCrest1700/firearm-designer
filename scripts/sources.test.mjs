@@ -67,7 +67,7 @@ test('an unknown retailer id in "paused" fails instead of pausing nothing', () =
 test('a paused entry without a real pause date or a reason fails, so the site always knows which history to drop', () => {
   const ok = { since: '2026-10-22', reason: 'why' };
   assert.equal(pausedIds({ paused: { PA: ok }, parts: {} }, retailers).has('PA'), true);
-  for (const bad of ['2026-10-22: why', { reason: 'why' }, { since: '2026-10-22' }, { since: '2026-10-22', reason: ' ' }, { since: '10/22/2026', reason: 'why' }, { since: '2026-02-30', reason: 'why' }, null])
+  for (const bad of ['2026-10-22: why', { reason: 'why' }, { since: '2026-10-22' }, { since: '2026-10-22', reason: ' ' }, { since: '10/22/2026', reason: 'why' }, { since: '2026-02-30', reason: 'why' }, { since: '2026-99-99', reason: 'why' }, null])
     assert.throws(() => pausedIds({ paused: { PA: bad }, parts: {} }, retailers), /PA needs \{ "since"/, JSON.stringify(bad));
 });
 

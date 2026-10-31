@@ -18,7 +18,7 @@ export function retailersFrom(text) {
 export const readRetailers = () => retailersFrom(readFileSync('src/data/retailers.ts', 'utf8'));
 
 /** A real calendar day written YYYY-MM-DD. */
-const isDay = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && new Date(`${s}T00:00:00Z`).toISOString().slice(0, 10) === s;
+export const isDay = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`)) && new Date(`${s}T00:00:00Z`).toISOString().slice(0, 10) === s;
 
 /**
  * The paused retailer ids. Throws on an id that isn't a retailer, so a typo can't leave a store running, and on an
@@ -66,7 +66,7 @@ export function pausedHosts(sources, retailers) {
   return hosts;
 }
 
-/** data/sources.json as written: every link, paused retailers included. Only this file reads it. */
+/** data/sources.json as written: every link, paused retailers included. Scripts that fetch must use readActiveSources, not this. */
 export const readSources = () => JSON.parse(readFileSync('data/sources.json', 'utf8'));
 
 /** The links the price job and the weight reader may fetch: data/sources.json without the paused retailers. */
