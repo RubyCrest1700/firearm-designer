@@ -9,17 +9,21 @@ import { extractWeight } from './extract-price.mjs';
 import { robotsGate } from './robots.mjs';
 import { readPage } from './robots.mjs';
 import { readFetchableSources } from './sources.mjs';
+import { readNoFetchHosts } from './sources.mjs';
 
 const USER_AGENT = 'FirearmDesignerPriceBot/0.1 (+https://github.com/RubyCrest1700/firearm-designer)';
 const HOST_DELAY_MS = 5000;
 // Paused and links-only retailers ("paused" and "linksOnly" in data/sources.json) are left out.
 const sources = readFetchableSources();
+// A second lock at request time: no request, redirect hop or robots.txt reaches these hosts (scripts/sources.mjs).
+const NO_FETCH_HOSTS = readNoFetchHosts();
 const current = JSON.parse(readFileSync('data/weights.json', 'utf8')).parts ?? {};
 
 const lastHit = new Map();
 /** One request per host every HOST_DELAY_MS, redirect hops and robots.txt included. robotsGate sets `redirect`. */
 async function politeFetch(url, init = {}) {
   const u = new URL(url);
+  if (NO_FETCH_HOSTS.has(u.host)) throw new Error(`no-fetch host ${u.host}`);
   const wait = (lastHit.get(u.host) ?? 0) + HOST_DELAY_MS - Date.now();
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
   lastHit.set(u.host, Date.now());

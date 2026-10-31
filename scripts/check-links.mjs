@@ -1,4 +1,4 @@
-// Checks every outbound link on the site: retailer product pages, retailer search links, and the sources
+// Checks the site's outbound links, skipping paused and links-only retailers' sites: retailer product pages, retailer search links, and the sources
 // cited in warnings and FAQ pages. Run by .github/workflows/check-links.yml after `npm run build`.
 // Same manners as the price job: robots.txt respected, one request per host every few seconds.
 // Fails only on links that are really gone (404/410, or the address no longer exists). Retailers that block
@@ -45,6 +45,7 @@ const lastHit = new Map();
 /** One request per host every HOST_DELAY_MS, redirect hops and robots.txt included. robotsGate sets `redirect`. */
 async function politeFetch(url, init = {}) {
   const u = new URL(url);
+  if (NO_FETCH_HOSTS.has(u.host)) throw new Error(`no-fetch host ${u.host}`);
   // A loop, since a busy event loop can fire a timer a few ms early.
   for (let wait; (wait = (lastHit.get(u.host) ?? 0) + HOST_DELAY_MS - Date.now()) > 0; ) await new Promise((r) => setTimeout(r, wait));
   lastHit.set(u.host, Date.now());

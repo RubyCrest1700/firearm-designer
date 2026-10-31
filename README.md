@@ -61,7 +61,11 @@ the reason, the same way (`"CTD": { "since": "2026-10-31", "reason": "..." }`). 
 `read-weights` and `check-links` then send nothing to that retailer's site, robots.txt and subdomains
 included, but the site keeps its links and Sample prices as they were. An id can't be under both
 `"paused"` and `"linksOnly"`, and the same checks apply to an unknown id or a missing date or reason.
-To undo, delete the entry. `RETAILERS.md` shows the status and needs `npm run retailers` in the same PR.
+A store's Sample price and link show only on parts with no live or list price. Listing a store that has
+live prices drops them on the next nightly run, so measure the effect on shown prices first and use
+Plan A, the merge order that keeps price-alert emails quiet. To undo, delete the entry and remove the id
+from `LINKS_ONLY` in `scripts/sources.test.mjs` and `LINKS_ONLY_IDS` in `scripts/unit.test.ts`.
+`RETAILERS.md` shows the status, so either change needs `npm run retailers` in the same PR.
 
 ## Where things live
 

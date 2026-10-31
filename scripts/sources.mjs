@@ -1,16 +1,17 @@
 // Which product links the scripts may read. data/sources.json keeps every link, and its "paused" object lists
 // retailers we've stopped reading for now ({ "PA": { "since": "2026-10-22", "reason": "why" } }). The price job, the
-// link check and the weight reader all go through here (readActiveSources, readPausedHosts), so a paused retailer's
-// pages and search links are never fetched. The site leaves the same retailers' prices out (src/data/helpers.ts), and
-// the price history up to the pause date for the parts they priced (src/data/history.ts). Delete an entry from
-// "paused" to resume.
+// link check and the weight reader all go through here (see "linksOnly" below for which reader each uses), so a paused
+// retailer's pages and search links are never fetched. The site leaves the same retailers' prices out
+// (src/data/helpers.ts), and the price history up to the pause date for the parts they priced (src/data/history.ts).
+// Delete an entry from "paused" to resume.
 //
 // Its "linksOnly" object lists retailers that are not paused but that we don't request at all
 // ({ "CTD": { "since": "2026-10-31", "reason": "why" } }). The site keeps their links and Sample prices exactly as it
 // would for any active retailer, and nothing about them reaches the app (scripts/price-table.mjs). The three fetching
 // scripts stay off their whole sites, robots.txt and subdomains included: update-prices and read-weights read
-// readFetchableSources, and check-links skips readNoFetchHosts. pausedIds, activeSources and pausedHosts stay
-// paused-only. Delete an entry from "linksOnly" to resume.
+// readFetchableSources, check-links skips readNoFetchHosts, and the politeFetch in all three refuses a request to
+// readNoFetchHosts, redirect hops and robots.txt included. pausedIds, activeSources and pausedHosts stay paused-only.
+// Delete an entry from "linksOnly" to resume.
 
 import { readFileSync } from 'node:fs';
 import { registrableDomain } from './domains.mjs';
@@ -28,14 +29,26 @@ export const readRetailers = () => retailersFrom(readFileSync('src/data/retailer
 export const isDay = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`)) && new Date(`${s}T00:00:00Z`).toISOString().slice(0, 10) === s;
 
 /**
+ * One retailer list of data/sources.json ("paused" or "linksOnly"). Left out, it's empty. Anything but a plain object
+ * throws, so a null or a list can't read as "nobody is listed" and leave a store running.
+ */
+function retailerList(sources, key) {
+  const list = sources[key];
+  if (list === undefined) return {};
+  if (list === null || typeof list !== 'object' || Array.isArray(list)) throw new Error(`data/sources.json "${key}" must be an object keyed by retailer id`);
+  return list;
+}
+
+/**
  * The paused retailer ids. Throws on an id that isn't a retailer, so a typo can't leave a store running, and on an
  * entry without a pause date ("since", YYYY-MM-DD) and a reason, since the site needs the date to drop old history.
  */
 export function pausedIds(sources, retailers) {
-  const ids = Object.keys(sources.paused ?? {});
-  const unknown = ids.filter((id) => !retailers[id]);
+  const list = retailerList(sources, 'paused');
+  const ids = Object.keys(list);
+  const unknown = ids.filter((id) => !Object.hasOwn(retailers, id));
   if (unknown.length) throw new Error(`data/sources.json "paused" names unknown retailer${unknown.length > 1 ? 's' : ''} ${unknown.join(', ')} (see src/data/retailers.ts)`);
-  const bad = ids.filter((id) => { const e = sources.paused[id]; return !e || !isDay(e.since) || typeof e.reason !== 'string' || !e.reason.trim(); });
+  const bad = ids.filter((id) => { const e = list[id]; return !e || !isDay(e.since) || typeof e.reason !== 'string' || !e.reason.trim(); });
   if (bad.length) throw new Error(`data/sources.json "paused" entry for ${bad.join(', ')} needs { "since": "YYYY-MM-DD", "reason": "..." }`);
   return new Set(ids);
 }
@@ -78,12 +91,13 @@ export function pausedHosts(sources, retailers) {
  * and a reason, and on an id that is also paused, since a retailer can't both keep its prices and lose them.
  */
 export function linksOnlyIds(sources, retailers) {
-  const ids = Object.keys(sources.linksOnly ?? {});
-  const unknown = ids.filter((id) => !retailers[id]);
+  const list = retailerList(sources, 'linksOnly');
+  const ids = Object.keys(list);
+  const unknown = ids.filter((id) => !Object.hasOwn(retailers, id));
   if (unknown.length) throw new Error(`data/sources.json "linksOnly" names unknown retailer${unknown.length > 1 ? 's' : ''} ${unknown.join(', ')} (see src/data/retailers.ts)`);
-  const bad = ids.filter((id) => { const e = sources.linksOnly[id]; return !e || !isDay(e.since) || typeof e.reason !== 'string' || !e.reason.trim(); });
+  const bad = ids.filter((id) => { const e = list[id]; return !e || !isDay(e.since) || typeof e.reason !== 'string' || !e.reason.trim(); });
   if (bad.length) throw new Error(`data/sources.json "linksOnly" entry for ${bad.join(', ')} needs { "since": "YYYY-MM-DD", "reason": "..." }`);
-  const both = ids.filter((id) => Object.hasOwn(sources.paused ?? {}, id));
+  const both = ids.filter((id) => Object.hasOwn(retailerList(sources, 'paused'), id));
   if (both.length) throw new Error(`data/sources.json lists ${both.join(', ')} under both "paused" and "linksOnly"`);
   return new Set(ids);
 }
@@ -121,5 +135,5 @@ export const readPausedHosts = () => pausedHosts(readSources(), readRetailers())
 /** The links the price job and the weight reader may fetch: data/sources.json without the paused and links-only retailers. */
 export const readFetchableSources = () => fetchableSources(readSources(), readRetailers());
 
-/** The hosts the link check skips: the paused and links-only retailers' sites. */
+/** The paused and links-only retailers' sites: the link check skips them, and all three scripts refuse any request to them. */
 export const readNoFetchHosts = () => noFetchHosts(readSources(), readRetailers());

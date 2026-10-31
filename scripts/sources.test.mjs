@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { robotsGate } from './robots.mjs';
 import { activeSources, fetchableSources, linksOnlyIds, noFetchHosts, pausedHosts, pausedIds, readActiveSources, readFetchableSources, readNoFetchHosts, readPausedHosts, retailersFrom } from './sources.mjs';
 
 const read = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
@@ -86,7 +87,7 @@ test('the price job, weight reader and link check read links only through the pa
     assert.match(text, new RegExp(`^import \{ ${fn} \} from './sources\.mjs';$`, 'm'), file);
     assert.match(text, fn === 'readFetchableSources' ? /^const sources = readFetchableSources\(\);$/m : /^const NO_FETCH_HOSTS = readNoFetchHosts\(\);$/m, file);
     assert.doesNotMatch(text, /sources\.json'/, `${file} must not read data/sources.json directly`);
-    assert.doesNotMatch(text, /\b(activeSources|pausedHosts|pausedIds|fetchableSources|noFetchHosts|linksOnlyIds|readActiveSources|readPausedHosts)\(/, `${file} must not filter by hand`);
+    assert.doesNotMatch(text, /\b(activeSources|pausedHosts|pausedIds|fetchableSources|noFetchHosts|linksOnlyIds|readActiveSources|readPausedHosts|readSources|readRetailers)\(/, `${file} must not filter by hand`);
   }
   // update-prices builds its fetch jobs, and read-weights its page list, from that filtered `sources` alone.
   assert.match(read('scripts/update-prices.mjs'), /^const jobs = Object\.entries\(sources\)\.flatMap\(/m);
@@ -178,6 +179,34 @@ test('a links-only entry without a real date or a reason fails', () => {
     assert.throws(() => linksOnlyIds({ linksOnly: { CTD: bad }, parts: {} }, retailers), /"linksOnly" entry for CTD needs \{ "since"/, JSON.stringify(bad));
 });
 
+test('a "paused" or "linksOnly" that is not a plain object fails instead of listing nobody', () => {
+  for (const bad of [null, [], ['PA'], 0, 5, true, false, '', 'PA']) {
+    const shown = JSON.stringify(bad);
+    assert.throws(() => pausedIds({ paused: bad, parts: {} }, retailers), /"paused" must be an object/, shown);
+    assert.throws(() => linksOnlyIds({ linksOnly: bad, parts: {} }, retailers), /"linksOnly" must be an object/, shown);
+    assert.throws(() => linksOnlyIds({ paused: bad, linksOnly: { CTD: OK_ENTRY }, parts: {} }, retailers), /"paused" must be an object/, shown);
+    for (const fn of [activeSources, pausedHosts, fetchableSources, noFetchHosts]) assert.throws(() => fn({ paused: bad, parts: {} }, retailers), /"paused" must be an object/, `${fn.name} ${shown}`);
+    for (const fn of [fetchableSources, noFetchHosts]) assert.throws(() => fn({ linksOnly: bad, parts: {} }, retailers), /"linksOnly" must be an object/, `${fn.name} ${shown}`);
+  }
+});
+
+test('"paused" and "linksOnly" may be left out or empty', () => {
+  for (const s of [{ parts: {} }, { paused: {}, linksOnly: {}, parts: {} }]) {
+    assert.deepEqual([...pausedIds(s, retailers)], []);
+    assert.deepEqual([...linksOnlyIds(s, retailers)], []);
+    assert.deepEqual([...noFetchHosts(s, retailers)], []);
+  }
+});
+
+test('a name every object inherits is not a retailer', () => {
+  for (const id of ['constructor', 'toString', 'hasOwnProperty', '__proto__']) {
+    const list = JSON.parse(`{ ${JSON.stringify(id)}: ${JSON.stringify(OK_ENTRY)} }`);
+    assert.deepEqual(Object.keys(list), [id]);
+    assert.throws(() => pausedIds({ paused: list, parts: {} }, retailers), new RegExp(`"paused" names unknown retailer ${id}`), id);
+    assert.throws(() => linksOnlyIds({ linksOnly: list, parts: {} }, retailers), new RegExp(`"linksOnly" names unknown retailer ${id}`), id);
+  }
+});
+
 test('a retailer listed under both "paused" and "linksOnly" fails', () => {
   const s = { paused: { CTD: OK_ENTRY }, linksOnly: { CTD: OK_ENTRY }, parts: {} };
   for (const fn of [linksOnlyIds, fetchableSources, noFetchHosts]) assert.throws(() => fn(s, retailers), /CTD under both "paused" and "linksOnly"/, fn.name);
@@ -236,6 +265,58 @@ test('listing the links-only retailers leaves the paused results as they are', (
   assert.deepEqual([...pausedHosts(sources, retailers)].sort(), [...pausedHosts(withoutThem, retailers)].sort());
   for (const h of ['www.cheaperthandirt.com', 'www.brownells.com', 'www.sigsauer.com', 'palmettostatearmory.com']) assert.ok(!pausedHosts(sources, retailers).has(h), h);
   assert.ok(Object.values(activeSources(sources, retailers)).some((b) => b.CTD), 'activeSources still holds their links');
+});
+
+// The scripts run network code on import, so the line itself is checked as text.
+test('the price job, weight reader and link check refuse a no-fetch host at request time, in politeFetch', () => {
+  for (const file of ['scripts/update-prices.mjs', 'scripts/read-weights.mjs', 'scripts/check-links.mjs']) {
+    const text = read(file);
+    assert.match(text, /^import \{ readNoFetchHosts \} from '\.\/sources\.mjs';$/m, file);
+    assert.match(text, /^const NO_FETCH_HOSTS = readNoFetchHosts\(\);$/m, file);
+    assert.match(text, /async function politeFetch\(url, init = \{\}\) \{\r?\n {2}const u = new URL\(url\);\r?\n {2}if \(NO_FETCH_HOSTS\.has\(u\.host\)\) throw new Error\(`no-fetch host \$\{u\.host\}`\);\r?\n/, file);
+  }
+});
+
+/** The guard each politeFetch has, in front of a made-up network. `asked` records what got past it. */
+const guardedGate = (answer, refuse = (u) => noFetchHosts(sources, retailers).has(u.host)) => {
+  const asked = [];
+  const get = async (url) => {
+    const u = new URL(url);
+    if (refuse(u)) throw new Error(`no-fetch host ${u.host}`);
+    asked.push(url);
+    return answer(url);
+  };
+  return { asked, ...robotsGate({ get, agent: 'TestBot' }) };
+};
+
+test('a no-fetch host\'s robots.txt counts as unreadable, so that host is disallowed and nothing reaches it', async () => {
+  const g = guardedGate(() => new Response('', { status: 200 }));
+  for (const url of ['https://www.brownells.com/p', 'https://blog.cheaperthandirt.com/p', 'https://www.primaryarms.com/p']) {
+    const got = await g.safeGet(url);
+    assert.equal(got.blocked, url);
+    assert.equal(got.unreadable, true, url);
+    assert.match(got.error.message, /^no-fetch host /, url);
+    assert.equal(await g.allowed(url), false, url);
+  }
+  assert.deepEqual(g.asked, []);
+});
+
+test('a robots.txt that redirects onto a no-fetch host counts as unreadable too, and an ordinary host still works', async () => {
+  const g = guardedGate((url) => {
+    if (url === 'https://shop.example/robots.txt') return new Response(null, { status: 301, headers: { location: 'https://www.sigsauer.com/robots.txt' } });
+    return new Response('page', { status: url.endsWith('/robots.txt') ? 404 : 200 });
+  });
+  const got = await g.safeGet('https://shop.example/p');
+  assert.equal(got.blocked, 'https://shop.example/p');
+  assert.equal(got.unreadable, true);
+  assert.equal((await g.safeGet('https://other.example/p')).res.status, 200);
+  assert.deepEqual(g.asked, ['https://shop.example/robots.txt', 'https://other.example/robots.txt', 'https://other.example/p']);
+});
+
+test('a page refused after its robots.txt was read rejects, into the script\'s own catch', async () => {
+  const g = guardedGate(() => new Response('', { status: 404 }), (u) => u.pathname !== '/robots.txt');
+  await assert.rejects(g.safeGet('https://shop.example/p'), /no-fetch host shop\.example/);
+  assert.deepEqual(g.asked, ['https://shop.example/robots.txt']);
 });
 
 test('the no-fetch hosts cover the links-only retailers\' whole sites, the paused ones, and no one else', () => {
