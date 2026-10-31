@@ -61,6 +61,23 @@ jobs:
             done
           fi
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Refresh retailer list
+        if: github.ref == 'refs/heads/main'
+        # Comes after the sha above, so build keeps using the price commit. A failure here, or a push that loses a race
+        # for main, only loses tonight's refresh: tomorrow's run picks it up, and check-data ignores the column it moves.
+        continue-on-error: true
+        # continue-on-error doesn't cover the job's own timeout, so a hang has to stop here first.
+        timeout-minutes: 5
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main
+          npm run retailers
+          if [ -n "$(git status --porcelain data/retailer-checks.json RETAILERS.md)" ]; then
+            git add data/retailer-checks.json RETAILERS.md
+            git commit -m "Update retailer list"
+            git push origin HEAD:main
+          fi
 
   build:
     needs: prices

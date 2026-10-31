@@ -520,7 +520,6 @@
       "VED": "https://www.vedderholsters.com/holsters/lighttuck/glock-17-gen-3-4-5-iwb-holster/"
     },
     "g26-bbl-lw": {
-      "LW": "https://www.lonewolfdist.com/Detail.aspx?PROD=919649",
       "BRD": "https://blackrifledepot.com/lone-wolf-alpha-wolf-m-26-threaded-9mm-barrel-for-glock-26/",
       "ARD": "https://ar15discounts.com/products/lone-wolf-alpha-wolf-m-26-threaded-9mm-barrel-for-glock-26/"
     },
@@ -545,7 +544,7 @@
       "ARD": "https://ar15discounts.com/products/spikes-tactical-stls018-spider-fire-safe-stripped-lower-223-rem-556nato-black/"
     },
     "g17-bbl-lw": {
-      "LW": "https://lonewolfdist.com/barrel-promotion/alphawolf-barrel-for-m-17-9mm-threaded-1-2-x-28/"
+      "BRD": "https://blackrifledepot.com/lone-wolf-alpha-wolf-9mm-fluted-threaded-barrel-for-glock-17-nitride/"
     },
     "ar-bcg-grendel": {
       "FAX": "https://faxonfirearms.com/FF65GBCGCNITRIDE",
@@ -599,7 +598,7 @@
       "KYG": "https://www.kygunco.com/product/armalite-10607002-2nd-gen-20rd-ar10-magazine"
     },
     "g19-bbl-lw": {
-      "LW": "https://lonewolfdist.com/barrel-promotion/alphawolf-barrel-for-m-19-9mm-threaded-1-2-x-28/",
+      "BRD": "https://blackrifledepot.com/lone-wolf-alpha-wolf-9mm-fluted-threaded-for-glock-19-nitride/",
       "RTB": "https://www.righttobear.com/lone-wolf-alpha-wolf-glock-19-threaded-barrel-sb-aw-19th/"
     },
     "ar-bbl-ba75": {
@@ -783,7 +782,7 @@
       "RA": "https://www.rainierarms.com/glock-g17-g34-oem-9mm-17rd-magazine/"
     },
     "g17-frame-g3": {
-      "RTB": "https://www.righttobear.com/glock-17-gen-3-frame-g17-gen3-oemf/"
+      "RSUP": "https://riflesupply.com/Glock-OEM-Stripped-Frame-Glock-17-22-34-Gen-3-Color-Options_p_1624.html"
     },
     "r-fg-bcmvg": {
       "RA": "https://www.rainierarms.com/bravo-company-mfg-bcm-gunfighter-vertical-grip-mlok-compatible-mod-3/",
@@ -989,8 +988,7 @@
       "KYG": "https://www.kygunco.com/product/spikes-tactical-sla009x-st-9x-heavy-buffer-9mm-fits-ar-15-rifles-stainless",
       "GRITR": "https://gritrsports.com/spikes-tactical-st-9x-9mm-heavy-buffer-sla009x",
       "CTD": "https://www.cheaperthandirt.com/spikes-tactical-ar-15-st-9x-9mm-heavy-buffer-7.7-ounce-303-stainless-steel-sla009x/fc-855319005280.html",
-      "AT3": "https://www.at3tactical.com/products/spikes-tactical-st-9x-9mm-heavy-buffer",
-      "BUDS": "https://www.budsgunshop.com/products/gun-parts-ar15/spikes-st-9x-9mm-heavy-buffer-stainless-finish-714019874"
+      "AT3": "https://www.at3tactical.com/products/spikes-tactical-st-9x-9mm-heavy-buffer"
     },
     "a9-stock-moesl": {
       "SPW": "https://www.sportsmans.com/shooting-gear-gun-supplies/gun-parts-accessories/gun-parts-magazines/rifle-parts/stocks-recoil-pads/magpul-moe-sl-carbine-stock/p/p40103",
@@ -1190,9 +1188,6 @@
       "KYG": "https://www.kygunco.com/product/springfield-armory-hellcat-pro-comp-osp-9mm-3.7-15rd-black",
       "ARD": "https://ar15discounts.com/products/springfield-armory-hellcat-pro-comp-osp-9mm-pistol-17-rounds/"
     },
-    "hc-slide-tp": {
-      "BUDS": "https://www.budsgunshop.com/products/gun-parts-miscellaneous/true-precision-axiom-pro-optic-cut-slide-hellcat-rmsc-171597"
-    },
     "hc-bbl-tp": {
       "SPW": "https://www.sportsmans.com/shooting-gear-gun-supplies/gun-parts-accessories/gun-parts-magazines/handgun-parts/handgun-barrels/true-precision-hellcat-pro-9mm-luger-threaded-handgun-barrel-37in-stainless/p/p314723",
       "RA": "https://www.rainierarms.com/true-precision-springfield-hellcat-pro-threaded-barrel-black-nitride/",
@@ -1266,9 +1261,6 @@
     "g17-bbl-lwm": {
       "BRD": "https://blackrifledepot.com/lone-wolf-alpha-wolf-9mm-fluted-threaded-barrel-for-glock-17-nitride/",
       "ARD": "https://ar15discounts.com/products/lone-wolf-alpha-wolf-9mm-fluted-threaded-barrel-for-glock-17-nitride/"
-    },
-    "g19-bbl-lwm": {
-      "BUDS": "https://www.budsgunshop.com/products/gun-parts-barrels/lone-wolf-alphawolf-barrel-glock-19-9mm-threaded-nitride-fluted-714019244"
     },
     "g26-bbl-lwm": {
       "ARD": "https://ar15discounts.com/products/lone-wolf-alpha-wolf-m-26-threaded-9mm-barrel-for-glock-26/",
@@ -1600,9 +1592,6 @@
     "g-mz-tp12": {
       "LW": "https://lonewolfdist.com/accessories/barrel-accessories/lwd-thread-protector-1-2-x-28-black-9mm-357sig/"
     },
-    "g34-bbl-lw": {
-      "LW": "https://lonewolfdist.com/barrels/glock-compatible-barrels/g34-35-tactical-length/alphawolf-barrel-for-m-34-9mm-threaded-1-2-x-28/"
-    },
     "gl-bbl-21lwt": {
       "LW": "https://lonewolfdist.com/barrels/glock-compatible-barrels/g20-21-40-41-full-size/alphawolf-barrel-for-m-21-45-acp-threaded-578-x-28/"
     },
@@ -1619,7 +1608,7 @@
       "LW": "https://lonewolfdist.com/barrels/glock-compatible-barrels/g20-21-40-41-full-size/lwd-barrel-m-20-10mm-stock-length/"
     },
     "gl-bbl-20to40": {
-      "LW": "https://lonewolfdist.com/barrel-promotion/alphawolf-barrel-for-m-20-conversion-to-40s-w-stock-length/"
+      "LW": "https://lonewolfdist.com/barrels/alphawolf-barrel-for-glock-40sw-pistols/"
     },
     "gl-bbl-21lw": {
       "LW": "https://lonewolfdist.com/barrel-promotion/alphawolf-barrel-for-m-21-45-acp-stock-length/"

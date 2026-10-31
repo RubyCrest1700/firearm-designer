@@ -10,6 +10,7 @@
     "artifact": "vite build --mode artifact && node scripts/make-artifact.mjs",
     "test": "node --test \"scripts/*.test.mjs\" worker/api.test.mjs && esbuild scripts/unit.test.ts --bundle --platform=node --log-level=warning --outfile=node_modules/.cache/unit.test.cjs && node node_modules/.cache/unit.test.cjs",
     "update-prices": "node scripts/update-prices.mjs",
+    "retailers": "node scripts/retailer-list.mjs",
     "guides": "esbuild scripts/build-guides.ts --bundle --platform=node --log-level=warning --outfile=node_modules/.cache/guides.cjs && node node_modules/.cache/guides.cjs",
     "prerender": "esbuild scripts/prerender-home.tsx --bundle --platform=node --format=esm --packages=external --jsx=automatic --loader:.css=empty --log-level=warning --outfile=node_modules/.cache/prerender.mjs && node node_modules/.cache/prerender.mjs",
     "og": "esbuild scripts/og-cards.tsx --bundle --platform=node --format=esm --packages=external --jsx=automatic --log-level=warning --outfile=node_modules/.cache/og.mjs && node node_modules/.cache/og.mjs"
