@@ -7,7 +7,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { awarenessFor } from '../src/awareness';
 import { PLATFORMS } from '../src/data/index';
-import { NFA_SHORT_NOTICE, PAUSED, SBR_MESSAGE, VERTICAL_GRIP_MESSAGE, shortBarrelStockIssue } from '../src/data/helpers';
+import { NFA_SHORT_NOTICE, PAUSED, SBR_MESSAGE, VERTICAL_GRIP_MESSAGE, parts as buildParts, shortBarrelStockIssue } from '../src/data/helpers';
 import { biggestDrops, daysAgo, hasHistory, partSeries, priceOn, recentChange, seriesOf } from '../src/data/history';
 import { baseSelection, bestOffer, candidateIssues, issuesFor, listedParts, noPriceNote, ownedOf, placementOf, presetSelection, priceRange, selectionTokens, singleRetailerCarts, toBuild, toBuyIds, unpricedCount, worst, type Selection } from '../src/engine';
 import { findParts } from '../src/find';
@@ -27,6 +27,7 @@ import { priceIndex } from './og-index';
 import { retailersFrom } from './sources.mjs';
 import { cardNotice } from './og-notice';
 import history from '../data/price-history.json';
+import sources from '../data/sources.json';
 import type { Issue, Part, Platform } from '../src/types';
 
 const platform = (id: string) => PLATFORMS.find((p) => p.id === id)!;
@@ -310,6 +311,32 @@ test('a part sold only by a paused retailer has no price and renders without one
   const priced = renderToStaticMarkup(createElement(Candidate, { part: part(ar15, 'ar-mz-vg6'), open: true, issues: [], sev: 'ok', selected: false, owned: false, onChoose: () => {}, onBuyClick: () => {} }));
   assert.match(priced, /<table class="offers">/);
   assert.doesNotMatch(priced, /Primary Arms|AR15Discounts|Vedder Holsters/);
+});
+
+/* ------------------------------------------------------------------ links-only retailers */
+
+// Links only stops the scripts' requests and nothing else: to the site these stores are ordinary retailers.
+const LINKS_ONLY_IDS = ['BRN', 'CTD', 'PSA', 'SIG'];
+const RAW_LINKS = (sources as unknown as { parts: Record<string, Record<string, string>> }).parts;
+
+test('the links-only retailers are not paused, and one of them alone gives a part no pausedThrough', () => {
+  assert.deepEqual(Object.keys((sources as unknown as { linksOnly: object }).linksOnly).sort(), LINKS_ONLY_IDS);
+  for (const id of LINKS_ONLY_IDS) assert.ok(!PAUSED.has(id), id);
+  const clean = Object.entries(RAW_LINKS).filter(([, b]) => LINKS_ONLY_IDS.some((r) => b[r]) && !Object.keys(b).some((r) => PAUSED.has(r)));
+  assert.ok(clean.length > 50, `${clean.length} parts`);
+  for (const [id, byRetailer] of clean) {
+    const retailer = LINKS_ONLY_IDS.find((r) => byRetailer[r])!;
+    const [built] = buildParts('slot', [{ id, offers: [[retailer, 100]] } as never]);
+    assert.equal(built.pausedThrough, undefined, id);
+  }
+});
+
+test('the links-only retailers\' sample offers are still shown, each with its tracked link', () => {
+  const [built] = buildParts('slot', [{ id: 'no-such-part', offers: LINKS_ONLY_IDS.map((r) => [r, 100]) } as never]);
+  assert.deepEqual(built.offers.map((o) => o.retailer), LINKS_ONLY_IDS);
+  assert.equal(built.pausedThrough, undefined);
+  const shown = PLATFORMS.flatMap((p) => p.parts).flatMap((x) => x.offers.filter((o) => LINKS_ONLY_IDS.includes(o.retailer) && o.url === RAW_LINKS[x.id]?.[o.retailer]));
+  assert.ok(shown.length > 0);
 });
 
 /* ------------------------------------------------------------------ saved builds */

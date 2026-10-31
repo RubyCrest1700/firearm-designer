@@ -10,7 +10,8 @@ import { extractPrice, implausiblePrice } from './extract-price.mjs';
 import { robotsGate } from './robots.mjs';
 import { readPage } from './robots.mjs';
 import { recordHistory, formatHistory } from './price-history.mjs';
-import { readActiveSources } from './sources.mjs';
+import { readFetchableSources } from './sources.mjs';
+import { readNoFetchHosts } from './sources.mjs';
 
 const USER_AGENT = 'FirearmDesignerPriceBot/0.1 (+https://github.com/RubyCrest1700/firearm-designer)';
 const HOST_DELAY_MS = 5000;
@@ -19,7 +20,10 @@ const KEEP_STALE_DAYS = 7;
 const dryRun = process.argv.includes('--dry-run');
 
 // Paused retailers ("paused" in data/sources.json) are left out: their pages aren't read and their prices drop out.
-const sources = readActiveSources();
+// Links-only retailers ("linksOnly") are left out too: no request goes to them, and the site keeps their Sample prices.
+const sources = readFetchableSources();
+// A second lock at request time: no request, redirect hop or robots.txt reaches these hosts (scripts/sources.mjs).
+const NO_FETCH_HOSTS = readNoFetchHosts();
 const previous = JSON.parse(readFileSync('data/prices.json', 'utf8'));
 const now = new Date();
 
@@ -28,6 +32,7 @@ const lastHit = new Map();
 /** One request per host every HOST_DELAY_MS, every redirect hop and robots.txt included. robotsGate sets `redirect`. */
 async function politeFetch(url, init = {}) {
   const u = new URL(url);
+  if (NO_FETCH_HOSTS.has(u.host)) throw new Error(`no-fetch host ${u.host}`);
   // A loop, since a busy event loop can fire a timer a few ms early.
   for (let wait; (wait = (lastHit.get(u.host) ?? 0) + HOST_DELAY_MS - Date.now()) > 0; ) await new Promise((r) => setTimeout(r, wait));
   lastHit.set(u.host, Date.now());

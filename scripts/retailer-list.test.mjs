@@ -62,8 +62,8 @@ test('the header says the file is generated and how to regenerate it, and the la
   const text = render();
   assert.match(text, /Generated file/);
   assert.match(text, /`npm run retailers`/);
-  assert.match(text, /^In the Status column, "active" only means the retailer is not paused\.$/m);
-  assert.match(text, /^\| Retailer \| Domain \| Status \| Paused since \| Reason \| Links \| Last price check \|$/m);
+  assert.match(text, /^In the Status column, "active" only means the retailer is neither paused nor links only\. "Links only" means we keep its links and Sample prices but don't request its pages\.$/m);
+  assert.match(text, /^\| Retailer \| Domain \| Status \| Since \| Reason \| Links \| Last price check \|$/m);
 });
 
 test('the domain is the search link host without a leading www., so a store on a shared platform shows its own host', () => {
@@ -75,6 +75,25 @@ test('the domain is the search link host without a leading www., so a store on a
 test('a retailer with no check date reads "none recorded", and one with no links reads 0', () => {
   const row = rows(render({ checks: {}, sources: { parts: {} } })).find((r) => r.startsWith('| Zed Arms'));
   assert.equal(row, '| Zed Arms | zedarms.example | active | - | - | 0 | none recorded |');
+});
+
+test('a links-only retailer shows its status and shares the date and reason columns, and its links still count', () => {
+  const linksOnly = { BUD: { since: '2026-10-31', reason: 'its product pages answer the price bot with a 403' } };
+  assert.equal(rows(render({ sources: { ...sources, linksOnly } })).find((r) => r.startsWith("| Bud's")), "| Bud's Parts | budsparts.example | links only | 2026-10-31 | its product pages answer the price bot with a 403 | 1 | 2026-10-30 |");
+  assert.ok(rows(render({ sources: { ...sources, linksOnly } })).find((r) => r.startsWith('| Zed Arms')).includes('| paused | 2026-10-24 |'));
+  assert.equal(rows(render({ sources: { ...sources, linksOnly }, checks: {} })).find((r) => r.startsWith("| Bud's")).endsWith(' | 1 | none recorded |'), true);
+});
+
+test('a changed links-only entry is reported', () => {
+  const linksOnly = { BUD: { since: '2026-10-31', reason: 'why' } };
+  const committed = render({ sources: { ...sources, linksOnly } });
+  assert.notDeepEqual(retailerListProblems(render(), committed), []);
+  assert.match(retailerListProblems(render({ sources: { ...sources, linksOnly: { BUD: { since: '2026-11-02', reason: 'why' } } } }), committed).join('\n'), /2026-11-02/);
+});
+
+test('Cheaper Than Dirt keeps its last price check in the ledger after going links only', () => {
+  const ledger = { BUDS: '2026-10-29', CTD: '2026-10-16' };
+  assert.deepEqual(advanceChecks(ledger, { offers: { a: { BUDS: offer('2026-10-30T08:00:00.000Z') } } }), { BUDS: '2026-10-30', CTD: '2026-10-16' });
 });
 
 test('a paused retailer\'s links still count', () => {

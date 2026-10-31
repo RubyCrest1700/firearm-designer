@@ -1,4 +1,4 @@
-# Checks every outbound link on the site (retailer product pages, search links, cited sources) once a week,
+# Checks the site's outbound links, skipping paused and links-only retailers' sites (retailer product pages, search links, cited sources) once a week,
 # and on pull requests that change links. A failed run means a link is really gone (404, or the site no
 # longer exists); retailers that block bots are listed in the log but don't fail the run.
 name: Check links

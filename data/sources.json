@@ -9,6 +9,13 @@
     "RA": { "since": "2026-10-26", "reason": "robots.txt refuses the price bot" },
     "MID": { "since": "2026-10-26", "reason": "robots.txt refuses the price bot" }
   },
+  "_linksOnly": "Retailers listed in \"linksOnly\" are not paused: their links and Sample prices stay on the site as they are, but update-prices, read-weights and check-links send no request to their sites, robots.txt and subdomains included. Their URLs stay below. Remove an entry to resume. \"since\" is the day we stopped requesting (YYYY-MM-DD). A retailer can't be listed under both \"paused\" and \"linksOnly\".",
+  "linksOnly": {
+    "CTD": { "since": "2026-10-31", "reason": "its robots.txt answers the price bot with a 403" },
+    "BRN": { "since": "2026-10-31", "reason": "its product pages answer the price bot with a 403" },
+    "SIG": { "since": "2026-10-31", "reason": "its product pages answer the price bot with a 403" },
+    "PSA": { "since": "2026-10-31", "reason": "its product pages answer the price bot with a 403" }
+  },
   "parts": {
     "a10-bcg-jp": {
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-bolts-bolt-carrier-groups/ar-.308-low-mass-operating-system-complete-carrier-group/",

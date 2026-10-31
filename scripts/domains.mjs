@@ -1,4 +1,4 @@
-// Host checks shared by the fetching scripts (scripts/robots.mjs) and the paused-retailer filter (scripts/sources.mjs).
+// Host checks shared by the fetching scripts (scripts/robots.mjs) and the paused and links-only filters (scripts/sources.mjs).
 // No dependencies: the registrable domain is the last two labels of a host name, or the last three when the last
 // two are a known two-part public suffix such as co.uk. That is enough for the US stores and makers we track; it is
 // not the full Public Suffix List.

@@ -1,4 +1,4 @@
-// Checks every outbound link on the site: retailer product pages, retailer search links, and the sources
+// Checks the site's outbound links, skipping paused and links-only retailers' sites: retailer product pages, retailer search links, and the sources
 // cited in warnings and FAQ pages. Run by .github/workflows/check-links.yml after `npm run build`.
 // Same manners as the price job: robots.txt respected, one request per host every few seconds.
 // Fails only on links that are really gone (404/410, or the address no longer exists). Retailers that block
@@ -11,15 +11,15 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { robotsGate } from './robots.mjs';
 import { blockedKind } from './robots.mjs';
-import { readPausedHosts } from './sources.mjs';
+import { readNoFetchHosts } from './sources.mjs';
 
 const USER_AGENT = 'FirearmDesignerLinkCheck/0.1 (+https://github.com/RubyCrest1700/firearm-designer)';
 const HOST_DELAY_MS = 3000;
 /** Our own services and third-party assets aren't outbound links. */
 const SKIP = /^https:\/\/(dropinbuilds\.com|share\.dropinbuilds\.com|[^/]*\.workers\.dev|fonts\.(googleapis|gstatic)\.com|static\.cloudflareinsights\.com|schema\.org|www\.w3\.org|github\.com\/RubyCrest1700)/;
 const URL_RE = /https:\/\/[^\s'"`<>)\\]+/g;
-/** Retailers paused in data/sources.json aren't fetched at all, search links included (scripts/sources.mjs). */
-const PAUSED_HOSTS = readPausedHosts();
+/** Paused and links-only retailers in data/sources.json aren't fetched at all, search links included (scripts/sources.mjs). */
+const NO_FETCH_HOSTS = readNoFetchHosts();
 
 /** Store search pages (src/data/retailers.ts) always exist; a 404 there means the store turned the checker away. */
 const SEARCH_PREFIXES = [...readFileSync('src/data/retailers.ts', 'utf8').matchAll(/search: '(https:[^']+)'/g)].map((m) => m[1]);
@@ -32,7 +32,7 @@ const where = new Map();
 const add = (url, from) => {
   url = decode(url).replace(/[.,;]+$/, '');
   if (SKIP.test(url) || /\$\{|=$/.test(url) || !/^https:\/\/[^/]+\.[a-z]{2,}/.test(url)) return; // template pieces, bare search prefixes, examples in comments
-  if (PAUSED_HOSTS.has(new URL(url).host)) return;
+  if (NO_FETCH_HOSTS.has(new URL(url).host)) return;
   if (!where.has(url)) where.set(url, new Set());
   where.get(url).add(from);
 };
@@ -45,6 +45,7 @@ const lastHit = new Map();
 /** One request per host every HOST_DELAY_MS, redirect hops and robots.txt included. robotsGate sets `redirect`. */
 async function politeFetch(url, init = {}) {
   const u = new URL(url);
+  if (NO_FETCH_HOSTS.has(u.host)) throw new Error(`no-fetch host ${u.host}`);
   // A loop, since a busy event loop can fire a timer a few ms early.
   for (let wait; (wait = (lastHit.get(u.host) ?? 0) + HOST_DELAY_MS - Date.now()) > 0; ) await new Promise((r) => setTimeout(r, wait));
   lastHit.set(u.host, Date.now());
@@ -95,7 +96,7 @@ const show = (title, list) => {
   console.log(`\n${title} (${list.length})`);
   for (const [url, why] of list) console.log(`  ${url}\n    ${why}; used in ${[...where.get(url)].join(', ')}`);
 };
-console.log(`Not checked, paused in data/sources.json: ${[...PAUSED_HOSTS].join(', ') || 'none'}.`);
+console.log(`Not checked, paused or links only in data/sources.json: ${[...NO_FETCH_HOSTS].join(', ') || 'none'}.`);
 console.log(`Checked ${where.size} outbound links: ${result.ok.length} work, ${result.broken.length} broken, ${result.home.length} land on a home page, ${result.blocked.length} couldn't be checked (site blocks bots or timed out), ${result.unreadable.length} not checked because robots.txt couldn't be read, ${result.offsite.length} redirect off-site, ${result.skipped.length} skipped by robots.txt.`);
 show('Broken', result.broken);
 show('Land on the home page (product may be gone)', result.home);
