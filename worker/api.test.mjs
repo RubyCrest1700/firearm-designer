@@ -1628,7 +1628,8 @@ test('an alert for a build with a part id Object already has shows a real total'
   assert.equal(mail.html.split('<s>').length, 2, 'one row, the apex trigger');
 });
 
-test('a part id Object already has is never stored as a last reported price', async () => {
+// Pins stored data only: the old lookup's undefined never reached JSON, so this can't catch a return of that code.
+test('regression pin on stored data: nothing with `constructor` is stored as a last reported price', async () => {
   const known = ['glock9/g-fcg-apex5', 'glock9/g19-frame-g5', 'glock9/g19-slide-mos'];
   const e = alertEnv();
   const { token } = (await signup(e, 'partid@example.com', [WITH_CONSTRUCTOR])).body;

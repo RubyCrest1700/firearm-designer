@@ -37,11 +37,12 @@ jobs:
       sha: ${{ steps.commit.outputs.sha }}
     steps:
       # "Commit updated prices" pushes to main, so a branch's commits must never reach it. This fails instead of
-      # skipping the job: build treats a skipped prices job as fine and would deploy the branch.
+      # skipping the job: a skip would let build run from the branch, and a deploy would then rely only on the
+      # github-pages environment's main-only policy, which rejects it.
       - name: Refuse to run from a branch
         if: github.ref != 'refs/heads/main'
         run: |
-          echo "::error::Prices can only be refreshed from main. Untick 'Refresh prices', or run this from main."
+          echo "::error::Prices can only be refreshed from main. Run this from main."
           exit 1
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
