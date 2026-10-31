@@ -15,9 +15,9 @@ In the Status column, "active" only means the retailer is neither paused nor lin
 | Black Phoenix Customs | blackphoenixcustoms.com | active | - | - | 12 | 2026-10-30 |
 | Black Rifle Depot | blackrifledepot.com | active | - | - | 41 | 2026-10-30 |
 | Bravo Company | bravocompanyusa.com | active | - | - | 1 | 2026-10-30 |
-| Brownells | brownells.com | active | - | - | 51 | none recorded |
+| Brownells | brownells.com | links only | 2026-10-31 | its product pages answer the price bot with a 403 | 51 | none recorded |
 | Bud's Gun Shop | budsgunshop.com | active | - | - | 65 | 2026-10-30 |
-| Cheaper Than Dirt | cheaperthandirt.com | active | - | - | 49 | 2026-10-16 |
+| Cheaper Than Dirt | cheaperthandirt.com | links only | 2026-10-31 | its robots.txt answers the price bot with a 403 | 49 | 2026-10-16 |
 | Classic Firearms | classicfirearms.com | active | - | - | 8 | 2026-10-30 |
 | CMC Triggers | cmctriggers.com | active | - | - | 1 | 2026-10-30 |
 | CopsPlus | copsplus.com | active | - | - | 13 | 2026-10-30 |
@@ -40,14 +40,14 @@ In the Status column, "active" only means the retailer is neither paused nor lin
 | Night Fision | nightfision.com | active | - | - | 3 | 2026-10-30 |
 | OpticsPlanet | opticsplanet.com | active | - | - | 10 | 2026-10-30 |
 | Overwatch Precision | overwatchprecision.com | active | - | - | 1 | 2026-10-30 |
-| Palmetto State Armory | palmettostatearmory.com | active | - | - | 6 | none recorded |
+| Palmetto State Armory | palmettostatearmory.com | links only | 2026-10-31 | its product pages answer the price bot with a 403 | 6 | none recorded |
 | Primary Arms | primaryarms.com | paused | 2026-10-24 | paused pending review of the retailer's terms on automated price collection | 79 | 2026-10-23 |
 | Rainier Arms | rainierarms.com | paused | 2026-10-26 | robots.txt refuses the price bot | 57 | 2026-10-26 |
 | Rifle Supply | riflesupply.com | active | - | - | 2 | 2026-10-30 |
 | Right To Bear | righttobear.com | active | - | - | 19 | 2026-10-30 |
 | Rock Your Glock | rockyourglock.com | active | - | - | 4 | 2026-10-30 |
 | Savior Equipment | saviorequipment.com | active | - | - | 1 | 2026-10-30 |
-| Sig Sauer | sigsauer.com | active | - | - | 26 | none recorded |
+| Sig Sauer | sigsauer.com | links only | 2026-10-31 | its product pages answer the price bot with a 403 | 26 | none recorded |
 | Smith & Wesson | shop.smith-wesson.com | active | - | - | 2 | 2026-10-30 |
 | Sportsman's Warehouse | sportsmans.com | active | - | - | 24 | 2026-10-30 |
 | Springfield Armory | store.springfield-armory.com | active | - | - | 2 | 2026-10-30 |

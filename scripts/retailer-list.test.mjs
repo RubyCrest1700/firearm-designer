@@ -91,6 +91,12 @@ test('a changed links-only entry is reported', () => {
   assert.match(retailerListProblems(render({ sources: { ...sources, linksOnly: { BUD: { since: '2026-11-02', reason: 'why' } } } }), committed).join('\n'), /2026-11-02/);
 });
 
+test('Cheaper Than Dirt keeps its last price check in the ledger after going links only', () => {
+  const ledger = JSON.parse(readFileSync(new URL('../data/retailer-checks.json', import.meta.url), 'utf8'));
+  assert.equal(ledger.CTD, '2026-10-16');
+  assert.equal(advanceChecks(ledger, { offers: { a: { BUDS: offer('2026-10-30T08:00:00.000Z') } } }).CTD, '2026-10-16');
+});
+
 test('a paused retailer\'s links still count', () => {
   assert.match(rows(render()).find((r) => r.startsWith('| Zed Arms')), / \| 2 \| 2026-10-23 \|$/);
 });

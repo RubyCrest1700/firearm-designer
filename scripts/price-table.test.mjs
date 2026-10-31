@@ -24,6 +24,19 @@ test('carries the paused retailers through, and adds none when there are none', 
   assert.equal('paused' in unpackSources(packPrices(prices, { parts: sources.parts })), false);
 });
 
+test('the links-only list never reaches the table the app is built from', () => {
+  const entry = { since: '2026-10-31', reason: 'why' };
+  const table = packPrices({ updatedAt: null, offers: {} }, { linksOnly: { CTD: entry }, parts: { a: { CTD: 'https://x/a' } } });
+  assert.deepEqual(Object.keys(table).sort(), ['days', 'parts', 'updatedAt']);
+  assert.deepEqual(unpackSources(table), { parts: { a: { CTD: 'https://x/a' } } });
+  const real = read('sources.json');
+  assert.ok(real.linksOnly);
+  const packed = JSON.stringify(packPrices(read('prices.json'), real));
+  assert.doesNotMatch(packed, /linksOnly/);
+  for (const { reason } of Object.values(real.linksOnly)) assert.ok(!packed.includes(reason), reason);
+  assert.deepEqual(JSON.parse(packed).paused, real.paused);
+});
+
 test('keeps live prices without a tracked link, and links without a live price', () => {
   const at = '2026-10-09T15:15:53.953Z';
   const prices = { updatedAt: at, offers: { a: { PA: { price: 10, inStock: false, url: 'https://x/a', checkedAt: at } }, b: { BRN: { price: 5, inStock: true, checkedAt: at } } } };

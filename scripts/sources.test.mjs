@@ -182,3 +182,65 @@ test('a retailer listed under both "paused" and "linksOnly" fails', () => {
   const s = { paused: { CTD: OK_ENTRY }, linksOnly: { CTD: OK_ENTRY }, parts: {} };
   for (const fn of [linksOnlyIds, fetchableSources, noFetchHosts]) assert.throws(() => fn(s, retailers), /CTD under both "paused" and "linksOnly"/, fn.name);
 });
+
+/**
+ * The day we stopped requesting the links-only retailers. If it moves at merge, change it here and in data/sources.json,
+ * then run `npm run retailers`.
+ */
+const LINKS_ONLY_DAY = '2026-10-31';
+/** Every links-only retailer, with its date and reason, exactly as data/sources.json must have them. */
+const LINKS_ONLY = {
+  BRN: [LINKS_ONLY_DAY, 'its product pages answer the price bot with a 403'],
+  CTD: [LINKS_ONLY_DAY, 'its robots.txt answers the price bot with a 403'],
+  PSA: [LINKS_ONLY_DAY, 'its product pages answer the price bot with a 403'],
+  SIG: [LINKS_ONLY_DAY, 'its product pages answer the price bot with a 403'],
+};
+const LINKS_ONLY_NOW = Object.keys(LINKS_ONLY).sort();
+
+test(`Brownells, Cheaper Than Dirt, Palmetto State Armory and Sig Sauer are links only since ${LINKS_ONLY_DAY}, each with its reason, and none is paused`, () => {
+  assert.deepEqual(LINKS_ONLY_NOW, ['BRN', 'CTD', 'PSA', 'SIG']);
+  assert.deepEqual([...linksOnlyIds(sources, retailers)].sort(), LINKS_ONLY_NOW);
+  assert.deepEqual(Object.keys(sources.linksOnly).sort(), LINKS_ONLY_NOW);
+  for (const [id, entry] of Object.entries(sources.linksOnly)) {
+    assert.deepEqual(Object.keys(entry).sort(), ['reason', 'since'], id);
+    assert.equal(entry.since, LINKS_ONLY[id][0], id);
+    assert.equal(entry.reason, LINKS_ONLY[id][1], id);
+    assert.ok(!PAUSED_NOW.includes(id), id);
+  }
+});
+
+test('the fetch list leaves out the links-only and paused retailers, and keeps everyone else', () => {
+  const fetchable = fetchableSources(sources, retailers);
+  let kept = 0;
+  for (const [partId, byRetailer] of Object.entries(sources.parts))
+    for (const [r, url] of Object.entries(byRetailer)) {
+      if (LINKS_ONLY_NOW.includes(r) || PAUSED_NOW.includes(r)) assert.equal(fetchable[partId]?.[r], undefined, `${partId} @ ${r}`);
+      else { assert.equal(fetchable[partId][r], url); kept++; }
+    }
+  assert.equal(Object.values(fetchable).reduce((n, b) => n + Object.keys(b).length, 0), kept);
+  assert.ok(Object.values(fetchable).every((b) => Object.keys(b).length > 0), 'no part is left with an empty list');
+  // The links stay in the file, for the site and so that resuming is one line.
+  for (const id of LINKS_ONLY_NOW) assert.ok(Object.values(sources.parts).some((b) => b[id]), `${id} links stay in the file`);
+});
+
+test('no fetchable link sits on a no-fetch host, under any retailer id', () => {
+  const hosts = noFetchHosts(sources, retailers);
+  const reached = Object.entries(fetchableSources(sources, retailers)).flatMap(([p, b]) => Object.entries(b).filter(([, url]) => hosts.has(new URL(url).host)).map(([r, url]) => `${p} @ ${r}: ${url}`));
+  assert.deepEqual(reached, []);
+});
+
+test('listing the links-only retailers leaves the paused results as they are', () => {
+  const { linksOnly: _, ...withoutThem } = sources;
+  assert.deepEqual([...pausedIds(sources, retailers)].sort(), PAUSED_NOW);
+  assert.deepEqual(activeSources(sources, retailers), activeSources(withoutThem, retailers));
+  assert.deepEqual([...pausedHosts(sources, retailers)].sort(), [...pausedHosts(withoutThem, retailers)].sort());
+  for (const h of ['www.cheaperthandirt.com', 'www.brownells.com', 'www.sigsauer.com', 'palmettostatearmory.com']) assert.ok(!pausedHosts(sources, retailers).has(h), h);
+  assert.ok(Object.values(activeSources(sources, retailers)).some((b) => b.CTD), 'activeSources still holds their links');
+});
+
+test('the no-fetch hosts cover the links-only retailers\' whole sites, the paused ones, and no one else', () => {
+  const hosts = noFetchHosts(sources, retailers);
+  for (const h of ['www.cheaperthandirt.com', 'blog.cheaperthandirt.com', 'cheaperthandirt.com', 'www.brownells.com', 'brownells.com', 'www.sigsauer.com', 'palmettostatearmory.com', 'www.palmettostatearmory.com', ...pausedHosts(sources, retailers)]) assert.ok(hosts.has(h), h);
+  for (const h of ['notcheaperthandirt.com', 'cheaperthandirt.com.example.net', 'blog.cheaperthandirt.example', 'mybrownells.com', 'sigsauer.co', 'palmettostatearmory.org', 'magpul.com']) assert.ok(!hosts.has(h), h);
+  for (const id of Object.keys(retailers).filter((id) => !PAUSED_NOW.includes(id) && !LINKS_ONLY_NOW.includes(id))) assert.ok(!hosts.has(new URL(retailers[id].search).host), id);
+});
