@@ -1488,7 +1488,9 @@ test('the one-store table says its cart has estimates, and its note is the appro
   const html = (p: Platform) => strip(summaryHtml(p, sel));
   assert.match(html(allPriced([SAMPLE])), /Brownells<small class="to-buy"> Includes estimates<\/small>/);
   assert.doesNotMatch(html(allPriced([LIVE])), /Includes estimates/);
-  assert.match(html(allPriced([LIVE])), /Fewer shipments can beat a lower parts total\. Leaves out parts that are out of stock or not checked\./);
+  // React writes the apostrophe in "doesn't" as &#x27; in the markup.
+  assert.match(html(allPriced([LIVE])), /Fewer shipments can beat a lower parts total\. Leaves out parts the store doesn&#x27;t list or that are marked out of stock\. Estimates are included and marked\./);
+  assert.doesNotMatch(html(allPriced([LIVE])), /Leaves out parts that are out of stock or not checked/);
   assert.doesNotMatch(html(allPriced([LIVE])), /Leaves out parts shown as out of stock/);
   assert.doesNotMatch(html(allPriced([LIVE])), /In-stock parts only/);
 });
