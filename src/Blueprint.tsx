@@ -11,8 +11,7 @@ import type { Build, Part, Placement, Platform } from './types';
 
 /**
  * Blueprint-style side elevation of a build, drawn as line art from real-world proportions (inches)
- * and the selected parts' attributes. The Sig pistols follow Sig's own design-patent drawings
- * (public records); no product photos are traced.
+ * and the selected parts' attributes.
  */
 
 export type RegionState = 'empty' | 'ok' | 'warn' | 'error';
