@@ -98,11 +98,17 @@ export function bestOffer(part: Part): Offer | undefined {
   return pool.reduce<Offer | undefined>((m, o) => (!m || o.price < m.price ? o : m), undefined);
 }
 
-/** The small label beside a price that isn't a live store price: Sample, List Price or Factory Part. */
+/** Owner-approved wording (2026-10-31). */
+export const ESTIMATE_LABEL = 'Estimate';
+
+/** A rough figure of ours, neither read by the nightly job nor checked by hand: samples and undated Factory Parts. Display only. */
+export const isEstimate = (o: Offer) => !o.checkedAt && !o.asOf;
+
+/** The small label beside a price that isn't a live store price: Estimate, List Price or Factory Part. */
 export function priceLabel(o: Offer): string {
   if (o.basis === 'list') return 'List Price';
-  if (o.basis === 'factory') return 'Factory Part';
-  return o.checkedAt ? '' : 'Sample';
+  if (o.basis === 'factory') return isEstimate(o) ? `Factory Part, ${ESTIMATE_LABEL}` : 'Factory Part';
+  return isEstimate(o) ? ESTIMATE_LABEL : '';
 }
 
 /** A price as shown: "From" in front when it's a holster's base price before the light option. */
@@ -111,6 +117,15 @@ export const unpricedCount = (parts: (Part | undefined)[]) => parts.filter((p) =
 
 /** The note shown next to a total that leaves out parts with no price, or '' when there are none. Owner-approved wording. */
 export const noPriceNote = (n: number) => (n <= 0 ? '' : n === 1 ? '1 part has no price' : `${n} parts have no price`);
+
+/** How many of these parts are priced at an estimate. */
+export const estimatedCount = (parts: (Part | undefined)[]) => parts.filter((p) => { const o = p && bestOffer(p); return !!o && isEstimate(o); }).length;
+
+/** The note shown next to a total that includes estimates, or '' when there are none. Owner-approved wording (2026-10-31). */
+export const estimateNote = (n: number) => (n <= 0 ? '' : n === 1 ? '1 price is an estimate' : `${n} prices are estimates`);
+
+/** Notes beside a total, in one string: the ones that aren't empty, joined. */
+export const totalNotes = (...notes: string[]) => notes.filter(Boolean).join(' · ');
 
 export const priceText = (o: Offer) => (o.basis === 'from' ? 'From ' : '') + money(o.price);
 
@@ -144,6 +159,8 @@ export interface RetailerCart {
   carried: number;
   total: number;
   missing: Part[];
+  /** How many of the prices in `total` are estimates. */
+  estimates: number;
 }
 
 /** What it costs to buy every selected part from a single retailer. */
@@ -152,13 +169,14 @@ export function singleRetailerCarts(parts: Part[]): RetailerCart[] {
   return [...ids]
     .map((r) => {
       let total = 0;
+      let estimates = 0;
       const missing: Part[] = [];
       for (const p of parts) {
         const o = p.offers.find((x) => x.retailer === r && x.inStock);
-        if (o) total += o.price;
+        if (o) { total += o.price; if (isEstimate(o)) estimates += 1; }
         else missing.push(p);
       }
-      return { retailer: r, carried: parts.length - missing.length, total, missing };
+      return { retailer: r, carried: parts.length - missing.length, total, missing, estimates };
     })
     .sort((a, b) => b.carried - a.carried || a.total - b.total);
 }

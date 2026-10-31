@@ -10,7 +10,7 @@ export interface Offer {
   inStock: boolean;
   /** Direct product page, when known */
   url?: string;
-  /** ISO time the price was read by the nightly job; absent for sample prices */
+  /** ISO time the price was read by the nightly job; absent for sample prices (shown as Estimate, see isEstimate) */
   checkedAt?: string;
   /**
    * How to read a price that isn't a plain store price: 'from' is the holster's base price before a light option,
