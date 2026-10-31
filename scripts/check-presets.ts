@@ -1,4 +1,5 @@
 // Verifies every preset build is complete and free of compatibility errors.
+import { existsSync, readFileSync } from 'node:fs';
 import { awarenessFor } from '../src/awareness';
 import { PLATFORMS, canonicalPlatform } from '../src/data/index';
 import { PAUSED, SBR_MESSAGE, VERTICAL_GRIP_MESSAGE } from '../src/data/helpers';
@@ -12,9 +13,11 @@ import type { Issue } from '../src/types';
 import sources from '../data/sources.json';
 import PRICES from '../data/prices.json';
 import HISTORY from '../data/price-history.json';
+import CHECKS from '../data/retailer-checks.json';
 import { pausedPriceProblems } from './pause-guard.mjs';
+import { advanceChecks, renderRetailerList, retailerListProblems } from './retailer-list.mjs';
 
-const SOURCES = sources as unknown as { paused?: Record<string, { since: string }> };
+const SOURCES = sources as unknown as { parts?: Record<string, Record<string, string>>; paused?: Record<string, { since: string; reason: string }> };
 
 let bad = 0;
 for (const p of PLATFORMS) {
@@ -319,6 +322,12 @@ for (const [id, e] of Object.entries((sources as unknown as { paused?: Record<st
 for (const pick of FAQ_PICKS) {
   const g = GUIDES.find((x) => x.slug === pick.slug);
   if (g?.h1 !== pick.h1) { console.log(`home FAQ link ${pick.slug}: ${g ? `guide question is now "${g.h1}"` : 'no such guide'} (src/guides/picks.ts)`); bad++; }
+}
+// RETAILERS.md matches what `npm run retailers` would write, last column aside (scripts/retailer-list.mjs).
+{
+  const rendered = renderRetailerList(RETAILERS, SOURCES, advanceChecks(CHECKS, PRICES));
+  const committed = existsSync('RETAILERS.md') ? readFileSync('RETAILERS.md', 'utf8') : null;
+  for (const problem of retailerListProblems(rendered, committed)) { console.log(problem); bad++; }
 }
 console.log(`Interface audit: ${combos} part combinations checked across ${IFACES.length} measured interfaces.`);
 process.exit(bad ? 1 : 0);
