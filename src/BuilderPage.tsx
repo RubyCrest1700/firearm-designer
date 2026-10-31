@@ -453,7 +453,8 @@ export function Summary({ platform, build, issues, aware, states, status, total,
 
       {chosen.length > 0 && <section className="card">
         <h2 className="card-title">Buy It All from One Store</h2>
-        <p className="card-note">Fewer shipments can beat a lower parts total. Leaves out parts shown as out of stock.</p>
+        {/** Owner-approved wording (2026-10-31). */}
+        <p className="card-note">Fewer shipments can beat a lower parts total. Leaves out parts that are out of stock or not checked.</p>
         <table className="carts">
           <tbody>
             {carts.map((c) => (

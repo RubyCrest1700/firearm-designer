@@ -949,7 +949,7 @@ test('the Privacy Policy and Terms of Use pages render with their h1, at /privac
 });
 
 /** Each legal page's own effective date, pinned word for word. */
-const EFFECTIVE = { privacy: 'October 30, 2026', terms: 'October 26, 2026' } as const;
+const EFFECTIVE = { privacy: 'October 30, 2026', terms: 'October 31, 2026' } as const;
 
 test('neither page carries draft notes, counsel flags or any placeholder, and each says its own effective date once', () => {
   for (const [name, md, html] of [['privacy', PRIVACY_MD, privacyPage()], ['terms', TERMS_MD, termsPage()]] as const) {
@@ -962,6 +962,17 @@ test('neither page carries draft notes, counsel flags or any placeholder, and ea
     }
     assert.ok(docOf(html).includes(`<p>${effective}</p>`), name);
   }
+});
+
+/** Owner-approved wording (2026-10-31): the Terms' section 4 price sentences, byte for byte. */
+const TERMS_PRICES = 'Prices from retailers we check are collected about once a day and can change at any time. Prices marked Estimate are not current store prices.';
+
+test('the Terms keep the approved price sentences in section 4, and the old one is gone', () => {
+  const before = "accurate, but we don't guarantee them. ";
+  const after = ' Always confirm the price, availability and fit at the retailer before you buy.';
+  assert.equal(TERMS_MD.split(`${before}${TERMS_PRICES}${after}`).length, 2, 'exactly once, in its place in the paragraph');
+  assert.ok(pageText(termsPage()).includes(TERMS_PRICES), 'on the page');
+  for (const text of [TERMS_MD, pageText(termsPage())]) assert.ok(!text.includes('Prices are collected about once a day'), 'old sentence');
 });
 
 /** Owner-approved wording (2026-10-29): the privacy page's "Updated" line, its own paragraph under the effective date. */
@@ -1477,7 +1488,8 @@ test('the one-store table says its cart has estimates, and its note is the appro
   const html = (p: Platform) => strip(summaryHtml(p, sel));
   assert.match(html(allPriced([SAMPLE])), /Brownells<small class="to-buy"> Includes estimates<\/small>/);
   assert.doesNotMatch(html(allPriced([LIVE])), /Includes estimates/);
-  assert.match(html(allPriced([LIVE])), /Fewer shipments can beat a lower parts total\. Leaves out parts shown as out of stock\./);
+  assert.match(html(allPriced([LIVE])), /Fewer shipments can beat a lower parts total\. Leaves out parts that are out of stock or not checked\./);
+  assert.doesNotMatch(html(allPriced([LIVE])), /Leaves out parts shown as out of stock/);
   assert.doesNotMatch(html(allPriced([LIVE])), /In-stock parts only/);
 });
 
