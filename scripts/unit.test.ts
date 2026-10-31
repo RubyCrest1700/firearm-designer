@@ -1059,6 +1059,12 @@ test('the FAQ answers "Do you make money from the links?" with the approved word
   assert.match(readFileSync('src/guides/render.ts', 'utf8'), /\/\*\* Owner-approved wording \(2026-10-26\)\. \*\/\r?\n {4}\{ q: 'Do you make money from the links\?', a: 'No\. There are no affiliate links/);
 });
 
+test('the FAQ states the owner-approved drawings wording and credits the CC BY photo with its licence and changes', () => {
+  const faq = indexPage(BUILT);
+  assert.ok(faq.includes(htmlEsc("Drawings are simplified illustrations for planning. They aren't exact or to scale.")));
+  for (const s of ['Tony Webster and LeoPavouk', 'CC BY 2.0', 'creativecommons.org/licenses/by/2.0', 'Changes: redrawn as a simplified line drawing', 'https://commons.wikimedia.org/wiki/File:Glock_17_Gen_5_Gun_white_bg_crop.png']) assert.ok(faq.includes(s), s);
+});
+
 /* ------------------------------------------------------------------ community build preview cards */
 
 test('AR-15, AR-9 and AR-10 community build and platform cards carry the short NFA notice; pistol cards do not', () => {
