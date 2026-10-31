@@ -5,7 +5,7 @@
  */
 import { PLATFORMS, PRICES_UPDATED_AT } from '../data';
 import { RETAILERS, buyUrl } from '../data/retailers';
-import { baseSelection, bestOffer, money, noPriceNote, presetSelection, priceLabel, priceText, unpricedCount, worst } from '../engine';
+import { baseSelection, bestOffer, estimateNote, estimatedCount, isEstimate, money, noPriceNote, presetSelection, priceLabel, priceText, unpricedCount, worst } from '../engine';
 import type { Part, Platform, Severity, Tier } from '../types';
 import { GUIDES, type AcrossChart, type FitChart, type Guide, type PairChart } from './content';
 import { titleCase } from '../text';
@@ -178,7 +178,7 @@ function priceHtml(part: Part) {
   const store = RETAILERS[o.retailer]?.name ?? o.retailer;
   const href = buyUrl(o, `${part.brand} ${part.name}`);
   const label = priceLabel(o).toLowerCase();
-  const when = o.checkedAt ? `checked ${shortDate(o.checkedAt)}` : o.asOf ? `${label}, checked ${shortDate(o.asOf)}` : o.basis === 'factory' ? 'factory part, estimated' : 'sample price';
+  const when = o.checkedAt ? `checked ${shortDate(o.checkedAt)}` : o.asOf ? `${label}, checked ${shortDate(o.asOf)}` : o.basis === 'factory' ? 'factory part, estimated' : 'estimate';
   return `<p class="price"><b>${priceText(o)}</b> at <a href="${esc(href)}" rel="sponsored nofollow noopener" target="_blank">${esc(store)}</a> <span class="muted">(${when})</span></p>`;
 }
 
@@ -204,18 +204,18 @@ function picksHtml(platform: Platform, slots: string[]) {
     .join('');
 }
 
-/** A preset's total at the lowest prices we list, and the note for its parts with no price ('' when none). */
+/** A preset's total at the lowest prices we list, the note for its parts with no price, and the note for its estimates ('' when none). */
 function presetTotal(platform: Platform, tier: Tier) {
   const parts = Object.values(presetSelection(platform, tier)).map((id) => platform.parts.find((p) => p.id === id)!);
-  return { total: parts.reduce((sum, p) => sum + (bestOffer(p)?.price ?? 0), 0), note: noPriceNote(unpricedCount(parts)) };
+  return { total: parts.reduce((sum, p) => sum + (bestOffer(p)?.price ?? 0), 0), note: noPriceNote(unpricedCount(parts)), estimates: estimateNote(estimatedCount(parts)) };
 }
 
 function startersHtml(platform: Platform) {
   return TIERS.map((tier) => {
     const ids = Object.values(presetSelection(platform, tier));
-    const { total, note } = presetTotal(platform, tier);
+    const { total, note, estimates } = presetTotal(platform, tier);
     const name = tier === 'value' ? 'Best Value' : tier[0].toUpperCase() + tier.slice(1);
-    return `<a class="starter" href="${builderUrl(platform.id, ids)}"><b>${name} ${esc(platform.name)}</b><span>${ids.length} parts, ${money(total)} at the lowest prices we list${note ? ` · ${esc(note)}` : ''}</span></a>`;
+    return `<a class="starter" href="${builderUrl(platform.id, ids)}"><b>${name} ${esc(platform.name)}</b><span>${ids.length} parts, ${money(total)} at the lowest prices we list${note ? ` · ${esc(note)}` : ''}</span>${estimates ? `<span>${esc(estimates)}</span>` : ''}</a>`;
   }).join('');
 }
 
@@ -274,7 +274,7 @@ ${o.jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).re
 <footer class="site-footer"><div class="wrap">
   <p class="brand-name small">Drop-In <b>Builds</b></p>
   <p>Plan a build part by part, check that everything fits, and see where each part costs least. We don't sell anything.</p>
-  <p>Fit charts come from the same rules the builder uses. Prices marked Sample aren't tracked yet, List Price and dated Factory Part prices were checked by hand on that date, and undated Factory Part prices are estimates; always confirm the price and fit with the retailer and the maker. Parts that are serialized and treated as the firearm under federal law ship to a licensed dealer, and laws vary by state.</p>
+  <p>Fit charts come from the same rules the builder uses. Prices marked Estimate are rough figures, not current store prices, List Price and dated Factory Part prices were checked by hand on that date, and undated Factory Part prices are also estimates; always confirm the price and fit with the retailer and the maker. Parts that are serialized and treated as the firearm under federal law ship to a licensed dealer, and laws vary by state.</p>
   <p><a class="foot-link" href="/feedback/">Send Feedback</a> · <a class="foot-link" href="/privacy/">Privacy Policy</a> · <a class="foot-link" href="/terms/">Terms of Use</a></p>
 </div></footer>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "${ANALYTICS_TOKEN}"}'></script>
@@ -299,7 +299,7 @@ export function guidePage(g: Guide, builtAt: string) {
     ${g.charts.map((c) => chartHtml(platform, c)).join('')}
     <section>
       <h2>Parts Worth a Look</h2>
-      <p class="muted">Our picks from the ${esc(platform.name)} catalog, with the lowest price we list${PRICES_UPDATED_AT ? ` (prices last checked ${shortDate(PRICES_UPDATED_AT)})` : ''}.</p>
+      <p class="muted">Our picks from the ${esc(platform.name)} catalog, with the lowest price we list${PRICES_UPDATED_AT ? ` (prices last checked ${shortDate(PRICES_UPDATED_AT)})` : ''}. Estimates are marked.</p>
       ${picksHtml(platform, g.picks)}
     </section>
     <section>
@@ -362,8 +362,8 @@ const GENERAL_FAQ: { section: string; items: { q: string; a: string; link?: { te
     { q: 'How are community builds featured?', a: 'Each week the builds with the most votes, and the most people clicking through to buy the parts, are featured at the top of the Community page.' },
   ] },
   { section: 'Prices and Alerts', items: [
-    { q: 'Where do the prices come from?', a: "We check retailer and maker sites every night where they allow it, and show each part's price at every retailer we track. Prices marked Sample aren't tracked yet, List Price and dated Factory Part prices were checked by hand on that date, and undated Factory Part prices are estimates, so always confirm the price at the retailer." },
-    { q: "Why isn't my favorite retailer listed?", a: "Some retailers don't allow automated price checks, and we respect that. We've also paused some retailers while we review their terms. We add retailers as they make their prices available to us." },
+    { q: 'Where do the prices come from?', a: "We check retailer and maker sites every night where they allow it. Some stores we only link to, without checking their prices, so those parts stay marked Estimate: a rough figure of ours, not the store's current price. List Price and dated Factory Part prices were checked by hand on that date, and undated Factory Part prices are estimates too, so always confirm the price at the retailer." },
+    { q: "Why isn't my favorite retailer listed?", a: "Some retailers don't allow automated price checks, and we respect that. We link to some of them without checking prices, and leave others out. We add retailers when we can." },
     { q: 'How do price alerts work?', a: 'Save a build to My Builds, then enter your email there. We send one email a day at most, only when a part in a saved build moves by $20 and 10% or more. Every email has a one-click unsubscribe link.' },
     { q: 'What do you do with my email address?', a: "We only use it to send the price alerts you asked for. We don't sell it. Our email provider (Resend) and host (Cloudflare) process it to deliver the emails. Unsubscribing deletes it from our database; the providers may keep delivery logs for a limited time. See our Privacy Policy.", link: { text: 'Privacy Policy', href: '/privacy/' } },
   ] },
@@ -451,7 +451,7 @@ function starterListHtml(platform: Platform) {
       <details class="starter-parts"><summary>What's in the ${name} ${esc(platform.name)}</summary><ul>${parts.map((p) => {
         const slot = platform.slots.find((s) => s.id === p.slot)?.name ?? p.slot;
         const o = bestOffer(p);
-        return `<li><span class="muted">${esc(titleCase(slot))}:</span> ${esc(label(p))}${o ? ` <b>${money(o.price)}</b>` : ''}</li>`;
+        return `<li><span class="muted">${esc(titleCase(slot))}:</span> ${esc(label(p))}${o ? ` <b>${money(o.price)}</b>${isEstimate(o) ? ' <span class="muted">(estimate)</span>' : ''}` : ''}</li>`;
       }).join('')}</ul></details>`;
   }).join('');
 }
@@ -466,7 +466,7 @@ function slotTableHtml(platform: Platform) {
       return `
       <section class="slot">
         <h3>${esc(titleCase(slot.name))}</h3>
-        <p class="muted">${parts.length} option${parts.length > 1 ? 's' : ''}${range ? `, ${range}` : ''}.${slot.hint ? ` ${esc(slot.hint)}` : ''}</p>
+        <p class="muted">${parts.length} option${parts.length > 1 ? 's' : ''}${range ? `, ${range}${estimatedCount(parts) ? ', some estimated' : ''}` : ''}.${slot.hint ? ` ${esc(slot.hint)}` : ''}</p>
         <div class="grid-wrap"><table class="parts">
           <tbody>${parts.map((p) => `
             <tr><th scope="row">${esc(label(p))}${p.pick ? ` <span class="tier tier-${p.pick.tier}">${TIER_LABEL[p.pick.tier]}</span>` : ''}<span class="specs">${p.specs.map(esc).join(' · ')}</span></th>
@@ -492,7 +492,7 @@ export function platformPage(platform: PageView) {
   const guides = GUIDES.filter((g) => platformOf(g.platform).id === platform.id);
   const related = guides.length ? guides : GUIDES.filter((g) => platformOf(g.platform).maker === platform.maker).slice(0, 4);
   const others = PAGE_VIEWS.filter((p) => p.pageId !== platform.pageId);
-  const { total: budget, note: budgetNote } = presetTotal(platform, 'budget');
+  const { total: budget, note: budgetNote, estimates: budgetEstimates } = presetTotal(platform, 'budget');
   const body = `
   <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="/build/">Platforms</a> › <span>${esc(platform.name)}</span></nav>
   <article>
@@ -501,13 +501,13 @@ export function platformPage(platform: PageView) {
     <a class="cta" href="${baseUrl(platform)}">Open the ${esc(platform.name)} Builder</a>
     <section>
       <h2>Start from a Complete Build</h2>
-      <p class="muted">Three ${esc(platform.name)} builds where every part already fits, from ${money(budget)}${budgetNote ? ` (${esc(budgetNote)})` : ''}. Open one in the builder and swap anything you like.</p>
+      <p class="muted">Three ${esc(platform.name)} builds where every part already fits, from ${money(budget)}${budgetNote ? ` (${esc(budgetNote)})` : ''}.${budgetEstimates ? ` ${esc(budgetEstimates)}.` : ''} Open one in the builder and swap anything you like.</p>
       <div class="starters">${startersHtml(platform)}</div>
       ${starterListHtml(platform)}
     </section>
     <section>
       <h2>${esc(platform.name)} Parts and Prices</h2>
-      <p class="muted">Every ${esc(platform.name)} part we list, cheapest first, with the lowest price we found${PRICES_UPDATED_AT ? ` (prices last checked ${shortDate(PRICES_UPDATED_AT)})` : ''}. The builder checks how each one fits with the rest of your parts.</p>
+      <p class="muted">Every ${esc(platform.name)} part we list, cheapest first, with the lowest price we list${PRICES_UPDATED_AT ? ` (prices last checked ${shortDate(PRICES_UPDATED_AT)})` : ''}. Estimates are marked. The builder checks how each one fits with the rest of your parts.</p>
       ${slotTableHtml(platform)}
     </section>
     ${related.length ? `<section><h2>Fit Questions</h2><ul class="guide-list">${related.map((g) => `<li><a href="/faq/${g.slug}/">${esc(g.h1)}</a></li>`).join('')}</ul></section>` : ''}
@@ -515,7 +515,7 @@ export function platformPage(platform: PageView) {
   </article>`;
   return layout({
     title: pageTitle(`${platform.name} Build Planner: Parts, Fit and Prices`, `${platform.name} Build Planner`),
-    description: `Plan a ${platform.name} build part by part. ${platform.parts.length} parts checked for fit, prices compared across retailers, and starter builds from ${money(budget)}.`,
+    description: `Plan a ${platform.name} build part by part. ${platform.parts.length} parts checked for fit, prices compared across retailers, and starter builds from ${money(budget)}.${budgetEstimates ? ' Some prices are estimates.' : ''}`,
     path,
     body,
     image: `/og/${platform.id}.png`,
