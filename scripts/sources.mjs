@@ -8,10 +8,10 @@
 import { readFileSync } from 'node:fs';
 import { registrableDomain } from './domains.mjs';
 
-/** Retailer ids and search-link templates, read from src/data/retailers.ts (the scripts don't bundle TypeScript). */
+/** Retailer ids, names and search-link templates, read from src/data/retailers.ts (the scripts don't bundle TypeScript). */
 export function retailersFrom(text) {
   const out = {};
-  for (const m of text.matchAll(/(\w+): \{ id: '(\w+)', name: (?:'[^']*'|"[^"]*"), search: '(https:[^']+)' \}/g)) out[m[2]] = { id: m[2], search: m[3] };
+  for (const m of text.matchAll(/(\w+): \{ id: '(\w+)', name: (?:'([^']*)'|"([^"]*)"), search: '(https:[^']+)' \}/g)) out[m[2]] = { id: m[2], name: m[3] ?? m[4], search: m[5] };
   return out;
 }
 
@@ -67,7 +67,7 @@ export function pausedHosts(sources, retailers) {
 }
 
 /** data/sources.json as written: every link, paused retailers included. Only this file reads it. */
-const readSources = () => JSON.parse(readFileSync('data/sources.json', 'utf8'));
+export const readSources = () => JSON.parse(readFileSync('data/sources.json', 'utf8'));
 
 /** The links the price job and the weight reader may fetch: data/sources.json without the paused retailers. */
 export const readActiveSources = () => activeSources(readSources(), readRetailers());
