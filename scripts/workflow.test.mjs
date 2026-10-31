@@ -33,7 +33,7 @@ test('the prices job stops first thing when run from a branch', () => {
 });
 
 test('a branch run fails the prices job instead of skipping it', () => {
-  // build treats a skipped prices job as fine and would deploy the branch; a failed one stops it.
+  // build treats a skipped prices job as fine and would run from the branch; a failed one stops it.
   assert.equal(jobIf(prices), "github.event_name == 'schedule' || inputs.update_prices");
   assert.match(workflow, /needs\.prices\.result == 'success' \|\| needs\.prices\.result == 'skipped'/);
 });
