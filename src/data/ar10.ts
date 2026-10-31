@@ -68,7 +68,7 @@ const allParts = [
     { id: 'a10-buf-aero', brand: 'Aero Precision', name: 'AR-10 Carbine Buffer Kit', specs: ['Carbine tube', '.308 buffer + spring'], attrs: {},
       offers: [['AERO', 69.99], ['PA', 67.99]], pick: pick('value', 'Buffer weight and spring tuned for .308.') },
     { id: 'a10-buf-psa', brand: 'Palmetto State Armory', name: 'PA-10 Carbine Buffer Kit', specs: ['Carbine tube', '.308 buffer'], attrs: {},
-      offers: [['PSA', 49.99]], pick: pick('budget', 'Complete kit at the lowest price.') },
+      offers: [['PSA', 49.99]], pick: pick('budget', 'Complete kit for a tight budget.') },
   ]),
   ...parts('stock', [
     { id: 'a10-stock-moesl', brand: 'Magpul', name: 'MOE SL Carbine Stock', specs: ['Collapsible', 'QD socket'], attrs: { qd: true },

@@ -1,6 +1,6 @@
 import { SHARE_BASE } from './config';
 import { PLATFORMS, canonicalPlatform } from './data';
-import { MOUNT_CODE, baseSelection, bestOffer, ownedOf, placementOf, presetSelection, selectionTokens, toBuild, unpricedCount, type Selection } from './engine';
+import { MOUNT_CODE, baseSelection, bestOffer, estimatedCount, ownedOf, placementOf, presetSelection, selectionTokens, toBuild, unpricedCount, type Selection } from './engine';
 import { worthShowing } from './data/history';
 import type { Build, Part, Platform, Tier } from './types';
 
@@ -250,6 +250,10 @@ export function totalOf(platform: Platform, build: Build, skip?: Set<string>) {
 /** How many parts totalOf leaves out for having no price, for the note beside the total (noPriceNote). */
 export const unpricedOf = (platform: Platform, build: Build, skip?: Set<string>) =>
   unpricedCount(platform.slots.filter((s) => !skip?.has(s.id)).map((s) => build[s.id]));
+
+/** How many prices in totalOf are estimates, for the note beside the total (estimateNote). */
+export const estimatedOf = (platform: Platform, build: Build, skip?: Set<string>) =>
+  estimatedCount(platform.slots.filter((s) => !skip?.has(s.id)).map((s) => build[s.id]));
 
 export function buildOf(platformId: string, sel: Selection) {
   const platform = PLATFORMS.find((p) => p.id === platformId) ?? PLATFORMS[0];

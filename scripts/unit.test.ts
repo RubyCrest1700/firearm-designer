@@ -10,20 +10,26 @@ import { PLATFORMS } from '../src/data/index';
 import { NFA_SHORT_NOTICE, PAUSED, SBR_MESSAGE, VERTICAL_GRIP_MESSAGE, parts as buildParts, shortBarrelStockIssue } from '../src/data/helpers';
 import { biggestDrops, daysAgo, hasHistory, partSeries, priceOn, recentChange, seriesOf } from '../src/data/history';
 import { baseSelection, bestOffer, candidateIssues, issuesFor, listedParts, noPriceNote, ownedOf, placementOf, presetSelection, priceRange, selectionTokens, singleRetailerCarts, toBuild, toBuyIds, unpricedCount, worst, type Selection } from '../src/engine';
+import { estimateNote, estimatedCount, isEstimate, money, priceLabel, totalNotes } from '../src/engine';
 import { findParts } from '../src/find';
 import { Candidate } from '../src/Picker';
 import { buildStatus, statesFor } from '../src/status';
 import { loadSavedBuilds, priceChanges, priceSnapshot, readSharedBuild, selectionFromParts, storeSavedBuilds, totalOf, unpricedOf, type SavedBuild } from '../src/store';
 import { Dock, PartsList, Summary, toLegalNotice } from '../src/BuilderPage';
+import { ChipTotal } from '../src/BuilderPage';
+import { FoundRow } from '../src/OwnedFinder';
+import { FEATURED, estimatedOf } from '../src/store';
 import { ComparePage } from '../src/Compare';
 import { HomePage } from '../src/HomePage';
 import { BuildCard, ChangeChip, legalOnly } from '../src/ui';
 import { PAGE_VIEWS, feedbackPage, guidePage, indexPage, notFoundPage, platformPage, privacyPage, sitemap, termsPage } from '../src/guides/render';
 import { PRIVACY_MD, TERMS_MD, legalHtml } from '../src/guides/legal';
 import { AlertsPanel } from '../src/SavedPage';
+import { SavedPage } from '../src/SavedPage';
 import { GUIDES, type FitChart } from '../src/guides/content';
 import { RETAILERS } from '../src/data/retailers';
 import { priceIndex } from './og-index';
+import { cardTotalWords } from './og-index';
 import { retailersFrom } from './sources.mjs';
 import { cardNotice } from './og-notice';
 import history from '../data/price-history.json';
@@ -943,7 +949,7 @@ test('the Privacy Policy and Terms of Use pages render with their h1, at /privac
 });
 
 /** Each legal page's own effective date, pinned word for word. */
-const EFFECTIVE = { privacy: 'October 30, 2026', terms: 'October 26, 2026' } as const;
+const EFFECTIVE = { privacy: 'October 30, 2026', terms: 'October 31, 2026' } as const;
 
 test('neither page carries draft notes, counsel flags or any placeholder, and each says its own effective date once', () => {
   for (const [name, md, html] of [['privacy', PRIVACY_MD, privacyPage()], ['terms', TERMS_MD, termsPage()]] as const) {
@@ -956,6 +962,17 @@ test('neither page carries draft notes, counsel flags or any placeholder, and ea
     }
     assert.ok(docOf(html).includes(`<p>${effective}</p>`), name);
   }
+});
+
+/** Owner-approved wording (2026-10-31): the Terms' section 4 price sentences, byte for byte. */
+const TERMS_PRICES = 'Prices from retailers we check are collected about once a day and can change at any time. Prices marked Estimate are not current store prices.';
+
+test('the Terms keep the approved price sentences in section 4, and the old one is gone', () => {
+  const before = "accurate, but we don't guarantee them. ";
+  const after = ' Always confirm the price, availability and fit at the retailer before you buy.';
+  assert.equal(TERMS_MD.split(`${before}${TERMS_PRICES}${after}`).length, 2, 'exactly once, in its place in the paragraph');
+  assert.ok(pageText(termsPage()).includes(TERMS_PRICES), 'on the page');
+  for (const text of [TERMS_MD, pageText(termsPage())]) assert.ok(!text.includes('Prices are collected about once a day'), 'old sentence');
 });
 
 /** Owner-approved wording (2026-10-29): the privacy page's "Updated" line, its own paragraph under the effective date. */
@@ -1215,4 +1232,375 @@ test('the scripts read every retailer in src/data/retailers.ts, so a new entry t
   const read = retailersFrom(readFileSync('src/data/retailers.ts', 'utf8'));
   assert.deepEqual(Object.keys(read).sort(), Object.keys(RETAILERS).sort());
   for (const r of Object.values(RETAILERS)) assert.equal(read[r.id].name, r.name, r.id);
+});
+
+/* ------------------------------------------------------------------ estimate labels */
+
+const LIVE = { retailer: 'FAX', price: 100, inStock: true, checkedAt: '2026-10-30T08:00:00Z' };
+const SAMPLE = { retailer: 'BRN', price: 90, inStock: true };
+const LIST = { retailer: 'FAX', price: 120, inStock: true, basis: 'list' as const, asOf: '2026-10-01' };
+const FACTORY_DATED = { retailer: 'FAX', price: 80, inStock: true, basis: 'factory' as const, asOf: '2026-10-01' };
+const FACTORY_UNDATED = { retailer: 'FAX', price: 70, inStock: true, basis: 'factory' as const };
+const FROM_LIVE = { ...LIVE, basis: 'from' as const };
+
+/** The AR-15 catalog with every part sold at these offers, so a test doesn't depend on tonight's prices. */
+const allPriced = (offers: Part['offers']): Platform => ({ ...ar15, parts: ar15.parts.map((x) => ({ ...x, offers })) });
+const strip = (html: string) => html.replace(/<!-- -->/g, '');
+const EST_NOTE = /\d+ prices? (?:is an estimate|are estimates)/;
+const noop = () => {};
+const candidate = (p: Part) => renderToStaticMarkup(createElement(Candidate, { part: p, open: true, issues: [], sev: 'ok', selected: false, owned: false, onChoose: noop, onBuyClick: noop }));
+
+test('isEstimate and priceLabel for each kind of offer', () => {
+  assert.equal(isEstimate(SAMPLE), true, 'sample');
+  assert.equal(isEstimate(FACTORY_UNDATED), true, 'undated factory part');
+  assert.equal(isEstimate(LIVE), false, 'live');
+  assert.equal(isEstimate(FROM_LIVE), false, 'live holster base price');
+  assert.equal(isEstimate(LIST), false, 'list price');
+  assert.equal(isEstimate(FACTORY_DATED), false, 'dated factory part');
+  assert.equal(priceLabel(SAMPLE), 'Estimate');
+  assert.equal(priceLabel(FACTORY_UNDATED), 'Factory Part, Estimate');
+  assert.equal(priceLabel(LIVE), '');
+  assert.equal(priceLabel(FROM_LIVE), '');
+  assert.equal(priceLabel(LIST), 'List Price');
+  assert.equal(priceLabel(FACTORY_DATED), 'Factory Part');
+});
+
+test('estimateNote counts the estimates in a total, leaving out owned parts and parts with no price', () => {
+  assert.equal(estimateNote(0), '');
+  assert.equal(estimateNote(1), '1 price is an estimate');
+  assert.equal(estimateNote(2), '2 prices are estimates');
+  assert.equal(estimateNote(4), '4 prices are estimates');
+  assert.equal(estimateNote(-1), '');
+  assert.equal(totalNotes(estimateNote(4), noPriceNote(1)), '4 prices are estimates · 1 part has no price');
+  assert.equal(totalNotes('', noPriceNote(1)), '1 part has no price');
+  assert.equal(totalNotes('', ''), '');
+  for (const n of [1, 2, 9]) assert.doesNotMatch(estimateNote(n), /no price/);
+
+  const p = allPriced([SAMPLE]);
+  const sel = baseSelection(ar15);
+  const n = toBuild(p, sel) && Object.keys(sel).filter((k) => !k.startsWith('@') && !k.startsWith('+')).length;
+  assert.ok(n > 2);
+  const build = toBuild(p, sel);
+  assert.equal(estimatedOf(p, build), n);
+  const owned = ownedOf({ ...sel, '+barrel': 'own' });
+  assert.equal(owned.owned.size, 1);
+  assert.equal(estimatedOf(p, build, owned.owned), n - 1);
+  assert.match(strip(summaryHtml(p, { ...sel, '+barrel': 'own' })), new RegExp(`· <span class="est-note">${n - 1} prices are estimates</span>`));
+  // A part with no price isn't an estimate.
+  const gone = { ...p, parts: p.parts.map((x) => (x.id === sel.barrel ? { ...x, offers: [] } : x)) };
+  assert.equal(estimatedOf(gone, toBuild(gone, sel)), n - 1);
+  assert.equal(estimatedCount([undefined, { ...part(ar15, sel.barrel), offers: [] }]), 0);
+  // No estimates, no note.
+  assert.doesNotMatch(summaryHtml(allPriced([LIVE]), sel), EST_NOTE);
+});
+
+test('marking a price as an estimate changes no price or stock: a real sample offer stays in stock and stays the best offer', () => {
+  const sample = everyPart().find((x) => { const o = bestOffer(x); return o && isEstimate(o) && !o.basis; });
+  assert.ok(sample, 'the catalog has at least one sample price');
+  const o = bestOffer(sample)!;
+  assert.equal(o.inStock, true);
+  // bestOffer as it has always read: the cheapest in-stock offer, or the cheapest of all when none is in stock.
+  for (const x of everyPart()) {
+    const pool = x.offers.some((y) => y.inStock) ? x.offers.filter((y) => y.inStock) : x.offers;
+    assert.equal(bestOffer(x)?.price, pool.length ? Math.min(...pool.map((y) => y.price)) : undefined, x.id);
+  }
+  // A sample cheaper than a live price still wins, as it did before, and the cart counts it as in stock.
+  const mixed = { ...sample, offers: [{ ...LIVE, price: 100 }, { ...SAMPLE, price: 50 }] };
+  assert.equal(bestOffer(mixed)?.retailer, 'BRN');
+  const cart = singleRetailerCarts([mixed]).find((c) => c.retailer === 'BRN')!;
+  assert.deepEqual([cart.carried, cart.total, cart.estimates], [1, 50, 1]);
+  assert.deepEqual(priceRange(mixed), [50, 100]);
+});
+
+test('the offers table never says In Stock for an offer without a live check, and live offers read as before', () => {
+  const stock = (html: string) => [...html.matchAll(/<tr[^>]*>.*?<\/tr>/g)].slice(1).map((m) => [...m[0].matchAll(/<td[^>]*>(.*?)<\/td>/g)][2][1]);
+  const p = { ...part(ar15, 'ar-mz-vg6') };
+  const rows = stock(candidate({ ...p, offers: [SAMPLE, FACTORY_UNDATED, LIST, FACTORY_DATED, { ...SAMPLE, retailer: 'CTD', inStock: false }] }));
+  assert.deepEqual(rows, Array(5).fill('Check store'));
+  assert.deepEqual(stock(candidate({ ...p, offers: [LIVE, { ...LIVE, retailer: 'BRN', price: 110, inStock: false }] })), ['In Stock', '<span class="oos">Out</span>']);
+  // The whole real catalog.
+  for (const x of everyPart()) {
+    if (!x.offers.length) continue;
+    const got = stock(candidate(x));
+    const want = [...x.offers].sort((a, b) => a.price - b.price).map((o) => (!o.checkedAt ? 'Check store' : o.inStock ? 'In Stock' : '<span class="oos">Out</span>'));
+    assert.deepEqual(got, want, x.id);
+  }
+});
+
+test('the picker marks estimates: the row label, the Lowest (estimate) badge, and no Save Up to on estimates', () => {
+  const p = part(ar15, 'ar-mz-vg6');
+  const est = strip(candidate({ ...p, offers: [SAMPLE, { ...SAMPLE, retailer: 'CTD', price: 120 }] }));
+  assert.match(est, /<tr class="best est">/);
+  assert.match(est, /<span class="src">[^<]* · Estimate<\/span>/);
+  assert.doesNotMatch(est, /Save Up to/);
+  const live = strip(candidate({ ...p, offers: [LIVE, { ...LIVE, retailer: 'BRN', price: 120 }] }));
+  assert.match(live, /<tr class="best">/);
+  assert.doesNotMatch(live, /best est/);
+  assert.match(live, /Save Up to \$20\.00/);
+  // One estimate among the offers is enough to drop the saving: part of it would be a rough figure.
+  assert.doesNotMatch(strip(candidate({ ...p, offers: [LIVE, { ...SAMPLE, price: 120 }] })), /Save Up to/);
+  // A dated Factory Part keeps its plain label and date; an undated one says Estimate.
+  assert.match(strip(candidate({ ...p, offers: [FACTORY_UNDATED] })), /· Factory Part, Estimate<\/span>/);
+  assert.match(strip(candidate({ ...p, offers: [FACTORY_DATED] })), /· Factory Part<\/span>/);
+  const css = readFileSync('src/styles.css', 'utf8');
+  assert.match(css, /\.offers tr\.best td:first-child::after \{ content: 'Best';/);
+  assert.match(css, /\.offers tr\.best\.est td:first-child::after \{ content: 'Lowest \(estimate\)';/);
+});
+
+test('the builder rows, Compare cells, the owned finder and saved rows label an estimate', () => {
+  const rows = (p: Platform) => {
+    const sel = { barrel: baseSelection(ar15).barrel };
+    const build = toBuild(p, sel);
+    const { issues, states } = statesFor(p, build);
+    return strip(renderToStaticMarkup(createElement(PartsList, { platform: p, build, issues, states, hover: null, onHover: noop, onOpen: noop, onRemove: noop, mounts: {}, onMount: noop, owned: ownedOf(sel), onToggleOwn: noop })));
+  };
+  assert.match(rows(allPriced([SAMPLE])), /<span class="src">Brownells · Estimate<\/span>/);
+  assert.match(rows(allPriced([LIST])), /<span class="src">[^<]* · List Price<\/span>/);
+  assert.match(rows(allPriced([FACTORY_DATED])), /<span class="src">[^<]* · Factory Part<\/span>/);
+  assert.match(rows(allPriced([FACTORY_UNDATED])), /<span class="src">[^<]* · Factory Part, Estimate<\/span>/);
+  assert.doesNotMatch(rows(allPriced([LIVE])), /<span class="src">[^<]* · /);
+
+  const barrel = part(ar15, baseSelection(ar15).barrel);
+  const found = (p: Part) => strip(renderToStaticMarkup(createElement(FoundRow, { f: { part: p, platform: ar15 } as never, build: {}, owned: ownedOf({}), onOwn: noop })));
+  assert.match(found({ ...barrel, offers: [SAMPLE] }), /<span class="src">\$90\.00 new · Estimate<\/span>/);
+  assert.match(found({ ...barrel, offers: [LIVE] }), /<span class="src">\$100\.00 new<\/span>/);
+
+  // Saved rows: the current price is marked exactly when it's an estimate. Real parts, real prices.
+  const wasDifferent = (id: string) => bestOffer(part(ar15, id))!.price + 50;
+  const check = (id: string) => {
+    const x = part(ar15, id);
+    const s: SavedBuild = { id: 's', name: 'N', platform: 'ar15', selection: { [x.slot]: id }, prices: { [id]: wasDifferent(id) }, savedAt: '2099-01-01T00:00:00Z' };
+    const html = strip(renderToStaticMarkup(createElement(SavedPage, { saved: [s], alerts: null, onOpen: noop, onRename: noop, onDuplicate: noop, onDelete: noop, onCopyLink: noop, onCompare: noop, onCompareAll: noop, onStart: noop, onBrowse: noop })));
+    assert.equal(/<b>\$[\d,.]+<small class="to-buy"> Estimate<\/small><\/b>/.test(html), isEstimate(bestOffer(x)!), id);
+  };
+  const ids = ar15.parts.filter((x) => bestOffer(x));
+  const est = ids.find((x) => isEstimate(bestOffer(x)!));
+  const live = ids.find((x) => !isEstimate(bestOffer(x)!));
+  assert.ok(est && live);
+  check(est.id);
+  check(live.id);
+});
+
+test('each total shows the estimate note exactly when it has an estimate', () => {
+  const sel = baseSelection(ar15);
+  const est = allPriced([SAMPLE]);
+  const n = estimatedOf(est, toBuild(est, sel));
+  assert.ok(n > 1);
+  // Dock: beside the no-price note, and nothing when there's nothing to say.
+  const dock = (estimates?: string) => strip(renderToStaticMarkup(createElement(Dock, { total: 100, status: { cls: 'ok', text: 'x' }, toBuy: false, noPrice: '1 part has no price', estimates, legal: false })));
+  const dockHtml = dock(estimateNote(4));
+  assert.match(dockHtml, /<span class="dock-lead">\$100\.00<small> ·<\/small><\/span> <small class="dock-note">4 prices are estimates ·<\/small> <small class="dock-note">1 part has no price<\/small>/);
+  // Same text as ever, and a separator never leads a piece that can wrap to a new line.
+  assert.ok(dockHtml.replace(/<[^>]*>/g, '').includes('$100.00 · 4 prices are estimates · 1 part has no price'));
+  assert.doesNotMatch(dockHtml, /class="dock-note">\s*·/);
+  assert.doesNotMatch(renderToStaticMarkup(createElement(Dock, { total: 100, status: { cls: 'ok', text: 'x' }, toBuy: true, noPrice: '', legal: false })), /·/);
+  assert.doesNotMatch(dock(), EST_NOTE);
+  assert.doesNotMatch(dock(''), EST_NOTE);
+  // Chips, on a made-up catalog and on every real starter build.
+  const chip = (p: Platform, s: Selection) => strip(renderToStaticMarkup(createElement(ChipTotal, { platform: p, sel: s })));
+  assert.match(chip(est, sel), new RegExp(`<span class="chip-tag">${n} prices are estimates</span>`));
+  assert.doesNotMatch(chip(allPriced([LIVE]), sel), EST_NOTE);
+  for (const fb of FEATURED) {
+    const k = estimatedOf(fb.platform, toBuild(fb.platform, fb.selection));
+    const html = chip(fb.platform, fb.selection);
+    if (k) assert.ok(html.includes(`<span class="chip-tag">${estimateNote(k)}</span>`), fb.id);
+    else assert.doesNotMatch(html, EST_NOTE, fb.id);
+    // Saved and community build cards, the same.
+    const card = strip(renderToStaticMarkup(createElement(BuildCard, { platformId: fb.platform.id, selection: fb.selection, title: 'T', meta: 'M', actions: null })));
+    if (k) assert.ok(card.includes(`<small class="to-buy"> · ${estimateNote(k)}</small>`), fb.id);
+    else assert.doesNotMatch(card, EST_NOTE, fb.id);
+  }
+  // Home tiles.
+  const home = strip(renderToStaticMarkup(createElement(HomePage, { onPick: noop, onStart: noop, onBrowse: noop })));
+  for (const p of PLATFORMS) {
+    const budget = toBuild(p, presetSelection(p, 'budget'));
+    const k = estimatedOf(p, budget);
+    const np = noPriceNote(unpricedOf(p, budget));
+    assert.ok(home.includes(`Starter builds from <b>${money(totalOf(p, budget))}</b>${k ? ` · ${estimateNote(k)}` : ''}${np ? ` · ${np}` : ''}</span>`), p.id);
+  }
+  // Compare: the rows, the part cells, and the dropdown. The owned case has its own test below.
+  const fb = FEATURED.find((x) => x.platform.id === 'ar15' && x.tier === 'budget')!;
+  const compare = (a: Selection, b: Selection) => strip(renderToStaticMarkup(createElement(ComparePage, {
+    items: [{ kind: 'A', name: 'A', platform: 'ar15', selection: a }, { kind: 'B', name: 'B', platform: 'ar15', selection: b }], onSet: noop, saved: [], current: null, lastPlatform: 'ar15', onOpen: noop,
+  })));
+  const facts = (s: Selection) => totalNotes(estimateNote(estimatedOf(ar15, toBuild(ar15, s), ownedOf(s).owned)), noPriceNote(unpricedOf(ar15, toBuild(ar15, s), ownedOf(s).owned)));
+  const a = fb.selection;
+  const k = estimatedOf(ar15, toBuild(ar15, a));
+  const html = compare(a, a);
+  if (facts(a)) assert.ok(html.includes(`<small class="dim">${facts(a)}</small>`));
+  if (k) assert.equal(html.split('<small class="to-buy"> Estimate</small>').length - 1, 2 * k);
+  else assert.doesNotMatch(html, /to-buy"> Estimate/);
+  const chooser = strip(renderToStaticMarkup(createElement(ComparePage, { items: [null, null], onSet: noop, saved: [], current: null, lastPlatform: 'ar15', onOpen: noop })));
+  for (const x of FEATURED.filter((f) => f.platform.id === 'ar15')) {
+    const b = toBuild(ar15, x.selection);
+    const notes = totalNotes(estimateNote(estimatedOf(ar15, b)), noPriceNote(unpricedOf(ar15, b)));
+    assert.ok(chooser.includes(`${ar15.name} · ${money(totalOf(ar15, b))}${notes ? ` (${notes})` : ''}`), x.id);
+  }
+});
+
+test('an owned part drops out of the estimate count on Compare and build cards', () => {
+  const fb = FEATURED.find((x) => x.platform.id === 'ar15' && x.tier === 'budget')!;
+  const est = ar15.parts.find((x) => bestOffer(x) && isEstimate(bestOffer(x)!))!;
+  assert.ok(est, 'a real estimate to own');
+  const plain: Selection = { ...fb.selection, [est.slot]: est.id };
+  const sel: Selection = { ...plain, ['+' + est.slot]: 'own' };
+  const build = toBuild(ar15, sel);
+  const { owned } = ownedOf(sel);
+  assert.deepEqual([...owned], [est.slot]);
+  const whole = estimatedOf(ar15, build);
+  const left = estimatedOf(ar15, build, owned);
+  assert.equal(left, whole - 1);
+
+  const html = strip(renderToStaticMarkup(createElement(ComparePage, {
+    items: [{ kind: 'A', name: 'A', platform: 'ar15', selection: sel }, { kind: 'B', name: 'B', platform: 'ar15', selection: plain }], onSet: noop, saved: [], current: null, lastPlatform: 'ar15', onOpen: noop,
+  })));
+  assert.match(html, /Left to Buy/);
+  assert.ok(html.includes('You Own It'));
+  assert.ok(html.includes(money(totalOf(ar15, build, owned))));
+  // One side's owned part shows no Estimate tag; the other side still does.
+  assert.equal(html.split('<small class="to-buy"> Estimate</small>').length - 1, left + whole);
+  const facts = totalNotes(estimateNote(left), noPriceNote(unpricedOf(ar15, build, owned)));
+  if (facts) assert.ok(html.includes(`<small class="dim">${facts}</small>`));
+
+  const card = strip(renderToStaticMarkup(createElement(BuildCard, { platformId: 'ar15', selection: sel, title: 'T', meta: 'M', actions: null })));
+  assert.ok(card.includes(`${money(totalOf(ar15, build, owned))}<small class="to-buy"> to buy</small>`));
+  if (left) assert.ok(card.includes(`<small class="to-buy"> · ${estimateNote(left)}</small>`));
+  else assert.doesNotMatch(card, EST_NOTE);
+  assert.ok(!card.includes(`<small class="to-buy"> · ${estimateNote(whole)}</small>`));
+});
+
+test('the builder hands the estimate note to the dock and the drawing title, and the layout keeps it on screen', () => {
+  const src = readFileSync('src/BuilderPage.tsx', 'utf8');
+  assert.match(src, /<Dock [^>]*\bestimates=\{estimates\}/);
+  assert.match(src, /<figcaption[\s\S]*?<b title=\{totalNotes\(estimates, noPrice\) \|\| undefined\}>\{money\(total\)\}<\/b>[\s\S]*?<\/figcaption>/);
+  const css = readFileSync('src/styles.css', 'utf8');
+  assert.match(css, /\.bp-toolbar \.chip \{ white-space: normal;/);
+  assert.match(css, /\.chip-amt, \.chip-tag \{ white-space: nowrap; \}/);
+  assert.match(css, /\.dock-lead, \.dock-note \{ display: inline-block; \}/);
+  assert.match(css, /@media \(min-width: 600px\) and \(max-width: 979px\) \{[^}]*\.parts-head, \.part-row \{ grid-template-columns: 34px minmax\(0, 1fr\) 130px 96px; \}/);
+  const app = readFileSync('src/App.tsx', 'utf8');
+  assert.ok(app.includes('<>Estimated prices</>'));
+  assert.doesNotMatch(app, /Sample prices/);
+});
+
+test('the one-store table says its cart has estimates, and its note is the approved wording', () => {
+  const sel = { barrel: baseSelection(ar15).barrel, trigger: baseSelection(ar15).trigger };
+  const html = (p: Platform) => strip(summaryHtml(p, sel));
+  assert.match(html(allPriced([SAMPLE])), /Brownells<small class="to-buy"> Includes estimates<\/small>/);
+  assert.doesNotMatch(html(allPriced([LIVE])), /Includes estimates/);
+  // React writes the apostrophe in "doesn't" as &#x27; in the markup.
+  assert.match(html(allPriced([LIVE])), /Fewer shipments can beat a lower parts total\. Leaves out parts the store doesn&#x27;t list or that are marked out of stock\. Estimates are included and marked\./);
+  assert.doesNotMatch(html(allPriced([LIVE])), /Leaves out parts that are out of stock or not checked/);
+  assert.doesNotMatch(html(allPriced([LIVE])), /Leaves out parts shown as out of stock/);
+  assert.doesNotMatch(html(allPriced([LIVE])), /In-stock parts only/);
+});
+
+test('every platform page marks estimates exactly where it has them, and keeps the no-price wording in place', () => {
+  const tierParts = (v: (typeof PAGE_VIEWS)[number], tier: 'budget' | 'value' | 'premium') => Object.values(presetSelection(v, tier)).map((id) => v.parts.find((x) => x.id === id));
+  let some = 0;
+  for (const v of PAGE_VIEWS) {
+    const html = platformPage(v);
+    const tiers = (['budget', 'value', 'premium'] as const).map((t) => estimatedCount(tierParts(v, t)));
+    // Starter cards: a span of its own, right after the card's text.
+    assert.equal(html.match(/<\/span><span>\d+ prices? (?:is an estimate|are estimates)<\/span><\/a>/g)?.length ?? 0, tiers.filter(Boolean).length, v.pageId);
+    tiers.forEach((k) => { if (k) assert.ok(html.includes(`<span>${estimateNote(k)}</span></a>`), v.pageId); });
+    // The lede after its full stop, and the meta description.
+    const lede = html.match(/every part already fits, from [^<]*?\.( \d+ prices? (?:is an estimate|are estimates)\.)? Open one in the builder/);
+    assert.ok(lede, v.pageId);
+    assert.equal(lede[1] ?? '', tiers[0] ? ` ${estimateNote(tiers[0])}.` : '', v.pageId);
+    assert.equal(html.includes('Some prices are estimates.'), tiers[0] > 0, v.pageId);
+    // Slot ranges.
+    const slots = v.slots.filter((s) => { const ps = v.parts.filter((p) => p.slot === s.id); return ps.some((p) => bestOffer(p)) && estimatedCount(ps) > 0; });
+    assert.equal(html.match(/, some estimated\./g)?.length ?? 0, slots.length, v.pageId);
+    // The starter parts list: one mark per estimate across the three lists.
+    assert.equal(html.match(/<\/b> <span class="muted">\(estimate\)<\/span><\/li>/g)?.length ?? 0, tiers.reduce((a, b) => a + b, 0), v.pageId);
+    // Page intro.
+    assert.ok(html.includes('with the lowest price we list'), v.pageId);
+    assert.doesNotMatch(html, /lowest price we found/, v.pageId);
+    assert.match(html, /\. Estimates are marked\. The builder checks/, v.pageId);
+    assert.doesNotMatch(html, /sample price/i, v.pageId);
+    some += tiers[0];
+  }
+  assert.ok(some > 0, 'some page has an estimate tonight');
+  // The no-price note still closes the card's first span, with the estimate after it.
+  const view = PAGE_VIEWS.find((v) => v.pageId === 'ar15')!;
+  const budget = Object.values(presetSelection(view, 'budget'));
+  const est = { ...view, parts: view.parts.map((x) => (x.id === budget[0] ? { ...x, offers: [] } : budget.includes(x.id) ? { ...x, offers: [SAMPLE] } : x)) };
+  const html = platformPage(est);
+  assert.ok(html.includes(`· 1 part has no price</span><span>${estimateNote(budget.length - 1)}</span></a>`));
+  assert.ok(html.includes(`(1 part has no price). ${estimateNote(budget.length - 1)}. Open one`));
+  // A live part gets no marks; a static price reads "(estimate)", and "factory part, estimated" stays.
+  const live = { ...view, parts: view.parts.map((x) => ({ ...x, offers: [LIVE] })) };
+  const clean = platformPage(live);
+  assert.doesNotMatch(clean, EST_NOTE);
+  assert.doesNotMatch(clean, /some estimated|\(estimate\)|Some prices are estimates/);
+  const sample = platformPage({ ...view, parts: view.parts.map((x) => ({ ...x, offers: [SAMPLE] })) });
+  assert.match(sample, /<span class="muted">\(estimate\)<\/span><\/p>/);
+  const factory = platformPage({ ...view, parts: view.parts.map((x) => ({ ...x, offers: [FACTORY_UNDATED] })) });
+  assert.match(factory, /\(factory part, estimated\)/);
+});
+
+test('guide pages say estimates are marked, on the lowest price we list', () => {
+  const g = GUIDES.find((x) => x.picks.length)!;
+  assert.match(guidePage(g, BUILT), /with the lowest price we list[^<]*\. Estimates are marked\.<\/p>/);
+});
+
+test('the price index lists its estimates beside the parts, whose entries stay two items', () => {
+  const index = priceIndex(PLATFORMS);
+  for (const p of PLATFORMS) {
+    const entry = index.platforms[p.id];
+    assert.deepEqual([...entry.estimates].sort(), [...new Set(p.parts.filter((x) => { const o = bestOffer(x); return o && isEstimate(o); }).map((x) => x.id))].sort(), p.id);
+    assert.equal(new Set(entry.estimates).size, entry.estimates.length, p.id);
+    for (const id of entry.estimates) assert.ok(entry.parts[id], `${p.id}/${id} is priced`);
+    for (const tuple of Object.values(entry.parts)) assert.equal(tuple.length, 2, p.id);
+  }
+  const vg6 = part(ar15, 'ar-mz-vg6');
+  const tiny = { ...ar15, id: 'tiny', parts: [{ ...vg6, offers: [SAMPLE] }, { ...vg6, id: 'live', offers: [LIVE] }, { ...vg6, id: 'none', offers: [] }, { ...vg6, id: 'fac', offers: [FACTORY_UNDATED] }, { ...vg6, id: 'lst', offers: [LIST] }] };
+  assert.deepEqual(priceIndex([tiny]).platforms.tiny.estimates, ['ar-mz-vg6', 'fac']);
+});
+
+test('a community card total says WITH ESTIMATES when it has any', () => {
+  const sel = baseSelection(ar15);
+  const est = allPriced([SAMPLE]);
+  assert.equal(cardTotalWords(est, toBuild(est, sel)), 'WITH ESTIMATES');
+  const live = allPriced([LIVE]);
+  assert.equal(cardTotalWords(live, toBuild(live, sel)), 'BEST-PRICE TOTAL');
+  const og = readFileSync('scripts/og-cards.tsx', 'utf8');
+  assert.match(og, /function buildCard\([^)]*\) \{[\s\S]*?cardTotalWords\(platform, build\)/);
+  assert.doesNotMatch(og, /BEST-PRICE TOTAL/);
+});
+
+/** Owner-approved wording (2026-10-31). */
+const FAQ_PRICES = "We check retailer and maker sites every night where they allow it. Some stores we only link to, without checking their prices, so those parts stay marked Estimate: a rough figure of ours, not the store's current price. List Price and dated Factory Part prices were checked by hand on that date, and undated Factory Part prices are estimates too, so always confirm the price at the retailer.";
+const FAQ_RETAILERS = "Some retailers don't allow automated price checks, and we respect that. We link to some of them without checking prices, and leave others out. We add retailers when we can.";
+const FOOTER_PRICES = 'Prices marked Estimate are rough figures, not current store prices, List Price and dated Factory Part prices were checked by hand on that date, and undated Factory Part prices are also estimates; always confirm the price and fit with the retailer and the maker.';
+const APP_PRICES = 'Prices marked Estimate are rough figures, not current store prices. List Price and dated Factory Part prices were checked by hand on that date; undated Factory Part prices are also estimates. A From price is a holster before its light option. Always confirm the price at the retailer.';
+const SAVED_LEDE = 'Builds are saved in this browser. We check prices every night at the stores we track, and each build shows what changed since you saved it. Use Copy Link to open one on another device or send it to someone.';
+
+test('the FAQ, footers and page text keep the approved estimate wording', () => {
+  const faq = indexPage(BUILT);
+  // The FAQ's structured data carries the raw answers, so the exact text is checked there.
+  assert.ok(faq.includes(FAQ_PRICES), 'prices answer');
+  assert.ok(faq.includes(FAQ_RETAILERS), 'retailers answer');
+  for (const page of [faq, platformPage(PAGE_VIEWS[0]), guidePage(GUIDES[0], BUILT)]) assert.ok(page.includes(FOOTER_PRICES), 'footer');
+  assert.ok(readFileSync('src/App.tsx', 'utf8').includes(APP_PRICES), 'app footer');
+  const saved = strip(renderToStaticMarkup(createElement(SavedPage, { saved: [], alerts: null, onOpen: noop, onRename: noop, onDuplicate: noop, onDelete: noop, onCopyLink: noop, onCompare: noop, onCompareAll: noop, onStart: noop, onBrowse: noop })));
+  assert.ok(saved.includes(SAVED_LEDE), 'saved page');
+  const home = strip(renderToStaticMarkup(createElement(HomePage, { onPick: noop, onStart: noop, onBrowse: noop }))).replace(/&#x27;/g, "'");
+  assert.ok(home.includes("See each part's price at every retailer we list, save the build"), 'home');
+  for (const page of [faq, platformPage(PAGE_VIEWS[0])]) assert.doesNotMatch(page, /Prices marked Sample/);
+  assert.doesNotMatch(readFileSync('src/App.tsx', 'utf8'), /Prices marked Sample/);
+  assert.ok(ar15.parts.some((x) => x.pick?.note === 'Reliable carbine-gas barrel for a tight budget.'));
+  assert.ok(platform('ar10').parts.some((x) => x.pick?.note === 'Complete kit for a tight budget.'));
+  assert.ok(!everyPart().some((x) => /at the lowest price/.test(x.pick?.note ?? '')));
+});
+
+test('no structured data on the home page or the static pages states a price', () => {
+  const blocks = (html: string) => [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)].map((m) => m[1]);
+  const home = blocks(readFileSync('index.html', 'utf8'));
+  assert.ok(home.length > 0);
+  for (const page of [...home, ...PAGE_VIEWS.flatMap((v) => blocks(platformPage(v)))]) {
+    assert.doesNotMatch(page, /\$\s?\d/);
+    assert.doesNotMatch(page, /"(?:price|lowPrice|highPrice|priceCurrency|offers)"\s*:/);
+  }
 });

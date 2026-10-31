@@ -2,7 +2,7 @@
 
 Generated file, do not edit by hand. Regenerate it with `npm run retailers`.
 Built from src/data/retailers.ts, data/sources.json and data/retailer-checks.json.
-In the Status column, "active" only means the retailer is neither paused nor links only. "Links only" means we keep its links and Sample prices but don't request its pages.
+In the Status column, "active" only means the retailer is neither paused nor links only. "Links only" means we keep its links and estimated prices but don't request its pages.
 
 | Retailer | Domain | Status | Since | Reason | Links | Last price check |
 |---|---|---|---|---|---|---|

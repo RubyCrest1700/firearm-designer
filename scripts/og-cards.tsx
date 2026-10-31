@@ -13,7 +13,7 @@ import { COMMUNITY_API } from '../src/config';
 import { PLATFORMS, canonicalPlatform } from '../src/data/index';
 import { baseSelection, partIds, type Selection } from '../src/engine';
 import { buildOf, selectionFromParts, totalOf } from '../src/store';
-import { priceIndex } from './og-index';
+import { cardTotalWords, priceIndex } from './og-index';
 import { cardNotice } from './og-notice';
 import type { Platform } from '../src/types';
 
@@ -90,7 +90,7 @@ const ART = { x: 70, y: 268, w: W - 140, h: H - 326 };
 function buildCard(title: string, platform: Platform, sel: Selection) {
   const { build } = buildOf(platform.id, sel);
   const n = partIds(sel).length;
-  const line = `${esc(platform.name.toUpperCase())} · ${n} PARTS · <tspan fill="${C.cta}">${money(totalOf(platform, build))}</tspan> BEST-PRICE TOTAL`;
+  const line = `${esc(platform.name.toUpperCase())} · ${n} PARTS · <tspan fill="${C.cta}">${money(totalOf(platform, build))}</tspan> ${cardTotalWords(platform, build)}`;
   return card(title, line, drawing(platform, sel, ART.x, ART.y, ART.w, ART.h), cardNotice(platform.id));
 }
 

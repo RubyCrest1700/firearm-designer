@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { bestOffer, money, type Owned } from './engine';
+import { ESTIMATE_LABEL, bestOffer, isEstimate, money, type Owned } from './engine';
 import { findParts, isLink, type Found } from './find';
 import { titleCase } from './text';
 import type { Build, Part, Platform } from './types';
@@ -91,7 +91,7 @@ export function OwnedFinder({ platform, build, owned, onOwn, onOwnOther, onSwitc
   );
 }
 
-function FoundRow({ f, build, owned, onOwn }: { f: Found; build: Build; owned: Owned; onOwn: (p: Part) => void }) {
+export function FoundRow({ f, build, owned, onOwn }: { f: Found; build: Build; owned: Owned; onOwn: (p: Part) => void }) {
   const { part, platform } = f;
   const slot = platform.slots.find((s) => s.id === part.slot)!;
   const inBuild = build[part.slot]?.id === part.id;
@@ -107,7 +107,7 @@ function FoundRow({ f, build, owned, onOwn }: { f: Found; build: Build; owned: O
         {replaces && <span className="row-issue">Replaces the {replaces.brand} {replaces.name} in your build.</span>}
       </div>
       <div className="found-act">
-        {best && <span className="src">{money(best.price)} new</span>}
+        {best && <span className="src">{money(best.price)} new{isEstimate(best) ? ` · ${ESTIMATE_LABEL}` : ''}</span>}
         {isOwned ? <span className="own-btn on">✓ Owned</span> : <button className="btn primary" onClick={() => onOwn(part)}>I Own This</button>}
       </div>
     </li>

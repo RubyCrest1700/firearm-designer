@@ -2,7 +2,7 @@
  * The Privacy Policy (/privacy/) and Terms of Use (/terms/). The text is the owner-approved wording (2026-10-26),
  * copied exactly from the approved drafts' published bodies; their owner notes are never part of the site. Edit the
  * wording only with the owner's approval. Each page has its own effective date, set on merge day: the Privacy Policy
- * October 30, 2026 (section 5, when retention went live), the Terms October 26, 2026. Change a date only with a
+ * October 30, 2026 (section 5, when retention went live), the Terms October 31, 2026 (section 4 price wording). Change a date only with a
  * change of that page's text the owner approves.
  *
  * The text is kept as simple Markdown and turned into HTML here, so it stays word for word what was approved:
@@ -154,10 +154,10 @@ If we change this policy, we'll update the effective date at the top. If a chang
 Contact us through the feedback form at dropinbuilds.com/feedback/. To report a community build, use the Report button on the build.
 `;
 
-/** Owner-approved wording (2026-10-26). */
+/** Owner-approved wording (2026-10-26; section 4 price sentence and effective date 2026-10-31). */
 export const TERMS_MD = `# Drop-In Builds Terms of Use
 
-Effective: October 26, 2026
+Effective: October 31, 2026
 
 These terms cover your use of dropinbuilds.com and share.dropinbuilds.com (the "site"), run by Drop-In Builds ("we", "us"). By using the site, you agree to these terms. If you don't agree, please don't use the site.
 
@@ -173,7 +173,7 @@ The build planner, its compatibility checks, and the notices it shows (including
 You are responsible for following all federal, state and local laws that apply to buying, owning, building, carrying and transporting firearms and parts where you live. Laws change and vary by state and city. If you're not sure, ask a licensed firearms dealer (FFL) or a lawyer.
 
 ## 4. Fit, prices and availability
-We work to keep part details, fit checks, weights, prices and stock status accurate, but we don't guarantee them. Prices are collected about once a day and can change at any time. Always confirm the price, availability and fit at the retailer before you buy.
+We work to keep part details, fit checks, weights, prices and stock status accurate, but we don't guarantee them. Prices from retailers we check are collected about once a day and can change at any time. Prices marked Estimate are not current store prices. Always confirm the price, availability and fit at the retailer before you buy.
 
 Building or changing a firearm can be dangerous. If you're not sure how to assemble or fit a part, use a qualified gunsmith. You use the site's information at your own risk.
 

@@ -197,7 +197,7 @@ export default function App() {
           </nav>
           <p className="price-status">
             <span className={'pulse' + (PRICES_UPDATED_AT ? ' live' : '')} aria-hidden="true" />
-            {PRICES_UPDATED_AT ? <>Prices checked {shortDate(PRICES_UPDATED_AT, true)}</> : <>Sample prices</>}
+            {PRICES_UPDATED_AT ? <>Prices checked {shortDate(PRICES_UPDATED_AT, true)}</> : <>Estimated prices</>}
           </p>
         </div>
       </header>
@@ -280,7 +280,7 @@ export default function App() {
           </div>
           <div>
             <p className="foot-title">Good to Know</p>
-            <p>Prices marked Sample aren't tracked yet. List Price and dated Factory Part prices were checked by hand on that date; undated Factory Part prices are estimates. A From price is a holster before its light option. Always confirm the price at the retailer.</p>
+            <p>Prices marked Estimate are rough figures, not current store prices. List Price and dated Factory Part prices were checked by hand on that date; undated Factory Part prices are also estimates. A From price is a holster before its light option. Always confirm the price at the retailer.</p>
             <p>Parts marked FFL are serialized and treated as the firearm under federal law, so they ship to a licensed dealer. Laws vary by state.</p>
           </div>
         </div>

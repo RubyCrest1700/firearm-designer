@@ -116,7 +116,7 @@ const allParts = [
   ...parts('barrel', [
     { id: 'ar-bbl-psa16', brand: 'Palmetto State Armory', name: '16" 5.56 NATO Carbine, Nitride', specs: ['16"', '5.56 NATO', 'Carbine gas', '.750 journal', '1:7', '1/2x28 thread'],
       attrs: { caliber: '5.56', bolt: '5.56', bullet: .224, length: 16, gas: 'carbine', journal: '.750', thread: '1/2x28' },
-      offers: [['PSA', 109.99]], pick: pick('budget', 'Reliable carbine-gas barrel at the lowest price.') },
+      offers: [['PSA', 109.99]], pick: pick('budget', 'Reliable carbine-gas barrel for a tight budget.') },
     { id: 'ar-bbl-ba16', brand: 'Ballistic Advantage', name: '16" 5.56 Midlength Modern Series', specs: ['16"', '5.56 NATO', 'Midlength gas', '.750 journal', '1:7', '1/2x28 thread'],
       attrs: { caliber: '5.56', bolt: '5.56', bullet: .224, length: 16, gas: 'midlength', journal: '.750', thread: '1/2x28' },
       offers: [['PA', 159.99], ['BRN', 169.99], ['OP', 164.99]], pick: pick('value', 'Midlength gas runs softer than carbine gas on a 16" barrel.') },

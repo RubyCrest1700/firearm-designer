@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { RETAILERS, buyUrl } from './data/retailers';
-import { bestOffer, candidateIssues, listedParts, money, priceLabel, priceRange, priceText, worst } from './engine';
+import { bestOffer, candidateIssues, isEstimate, listedParts, money, priceLabel, priceRange, priceText, worst } from './engine';
 import type { RegionState } from './Blueprint';
 import { TIER_LABEL } from './store';
 import { daysAgo, hasHistory, partSeries } from './data/history';
@@ -129,7 +129,7 @@ export function Candidate({ part, open, issues, sev, selected, owned, onChoose, 
       {/* A part with no offers (sold only by a paused retailer) has no retailers to compare. */}
       {part.offers.length > 0 && <button className="compare" aria-expanded={showPrices} onClick={() => setShowPrices(!showPrices)}>
         <span>{part.offers.length > 1 ? `Compare ${part.offers.length} Retailers` : 'View Retailer'}</span>
-        {hi > lo && <span className="save">Save Up to {money(hi - lo)}</span>}
+        {hi > lo && !part.offers.some(isEstimate) && <span className="save">Save Up to {money(hi - lo)}</span>}
         <span className="chev" aria-hidden="true">{showPrices ? '−' : '+'}</span>
       </button>}
       {showPrices && part.offers.length > 0 && (
@@ -139,10 +139,10 @@ export function Candidate({ part, open, issues, sev, selected, owned, onChoose, 
             <thead><tr><th>Retailer</th><th className="num">Price</th><th>Stock</th><th>Checked</th><th><span className="sr">Link</span></th></tr></thead>
             <tbody>
               {[...part.offers].sort((a, b) => a.price - b.price).map((o) => (
-                <tr key={o.retailer} className={best && o.retailer === best.retailer ? 'best' : ''}>
+                <tr key={o.retailer} className={best && o.retailer === best.retailer ? (isEstimate(o) ? 'best est' : 'best') : ''}>
                   <td>{RETAILERS[o.retailer].name}</td>
                   <td className="num">{priceText(o)}</td>
-                  <td>{o.inStock ? 'In Stock' : <span className="oos">Out</span>}</td>
+                  <td>{!o.checkedAt ? 'Check store' : o.inStock ? 'In Stock' : <span className="oos">Out</span>}</td>
                   <td className="dim">{o.checkedAt ? `Live ${shortDate(o.checkedAt)}` : o.asOf ? `${priceLabel(o)} ${shortDate(o.asOf)}` : priceLabel(o)}</td>
                   <td className="num"><a href={buyUrl(o, `${part.brand} ${part.name}`)} target="_blank" rel="sponsored noopener" onClick={onBuyClick}>{o.url ? 'View ↗' : 'Search ↗'}</a></td>
                 </tr>
