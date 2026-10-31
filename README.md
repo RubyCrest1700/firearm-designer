@@ -56,6 +56,13 @@ only that retailer sold shows no price. To undo, delete the entry; the next nigh
 pages again. An id that isn't in `src/data/retailers.ts` fails the tests and the price job. Paused
 since 2026-10-24: AR15Discounts (`ARD`), Primary Arms (`PA`) and Vedder Holsters (`VED`).
 
+Links only is not a pause. List the id under `"linksOnly"` in `data/sources.json`, with the date and
+the reason, the same way (`"CTD": { "since": "2026-10-31", "reason": "..." }`). `update-prices`,
+`read-weights` and `check-links` then send nothing to that retailer's site, robots.txt and subdomains
+included, but the site keeps its links and Sample prices as they were. An id can't be under both
+`"paused"` and `"linksOnly"`, and the same checks apply to an unknown id or a missing date or reason.
+To undo, delete the entry. `RETAILERS.md` shows the status and needs `npm run retailers` in the same PR.
+
 ## Where things live
 
 - `src/data/<platform>.ts`: slots, parts with sample prices, compatibility rules and presets

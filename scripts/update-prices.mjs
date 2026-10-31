@@ -10,7 +10,7 @@ import { extractPrice, implausiblePrice } from './extract-price.mjs';
 import { robotsGate } from './robots.mjs';
 import { readPage } from './robots.mjs';
 import { recordHistory, formatHistory } from './price-history.mjs';
-import { readActiveSources } from './sources.mjs';
+import { readFetchableSources } from './sources.mjs';
 
 const USER_AGENT = 'FirearmDesignerPriceBot/0.1 (+https://github.com/RubyCrest1700/firearm-designer)';
 const HOST_DELAY_MS = 5000;
@@ -19,7 +19,8 @@ const KEEP_STALE_DAYS = 7;
 const dryRun = process.argv.includes('--dry-run');
 
 // Paused retailers ("paused" in data/sources.json) are left out: their pages aren't read and their prices drop out.
-const sources = readActiveSources();
+// Links-only retailers ("linksOnly") are left out too: no request goes to them, and the site keeps their Sample prices.
+const sources = readFetchableSources();
 const previous = JSON.parse(readFileSync('data/prices.json', 'utf8'));
 const now = new Date();
 

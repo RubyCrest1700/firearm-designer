@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { activeSources, pausedHosts, pausedIds, readActiveSources, readPausedHosts, retailersFrom } from './sources.mjs';
+import { activeSources, fetchableSources, linksOnlyIds, noFetchHosts, pausedHosts, pausedIds, readActiveSources, readFetchableSources, readNoFetchHosts, readPausedHosts, retailersFrom } from './sources.mjs';
 
 const read = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 const sources = JSON.parse(read('data/sources.json'));
@@ -78,21 +78,22 @@ test('the link check skips the paused retailers\' sites, search links included, 
 });
 
 // The scripts that fetch retailer pages run network code on import, so they're checked as text: each reads its
-// links only through readActiveSources / readPausedHosts, and none reads data/sources.json itself.
-test('the price job, weight reader and link check read links only through the paused-retailer filter', () => {
-  const uses = { 'scripts/update-prices.mjs': 'readActiveSources', 'scripts/read-weights.mjs': 'readActiveSources', 'scripts/check-links.mjs': 'readPausedHosts' };
+// links only through readFetchableSources / readNoFetchHosts, and none reads data/sources.json itself.
+test('the price job, weight reader and link check read links only through the paused and links-only filter', () => {
+  const uses = { 'scripts/update-prices.mjs': 'readFetchableSources', 'scripts/read-weights.mjs': 'readFetchableSources', 'scripts/check-links.mjs': 'readNoFetchHosts' };
   for (const [file, fn] of Object.entries(uses)) {
     const text = read(file);
     assert.match(text, new RegExp(`^import \{ ${fn} \} from './sources\.mjs';$`, 'm'), file);
-    assert.match(text, fn === 'readActiveSources' ? /^const sources = readActiveSources\(\);$/m : /^const PAUSED_HOSTS = readPausedHosts\(\);$/m, file);
+    assert.match(text, fn === 'readFetchableSources' ? /^const sources = readFetchableSources\(\);$/m : /^const NO_FETCH_HOSTS = readNoFetchHosts\(\);$/m, file);
     assert.doesNotMatch(text, /sources\.json'/, `${file} must not read data/sources.json directly`);
-    assert.doesNotMatch(text, /\b(activeSources|pausedHosts|pausedIds)\(/, `${file} must not filter by hand`);
+    assert.doesNotMatch(text, /\b(activeSources|pausedHosts|pausedIds|fetchableSources|noFetchHosts|linksOnlyIds|readActiveSources|readPausedHosts)\(/, `${file} must not filter by hand`);
   }
   // update-prices builds its fetch jobs, and read-weights its page list, from that filtered `sources` alone.
   assert.match(read('scripts/update-prices.mjs'), /^const jobs = Object\.entries\(sources\)\.flatMap\(/m);
   assert.match(read('scripts/read-weights.mjs'), /^for \(const \[partId, byRetailer\] of Object\.entries\(sources\)\) \{$/m);
-  // The link check skips a link when its host is paused.
-  assert.match(read('scripts/check-links.mjs'), /if \(PAUSED_HOSTS\.has\(new URL\(url\)\.host\)\) return;/);
+  // The link check skips a link when its host is paused or links only, and its log line names those hosts.
+  assert.match(read('scripts/check-links.mjs'), /if \(NO_FETCH_HOSTS\.has\(new URL\(url\)\.host\)\) return;/);
+  assert.ok(read('scripts/check-links.mjs').includes("console.log(`Not checked, paused or links only in data/sources.json: ${[...NO_FETCH_HOSTS].join(', ') || 'none'}.`);"));
 });
 
 test('readActiveSources and readPausedHosts read the real files and apply the filter', () => {
@@ -102,6 +103,17 @@ test('readActiveSources and readPausedHosts read the real files and apply the fi
     assert.deepEqual(readActiveSources(), activeSources(sources, retailers));
     assert.deepEqual([...readPausedHosts()].sort(), [...pausedHosts(sources, retailers)].sort());
     assert.ok(!Object.values(readActiveSources()).some((b) => b.PA || b.ARD || b.VED));
+  } finally {
+    process.chdir(cwd);
+  }
+});
+
+test('readFetchableSources and readNoFetchHosts read the real files and apply the filter', () => {
+  const cwd = process.cwd();
+  process.chdir(fileURLToPath(new URL('..', import.meta.url)));
+  try {
+    assert.deepEqual(readFetchableSources(), fetchableSources(sources, retailers));
+    assert.deepEqual([...readNoFetchHosts()].sort(), [...noFetchHosts(sources, retailers)].sort());
   } finally {
     process.chdir(cwd);
   }
@@ -126,4 +138,47 @@ test('the link check skips every host on a paused retailer\'s site, such as blog
   for (const h of ['www.brownells.com', 'primaryarms.com.example.net', 'notprimaryarms.com', 'magpul.com']) assert.ok(!hosts.has(h), h);
   // The list itself is still the hosts we hold links for.
   assert.ok([...hosts].includes('www.primaryarms.com') && ![...hosts].includes('blog.primaryarms.com'));
+});
+
+/* ------------------------------------------------------------------ links-only retailers */
+
+const OK_ENTRY = { since: '2026-10-22', reason: 'why' };
+
+test('a small example: fetching drops the links-only retailer too, and the paused results stay paused-only', () => {
+  const s = {
+    paused: { PA: OK_ENTRY },
+    linksOnly: { CTD: OK_ENTRY },
+    parts: { a: { PA: 'https://pa.example/a', CTD: 'https://www.ctd.example/a', BUDS: 'https://buds.example/a' }, b: { CTD: 'https://ctd2.example/b' }, c: { BUDS: 'https://buds.example/c' } },
+  };
+  assert.deepEqual(fetchableSources(s, retailers), { a: { BUDS: 'https://buds.example/a' }, c: { BUDS: 'https://buds.example/c' } });
+  assert.deepEqual(activeSources(s, retailers), { a: { CTD: 'https://www.ctd.example/a', BUDS: 'https://buds.example/a' }, b: { CTD: 'https://ctd2.example/b' }, c: { BUDS: 'https://buds.example/c' } });
+  assert.deepEqual([...pausedIds(s, retailers)], ['PA']);
+  assert.ok(!pausedHosts(s, retailers).has('www.cheaperthandirt.com'));
+  assert.deepEqual(fetchableSources({ parts: s.parts }, retailers), s.parts);
+  assert.deepEqual([...linksOnlyIds({ parts: {} }, retailers)], []);
+});
+
+test('the no-fetch hosts are the paused hosts plus each links-only search host and product link host, as whole sites', () => {
+  const s = { paused: { PA: OK_ENTRY }, linksOnly: { CTD: OK_ENTRY }, parts: { a: { PA: 'https://pa.example/a', CTD: 'https://shop.ctd-store.example/a', BUDS: 'https://buds.example/a' } } };
+  const hosts = noFetchHosts(s, retailers);
+  assert.deepEqual([...hosts].sort(), [...pausedHosts(s, retailers), 'shop.ctd-store.example', new URL(retailers.CTD.search).host].sort());
+  for (const h of ['www.primaryarms.com', 'pa.example', 'shop.ctd-store.example', 'other.ctd-store.example', 'www.cheaperthandirt.com', 'cheaperthandirt.com', 'blog.cheaperthandirt.com']) assert.ok(hosts.has(h), h);
+  for (const h of ['buds.example', 'notcheaperthandirt.com', 'cheaperthandirt.com.example.net']) assert.ok(!hosts.has(h), h);
+});
+
+test('an unknown retailer id in "linksOnly" fails instead of leaving a store running', () => {
+  for (const fn of [linksOnlyIds, fetchableSources, noFetchHosts]) {
+    assert.throws(() => fn({ linksOnly: { CTDD: OK_ENTRY }, parts: {} }, retailers), /"linksOnly" names unknown retailer CTDD/, fn.name);
+  }
+});
+
+test('a links-only entry without a real date or a reason fails', () => {
+  assert.equal(linksOnlyIds({ linksOnly: { CTD: OK_ENTRY }, parts: {} }, retailers).has('CTD'), true);
+  for (const bad of ['2026-10-22: why', { reason: 'why' }, { since: '2026-10-22' }, { since: '2026-10-22', reason: ' ' }, { since: '10/22/2026', reason: 'why' }, { since: '2026-02-30', reason: 'why' }, { since: '2026-99-99', reason: 'why' }, null])
+    assert.throws(() => linksOnlyIds({ linksOnly: { CTD: bad }, parts: {} }, retailers), /"linksOnly" entry for CTD needs \{ "since"/, JSON.stringify(bad));
+});
+
+test('a retailer listed under both "paused" and "linksOnly" fails', () => {
+  const s = { paused: { CTD: OK_ENTRY }, linksOnly: { CTD: OK_ENTRY }, parts: {} };
+  for (const fn of [linksOnlyIds, fetchableSources, noFetchHosts]) assert.throws(() => fn(s, retailers), /CTD under both "paused" and "linksOnly"/, fn.name);
 });
