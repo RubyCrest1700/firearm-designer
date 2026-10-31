@@ -2,6 +2,7 @@
 
 Generated file, do not edit by hand. Regenerate it with `npm run retailers`.
 Built from src/data/retailers.ts, data/sources.json and data/retailer-checks.json.
+In the Status column, "active" only means the retailer is not paused.
 
 | Retailer | Domain | Status | Paused since | Reason | Links | Last price check |
 |---|---|---|---|---|---|---|

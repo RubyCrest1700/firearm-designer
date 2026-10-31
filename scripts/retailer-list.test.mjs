@@ -62,6 +62,7 @@ test('the header says the file is generated and how to regenerate it, and the la
   const text = render();
   assert.match(text, /Generated file/);
   assert.match(text, /`npm run retailers`/);
+  assert.match(text, /^In the Status column, "active" only means the retailer is not paused\.$/m);
   assert.match(text, /^\| Retailer \| Domain \| Status \| Paused since \| Reason \| Links \| Last price check \|$/m);
 });
 
