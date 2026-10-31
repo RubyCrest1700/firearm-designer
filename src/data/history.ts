@@ -1,5 +1,5 @@
 import history from '../../data/price-history.json';
-import { bestOffer } from '../engine';
+import { bestOffer, isEstimate } from '../engine';
 import type { Part } from '../types';
 
 /** Days each part's lowest live price changed, written nightly by scripts/price-history.mjs. */
@@ -14,6 +14,12 @@ export function seriesOf(part: Part): [string, number][] {
   const series = SERIES[part.id] ?? [];
   return part.pausedThrough ? series.filter(([d]) => d > part.pausedThrough!) : series;
 }
+
+/**
+ * The first day the file records a live price for a part, if it ever has. Unlike seriesOf this keeps a paused retailer's
+ * points: it asks when a live price first existed, not which prices we can show.
+ */
+export const firstLiveDay = (part: Part): string | undefined => SERIES[part.id]?.[0]?.[0];
 
 export const today = () => new Date().toISOString().slice(0, 10);
 export const daysAgo = (n: number, from = new Date()) => new Date(from.getTime() - n * 864e5).toISOString().slice(0, 10);
@@ -58,11 +64,15 @@ export const totalSeries = (parts: Part[], from: string, to = today()): Point[] 
 
 export interface Change { was: number; now: number; by: number }
 
-/** How a part's best price moved over the last `days`: `by` is positive for a drop, negative for a rise. */
+/**
+ * How a part's best price moved over the last `days`: `by` is positive for a drop, negative for a rise. Nothing for a
+ * part at an estimate today: going to an estimate isn't a price change.
+ */
 export function recentChange(part: Part, days = 30): Change | undefined {
-  if (!hasHistory(part)) return undefined;
+  const best = bestOffer(part);
+  if (!hasHistory(part) || (best && isEstimate(best))) return undefined;
   const was = priceOn(part, daysAgo(days));
-  const now = bestOffer(part)?.price ?? priceOn(part, today());
+  const now = best?.price ?? priceOn(part, today());
   return worthShowing(was, now) ? { was, now, by: was - now } : undefined;
 }
 
