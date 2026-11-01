@@ -1,7 +1,7 @@
 import { SHARE_BASE } from './config';
 import { PLATFORMS, canonicalPlatform } from './data';
-import { MOUNT_CODE, baseSelection, bestOffer, estimatedCount, ownedOf, placementOf, presetSelection, selectionTokens, toBuild, unpricedCount, type Selection } from './engine';
-import { worthShowing } from './data/history';
+import { MOUNT_CODE, baseSelection, bestOffer, estimatedCount, isEstimate, ownedOf, placementOf, presetSelection, selectionTokens, toBuild, unpricedCount, type Selection } from './engine';
+import { firstLiveDay, worthShowing } from './data/history';
 import type { Build, Part, Platform, Tier } from './types';
 
 /* ---------------------------------------------------------------- saved builds */
@@ -12,10 +12,12 @@ export interface SavedBuild {
   platform: string;
   selection: Selection;
   savedAt: string;
-  /** Best price of each part when it went into the saved build, for "price dropped since you saved". */
+  /** Best live price of each part when it went into the saved build, for "price dropped since you saved". Never an estimate. */
   prices?: Record<string, number>;
-  /** When some of `prices` were last reset to that day's prices, because they may have been a paused retailer's (pausedPrice). */
+  /** When some of `prices` were last reset to that day's prices, because they may have been a paused retailer's (pausedPrice) or an estimate (estimateFigure). */
   pricesAt?: string;
+  /** True once estimateFigure has judged this build's prices: on its first load, or from the start for a build saved since then. Never judged again. */
+  pricesChecked?: boolean;
 }
 
 const SAVED_KEY = 'firearm-designer:saved:v1';
@@ -45,14 +47,14 @@ function savedEntry(e: unknown): SavedBuild | null {
     const platform = canonicalPlatform(e.platform);
     if (!PLATFORMS.some((p) => p.id === platform)) return null;
     // Builds saved before price tracking start from today's prices, and so does a part whose saved price may be a
-    // paused retailer's (pausedPrice).
+    // paused retailer's (pausedPrice) or, on a build's first load, an estimate (estimateFigure).
     const sel = selection as Selection;
-    const { pricesAt, ...entry } = e as unknown as SavedBuild;
+    const { pricesAt, pricesChecked, ...entry } = e as unknown as SavedBuild;
     const at = isText(pricesAt) ? { pricesAt } : {};
     const stored = prices as Record<string, number> | undefined;
-    const kept = stored && withoutPausedPrices(platform, sel, pricedAt({ savedAt: entry.savedAt, ...at }), stored);
+    const kept = stored && trustedPrices(platform, sel, pricedAt({ savedAt: entry.savedAt, ...at }), stored, pricesChecked === true);
     const reset = !!stored && Object.keys(kept!).length < Object.keys(stored).length;
-    return { ...entry, platform, selection: sel, prices: priceSnapshot(platform, sel, kept), ...(reset ? { pricesAt: new Date().toISOString() } : at) };
+    return { ...entry, platform, selection: sel, prices: priceSnapshot(platform, sel, kept), pricesChecked: true, ...(reset ? { pricesAt: new Date().toISOString() } : at) };
   } catch {
     return null;
   }
@@ -85,19 +87,29 @@ export function storeSavedBuilds(list: SavedBuild[]) {
 }
 
 /**
- * Best price of each part in a selection. Parts already in `keep` hold their earlier price, so editing a
- * saved build doesn't reset the drop on parts that stayed.
+ * Best price of each part in a selection, leaving out estimates: they're never stored to compare with. Parts already
+ * in `keep` hold their earlier price, so editing a saved build doesn't reset the drop on parts that stayed, and a part
+ * that fell back to an estimate keeps its last live price for when a live one returns.
  */
 export function priceSnapshot(platformId: string, sel: Selection, keep: Record<string, number> = {}) {
   const { build } = buildOf(platformId, sel);
   const { owned } = ownedOf(sel);
   const out: Record<string, number> = {};
   for (const part of Object.values(build)) {
-    const price = part && !owned.has(part.slot) && bestOffer(part)?.price;
-    if (part && typeof price === 'number') out[part.id] = keep[part.id] ?? price;
+    const best = part && !owned.has(part.slot) ? bestOffer(part) : undefined;
+    if (!part || !best) continue;
+    const price = keep[part.id] ?? (isEstimate(best) ? undefined : best.price);
+    if (price !== undefined) out[part.id] = price;
   }
   return out;
 }
+
+/** The price fields of a new save or a re-save, as of now. `keep` is priceSnapshot's. */
+export const savedPrices = (platformId: string, sel: Selection, keep?: Record<string, number>) => ({
+  savedAt: new Date().toISOString(),
+  prices: priceSnapshot(platformId, sel, keep),
+  pricesChecked: true,
+});
 
 /**
  * Whether a saved build's price for this part may be a paused retailer's: the build was saved on or before the pause
@@ -109,23 +121,45 @@ export const pausedPrice = (part: Part, savedAt: string) => !!part.pausedThrough
 /** When a saved build's prices were taken: its save, or a later reset (SavedBuild.pricesAt). */
 const pricedAt = (s: Pick<SavedBuild, 'savedAt' | 'pricesAt'>) => (s.pricesAt && s.pricesAt > s.savedAt ? s.pricesAt : s.savedAt);
 
-/** A saved build's prices without the ones that may be a paused retailer's (pausedPrice). */
-function withoutPausedPrices(platformId: string, sel: Selection, savedAt: string, prices: Record<string, number>) {
+/**
+ * Whether a saved build's price for this part can't be trusted as a live one, because it may be an estimate from before
+ * estimates were kept out of saved builds: it was taken on or before the first day the part had a live price
+ * (firstLiveDay), or the part has never had one and is an estimate today. A hand-checked price with no history is left
+ * alone: it was never an estimate. Asked once per build (SavedBuild.pricesChecked): a price stored later is live whatever
+ * its date says, and the first live day moves as the history file is trimmed.
+ */
+function estimateFigure(part: Part, pricedOn: string) {
+  const day = pricedOn.slice(0, 10);
+  const first = firstLiveDay(part);
+  const best = bestOffer(part);
+  return first ? first >= day : !!best && isEstimate(best);
+}
+
+/**
+ * A saved build's prices without the ones that may be a paused retailer's (pausedPrice) or, unless the build has been
+ * checked, an estimate (estimateFigure). Owned parts are left to priceSnapshot, which drops them without it being a reset.
+ */
+function trustedPrices(platformId: string, sel: Selection, savedAt: string, prices: Record<string, number>, checked: boolean) {
   const { build } = buildOf(platformId, sel);
-  const stale = new Set(Object.values(build).filter((p): p is Part => !!p && pausedPrice(p, savedAt)).map((p) => p.id));
+  const { owned } = ownedOf(sel);
+  const stale = new Set(Object.values(build).filter((p): p is Part => !!p && !owned.has(p.slot) && (pausedPrice(p, savedAt) || (!checked && estimateFigure(p, savedAt)))).map((p) => p.id));
   return Object.fromEntries(Object.entries(prices).filter(([id]) => !stale.has(id)));
 }
 
 export interface PriceChange { part: Part; was: number; now: number }
 
-/** Parts still to buy in a saved build whose best price moved since it was saved, biggest drop first, and the net change. */
+/**
+ * Parts still to buy in a saved build whose best price moved since it was saved, biggest drop first, and the net change.
+ * A part at an estimate today is left out: going to or from an estimate isn't a price change.
+ */
 export function priceChanges(s: SavedBuild): { changes: PriceChange[]; drop: number } {
   const { build } = buildOf(s.platform, s.selection);
   const { owned } = ownedOf(s.selection);
   const changes: PriceChange[] = [];
   for (const part of Object.values(build)) {
     const was = part && !owned.has(part.slot) && !pausedPrice(part, pricedAt(s)) ? s.prices?.[part.id] : undefined;
-    const now = part && bestOffer(part)?.price;
+    const best = part && bestOffer(part);
+    const now = best && !isEstimate(best) ? best.price : undefined;
     if (part && was !== undefined && now !== undefined && Math.abs(was - now) >= 0.01) changes.push({ part, was, now });
   }
   changes.sort((a, b) => (b.was - b.now) - (a.was - a.now));
