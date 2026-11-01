@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { PLATFORMS, PRICES_UPDATED_AT, canonicalPlatform } from './data';
 import { ownsAny, partIds, baseSelection, selectionTokens, withoutOwned, type Selection } from './engine';
 import { ComparePage, loadCompare, storeCompare, type CompareItem } from './Compare';
-import { droppedBuilds, loadSavedBuilds, priceChanges, priceSnapshot, newId, readSharedBuild, selectionFromParts, shareUrl, checkShareLinks, storeSavedBuilds, type SavedBuild } from './store';
+import { droppedBuilds, loadSavedBuilds, priceChanges, newId, readSharedBuild, savedPrices, selectionFromParts, shareUrl, checkShareLinks, storeSavedBuilds, type SavedBuild } from './store';
 import { recordBuyClick, shareBuild, type CommunityBuild } from './community';
 import { alertsAvailable, checkAlertSignup, loadAlertSignup, signUpForAlerts, stopAlerts, storeAlertSignup, syncAlertBuilds, type AlertSignup } from './alerts';
 import type { Part } from './types';
@@ -132,7 +132,7 @@ export default function App() {
     go('build');
   };
   const saveCopy = (name: string, pid: string, sel: Selection) => {
-    setSaved((list) => [{ id: newId(), name, platform: pid, selection: { ...sel }, savedAt: new Date().toISOString(), prices: priceSnapshot(pid, sel) }, ...list]);
+    setSaved((list) => [{ id: newId(), name, platform: pid, selection: { ...sel }, ...savedPrices(pid, sel) }, ...list]);
     setToast(`Saved "${name}" to My Builds`);
   };
   const share = async (name: string, note: string) => {
@@ -143,12 +143,11 @@ export default function App() {
   };
   const saveBuild = (name: string, asNew: boolean) => {
     const sel = selOf(platformId);
-    const now = new Date().toISOString();
     if (!asNew && openSavedId && saved.some((s) => s.id === openSavedId)) {
-      setSaved((list) => list.map((s) => (s.id === openSavedId ? { ...s, name, selection: { ...sel }, savedAt: now, prices: priceSnapshot(platformId, sel, s.prices) } : s)));
+      setSaved((list) => list.map((s) => (s.id === openSavedId ? { ...s, name, selection: { ...sel }, ...savedPrices(platformId, sel, s.prices) } : s)));
     } else {
       const id = newId();
-      setSaved((list) => [{ id, name, platform: platformId, selection: { ...sel }, savedAt: now, prices: priceSnapshot(platformId, sel) }, ...list]);
+      setSaved((list) => [{ id, name, platform: platformId, selection: { ...sel }, ...savedPrices(platformId, sel) }, ...list]);
       setOpenSavedId(id);
     }
     setToast(`Saved "${name}" to My Builds`);

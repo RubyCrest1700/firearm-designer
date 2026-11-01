@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { PLATFORMS } from './data';
-import { ESTIMATE_LABEL, bestOffer, isEstimate, money, ownedOf, ownsAny, partIds } from './engine';
-import { buildOf, priceChanges, type SavedBuild } from './store';
+import { money, ownedOf, ownsAny, partIds } from './engine';
+import { buildOf, estimatedOf, priceChanges, type SavedBuild } from './store';
 import { totalSeries } from './data/history';
 import { PriceChart } from './PriceChart';
 import { type AlertSignup } from './alerts';
@@ -63,16 +63,18 @@ export function AlertsPanel({ signup, hasBuilds, onSignUp, onRefresh, onStop }: 
 function PriceSinceSaved({ s }: { s: SavedBuild }) {
   const { changes, drop } = priceChanges(s);
   if (!s.prices || !Object.keys(s.prices).length) return null;
-  const { build } = buildOf(s.platform, s.selection);
+  const { build, platform } = buildOf(s.platform, s.selection);
   const chart = <PriceChart points={totalSeries(Object.values(build).filter((p): p is Part => !!p), s.savedAt.slice(0, 10))} label="Build Total Since You Saved It" />;
-  if (Math.abs(drop) < 1) return <><p className="since-saved flat">Same price as when you saved it</p>{chart}</>;
+  // An estimate isn't compared, so "same price" can't be said of a build that has one still to buy.
+  const estimated = estimatedOf(platform, build, ownedOf(s.selection).owned) > 0;
+  if (Math.abs(drop) < 1) return <>{!estimated && <p className="since-saved flat">Same price as when you saved it</p>}{chart}</>;
   return (
     <div className={'since-saved ' + (drop > 0 ? 'down' : 'up')}>
       {chart}
       <p className="since-total">{drop > 0 ? <>↓ {money(drop)} less than when you saved it</> : <>↑ {money(-drop)} more than when you saved it</>}</p>
       <ul>
         {changes.slice(0, 3).map((c) => (
-          <li key={c.part.id}><span>{c.part.brand} {c.part.name}</span><s>{money(c.was)}</s><b>{money(c.now)}{isEstimate(bestOffer(c.part)!) && <small className="to-buy"> {ESTIMATE_LABEL}</small>}</b></li>
+          <li key={c.part.id}><span>{c.part.brand} {c.part.name}</span><s>{money(c.was)}</s><b>{money(c.now)}</b></li>
         ))}
         {changes.length > 3 && <li className="more">and {changes.length - 3} more</li>}
       </ul>
