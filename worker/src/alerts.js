@@ -37,11 +37,14 @@ export const SUPPRESS_FOR = 90 * DAY;
  * The current one-time quiet re-baseline. When the value stored in meta differs, the next daily run sets every
  * signup's last reported prices to today's without emailing anyone, then stores this. 2026-10-pause: three
  * retailers were paused, which raised some best prices for no reason a subscriber cares about. 2026-10-26-pause:
- * three more (AT3 Tactical, Rainier Arms, MidwayUSA), whose robots.txt refuses the price bot.
+ * three more (AT3 Tactical, Rainier Arms, MidwayUSA), whose robots.txt refuses the price bot. 2026-11-estimate-moves:
+ * estimates stopped being comparison prices, so any already stored have to go, or one turning live reads as a move.
  */
-export const REBASELINE = '2026-10-26-pause';
-/** Signups updated per re-baseline statement: 3 bound parameters each keeps a statement within D1's 100. */
-const REBASELINE_ROWS = 33;
+export const REBASELINE = '2026-11-estimate-moves';
+/** Signups updated per `seen` statement: 3 bound parameters each keeps a statement within D1's 100. */
+const SEEN_ROWS = 33;
+/** Most statements the daily run spends on quiet writes; rows past the cap wait for the next day. Counts towards D1's query limit. */
+const MAX_QUIET_STATEMENTS = 5;
 
 export const alertsEnabled = (env) => !!(env.RESEND_API_KEY && env.MAILING_ADDRESS);
 
@@ -93,14 +96,45 @@ const currentSeen = (seen) => Object.fromEntries(Object.entries(seen).map(([k, v
   return [`${canonical(k.slice(0, i))}${k.slice(i)}`, v];
 }));
 
-/** Today's best price for every part in the builds, keyed `<platform>/<part>`. */
-function pricesFor(index, builds) {
+/**
+ * Today's best price for every part in the builds, keyed `<platform>/<part>`. An estimate is never a comparison
+ * price: its key stays missing, or keeps the last live price if `held` has one.
+ */
+function pricesFor(index, builds, held = {}) {
   const out = {};
-  for (const b of builds) for (const id of b.parts) {
-    const p = indexPart(index?.platforms?.[b.platform], id);
-    if (p) out[`${b.platform}/${id}`] = p[1];
+  for (const b of builds) {
+    const platform = index?.platforms?.[b.platform];
+    const estimates = estimateIds(platform);
+    for (const id of b.parts) {
+      const p = indexPart(platform, id);
+      const key = `${b.platform}/${id}`;
+      if (!p) continue;
+      if (!estimates.has(id)) out[key] = p[1];
+      else if (held[key] !== undefined) out[key] = held[key];
+    }
   }
   return out;
+}
+
+/**
+ * Live prices `seen` has no key for: a part that was an estimate, or wasn't priced, and is live now. An index with
+ * no estimates list can't tell live prices from estimates, so nothing from it is added.
+ */
+function missingPrices(index, builds, seen) {
+  const listed = builds.filter((b) => Array.isArray(index?.platforms?.[b.platform]?.estimates));
+  return Object.fromEntries(Object.entries(pricesFor(index, listed)).filter(([k]) => seen[k] === undefined));
+}
+
+/** UPDATEs setting `seen` from [token, value] rows, SEEN_ROWS at a time. `value` is the SQL for the new `seen`, given the SQL for the row's value. */
+function seenStatements(db, rows, value = (given) => given) {
+  const statements = [];
+  for (let i = 0; i < rows.length; i += SEEN_ROWS) {
+    const chunk = rows.slice(i, i + SEEN_ROWS);
+    const cases = chunk.map(() => 'WHEN ? THEN ?').join(' ');
+    const marks = chunk.map(() => '?').join(', ');
+    statements.push(db.prepare(`UPDATE alerts SET seen = ${value(`CASE token ${cases} END`)} WHERE token IN (${marks})`).bind(...chunk.flat(), ...chunk.map(([token]) => token)));
+  }
+  return statements;
 }
 
 /* ------------------------------------------------------------------ sending */
@@ -152,7 +186,7 @@ async function sendConfirm(env, row, code) {
   });
 }
 
-/** Builds whose parts moved, each with its changes (biggest drop first), today's total and how many of the prices in it are estimates. */
+/** Builds whose live prices moved, each with its changes (biggest drop first), today's total and how many of the prices in it are estimates. */
 export function changesFor(index, builds, seen) {
   const out = [];
   for (const b of builds) {
@@ -167,14 +201,12 @@ export function changesFor(index, builds, seen) {
       total += p[1];
       if (estimates.has(id)) estimated++;
       const was = seen[`${b.platform}/${id}`];
-      if (was !== undefined && worthTelling(was, p[1])) changes.push({ name: p[0], was, now: p[1], estimate: estimates.has(id) });
+      if (was !== undefined && !estimates.has(id) && worthTelling(was, p[1])) changes.push({ name: p[0], was, now: p[1] });
     }
     if (changes.length) out.push({ build: b, changes: changes.sort((x, y) => (y.was - y.now) - (x.was - x.now)), total, estimated });
   }
   return out;
 }
-
-const estimateTag = (change) => (change.estimate ? ' (estimate)' : '');
 
 function digest(env, token, moved) {
   const down = moved.flatMap((m) => m.changes).filter((c) => c.now < c.was).length;
@@ -188,9 +220,9 @@ function digest(env, token, moved) {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;margin-bottom:12px">${changes.map((c) => `<tr>
 <td style="padding:6px 0;border-top:1px solid #eee">${esc(c.name)}</td>
 <td style="padding:6px 0 6px 8px;border-top:1px solid #eee;text-align:right;white-space:nowrap;color:#8a939e"><s>${money(c.was)}</s></td>
-<td style="padding:6px 0 6px 8px;border-top:1px solid #eee;text-align:right;white-space:nowrap;font-weight:bold;color:${c.now < c.was ? '#2e7d4f' : '#b06d00'}">${c.now < c.was ? '↓' : '↑'} ${money(c.now)}${estimateTag(c)}</td></tr>`).join('')}</table>
+<td style="padding:6px 0 6px 8px;border-top:1px solid #eee;text-align:right;white-space:nowrap;font-weight:bold;color:${c.now < c.was ? '#2e7d4f' : '#b06d00'}">${c.now < c.was ? '↓' : '↑'} ${money(c.now)}</td></tr>`).join('')}</table>
 <p style="margin:0 0 24px"><a href="${buildLink(build)}" style="color:#d4691e;font-weight:bold">Open This Build</a></p>`).join('');
-  const text = moved.map(({ build, changes, total, estimated }) => `${build.name} (now ${money(total)}${estimated ? ` at the best prices we found${includingEstimates(estimated)}` : ''})\n${changes.map((c) => `  ${c.name}: ${money(c.was)} -> ${money(c.now)}${estimateTag(c)}`).join('\n')}\n  ${buildLink(build)}`).join('\n\n');
+  const text = moved.map(({ build, changes, total, estimated }) => `${build.name} (now ${money(total)}${estimated ? ` at the best prices we found${includingEstimates(estimated)}` : ''})\n${changes.map((c) => `  ${c.name}: ${money(c.was)} -> ${money(c.now)}`).join('\n')}\n  ${buildLink(build)}`).join('\n\n');
   // Once per email, when any build in it is an AR (the short NFA notice).
   const notice = moved.map((m) => nfaNoticeFor(m.build.platform)).find(Boolean) ?? '';
   const noticeHtml = notice ? `<p style="margin:0 0 16px;color:#6b7684;font-size:13px">${esc(notice)}</p>` : '';
@@ -267,7 +299,8 @@ export async function alertsRoute(request, env, { path, url, json, noContent, wh
     return row ? json({ email: row.email, confirmed: !!row.confirmed }, 200) : json({ error: 'Not found' }, 404);
   }
   // PUT /api/alerts/:token { builds }: the site keeps the watched builds in step with My builds.
-  // Parts new to the list start from today's price; parts already watched keep their last reported price.
+  // Parts new to the list start from today's price; parts already watched keep their last reported price, which
+  // for a part that is an estimate today is the last live one.
   if (request.method === 'PUT' && one) {
     const row = await db.prepare('SELECT seen FROM alerts WHERE token = ?').bind(one[1]).first();
     if (!row) return json({ error: 'Not found' }, 404);
@@ -275,7 +308,7 @@ export async function alertsRoute(request, env, { path, url, json, noContent, wh
     const builds = cleanBuilds(body?.builds);
     if (!builds) return json({ error: 'That builds list is not valid.' }, 400);
     const old = currentSeen(JSON.parse(row.seen));
-    const seen = { ...pricesFor(await loadIndex(), builds) };
+    const seen = pricesFor(await loadIndex(), builds, old);
     for (const k of Object.keys(seen)) if (old[k] !== undefined) seen[k] = old[k];
     await db.prepare('UPDATE alerts SET builds = ?, seen = ? WHERE token = ?').bind(JSON.stringify(builds), JSON.stringify(seen), one[1]).run();
     return json({ ok: true }, 200);
@@ -376,20 +409,13 @@ export async function runAlerts(env, now = Date.now()) {
 
   // One-time quiet re-baseline (REBASELINE): today's prices become the last reported ones, nobody is emailed.
   // Pending signups too, so one confirmed later doesn't report the same move. D1 allows 50 queries per Worker
-  // invocation on the free plan, shared with the other daily jobs, so the rows are updated REBASELINE_ROWS at a
+  // invocation on the free plan, shared with the other daily jobs, so the rows are updated SEEN_ROWS at a
   // time (3 bound parameters a row, within D1's 100 a query). The updates and the mark go in one batch, which
   // D1 runs as a single transaction: if any part fails nothing changes and tomorrow's run re-baselines again.
   const mark = await db.prepare("SELECT value FROM meta WHERE key = 'rebaseline'").first();
   if (mark?.value !== REBASELINE) {
     const { results: all } = await db.prepare('SELECT token, builds FROM alerts').all();
-    const statements = [];
-    for (let i = 0; i < all.length; i += REBASELINE_ROWS) {
-      const chunk = all.slice(i, i + REBASELINE_ROWS);
-      const cases = chunk.map(() => 'WHEN ? THEN ?').join(' ');
-      const marks = chunk.map(() => '?').join(', ');
-      const args = chunk.flatMap((row) => [row.token, JSON.stringify(pricesFor(index, currentBuilds(JSON.parse(row.builds))))]);
-      statements.push(db.prepare(`UPDATE alerts SET seen = CASE token ${cases} END WHERE token IN (${marks})`).bind(...args, ...chunk.map((row) => row.token)));
-    }
+    const statements = seenStatements(db, all.map((row) => [row.token, JSON.stringify(pricesFor(index, currentBuilds(JSON.parse(row.builds))))]));
     statements.push(db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES ('rebaseline', ?)").bind(REBASELINE));
     await db.batch(statements);
     return { sent: 0, rebaselined: all.length };
@@ -402,20 +428,26 @@ export async function runAlerts(env, now = Date.now()) {
   let sent = 0;
   let deferred = 0;
   let failed = 0;
+  const quiet = []; // [token, prices to add] for signups with nothing to tell
   for (const [email, rows] of byEmail) {
     const moved = [];
     const updates = [];
+    const missing = [];
     for (const row of rows) {
       const builds = currentBuilds(JSON.parse(row.builds));
       const seen = currentSeen(JSON.parse(row.seen));
       const m = changesFor(index, builds, seen);
-      const next = { ...pricesFor(index, builds) };
+      const next = pricesFor(index, builds, seen);
       // Keep the last reported price for parts that only drifted, so small moves add up to a real one.
       for (const k of Object.keys(next)) if (seen[k] !== undefined && !worthTelling(seen[k], next[k])) next[k] = seen[k];
       moved.push(...m);
       updates.push([row.token, next]);
+      const add = missingPrices(index, builds, seen);
+      if (Object.keys(add).length) missing.push([row.token, JSON.stringify(add)]);
     }
-    if (!moved.length) continue;
+    // No email means `seen` isn't rewritten, so a part that turned live gets its first price here. Addresses put
+    // off or failed below stay out of this: they're rewritten whole once their email goes.
+    if (!moved.length) { quiet.push(...missing); continue; }
     if (sent >= MAX_ALERT_EMAILS_PER_RUN) { deferred++; continue; } // waits for tomorrow
     try {
       await send(env, { to: email, token: rows[0].token, ...digest(env, rows[0].token, moved) });
@@ -423,6 +455,16 @@ export async function runAlerts(env, now = Date.now()) {
       for (const [token, seen] of updates) await db.prepare('UPDATE alerts SET seen = ?, last_sent_at = ? WHERE token = ?').bind(JSON.stringify(seen), now, token).run();
     } catch {
       failed++;
+    }
+  }
+
+  // After the emails, so it can't use up their queries. json_patch lets the stored `seen` win: this only ever adds
+  // keys, even if a PUT changed the row during the run. One transaction: on a failure every row waits for tomorrow.
+  if (quiet.length) {
+    try {
+      await db.batch(seenStatements(db, quiet.slice(0, MAX_QUIET_STATEMENTS * SEEN_ROWS), (given) => `json_patch(${given}, seen)`));
+    } catch (err) {
+      console.error(`Quiet price write failed: ${errorText(err)}`);
     }
   }
   return { sent, deferred, failed, watched: results.length };
