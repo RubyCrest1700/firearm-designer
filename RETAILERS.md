@@ -35,7 +35,7 @@ In the Status column, "active" only means the retailer is neither paused nor lin
 | Lone Wolf Arms | lonewolfdist.com | active | - | - | 9 | 2026-11-01 |
 | Magpul | magpul.com | active | - | - | 26 | 2026-11-01 |
 | MidwayUSA | midwayusa.com | paused | 2026-10-26 | robots.txt refuses the price bot | 6 | none recorded |
-| Midwest Industries | midwestindustriesinc.com | active | - | - | 5 | 2026-11-01 |
+| Midwest Industries | midwestindustriesinc.com | active | - | - | 4 | 2026-11-01 |
 | New Frontier Armory | newfrontierarmory.com | active | - | - | 1 | 2026-11-01 |
 | Night Fision | nightfision.com | active | - | - | 3 | 2026-11-01 |
 | OpticsPlanet | opticsplanet.com | active | - | - | 10 | 2026-11-01 |
