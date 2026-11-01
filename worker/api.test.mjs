@@ -1237,8 +1237,8 @@ const SHORT_NOTICE_TEXT = 'May be regulated under the NFA. Not legal advice: che
 const CONFIRM_PRICE = 'Prices change; confirm at the retailer.';
 const privacyLink = (html) => (html.match(new RegExp(`<a [^>]*href="${PRIVACY.replace(/[.]/g, '\\.')}"[^>]*>Privacy Policy</a>`, 'g')) ?? []).length;
 
-test('the re-baseline mark is the 2026-10-26 pause', () => {
-  assert.equal(REBASELINE, '2026-10-26-pause');
+test('the re-baseline mark is the estimate moves bump', () => {
+  assert.equal(REBASELINE, '2026-11-estimate-moves');
 });
 
 test('a run with a stale re-baseline mark re-baselines every signup quietly, and the next run stays quiet too', async () => {
@@ -1256,7 +1256,7 @@ test('a run with a stale re-baseline mark re-baselines every signup quietly, and
   assert.equal(e.outbox.length, 0);
   for (const row of (await e.DB.prepare('SELECT seen FROM alerts').all()).results)
     assert.deepEqual(JSON.parse(row.seen), { 'glock9/g-fcg-apex5': 200, 'glock9/g19-slide-mos': 300 });
-  assert.equal((await e.DB.prepare("SELECT value FROM meta WHERE key = 'rebaseline'").first()).value, '2026-10-26-pause');
+  assert.equal((await e.DB.prepare("SELECT value FROM meta WHERE key = 'rebaseline'").first()).value, '2026-11-estimate-moves');
   // The next run with the same index: nothing moved, nothing sent.
   assert.deepEqual(await withIndex(index, () => runAlerts(e, now + DAY)), { sent: 0, deferred: 0, failed: 0, watched: 2 });
   assert.equal(e.outbox.length, 0);
@@ -1493,46 +1493,46 @@ const movedMail = async (extra = {}, base = ALERT_INDEX(120)) => {
   return e.outbox.at(-1);
 };
 
-test('an alert email counts the estimates in the total and marks a change to an estimate, in html and text', async () => {
-  const mail = await movedMail({ estimates: ['g-fcg-apex5'] });
+test('an alert email counts the estimates in the total, in html and text', async () => {
+  const mail = await movedMail({ estimates: ['g19-slide-mos'] });
   assert.ok(mail.html.includes('Now $620.00 at the best prices we found, including 1 estimate</p>'));
-  assert.ok(mail.html.includes('↓ $120.00 (estimate)</td>'));
+  assert.ok(mail.html.includes('↓ $120.00</td>'));
   assert.ok(mail.text.includes('Carry G19 (now $620.00 at the best prices we found, including 1 estimate)\n'));
-  assert.ok(mail.text.includes('  Apex trigger: $150.00 -> $120.00 (estimate)\n'));
+  assert.ok(mail.text.includes('  Apex trigger: $150.00 -> $120.00\n'));
 });
 
-test('an alert email marks only the changed parts that are estimates, and counts the build\'s others in the total', async () => {
+test('an alert email lists only parts with live prices, and counts the build\'s estimates in the total', async () => {
   // The two estimates didn't move; the part that moved has a live price.
   const mail = await movedMail({ estimates: ['g19-frame-g5', 'g19-slide-mos'] });
   assert.ok(mail.html.includes('Now $620.00 at the best prices we found, including 2 estimates</p>'));
   assert.ok(mail.text.includes('(now $620.00 at the best prices we found, including 2 estimates)\n'));
   assert.ok(!mail.html.includes('(estimate)') && !mail.text.includes('(estimate)'));
-  // A price that went up is marked the same way, among others that aren't.
+  // An estimate that went up has no row, among others that do.
   const up = await movedMail({ estimates: ['g-fcg-apex5'] }, ALERT_INDEX(200, 200));
-  assert.ok(up.html.includes('↑ $200.00 (estimate)</td>'));
+  assert.ok(!up.html.includes('↑ $200.00'));
   assert.ok(up.html.includes('↓ $200.00</td>'));
   assert.ok(up.text.includes('  Glock MOS slide: $300.00 -> $200.00\n'));
-  assert.ok(up.text.includes('  Apex trigger: $150.00 -> $200.00 (estimate)\n'));
+  assert.ok(!up.text.includes('Apex trigger'));
 });
 
 test('an alert email counts only estimates with a price, build by build', async () => {
   // The slide is on the list but has dropped out of the index: it isn't in the total, so it isn't counted.
   const { platforms: { glock9 } } = ALERT_INDEX(120);
   const { 'g19-slide-mos': _gone, ...parts } = glock9.parts;
-  const mail = await movedMail({ parts, estimates: ['g-fcg-apex5', 'g19-slide-mos'] });
+  const mail = await movedMail({ parts, estimates: ['g19-frame-g5', 'g19-slide-mos'] });
   assert.ok(mail.text.includes('(now $320.00 at the best prices we found, including 1 estimate)\n'));
 
   // Two builds in one email: the phrase follows the build with the estimate only.
   const e = alertEnv();
-  await withIndex(AR_ALERT_INDEX(), () => call(e, 'POST', '/api/alerts', { email: 'two@example.com', builds: [AR_BUILD, G19] }));
+  await withIndex(AR_ALERT_INDEX(), () => call(e, 'POST', '/api/alerts', { email: 'two@example.com', builds: [{ ...AR_BUILD, parts: ['ar-bbl-ba10', 'ar-grip-k2'] }, G19] }));
   await confirmMail(e, e.outbox[0]);
-  const index = { platforms: { ...ALERT_INDEX(120).platforms, ar15: { name: 'AR-15', parts: { 'ar-bbl-ba10': ['BA 10.3" barrel', 150] }, estimates: ['ar-bbl-ba10'] } } };
+  const index = { platforms: { ...ALERT_INDEX(120).platforms, ar15: { name: 'AR-15', parts: { 'ar-bbl-ba10': ['BA 10.3" barrel', 100], 'ar-grip-k2': ['K2 grip', 50] }, estimates: ['ar-grip-k2'] } } };
   assert.equal((await withIndex(index, () => runAlerts(e))).sent, 1);
   const two = e.outbox.at(-1);
   assert.ok(two.text.includes('Short AR (now $150.00 at the best prices we found, including 1 estimate)\n'));
   assert.ok(two.text.includes('Carry G19 (now $620.00)\n'));
   assert.ok(two.html.includes('Now $620.00 at the best prices we found</p>'));
-  assert.equal(two.html.split('(estimate)').length, 2, 'the one estimate row');
+  assert.ok(!two.html.includes('(estimate)'), 'no estimate row');
 });
 
 test('an alert email with no estimates, or an index with no list, has the old total and rows', async () => {
@@ -1554,7 +1554,7 @@ test('an alert email with no estimates, or an index with no list, has the old to
 });
 
 test('the alert email footer says where prices are checked, once, in html and text, with or without estimates', async () => {
-  for (const extra of [{}, { estimates: ['g-fcg-apex5'] }]) {
+  for (const extra of [{}, { estimates: ['g19-slide-mos'] }]) {
     const mail = await movedMail(extra);
     assert.equal(mail.html.split(ALERT_FOOTER).length, 2);
     assert.equal(mail.text.split(ALERT_FOOTER).length, 2);
@@ -1567,12 +1567,12 @@ test('the alert email footer says where prices are checked, once, in html and te
 test('estimates leave an email\'s escaping and the prices it remembers as they were', async () => {
   const name = 'Apex "Flat" & Co';
   const { platforms: { glock9 } } = ALERT_INDEX(120);
-  const mail = await movedMail({ parts: { ...glock9.parts, 'g-fcg-apex5': [name, 120] }, estimates: ['g-fcg-apex5'] });
+  const mail = await movedMail({ parts: { ...glock9.parts, 'g-fcg-apex5': [name, 120] }, estimates: ['g19-slide-mos'] });
   assert.ok(mail.html.includes('Apex &#34;Flat&#34; &#38; Co'));
   assert.ok(!mail.html.includes(name));
-  assert.ok(mail.text.includes(`  ${name}: $150.00 -> $120.00 (estimate)\n`));
+  assert.ok(mail.text.includes(`  ${name}: $150.00 -> $120.00\n`));
 
-  // The same run with and without the list stores the same last-reported prices.
+  // A real move stores the same last-reported prices with and without the list.
   const seenAfter = async (extra) => {
     const e = alertEnv();
     await signup(e, 'seen@example.com');
@@ -1580,7 +1580,9 @@ test('estimates leave an email\'s escaping and the prices it remembers as they w
     await withIndex({ platforms: { glock9: { ...glock9, ...extra } } }, () => runAlerts(e));
     return JSON.parse((await e.DB.prepare('SELECT seen FROM alerts').first()).seen);
   };
-  assert.deepEqual(await seenAfter({ estimates: ['g-fcg-apex5', 'g19-slide-mos'] }), await seenAfter({}));
+  assert.deepEqual(await seenAfter({ estimates: ['g19-slide-mos'] }), await seenAfter({}));
+  // A move that is only an estimate stores nothing.
+  assert.deepEqual(await seenAfter({ estimates: ['g-fcg-apex5', 'g19-slide-mos'] }), { 'glock9/g19-frame-g5': 200, 'glock9/g-fcg-apex5': 150, 'glock9/g19-slide-mos': 300 });
 });
 
 /* ------------------------------------------------- part ids Object already has */
@@ -1654,4 +1656,342 @@ test('a build with a part id Object already has still works when the price index
     assert.equal(put.status, 200, label);
     assert.deepEqual(await seenOf(e), {}, label);
   }
+});
+
+/* ------------------------------------------------- moves to and from an estimate */
+
+const MOVE_CASES = JSON.parse(readFileSync(new URL('../scripts/price-move-cases.json', import.meta.url), 'utf8')).cases;
+const FRAME = 'glock9/g19-frame-g5';
+const APEX = 'glock9/g-fcg-apex5';
+const SLIDE = 'glock9/g19-slide-mos';
+const ALL_SEEN = { [FRAME]: 200, [APEX]: 150, [SLIDE]: 300 };
+const APEX_ID = 'g-fcg-apex5';
+const SLIDE_ID = 'g19-slide-mos';
+/** ALERT_INDEX with an `estimates` list, as the site publishes it today. */
+const LISTED = (apex = 150, slide = 300, estimates = []) => ({ platforms: { glock9: { ...ALERT_INDEX(apex, slide).platforms.glock9, estimates } } });
+const tokenOf = (n) => String(n).padStart(32, '0');
+/** A confirmed signup with these last reported prices, stored straight in the table. */
+const addAlert = (e, n, seen, builds = [G19], email = `a${String(n).padStart(4, '0')}@example.com`) =>
+  e.DB.prepare('INSERT INTO alerts (token, email, builds, seen, confirmed, created_at, ip_hash) VALUES (?, ?, ?, ?, 1, ?, ?)')
+    .bind(tokenOf(n), email, JSON.stringify(builds), JSON.stringify(seen), Date.now() - DAY, 'x').run();
+const seenAt = async (e, n) => JSON.parse((await e.DB.prepare('SELECT seen FROM alerts WHERE token = ?').bind(tokenOf(n)).first()).seen);
+const QUIET = { sent: 0, deferred: 0, failed: 0 };
+
+test('price-move-cases.json holds for the Worker: rows through changesFor, stored prices through the daily run', async () => {
+  assert.equal(MOVE_CASES.length, 4);
+  for (const c of MOVE_CASES) {
+    const label = JSON.stringify(c);
+    const before = c.saved === 'live' ? { [APEX]: 150 } : {};
+    const index = LISTED(120, 300, c.today === 'estimate' ? [APEX_ID] : []);
+    const build = { name: 'Carry G19', platform: 'glock9', parts: [APEX_ID] };
+
+    const moved = changesFor(index, [build], before);
+    assert.deepEqual(moved.flatMap((m) => m.changes.map((x) => [x.was, x.now])), c.reported ? [[150, 120]] : [], label);
+
+    const e = alertEnv();
+    await addAlert(e, 1, before, [build]);
+    await withIndex(index, () => runAlerts(e));
+    assert.equal(e.outbox.length, c.reported ? 1 : 0, label);
+    // "saved" is the price kept until it's reported. The site keeps it on the saved build; the Worker has now
+    // told this person, so as for every real move, the price it told them is the one it keeps.
+    const stored = { saved: c.reported ? 120 : 150, today: 120 }[c.stored];
+    assert.deepEqual(await seenAt(e, 1), stored === undefined ? {} : { [APEX]: stored }, label);
+  }
+});
+
+test('a move that is only an estimate sends nothing and stores nothing', async () => {
+  // Live to estimate, down and up, with the old live price held.
+  for (const apex of [100, 220]) {
+    const e = alertEnv();
+    await addAlert(e, 1, ALL_SEEN);
+    assert.deepEqual(await withIndex(LISTED(apex, 300, [APEX_ID]), () => runAlerts(e)), { ...QUIET, watched: 1 });
+    assert.equal(e.outbox.length, 0);
+    assert.deepEqual(await seenAt(e, 1), ALL_SEEN);
+  }
+  // Estimate to estimate: nothing was stored for it, and nothing is.
+  const e = alertEnv();
+  await addAlert(e, 1, { [FRAME]: 200, [SLIDE]: 300 });
+  for (const apex of [150, 100]) assert.deepEqual(await withIndex(LISTED(apex, 300, [APEX_ID]), () => runAlerts(e)), { ...QUIET, watched: 1 });
+  assert.equal(e.outbox.length, 0);
+  assert.deepEqual(await seenAt(e, 1), { [FRAME]: 200, [SLIDE]: 300 });
+});
+
+test('a mixed email lists only the real moves, and its subject follows them', async () => {
+  const e = alertEnv();
+  const spare = { name: 'Spare Slide', platform: 'glock9', parts: [SLIDE_ID] };
+  await addAlert(e, 1, ALL_SEEN, [G19, spare]);
+  // The apex falls for real; the slide jumps, but it's an estimate now. With its row the subject would be "Prices changed".
+  assert.equal((await withIndex(LISTED(120, 500, [SLIDE_ID]), () => runAlerts(e))).sent, 1);
+  const mail = e.outbox[0];
+  assert.equal(mail.subject, 'Price drop on "Carry G19"');
+  assert.equal(mail.html.split('<s>').length, 2, 'one row, the apex');
+  assert.ok(mail.text.includes('Carry G19 (now $820.00 at the best prices we found, including 1 estimate)\n  Apex trigger: $150.00 -> $120.00\n'));
+  // A build whose only move is an estimate isn't in the email at all.
+  assert.doesNotMatch(mail.html + mail.text, /Spare Slide|MOS slide|\(estimate\)/);
+});
+
+test('an estimate that turns live with no email stores the price quietly, and the next real drop emails', async () => {
+  const e = alertEnv();
+  await addAlert(e, 1, { [FRAME]: 200, [SLIDE]: 300 });
+  await withIndex(LISTED(150, 300, [APEX_ID]), () => runAlerts(e));
+  assert.equal((await seenAt(e, 1))[APEX], undefined);
+  // Live at $100, far under the estimate: no email, because nothing real moved.
+  assert.deepEqual(await withIndex(LISTED(100), () => runAlerts(e)), { ...QUIET, watched: 1 });
+  assert.equal(e.outbox.length, 0);
+  assert.deepEqual(await seenAt(e, 1), { [FRAME]: 200, [APEX]: 100, [SLIDE]: 300 });
+  const next = await withIndex(LISTED(70), () => runAlerts(e));
+  assert.equal(next.sent, 1);
+  assert.equal(e.outbox[0].subject, 'Price drop on "Carry G19"');
+  assert.ok(e.outbox[0].text.includes('  Apex trigger: $100.00 -> $70.00\n'));
+});
+
+test('a quiet write adds missing keys and never overwrites a price, even one changed during the run', async () => {
+  const e = alertEnv();
+  await addAlert(e, 1, ALL_SEEN);
+  await addAlert(e, 2, { [FRAME]: 190, [APEX]: 150 });
+  await addAlert(e, 3, { [FRAME]: 195 });
+  const send = e.sendEmail;
+  // A site update lands while the run is sending: the run's copy of signup 3 is now out of date.
+  e.sendEmail = async (m) => {
+    await send(m);
+    await e.DB.prepare('UPDATE alerts SET seen = ? WHERE token = ?').bind(JSON.stringify({ [FRAME]: 205, [SLIDE]: 310 }), tokenOf(3)).run();
+  };
+  // Signup 1 gets the slide drop. Signup 2's apex is an estimate today and its price is held; its slide is missing.
+  assert.equal((await withIndex(LISTED(100, 200, [APEX_ID]), () => runAlerts(e))).sent, 1);
+  assert.deepEqual(await seenAt(e, 2), { [FRAME]: 190, [APEX]: 150, [SLIDE]: 200 });
+  assert.deepEqual(await seenAt(e, 3), { [FRAME]: 205, [SLIDE]: 310 });
+});
+
+test('a held price survives a PUT, and new parts start from live prices only', async () => {
+  const e = alertEnv();
+  await addAlert(e, 1, ALL_SEEN);
+  const { platforms: { glock9 } } = LISTED(100, 300, [APEX_ID, 'g-new-est']);
+  const index = { platforms: { glock9: { ...glock9, parts: { ...glock9.parts, 'g-new-live': ['New live', 50], 'g-new-est': ['New estimate', 60] } } } };
+  const parts = ['g19-frame-g5', APEX_ID, 'g-new-live', 'g-new-est'];
+  const put = await withIndex(index, () => call(e, 'PUT', `/api/alerts/${tokenOf(1)}`, { builds: [{ ...G19, parts }] }));
+  assert.equal(put.status, 200);
+  assert.deepEqual(await seenAt(e, 1), { [FRAME]: 200, [APEX]: 150, 'glock9/g-new-live': 50 });
+});
+
+test('a new signup stores no estimate', async () => {
+  const e = alertEnv();
+  await withIndex(LISTED(150, 300, [APEX_ID]), () => call(e, 'POST', '/api/alerts', { email: 'new@example.com', builds: [G19] }));
+  assert.deepEqual(await seenOf(e), { [FRAME]: 200, [SLIDE]: 300 });
+});
+
+test('a held price survives an email about something else, and a real move later compares with it', async () => {
+  const e = alertEnv();
+  await addAlert(e, 1, ALL_SEEN);
+  assert.equal((await withIndex(LISTED(100, 200, [APEX_ID]), () => runAlerts(e))).sent, 1);
+  assert.deepEqual(await seenAt(e, 1), { [FRAME]: 200, [APEX]: 150, [SLIDE]: 200 });
+  assert.equal((await withIndex(LISTED(120, 200), () => runAlerts(e))).sent, 1);
+  assert.ok(e.outbox[1].text.includes('  Apex trigger: $150.00 -> $120.00\n'));
+  assert.equal((await seenAt(e, 1))[APEX], 120);
+});
+
+test('an address whose send failed or was put off gets no quiet write', async () => {
+  // Each moved signup has a real drop on the apex and a missing slide key.
+  const moved = { [FRAME]: 200, [APEX]: 150 };
+  const failed = alertEnv();
+  await addAlert(failed, 1, moved);
+  await addAlert(failed, 2, { [FRAME]: 200 }, [{ ...G19, parts: ['g19-frame-g5', SLIDE_ID] }]);
+  failed.sendEmail = async () => { throw new Error('send refused'); };
+  assert.deepEqual(await withIndex(LISTED(120), () => runAlerts(failed)), { sent: 0, deferred: 0, failed: 1, watched: 2 });
+  assert.deepEqual(await seenAt(failed, 1), moved);
+  // The address that had nothing to send still gets its write.
+  assert.deepEqual(await seenAt(failed, 2), { [FRAME]: 200, [SLIDE]: 300 });
+
+  const deferred = alertEnv();
+  for (let n = 1; n <= 80; n++) await addAlert(deferred, n, moved);
+  assert.deepEqual(await withIndex(LISTED(120), () => runAlerts(deferred)), { sent: 79, deferred: 1, failed: 0, watched: 80 });
+  assert.deepEqual(await seenAt(deferred, 80), moved);
+  assert.equal((await seenAt(deferred, 79))[SLIDE], 300, 'an emailed address stores it with the email');
+});
+
+/** n signups each missing the apex, numbered from `first`. */
+const addMissing = async (e, n, first = 1) => { for (let i = first; i < first + n; i++) await addAlert(e, i, { [FRAME]: 200, [SLIDE]: 300 }); };
+const countWritten = async (e) => (await e.DB.prepare(`SELECT COUNT(*) AS n FROM alerts WHERE seen LIKE '%apex%'`).first()).n;
+
+test('a day of quiet writes stays well inside D1\'s 50 queries for the whole daily run', async (t) => {
+  const e = alertEnv();
+  await addMissing(e, 1000);
+  const { runDaily } = await import('./src/index.js');
+  e.DB.statements = 0;
+  await captureLogs(() => withIndex(LISTED(), () => runDaily(e)));
+  t.diagnostic(`daily run with 1,000 quiet rows waiting: ${e.DB.statements} D1 queries`);
+  assert.ok(e.DB.statements < 50, `${e.DB.statements} queries`);
+  assert.equal(e.outbox.length, 0);
+  assert.equal(await countWritten(e), 165);
+});
+
+test('quiet writes add at most 5 statements to a full day of emails', async (t) => {
+  const e = alertEnv();
+  for (let n = 1; n <= 79; n++) await addAlert(e, n, ALL_SEEN);
+  await addMissing(e, 200, 100);
+  e.DB.statements = 0;
+  assert.equal((await withIndex(LISTED(120, 300), () => runAlerts(e))).sent, 79);
+  // The cleanup, the mark, the read, one update per emailed signup (R8), then the 5.
+  t.diagnostic(`alert job with 79 emails and quiet rows waiting: ${e.DB.statements} D1 queries`);
+  assert.equal(e.DB.statements, 3 + 79 + 5);
+});
+
+test('rows over the quiet cap are written on the following days, and then the writes stop', async () => {
+  const e = alertEnv();
+  await addMissing(e, 170);
+  await withIndex(LISTED(), () => runAlerts(e));
+  assert.equal(await countWritten(e), 165);
+  assert.deepEqual(await seenAt(e, 165), { [FRAME]: 200, [SLIDE]: 300, [APEX]: 150 });
+  assert.deepEqual(await seenAt(e, 166), { [FRAME]: 200, [SLIDE]: 300 });
+  await withIndex(LISTED(), () => runAlerts(e));
+  assert.equal(await countWritten(e), 170);
+  e.DB.statements = 0;
+  await withIndex(LISTED(), () => runAlerts(e));
+  assert.equal(e.DB.statements, 3, 'nothing left to write, so no batch');
+  assert.equal(e.outbox.length, 0);
+});
+
+test('a failed quiet batch leaves its rows as they were, keeps the emails counted, and tries again next day', async () => {
+  const e = alertEnv();
+  await addAlert(e, 1, ALL_SEEN);
+  await addMissing(e, 40, 2);
+  // 40 quiet rows make 2 statements; fail on the second, after the first has run.
+  e.DB.failBatchAt = 1;
+  const { result, lines } = await captureLogs(() => withIndex(LISTED(120, 300), () => runAlerts(e)));
+  assert.deepEqual(result, { sent: 1, deferred: 0, failed: 0, watched: 41 });
+  assert.equal(await countWritten(e), 1, 'only the emailed signup');
+  assert.equal((await seenAt(e, 1))[APEX], 120);
+  assert.equal(lines.length, 1);
+  assert.match(lines[0], /batch failed/);
+  assert.doesNotMatch(lines[0], /@/);
+  await withIndex(LISTED(120, 300), () => runAlerts(e));
+  assert.equal(await countWritten(e), 41);
+  assert.equal(e.outbox.length, 1);
+});
+
+test('a re-baseline leaves estimates out of every signup, within the same query budget', async (t) => {
+  const e = alertEnv({ rebaselined: false });
+  const now = Date.now();
+  await addMixed(e, 1000, now);
+  const { runDaily } = await import('./src/index.js');
+  e.DB.statements = 0;
+  const { lines } = await captureLogs(() => withIndex(LISTED(180, 360, [APEX_ID]), () => runDaily(e, now)));
+  assert.ok(lines.includes('Price alerts {"sent":0,"rebaselined":1000}'), lines.join('\n'));
+  t.diagnostic(`re-baseline daily run of 1,000 signups with estimates: ${e.DB.statements} D1 queries`);
+  assert.ok(e.DB.statements < 50, `${e.DB.statements} queries`);
+  for (const row of await allSeen(e)) {
+    const { [APEX]: _left, ...want } = MIXED_BUILDS[parseInt(row.token, 16) % MIXED_BUILDS.length][1];
+    assert.deepEqual(JSON.parse(row.seen), want);
+  }
+});
+
+test('the bump clears an estimate already stored, so its turning live is no false drop', async () => {
+  const e = alertEnv({ rebaselined: false });
+  // What production holds today: the mark from the last pause, and an estimate stored as a last reported price.
+  e.DB.exec("INSERT INTO meta (key, value) VALUES ('rebaseline', '2026-10-26-pause')");
+  await addAlert(e, 1, ALL_SEEN);
+  assert.deepEqual(await withIndex(LISTED(150, 300, [APEX_ID]), () => runAlerts(e)), { sent: 0, rebaselined: 1 });
+  assert.deepEqual(await seenAt(e, 1), { [FRAME]: 200, [SLIDE]: 300 });
+  assert.equal((await e.DB.prepare("SELECT value FROM meta WHERE key = 'rebaseline'").first()).value, REBASELINE);
+  // Live at $120, $30 under the old estimate: not a drop anyone is told about.
+  assert.deepEqual(await withIndex(LISTED(120), () => runAlerts(e)), { ...QUIET, watched: 1 });
+  assert.equal(e.outbox.length, 0);
+  assert.equal((await seenAt(e, 1))[APEX], 120);
+  // A real drop from there is.
+  assert.equal((await withIndex(LISTED(90), () => runAlerts(e))).sent, 1);
+  assert.ok(e.outbox[0].text.includes('  Apex trigger: $120.00 -> $90.00\n'));
+});
+
+test('old rows without keys, under old platform ids, don\'t crash and gain only what is missing', async () => {
+  const e = alertEnv();
+  await addAlert(e, 1, {});
+  await addAlert(e, 2, { 'glock19/g19-frame-g5': 200, 'glock19/g-fcg-apex5': 150 });
+  await addAlert(e, 3, ALL_SEEN, []);
+  assert.deepEqual(await withIndex(LISTED(100, 300, [APEX_ID]), () => runAlerts(e)), { ...QUIET, watched: 3 });
+  assert.equal(e.outbox.length, 0);
+  assert.deepEqual(await seenAt(e, 1), { [FRAME]: 200, [SLIDE]: 300 });
+  assert.deepEqual(await seenAt(e, 2), { 'glock19/g19-frame-g5': 200, 'glock19/g-fcg-apex5': 150, [SLIDE]: 300 });
+  assert.deepEqual(await seenAt(e, 3), ALL_SEEN);
+});
+
+test('an index with no usable estimates list behaves as before: no quiet writes, and every price counts as live', async () => {
+  for (const extra of [{}, { estimates: null }, { estimates: 'g-fcg-apex5' }]) {
+    const label = JSON.stringify(extra);
+    const index = { platforms: { glock9: { ...ALERT_INDEX(120).platforms.glock9, ...extra } } };
+    const e = alertEnv();
+    await addAlert(e, 1, {});
+    await addAlert(e, 2, ALL_SEEN);
+    e.DB.statements = 0;
+    assert.equal((await withIndex(index, () => runAlerts(e))).sent, 1, label);
+    assert.equal(e.DB.statements, 4, label);
+    assert.deepEqual(await seenAt(e, 1), {}, label);
+    assert.equal((await seenAt(e, 2))[APEX], 120, label);
+    const put = await withIndex(index, () => call(e, 'PUT', `/api/alerts/${tokenOf(1)}`, { builds: [G19] }));
+    assert.equal(put.status, 200, label);
+    assert.deepEqual(await seenAt(e, 1), { [FRAME]: 200, [APEX]: 120, [SLIDE]: 300 }, label);
+  }
+});
+
+const NO_INDEX = [async () => { throw new Error('offline'); }, async () => new Response('nope', { status: 503 })];
+/** LISTED without one part, as when its last price has gone from the index. */
+const WITHOUT = (id, ...prices) => {
+  const { platforms: { glock9 } } = LISTED(...prices);
+  const { [id]: _gone, ...parts } = glock9.parts;
+  return { platforms: { glock9: { ...glock9, parts } } };
+};
+
+test('a PUT that can\'t read the index keeps the stored prices, and a later real drop emails', async () => {
+  for (const fake of NO_INDEX) {
+    const e = alertEnv();
+    await addAlert(e, 1, ALL_SEEN);
+    const put = await withFetch(fake, () => call(e, 'PUT', `/api/alerts/${tokenOf(1)}`, { builds: [G19] }));
+    assert.equal(put.status, 200);
+    assert.deepEqual(await seenAt(e, 1), ALL_SEEN);
+    assert.equal((await withIndex(LISTED(120), () => runAlerts(e))).sent, 1);
+    assert.ok(e.outbox[0].text.includes('  Apex trigger: $150.00 -> $120.00\n'));
+  }
+});
+
+test('a PUT that can\'t read the index still keeps only parts in the builds', async () => {
+  for (const fake of NO_INDEX) {
+    const e = alertEnv();
+    await addAlert(e, 1, ALL_SEEN);
+    await withFetch(fake, () => call(e, 'PUT', `/api/alerts/${tokenOf(1)}`, { builds: [{ ...G19, parts: ['g19-frame-g5', 'g-new-part'] }] }));
+    assert.deepEqual(await seenAt(e, 1), { [FRAME]: 200 });
+  }
+});
+
+test('a held price survives its part leaving the index, and the drop emails when the part comes back lower', async () => {
+  const e = alertEnv();
+  await addAlert(e, 1, ALL_SEEN);
+  // The apex is gone; the slide's drop sends an email, which rewrites `seen`.
+  assert.equal((await withIndex(WITHOUT(APEX_ID, 150, 200), () => runAlerts(e))).sent, 1);
+  assert.deepEqual(await seenAt(e, 1), { [FRAME]: 200, [APEX]: 150, [SLIDE]: 200 });
+  // So does a PUT made while it's gone.
+  await withIndex(WITHOUT(APEX_ID, 150, 200), () => call(e, 'PUT', `/api/alerts/${tokenOf(1)}`, { builds: [G19] }));
+  assert.deepEqual(await seenAt(e, 1), { [FRAME]: 200, [APEX]: 150, [SLIDE]: 200 });
+  assert.equal((await withIndex(LISTED(120, 200), () => runAlerts(e))).sent, 1);
+  assert.ok(e.outbox[1].text.includes('  Apex trigger: $150.00 -> $120.00\n'));
+  assert.equal((await seenAt(e, 1))[APEX], 120);
+});
+
+test('a price for a part no longer in the builds goes when `seen` is rewritten, even if the part left the index too', async () => {
+  const e = alertEnv();
+  await addAlert(e, 1, ALL_SEEN, [{ ...G19, parts: ['g19-frame-g5', SLIDE_ID] }]);
+  assert.equal((await withIndex(WITHOUT(APEX_ID, 150, 200), () => runAlerts(e))).sent, 1);
+  assert.deepEqual(await seenAt(e, 1), { [FRAME]: 200, [SLIDE]: 200 });
+});
+
+test('a daily run reads each platform\'s estimates list a fixed number of times, however many signups it has', async () => {
+  const readsFor = async (signups, options) => {
+    let reads = 0;
+    const { platforms: { glock9 } } = LISTED();
+    const { estimates: _list, ...rest } = glock9;
+    const index = { platforms: { glock9: { ...rest, get estimates() { reads++; return []; } } } };
+    const e = alertEnv(options);
+    await addMissing(e, signups);
+    await withFetch(async () => ({ ok: true, json: async () => index }), () => runAlerts(e));
+    return reads;
+  };
+  assert.equal(await readsFor(6), await readsFor(1));
+  assert.equal(await readsFor(6, { rebaselined: false }), await readsFor(1, { rebaselined: false }));
 });

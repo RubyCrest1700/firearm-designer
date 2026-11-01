@@ -1,5 +1,5 @@
 {
-  "about": "The rule for a part moving to or from an estimate, one case per saved/today pair. Read by the site's tests (scripts/unit.test.ts) and meant for a later Worker test suite too. It sits in scripts/ so editing it does not deploy the Worker. Estimates are never stored as comparison prices.",
+  "about": "The rule for a part moving to or from an estimate, one case per saved/today pair. Read by the site's tests (scripts/unit.test.ts) and the Worker's (worker/api.test.mjs). It sits in scripts/ so editing it does not deploy the Worker. Estimates are never stored as comparison prices.",
   "fields": {
     "saved": "What the saved build holds for the part: live (a stored price) or none (nothing stored).",
     "today": "The part's best price today: live, or estimate (isEstimate(bestOffer(part))).",
