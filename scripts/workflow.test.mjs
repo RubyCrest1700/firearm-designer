@@ -11,6 +11,9 @@ const GUARD = '- name: Refuse to run from a branch';
 /** A job's own `if`, not a step's: job keys sit at four spaces, step keys deeper. */
 const jobIf = (job) => job.match(/^ {4}if: (.*)$/m)?.[1];
 
+const workerWorkflow = readFileSync(new URL('../.github/workflows/deploy-worker.yml', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
+const workerJobs = workerWorkflow.slice(workerWorkflow.indexOf('\njobs:\n') + 1);
+
 test('the workflow text has the parts these tests look for', () => {
   for (const text of ['\n  prices:\n', '\n  build:\n', '\n  deploy:\n']) assert.ok(workflow.includes(text), text);
   for (const text of ['    steps:\n', 'actions/checkout', 'git push origin HEAD:main']) assert.ok(prices.includes(text), text);
@@ -58,4 +61,13 @@ test('a failed guard stops the rest of the prices job', () => {
 test('a failed prices job stops build, and a failed build stops deploy', () => {
   assert.equal(jobIf(build), "${{ !cancelled() && (needs.prices.result == 'success' || needs.prices.result == 'skipped') }}");
   assert.equal(jobIf(deploy), "${{ !cancelled() && needs.build.result == 'success' && github.event_name != 'pull_request' }}");
+});
+
+test('the Worker deploys only from main, even on a manual run', () => {
+  // workflow_dispatch can pick any branch, and this job applies migrations and deploys with the production secrets.
+  assert.ok(workerWorkflow.includes('workflow_dispatch'));
+  // One job, so there's no second way in that this `if` doesn't cover.
+  assert.deepEqual(workerJobs.match(/^ {2}\S.*$/gm), ['  deploy:']);
+  assert.equal(jobIf(workerJobs), "github.ref == 'refs/heads/main'");
+  assert.ok(workerJobs.indexOf('    if: ') < workerJobs.indexOf('    steps:\n'), 'on the job, ahead of its steps');
 });
