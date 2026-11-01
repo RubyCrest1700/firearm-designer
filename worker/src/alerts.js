@@ -96,20 +96,24 @@ const currentSeen = (seen) => Object.fromEntries(Object.entries(seen).map(([k, v
   return [`${canonical(k.slice(0, i))}${k.slice(i)}`, v];
 }));
 
+/** Each platform's estimate ids, for the platforms that have an estimates list. Built once and passed in, not once per build. */
+const estimateSets = (index) => new Map(Object.entries(index?.platforms ?? {}).filter(([, p]) => Array.isArray(p?.estimates)).map(([id, p]) => [id, estimateIds(p)]));
+const NO_ESTIMATES = new Set();
+
 /**
- * Today's best price for every part in the builds, keyed `<platform>/<part>`. An estimate is never a comparison
- * price: its key stays missing, or keeps the last live price if `held` has one.
+ * Today's best price for every part in the builds, keyed `<platform>/<part>`. A part with no live price today, because
+ * it's an estimate (never a comparison price), or isn't in the index, or the index couldn't be read: its key stays
+ * missing, or keeps the last live price if `held` has one. Only parts in the builds get a key.
  */
-function pricesFor(index, builds, held = {}) {
+function pricesFor(index, builds, estimates, held = {}) {
   const out = {};
   for (const b of builds) {
     const platform = index?.platforms?.[b.platform];
-    const estimates = estimateIds(platform);
+    const listed = estimates.get(b.platform) ?? NO_ESTIMATES;
     for (const id of b.parts) {
       const p = indexPart(platform, id);
       const key = `${b.platform}/${id}`;
-      if (!p) continue;
-      if (!estimates.has(id)) out[key] = p[1];
+      if (p && !listed.has(id)) out[key] = p[1];
       else if (held[key] !== undefined) out[key] = held[key];
     }
   }
@@ -120,9 +124,9 @@ function pricesFor(index, builds, held = {}) {
  * Live prices `seen` has no key for: a part that was an estimate, or wasn't priced, and is live now. An index with
  * no estimates list can't tell live prices from estimates, so nothing from it is added.
  */
-function missingPrices(index, builds, seen) {
-  const listed = builds.filter((b) => Array.isArray(index?.platforms?.[b.platform]?.estimates));
-  return Object.fromEntries(Object.entries(pricesFor(index, listed)).filter(([k]) => seen[k] === undefined));
+function missingPrices(index, builds, seen, estimates) {
+  const listed = builds.filter((b) => estimates.has(b.platform));
+  return Object.fromEntries(Object.entries(pricesFor(index, listed, estimates)).filter(([k]) => seen[k] === undefined));
 }
 
 /** UPDATEs setting `seen` from [token, value] rows, SEEN_ROWS at a time. `value` is the SQL for the new `seen`, given the SQL for the row's value. */
@@ -187,11 +191,11 @@ async function sendConfirm(env, row, code) {
 }
 
 /** Builds whose live prices moved, each with its changes (biggest drop first), today's total and how many of the prices in it are estimates. */
-export function changesFor(index, builds, seen) {
+export function changesFor(index, builds, seen, sets = estimateSets(index)) {
   const out = [];
   for (const b of builds) {
     const platform = index?.platforms?.[b.platform];
-    const estimates = estimateIds(platform);
+    const estimates = sets.get(b.platform) ?? NO_ESTIMATES;
     const changes = [];
     let total = 0;
     let estimated = 0;
@@ -279,7 +283,7 @@ export async function alertsRoute(request, env, { path, url, json, noContent, wh
     const index = await loadIndex();
     await db.prepare('INSERT INTO signups (ip_hash, email_hash, created_at) VALUES (?, ?, ?)').bind(hash, addressHash, now).run();
     await db.prepare('INSERT INTO alerts (token, email, builds, seen, created_at, ip_hash, confirm_hash) VALUES (?, ?, ?, ?, ?, ?, ?)')
-      .bind(token, email, JSON.stringify(builds), JSON.stringify(pricesFor(index, builds)), now, hash, await sha256(code)).run();
+      .bind(token, email, JSON.stringify(builds), JSON.stringify(pricesFor(index, builds, estimateSets(index))), now, hash, await sha256(code)).run();
     const confirmLater = async () => {
       try {
         const suppressed = await db.prepare('SELECT 1 AS n FROM suppressed WHERE email_hash = ? AND created_at > ?').bind(addressHash, now - SUPPRESS_FOR).first();
@@ -300,7 +304,8 @@ export async function alertsRoute(request, env, { path, url, json, noContent, wh
   }
   // PUT /api/alerts/:token { builds }: the site keeps the watched builds in step with My builds.
   // Parts new to the list start from today's price; parts already watched keep their last reported price, which
-  // for a part that is an estimate today is the last live one.
+  // for a part that is an estimate today, or not in the index, is the last live one. If the index can't be read,
+  // parts still in the builds keep theirs and new ones get a price from the daily run.
   if (request.method === 'PUT' && one) {
     const row = await db.prepare('SELECT seen FROM alerts WHERE token = ?').bind(one[1]).first();
     if (!row) return json({ error: 'Not found' }, 404);
@@ -308,7 +313,8 @@ export async function alertsRoute(request, env, { path, url, json, noContent, wh
     const builds = cleanBuilds(body?.builds);
     if (!builds) return json({ error: 'That builds list is not valid.' }, 400);
     const old = currentSeen(JSON.parse(row.seen));
-    const seen = pricesFor(await loadIndex(), builds, old);
+    const index = await loadIndex();
+    const seen = pricesFor(index, builds, estimateSets(index), old);
     for (const k of Object.keys(seen)) if (old[k] !== undefined) seen[k] = old[k];
     await db.prepare('UPDATE alerts SET builds = ?, seen = ? WHERE token = ?').bind(JSON.stringify(builds), JSON.stringify(seen), one[1]).run();
     return json({ ok: true }, 200);
@@ -406,6 +412,7 @@ export async function runAlerts(env, now = Date.now()) {
   if (!alertsEnabled(env)) return { sent: 0, skipped: 'not set up' };
   const index = await loadIndex(true);
   if (!index) return { sent: 0, skipped: 'price index unreachable' };
+  const estimates = estimateSets(index);
 
   // One-time quiet re-baseline (REBASELINE): today's prices become the last reported ones, nobody is emailed.
   // Pending signups too, so one confirmed later doesn't report the same move. D1 allows 50 queries per Worker
@@ -415,7 +422,8 @@ export async function runAlerts(env, now = Date.now()) {
   const mark = await db.prepare("SELECT value FROM meta WHERE key = 'rebaseline'").first();
   if (mark?.value !== REBASELINE) {
     const { results: all } = await db.prepare('SELECT token, builds FROM alerts').all();
-    const statements = seenStatements(db, all.map((row) => [row.token, JSON.stringify(pricesFor(index, currentBuilds(JSON.parse(row.builds))))]));
+    // No `held` prices here, so later bumps clear them too. This one must, since old `seen` values may be estimates.
+    const statements = seenStatements(db, all.map((row) => [row.token, JSON.stringify(pricesFor(index, currentBuilds(JSON.parse(row.builds)), estimates))]));
     statements.push(db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES ('rebaseline', ?)").bind(REBASELINE));
     await db.batch(statements);
     return { sent: 0, rebaselined: all.length };
@@ -436,13 +444,13 @@ export async function runAlerts(env, now = Date.now()) {
     for (const row of rows) {
       const builds = currentBuilds(JSON.parse(row.builds));
       const seen = currentSeen(JSON.parse(row.seen));
-      const m = changesFor(index, builds, seen);
-      const next = pricesFor(index, builds, seen);
+      const m = changesFor(index, builds, seen, estimates);
+      const next = pricesFor(index, builds, estimates, seen);
       // Keep the last reported price for parts that only drifted, so small moves add up to a real one.
       for (const k of Object.keys(next)) if (seen[k] !== undefined && !worthTelling(seen[k], next[k])) next[k] = seen[k];
       moved.push(...m);
       updates.push([row.token, next]);
-      const add = missingPrices(index, builds, seen);
+      const add = missingPrices(index, builds, seen, estimates);
       if (Object.keys(add).length) missing.push([row.token, JSON.stringify(add)]);
     }
     // No email means `seen` isn't rewritten, so a part that turned live gets its first price here. Addresses put

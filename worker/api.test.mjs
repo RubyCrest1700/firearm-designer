@@ -1493,7 +1493,7 @@ const movedMail = async (extra = {}, base = ALERT_INDEX(120)) => {
   return e.outbox.at(-1);
 };
 
-test('an alert email counts the estimates in the total and marks no row, in html and text', async () => {
+test('an alert email counts the estimates in the total, in html and text', async () => {
   const mail = await movedMail({ estimates: ['g19-slide-mos'] });
   assert.ok(mail.html.includes('Now $620.00 at the best prices we found, including 1 estimate</p>'));
   assert.ok(mail.html.includes('↓ $120.00</td>'));
@@ -1929,4 +1929,69 @@ test('an index with no usable estimates list behaves as before: no quiet writes,
     assert.equal(put.status, 200, label);
     assert.deepEqual(await seenAt(e, 1), { [FRAME]: 200, [APEX]: 120, [SLIDE]: 300 }, label);
   }
+});
+
+const NO_INDEX = [async () => { throw new Error('offline'); }, async () => new Response('nope', { status: 503 })];
+/** LISTED without one part, as when its last price has gone from the index. */
+const WITHOUT = (id, ...prices) => {
+  const { platforms: { glock9 } } = LISTED(...prices);
+  const { [id]: _gone, ...parts } = glock9.parts;
+  return { platforms: { glock9: { ...glock9, parts } } };
+};
+
+test('a PUT that can\'t read the index keeps the stored prices, and a later real drop emails', async () => {
+  for (const fake of NO_INDEX) {
+    const e = alertEnv();
+    await addAlert(e, 1, ALL_SEEN);
+    const put = await withFetch(fake, () => call(e, 'PUT', `/api/alerts/${tokenOf(1)}`, { builds: [G19] }));
+    assert.equal(put.status, 200);
+    assert.deepEqual(await seenAt(e, 1), ALL_SEEN);
+    assert.equal((await withIndex(LISTED(120), () => runAlerts(e))).sent, 1);
+    assert.ok(e.outbox[0].text.includes('  Apex trigger: $150.00 -> $120.00\n'));
+  }
+});
+
+test('a PUT that can\'t read the index still keeps only parts in the builds', async () => {
+  for (const fake of NO_INDEX) {
+    const e = alertEnv();
+    await addAlert(e, 1, ALL_SEEN);
+    await withFetch(fake, () => call(e, 'PUT', `/api/alerts/${tokenOf(1)}`, { builds: [{ ...G19, parts: ['g19-frame-g5', 'g-new-part'] }] }));
+    assert.deepEqual(await seenAt(e, 1), { [FRAME]: 200 });
+  }
+});
+
+test('a held price survives its part leaving the index, and the drop emails when the part comes back lower', async () => {
+  const e = alertEnv();
+  await addAlert(e, 1, ALL_SEEN);
+  // The apex is gone; the slide's drop sends an email, which rewrites `seen`.
+  assert.equal((await withIndex(WITHOUT(APEX_ID, 150, 200), () => runAlerts(e))).sent, 1);
+  assert.deepEqual(await seenAt(e, 1), { [FRAME]: 200, [APEX]: 150, [SLIDE]: 200 });
+  // So does a PUT made while it's gone.
+  await withIndex(WITHOUT(APEX_ID, 150, 200), () => call(e, 'PUT', `/api/alerts/${tokenOf(1)}`, { builds: [G19] }));
+  assert.deepEqual(await seenAt(e, 1), { [FRAME]: 200, [APEX]: 150, [SLIDE]: 200 });
+  assert.equal((await withIndex(LISTED(120, 200), () => runAlerts(e))).sent, 1);
+  assert.ok(e.outbox[1].text.includes('  Apex trigger: $150.00 -> $120.00\n'));
+  assert.equal((await seenAt(e, 1))[APEX], 120);
+});
+
+test('a price for a part no longer in the builds goes when `seen` is rewritten, even if the part left the index too', async () => {
+  const e = alertEnv();
+  await addAlert(e, 1, ALL_SEEN, [{ ...G19, parts: ['g19-frame-g5', SLIDE_ID] }]);
+  assert.equal((await withIndex(WITHOUT(APEX_ID, 150, 200), () => runAlerts(e))).sent, 1);
+  assert.deepEqual(await seenAt(e, 1), { [FRAME]: 200, [SLIDE]: 200 });
+});
+
+test('a daily run reads each platform\'s estimates list a fixed number of times, however many signups it has', async () => {
+  const readsFor = async (signups, options) => {
+    let reads = 0;
+    const { platforms: { glock9 } } = LISTED();
+    const { estimates: _list, ...rest } = glock9;
+    const index = { platforms: { glock9: { ...rest, get estimates() { reads++; return []; } } } };
+    const e = alertEnv(options);
+    await addMissing(e, signups);
+    await withFetch(async () => ({ ok: true, json: async () => index }), () => runAlerts(e));
+    return reads;
+  };
+  assert.equal(await readsFor(6), await readsFor(1));
+  assert.equal(await readsFor(6, { rebaselined: false }), await readsFor(1, { rebaselined: false }));
 });
