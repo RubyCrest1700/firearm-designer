@@ -38,7 +38,10 @@
     "a10-grip-bcm": {
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-grips/ar-15-mod-3-gunfighter-grip/?sku=100013641",
       "RA": "https://www.rainierarms.com/bcm-gunfighter-grip-mod-3-black/",
-      "PA": "https://www.primaryarms.com/bravo-company-gunfighter-grip-mod-3-black-bcm-gfg-mod-3-black"
+      "PA": "https://www.primaryarms.com/bravo-company-gunfighter-grip-mod-3-black-bcm-gfg-mod-3-black",
+      "KYG": "https://www.kygunco.com/product/bravo-company-bcm-gfg-mod-3-black-bcm-gunfighter-grip-mod-3-black",
+      "BCM": "https://bravocompanyusa.com/bcm-grip-mod-3-black/",
+      "RTB": "https://www.righttobear.com/bcm-gunfighter-grip-mod-3-black-bcm-gfg-mod-3-blk/"
     },
     "a10-grip-moe": {
       "PSA": "https://palmettostatearmory.com/magpul-moe-grip-ar15-m16-mag415-blk-mfg-retail-kit.html",
@@ -61,7 +64,8 @@
     "a10-mz-pa": {
       "PA": "https://www.primaryarms.com/precision-armament-m4-72-severe-duty-7-62-compensator-5-8x24-black",
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-muzzle-devices/ar-.308--m4-72-severe-duty-brake-30-caliber/",
-      "RA": "https://www.rainierarms.com/precision-armament-m4-72-severe-duty-compensator-7-62mm-308/"
+      "RA": "https://www.rainierarms.com/precision-armament-m4-72-severe-duty-compensator-7-62mm-308/",
+      "WING": "https://www.wingtactical.com/firearm-parts/ar-15-parts/muzzle-devices/precision-armament-m4-72-severe-duty-compensator-308-7-62/"
     },
     "a10-stock-moesl": {
       "PA": "https://www.primaryarms.com/magpul-moe-slim-line-carbine-stock-mil-spec-black-mag347-blk",
@@ -74,11 +78,14 @@
       "MAGPUL": "https://magpul.com/ubr-gen2-collapsible-stock.html"
     },
     "a10-trig-alg": {
-      "PA": "https://www.primaryarms.com/alg-defense-combat-trigger-act"
+      "PA": "https://www.primaryarms.com/alg-defense-combat-trigger-act",
+      "RSUP": "https://riflesupply.com/ALG-Defense-ACT-Advanced-Combat-Trigger-AR-15-AR-10-Chrome-moly-Steel-05-199-_p_6664.html"
     },
     "a10-trig-geissele": {
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-triggers-parts/ssa-e-super-sem-automatic-enhanced-2-stage-trigger-for-ar-15/",
-      "PA": "https://www.primaryarms.com/geissele-automatics-super-semi-automatic-enhanced-ssa-e-two-stage-ar-15-trigger-.154in"
+      "PA": "https://www.primaryarms.com/geissele-automatics-super-semi-automatic-enhanced-ssa-e-two-stage-ar-15-trigger-.154in",
+      "KYG": "https://www.kygunco.com/product/geissele-ssa-e-super-semi-auto-enhanced-trigg",
+      "RTB": "https://www.righttobear.com/geissele-super-semi-automatic-enhanced-ssa-e-ssa-e/"
     },
     "a10-trig-psa": {
       "PSA": "https://palmettostatearmory.com/psa-ar15-pa10-enhanced-polished-trigger.html"
@@ -118,7 +125,8 @@
     },
     "ar-ch-radian": {
       "PA": "https://www.primaryarms.com/radian-weapons-ar15-m16-raptor-ambidextrous-charging-handle-black",
-      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-charging-handle-parts/ar-15-raptor-charging-handle-5.56/"
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-charging-handle-parts/ar-15-raptor-charging-handle-5.56/",
+      "IMP": "https://www.impactguns.com/ar-15-lower-receiver-parts/radian-weapons-raptor-ambidextrous-charging-handle-5-56mm-black-finish-817093020477-r0001"
     },
     "ar-gb-aero750": {
       "AERO": "https://www.aeroprecisionusa.com/750-low-profile-gas-block-w-aero-logo-nitride"
@@ -143,10 +151,15 @@
     "ar-hg-bcm": {
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-handguards-parts/ar-15-bcmgunfighter--mcmr-handguard-m-lok-free-float/?sku=100026763",
       "RA": "https://www.rainierarms.com/bcm-gunfighter-ar-15-mcmr-223-5-56mm-rail-m-lok-compatible-mounting-slots-13/",
-      "PA": "https://www.primaryarms.com/bcm-13-mlok-compatible-modular-rail-bcm-mcmr-13-556-blk"
+      "PA": "https://www.primaryarms.com/bcm-13-mlok-compatible-modular-rail-bcm-mcmr-13-556-blk",
+      "BCM": "https://bravocompanyusa.com/bcm-mcmr-13-m-lok-compatible-modular-rail/",
+      "RTB": "https://www.righttobear.com/bcm-mcmr-m-lok-free-float-handguard-13-bcm-mcmr-13-556-blk/",
+      "GRITR": "https://gritrsports.com/bravo-company-mcmr-556-13in-rail-bcm-mcmr-13-556-blk"
     },
     "ar-hg-mi": {
-      "PA": "https://www.primaryarms.com/midwest-industries-15in-combat-rail-m-lok-ar-15-handguard-black"
+      "PA": "https://www.primaryarms.com/midwest-industries-15in-combat-rail-m-lok-ar-15-handguard-black",
+      "RTB": "https://www.righttobear.com/midwest-combat-rail-free-float-handguard-15-inch-mi-crm15/",
+      "RSUP": "https://riflesupply.com/Midwest-Industries-Combat-Rail-M-LOK-Handguard-Fits-AR-15-Rifles-15-Wrench-Included-Black-MI-CRM15_p_6019.html"
     },
     "ar-hg-mi9": {
       "PA": "https://www.primaryarms.com/midwest-industries-9.25in-combat-rail-m-lok-ar-15-handguard-black"
@@ -174,7 +187,8 @@
       "MID": "https://www.midwayusa.com/product/1027902722",
       "RA": "https://www.rainierarms.com/aimpoint-pro-patrol-rifle-optic/",
       "PA": "https://www.primaryarms.com/aimpoint-pro-patrol-rifle-optic-12841",
-      "ARD": "https://ar15discounts.com/products/aimpoint-patrol-rifle-optic-pro-ar15-ready-qrp2-mount-39mm-spacer/"
+      "ARD": "https://ar15discounts.com/products/aimpoint-patrol-rifle-optic-pro-ar15-ready-qrp2-mount-39mm-spacer/",
+      "IMP": "https://www.impactguns.com/sights/aimpoint-pro-patrol-rifle-optic-30mm-modular-qrp2-ar-15-mount-flip-covers-7350004383399-12841"
     },
     "ar-stock-bcm": {
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-stocks-parts/ar-15-bcmgunfighter-stock-collapsible-mil-spec/",
@@ -188,11 +202,15 @@
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-stocks-parts/ar-15-moe-sl-stock-collapsible-mil-spec/?sku=100015169"
     },
     "ar-trig-alg": {
-      "PA": "https://www.primaryarms.com/alg-defense-combat-trigger-act"
+      "PA": "https://www.primaryarms.com/alg-defense-combat-trigger-act",
+      "IMP": "https://www.impactguns.com/AR-15-Parts/ALG-Defense-Combat-Trigger-AR15-M4-6lb-Pull-854014005212-ACT/",
+      "RSUP": "https://riflesupply.com/ALG-Defense-ACT-Advanced-Combat-Trigger-AR-15-AR-10-Chrome-moly-Steel-05-199-_p_6664.html"
     },
     "ar-trig-geissele": {
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-triggers-parts/ssa-e-super-sem-automatic-enhanced-2-stage-trigger-for-ar-15/",
-      "PA": "https://www.primaryarms.com/geissele-automatics-super-semi-automatic-enhanced-ssa-e-two-stage-ar-15-trigger-.154in"
+      "PA": "https://www.primaryarms.com/geissele-automatics-super-semi-automatic-enhanced-ssa-e-two-stage-ar-15-trigger-.154in",
+      "KYG": "https://www.kygunco.com/product/geissele-ssa-e-super-semi-auto-enhanced-trigg",
+      "RTB": "https://www.righttobear.com/geissele-super-semi-automatic-enhanced-ssa-e-ssa-e/"
     },
     "ar-trig-psa": {
       "PSA": "https://palmettostatearmory.com/psa-ar15-pa10-enhanced-polished-trigger.html"
@@ -202,7 +220,8 @@
     },
     "g-mag-oem10": {
       "BRN": "https://www.brownells.com/gun-parts/magazines/handgun-magazines-parts/gen-5-magazine-for-glock-g26/?sku=100033566",
-      "CTD": "https://www.cheaperthandirt.com/glock-26-gen-5-9mm-luger-factory-magazine-10-rounds-black.html"
+      "CTD": "https://www.cheaperthandirt.com/glock-26-gen-5-9mm-luger-factory-magazine-10-rounds-black.html",
+      "TGS": "https://www.topgunsupply.com/glock-26-9mm-10rd-magazine.html"
     },
     "g-mag-oem15": {
       "BRN": "https://www.brownells.com/gun-parts/magazines/handgun-magazines-parts/9mm-luger-magazines-for-glock-19/?sku=100002772",
@@ -224,12 +243,14 @@
     },
     "g-opt-507c": {
       "PA": "https://www.primaryarms.com/holosun-hs507c-x2-pistol-red-dot-sight-2-moa",
-      "OP": "https://www.opticsplanet.com/holosun-hs507c-x2-red-dot-sights.html"
+      "OP": "https://www.opticsplanet.com/holosun-hs507c-x2-red-dot-sights.html",
+      "KYG": "https://www.kygunco.com/product/holosun-hs507c-x2-classic-hs507c-x2-1x-multi-recticle-red-dot-sight"
     },
     "g-opt-rmr": {
       "BRN": "https://www.brownells.com/optics/reflex-red-dot-sights/red-dot-sights/rmr-type-2-rm06-3.25-moa-adjustable-led-reflex-sight/",
       "RA": "https://www.rainierarms.com/trijicon-rmr-sight-adjustable-3-25-moa-red-dot-type-2/",
-      "PA": "https://www.primaryarms.com/trijicon-rmr-type-2-adjustable-led-reflex-sight-3.25-moa"
+      "PA": "https://www.primaryarms.com/trijicon-rmr-type-2-adjustable-led-reflex-sight-3.25-moa",
+      "IMP": "https://www.impactguns.com/Reflex-Sights/Trijicon-RMR-1x-Unlimited-Eye-Relief-3-25-MOA-Black-719307614239-700672/"
     },
     "g-sight-ameriglo": {
       "BRN": "https://www.brownells.com/handgun-parts/sights/sight-sets/suppressor-sights-for-glock--prod53947.aspx",
@@ -372,7 +393,9 @@
     "p-mag-sig17": {
       "SIG": "https://www.sigsauer.com/p250-p320-full-17rd-9mm-magazine.html",
       "BRN": "https://www.brownells.com/gun-parts/magazines/handgun-magazines-parts/p250p320-full-sizecarry-9mm-luger-handgun-magazines/",
-      "RA": "https://www.rainierarms.com/sig-sauer-p320-p250-full-size-9mm-17-rd-magazine/"
+      "RA": "https://www.rainierarms.com/sig-sauer-p320-p250-full-size-9mm-17-rd-magazine/",
+      "IMP": "https://www.impactguns.com/handgun-high-cap-mag/sig-magazine-250-320-9mm-full-17-rd-798681505098-mag-mod-f-9-17/",
+      "SPW": "https://www.sportsmans.com/shooting-gear-gun-supplies/gun-parts-accessories/gun-parts-magazines/magazines-clips/handgun-magazines/sig-sauer-p320p250-9mm-luger-handgun-magazine-17-rounds/p/1527919"
     },
     "p-opt-r1p": {
       "SIG": "https://www.sigsauer.com/romeo1pro-1x30-mm.html",
@@ -436,7 +459,8 @@
     },
     "p365-mag-12": {
       "SIG": "https://www.sigsauer.com/p365-micro-compact-12rd-9mm-magazine.html",
-      "PA": "https://www.primaryarms.com/sig-sauer-p365-magazine-9mm-12-round"
+      "PA": "https://www.primaryarms.com/sig-sauer-p365-magazine-9mm-12-round",
+      "TGS": "https://www.topgunsupply.com/sig-sauer-p365xl-p365-9mm-12rd-magazine.html"
     },
     "p365-opt-507k": {
       "PA": "https://www.primaryarms.com/holosun-hs507k-x2-compact-pistol-red-dot-sight-2-moa",
@@ -463,7 +487,9 @@
     },
     "p365-spr-xl": {
       "SIG": "https://www.sigsauer.com/recoil-spring-assembly-p365xl.html",
-      "RA": "https://www.rainierarms.com/sig-sauer-p365xl-9mm-recoil-spring-assembly/"
+      "RA": "https://www.rainierarms.com/sig-sauer-p365xl-9mm-recoil-spring-assembly/",
+      "IMP": "https://www.impactguns.com/handgun-parts/sig-p365xl-recoil-spring-assembly-9mm-compatible-p365-xmacro-798681653775-8900677",
+      "GRITR": "https://gritrsports.com/sig-sauer-recoil-spring-assembly-for-p365xl-8900677"
     },
     "a10-bcg-young": {
       "YM": "https://www.youngmanufacturing.net/ar-10-armalite-black-nitride-bolt-carrier-group.aspx"
@@ -498,7 +524,10 @@
       "PA": "https://www.primaryarms.com/surefire-3-prong-flash-hider-silencer-mount-sf3p-556-1-2-28",
       "RA": "https://www.rainierarms.com/surefire-sf3p-556-1-2x28/",
       "AT3": "https://www.at3tactical.com/products/surefire-socom-ar-15-flash-hider-for-5-56-1-2x28-thread",
-      "ARD": "https://ar15discounts.com/products/surefire-3-prong-flash-hider-w-suppressor-adapter-5-56-1-2x28/"
+      "ARD": "https://ar15discounts.com/products/surefire-3-prong-flash-hider-w-suppressor-adapter-5-56-1-2x28/",
+      "TGS": "https://www.topgunsupply.com/surefire-5.56mm-3-prong-flash-hider-m4-m16-ar15-1-2-28-threads.html",
+      "IMP": "https://www.impactguns.com/AR-15-Parts/Surefire-SF3P-556-1-2x28-3-Prong-Flash-Hider-For-Socom-Supressors-084871319119-SF3P-556-1-2-28/",
+      "RSUP": "https://riflesupply.com/SureFire-SOCOM-Flash-Hider-AR15-Black-3-Prong-SF3P-556-12-28_p_5739.html"
     },
     "ar-opt-romeo5x": {
       "SIG": "https://www.sigsauer.com/romeo5x-1x20-mm.html",
@@ -786,7 +815,8 @@
     },
     "g-mag-oem17": {
       "AT3": "https://www.at3tactical.com/products/glock-oem-17-round-magazine-for-g17-34-9mm",
-      "RA": "https://www.rainierarms.com/glock-g17-g34-oem-9mm-17rd-magazine/"
+      "RA": "https://www.rainierarms.com/glock-g17-g34-oem-9mm-17rd-magazine/",
+      "IMP": "https://www.impactguns.com/handgun-high-cap-mag/glock-g17-34-9mm-magazine-polymer-black-finish-17rd-764503170171-mf17017/"
     },
     "g17-frame-g3": {
       "RSUP": "https://riflesupply.com/Glock-OEM-Stripped-Frame-Glock-17-22-34-Gen-3-Color-Options_p_1624.html"
@@ -825,7 +855,8 @@
       "PA": "https://www.primaryarms.com/superlative-arms-bleed-off-adjustable-gas-block-set-screw-750-melonite"
     },
     "a10-gb-875": {
-      "PA": "https://www.primaryarms.com/superlative-arms-bleed-off-adjustable-gas-block-set-screw-875-melonite"
+      "PA": "https://www.primaryarms.com/superlative-arms-bleed-off-adjustable-gas-block-set-screw-875-melonite",
+      "RTB": "https://www.righttobear.com/superlative-arms-875-adjustable-gas-block-bleed-sabo-di-875sm/"
     },
     "ar-bcg-toolcraft": {
       "ARD": "https://ar15discounts.com/products/toolcraft-223-5-56-300blk-m16-profile-bolt-carrier-group-black-nitride/"
@@ -1289,7 +1320,8 @@
       "GRITR": "https://gritrsports.com/aimpoint-acro-p-2-red-dot-reflex-sight-200691"
     },
     "g-plate-rmr": {
-      "ARD": "https://ar15discounts.com/products/ch-precision-v4-optic-plate-glock-mos-to-rmr-sro-holosun-407c-507c-508t-507-comp-black/"
+      "ARD": "https://ar15discounts.com/products/ch-precision-v4-optic-plate-glock-mos-to-rmr-sro-holosun-407c-507c-508t-507-comp-black/",
+      "GS": "https://www.glockstore.com/C-H-Precision-Weapons-V4-Glock-MOS-Adapter-Plate"
     },
     "g-plate-k": {
       "AT3": "https://www.at3tactical.com/products/ch-precision-glock-mos-adapter-plate-holosun-407k-507k"
