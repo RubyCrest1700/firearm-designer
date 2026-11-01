@@ -2,6 +2,7 @@ import { SHARE_BASE } from './config';
 import { PLATFORMS, canonicalPlatform } from './data';
 import { MOUNT_CODE, baseSelection, bestOffer, estimatedCount, isEstimate, ownedOf, placementOf, presetSelection, selectionTokens, toBuild, unpricedCount, type Selection } from './engine';
 import { firstLiveDay, worthShowing } from './data/history';
+import ESTIMATE_ERA_PARTS from '../data/estimate-era-parts.json';
 import type { Build, Part, Platform, Tier } from './types';
 
 /* ---------------------------------------------------------------- saved builds */
@@ -18,9 +19,18 @@ export interface SavedBuild {
   pricesAt?: string;
   /** True once estimateFigure has judged this build's prices: on its first load, or from the start for a build saved since then. Never judged again. */
   pricesChecked?: boolean;
+  /** True once the one-time estimate-era clear has run on this build, or from the start for a build saved since then. Never run again. */
+  estimateEraCleared?: boolean;
 }
 
 const SAVED_KEY = 'firearm-designer:saved:v1';
+
+/**
+ * Parts with no live price when estimates were kept out of saved builds for good. A figure stored for one may be an
+ * estimate that estimateFigure passed, saved after a pause while the part was already at one, so it's dropped once
+ * (SavedBuild.estimateEraCleared). A fixed list, as a browser may first load after a nightly has priced these parts.
+ */
+const ESTIMATE_ERA = new Set<string>(ESTIMATE_ERA_PARTS);
 
 const isText = (v: unknown): v is string => typeof v === 'string';
 const isRecord = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -47,14 +57,14 @@ function savedEntry(e: unknown): SavedBuild | null {
     const platform = canonicalPlatform(e.platform);
     if (!PLATFORMS.some((p) => p.id === platform)) return null;
     // Builds saved before price tracking start from today's prices, and so does a part whose saved price may be a
-    // paused retailer's (pausedPrice) or, on a build's first load, an estimate (estimateFigure).
+    // paused retailer's (pausedPrice) or, on a build's first load, an estimate (estimateFigure, ESTIMATE_ERA).
     const sel = selection as Selection;
-    const { pricesAt, pricesChecked, ...entry } = e as unknown as SavedBuild;
+    const { pricesAt, pricesChecked, estimateEraCleared, ...entry } = e as unknown as SavedBuild;
     const at = isText(pricesAt) ? { pricesAt } : {};
     const stored = prices as Record<string, number> | undefined;
-    const kept = stored && trustedPrices(platform, sel, pricedAt({ savedAt: entry.savedAt, ...at }), stored, pricesChecked === true);
+    const kept = stored && trustedPrices(platform, sel, pricedAt({ savedAt: entry.savedAt, ...at }), stored, pricesChecked === true, estimateEraCleared === true);
     const reset = !!stored && Object.keys(kept!).length < Object.keys(stored).length;
-    return { ...entry, platform, selection: sel, prices: priceSnapshot(platform, sel, kept), pricesChecked: true, ...(reset ? { pricesAt: new Date().toISOString() } : at) };
+    return { ...entry, platform, selection: sel, prices: priceSnapshot(platform, sel, kept), pricesChecked: true, estimateEraCleared: true, ...(reset ? { pricesAt: new Date().toISOString() } : at) };
   } catch {
     return null;
   }
@@ -109,6 +119,7 @@ export const savedPrices = (platformId: string, sel: Selection, keep?: Record<st
   savedAt: new Date().toISOString(),
   prices: priceSnapshot(platformId, sel, keep),
   pricesChecked: true,
+  estimateEraCleared: true,
 });
 
 /**
@@ -137,12 +148,13 @@ function estimateFigure(part: Part, pricedOn: string) {
 
 /**
  * A saved build's prices without the ones that may be a paused retailer's (pausedPrice) or, unless the build has been
- * checked, an estimate (estimateFigure). Owned parts are left to priceSnapshot, which drops them without it being a reset.
+ * checked or cleared, an estimate (estimateFigure, ESTIMATE_ERA). Owned parts are left to priceSnapshot, which drops them
+ * without it being a reset.
  */
-function trustedPrices(platformId: string, sel: Selection, savedAt: string, prices: Record<string, number>, checked: boolean) {
+function trustedPrices(platformId: string, sel: Selection, savedAt: string, prices: Record<string, number>, checked: boolean, cleared: boolean) {
   const { build } = buildOf(platformId, sel);
   const { owned } = ownedOf(sel);
-  const stale = new Set(Object.values(build).filter((p): p is Part => !!p && !owned.has(p.slot) && (pausedPrice(p, savedAt) || (!checked && estimateFigure(p, savedAt)))).map((p) => p.id));
+  const stale = new Set(Object.values(build).filter((p): p is Part => !!p && !owned.has(p.slot) && (pausedPrice(p, savedAt) || (!checked && estimateFigure(p, savedAt)) || (!cleared && ESTIMATE_ERA.has(p.id)))).map((p) => p.id));
   return Object.fromEntries(Object.entries(prices).filter(([id]) => !stale.has(id)));
 }
 
