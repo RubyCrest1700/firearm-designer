@@ -10,7 +10,7 @@ on:
     branches: [main]
   pull_request:
   schedule:
-    - cron: '17 8 * * *' # daily, ~4am US Eastern
+    - cron: '17 8 * * *' # daily; GitHub often starts it hours late
   workflow_dispatch:
     inputs:
       update_prices:
