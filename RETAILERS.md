@@ -14,7 +14,7 @@ In the Status column, "active" only means the retailer is neither paused nor lin
 | AT3 Tactical | at3tactical.com | paused | 2026-10-26 | robots.txt refuses the price bot | 44 | 2026-10-26 |
 | Black Phoenix Customs | blackphoenixcustoms.com | active | - | - | 12 | 2026-11-01 |
 | Black Rifle Depot | blackrifledepot.com | active | - | - | 41 | 2026-11-01 |
-| Bravo Company | bravocompanyusa.com | active | - | - | 3 | 2026-11-01 |
+| Bravo Company | bravocompanyusa.com | active | - | - | 4 | 2026-11-01 |
 | Brownells | brownells.com | links only | 2026-10-31 | its product pages answer the price bot with a 403 | 51 | none recorded |
 | Bud's Gun Shop | budsgunshop.com | active | - | - | 65 | 2026-11-01 |
 | Cheaper Than Dirt | cheaperthandirt.com | links only | 2026-10-31 | its robots.txt answers the price bot with a 403 | 49 | 2026-10-16 |
@@ -29,9 +29,9 @@ In the Status column, "active" only means the retailer is neither paused nor lin
 | GlockStore | glockstore.com | active | - | - | 12 | 2026-11-01 |
 | Grey Ghost Precision | greyghostprecision.com | active | - | - | 2 | 2026-11-01 |
 | Gritr Sports | gritrsports.com | active | - | - | 52 | 2026-11-01 |
-| Impact Guns | impactguns.com | active | - | - | 17 | 2026-11-01 |
+| Impact Guns | impactguns.com | active | - | - | 18 | 2026-11-01 |
 | KAK Industry | kakindustry.com | active | - | - | 1 | 2026-11-01 |
-| KYGunCo | kygunco.com | active | - | - | 81 | 2026-11-01 |
+| KYGunCo | kygunco.com | active | - | - | 82 | 2026-11-01 |
 | Lone Wolf Arms | lonewolfdist.com | active | - | - | 9 | 2026-11-01 |
 | Magpul | magpul.com | active | - | - | 26 | 2026-11-01 |
 | MidwayUSA | midwayusa.com | paused | 2026-10-26 | robots.txt refuses the price bot | 6 | none recorded |
@@ -49,7 +49,7 @@ In the Status column, "active" only means the retailer is neither paused nor lin
 | Savior Equipment | saviorequipment.com | active | - | - | 1 | 2026-11-01 |
 | Sig Sauer | sigsauer.com | links only | 2026-10-31 | its product pages answer the price bot with a 403 | 26 | none recorded |
 | Smith & Wesson | shop.smith-wesson.com | active | - | - | 2 | 2026-11-01 |
-| Sportsman's Warehouse | sportsmans.com | active | - | - | 25 | 2026-11-01 |
+| Sportsman's Warehouse | sportsmans.com | active | - | - | 26 | 2026-11-01 |
 | Springfield Armory | store.springfield-armory.com | active | - | - | 2 | 2026-11-01 |
 | Strike Industries | strikeindustries.com | active | - | - | 1 | 2026-11-01 |
 | Timney Triggers | timneytriggers.com | active | - | - | 1 | 2026-11-01 |

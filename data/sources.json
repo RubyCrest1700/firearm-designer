@@ -184,7 +184,10 @@
       "MID": "https://www.midwayusa.com/product/1027902722",
       "RA": "https://www.rainierarms.com/aimpoint-pro-patrol-rifle-optic/",
       "PA": "https://www.primaryarms.com/aimpoint-pro-patrol-rifle-optic-12841",
-      "ARD": "https://ar15discounts.com/products/aimpoint-patrol-rifle-optic-pro-ar15-ready-qrp2-mount-39mm-spacer/"
+      "ARD": "https://ar15discounts.com/products/aimpoint-patrol-rifle-optic-pro-ar15-ready-qrp2-mount-39mm-spacer/",
+      "SPW": "https://www.sportsmans.com/hunting-gear-supplies/optics-binoculars-scopes-rangefinders/red-dots/aimpoint-patrol-rifle-optic-1x-red-dot-2-moa-dot/p/1379668",
+      "BCM": "https://bravocompanyusa.com/aimpoint-pro-patrol-rifle-optic/",
+      "IMP": "https://www.impactguns.com/sights/aimpoint-pro-patrol-rifle-optic-30mm-modular-qrp2-ar-15-mount-flip-covers-7350004383399-12841"
     },
     "ar-stock-bcm": {
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-stocks-parts/ar-15-bcmgunfighter-stock-collapsible-mil-spec/",
@@ -1265,7 +1268,8 @@
       "ARD": "https://ar15discounts.com/products/jp-enterprises-gmr-15-stripped-billet-9mm-lower-receiver/"
     },
     "a9-trig-angstadt": {
-      "CTD": "https://www.cheaperthandirt.com/angstadt-arms-ar9-enhanced-mil-spec-emt-9-pcc-trigger/fc-850035894828.html"
+      "CTD": "https://www.cheaperthandirt.com/angstadt-arms-ar9-enhanced-mil-spec-emt-9-pcc-trigger/fc-850035894828.html",
+      "KYG": "https://www.kygunco.com/product/angstadt-arms-emt-9-pcc-enhanced-mil-spec-trigger"
     },
     "a9-bbl-ba45": {
       "ARD": "https://ar15discounts.com/products/ballistic-advantage-4-5-9mm-modern-epc-series-ar-15-barrel-110-twist/"
