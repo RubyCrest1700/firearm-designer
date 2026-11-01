@@ -1775,7 +1775,7 @@ test('a build saved between the two pauses: the part paused later resets, the pa
   const sel = { ...baseSelection(ar15), handguard: early.id, bcg: late.id };
   liveParts(t, ar15, sel);
   const now = priceSnapshot('ar15', sel);
-  const saved: SavedBuild = { id: 'm', name: 'Between', platform: 'ar15', selection: sel, savedAt: '2026-10-25T12:00:00Z', prices: { ...now, [early.id]: now[early.id] - 30, [late.id]: now[late.id] - 30 } };
+  const saved: SavedBuild = { id: 'm', name: 'Between', platform: 'ar15', selection: sel, savedAt: '2026-10-25T12:00:00Z', estimateEraCleared: true, prices: { ...now, [early.id]: now[early.id] - 30, [late.id]: now[late.id] - 30 } };
   assert.ok(saved.savedAt.slice(0, 10) > PAUSE_DAY && saved.savedAt.slice(0, 10) < PAUSE_DAY_2);
   // Only the part paused before the save is compared; the later pause makes the other's saved price untrustworthy.
   assert.deepEqual(priceChanges(saved).changes.map((c) => c.part.id), [early.id]);
