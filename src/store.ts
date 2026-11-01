@@ -16,6 +16,8 @@ export interface SavedBuild {
   prices?: Record<string, number>;
   /** When some of `prices` were last reset to that day's prices, because they may have been a paused retailer's (pausedPrice) or an estimate (estimateFigure). */
   pricesAt?: string;
+  /** True once estimateFigure has judged this build's prices: on its first load, or from the start for a build saved since then. Never judged again. */
+  pricesChecked?: boolean;
 }
 
 const SAVED_KEY = 'firearm-designer:saved:v1';
@@ -45,14 +47,14 @@ function savedEntry(e: unknown): SavedBuild | null {
     const platform = canonicalPlatform(e.platform);
     if (!PLATFORMS.some((p) => p.id === platform)) return null;
     // Builds saved before price tracking start from today's prices, and so does a part whose saved price may be a
-    // paused retailer's (pausedPrice) or an estimate (estimateFigure).
+    // paused retailer's (pausedPrice) or, on a build's first load, an estimate (estimateFigure).
     const sel = selection as Selection;
-    const { pricesAt, ...entry } = e as unknown as SavedBuild;
+    const { pricesAt, pricesChecked, ...entry } = e as unknown as SavedBuild;
     const at = isText(pricesAt) ? { pricesAt } : {};
     const stored = prices as Record<string, number> | undefined;
-    const kept = stored && trustedPrices(platform, sel, pricedAt({ savedAt: entry.savedAt, ...at }), stored);
+    const kept = stored && trustedPrices(platform, sel, pricedAt({ savedAt: entry.savedAt, ...at }), stored, pricesChecked === true);
     const reset = !!stored && Object.keys(kept!).length < Object.keys(stored).length;
-    return { ...entry, platform, selection: sel, prices: priceSnapshot(platform, sel, kept), ...(reset ? { pricesAt: new Date().toISOString() } : at) };
+    return { ...entry, platform, selection: sel, prices: priceSnapshot(platform, sel, kept), pricesChecked: true, ...(reset ? { pricesAt: new Date().toISOString() } : at) };
   } catch {
     return null;
   }
@@ -102,6 +104,13 @@ export function priceSnapshot(platformId: string, sel: Selection, keep: Record<s
   return out;
 }
 
+/** The price fields of a new save or a re-save, as of now. `keep` is priceSnapshot's. */
+export const savedPrices = (platformId: string, sel: Selection, keep?: Record<string, number>) => ({
+  savedAt: new Date().toISOString(),
+  prices: priceSnapshot(platformId, sel, keep),
+  pricesChecked: true,
+});
+
 /**
  * Whether a saved build's price for this part may be a paused retailer's: the build was saved on or before the pause
  * date of a retailer that priced the part (Part.pausedThrough). Such a price isn't compared with today's, or the pause
@@ -113,28 +122,27 @@ export const pausedPrice = (part: Part, savedAt: string) => !!part.pausedThrough
 const pricedAt = (s: Pick<SavedBuild, 'savedAt' | 'pricesAt'>) => (s.pricesAt && s.pricesAt > s.savedAt ? s.pricesAt : s.savedAt);
 
 /**
- * Prices dated before this day may be estimates, stored before estimates were kept out of saved builds. Prices dated on
- * or after it can't be, so estimateFigure leaves them alone. Must not be earlier than the day that change goes live.
- */
-export const PRICE_CHECK_CUTOVER = '2026-11-15';
-
-/**
- * Whether a saved build's price for this part can't be trusted as a live one: it was taken on or before the first day
- * the part had a live price (firstLiveDay), or the part has never had one and is an estimate today. Only for prices
- * dated before PRICE_CHECK_CUTOVER. A hand-checked price with no history is left alone: it was never an estimate.
+ * Whether a saved build's price for this part can't be trusted as a live one, because it may be an estimate from before
+ * estimates were kept out of saved builds: it was taken on or before the first day the part had a live price
+ * (firstLiveDay), or the part has never had one and is an estimate today. A hand-checked price with no history is left
+ * alone: it was never an estimate. Asked once per build (SavedBuild.pricesChecked): a price stored later is live whatever
+ * its date says, and the first live day moves as the history file is trimmed.
  */
 function estimateFigure(part: Part, pricedOn: string) {
   const day = pricedOn.slice(0, 10);
-  if (day >= PRICE_CHECK_CUTOVER) return false;
   const first = firstLiveDay(part);
   const best = bestOffer(part);
   return first ? first >= day : !!best && isEstimate(best);
 }
 
-/** A saved build's prices without the ones that may be a paused retailer's (pausedPrice) or an estimate (estimateFigure). */
-function trustedPrices(platformId: string, sel: Selection, savedAt: string, prices: Record<string, number>) {
+/**
+ * A saved build's prices without the ones that may be a paused retailer's (pausedPrice) or, unless the build has been
+ * checked, an estimate (estimateFigure). Owned parts are left to priceSnapshot, which drops them without it being a reset.
+ */
+function trustedPrices(platformId: string, sel: Selection, savedAt: string, prices: Record<string, number>, checked: boolean) {
   const { build } = buildOf(platformId, sel);
-  const stale = new Set(Object.values(build).filter((p): p is Part => !!p && (pausedPrice(p, savedAt) || estimateFigure(p, savedAt))).map((p) => p.id));
+  const { owned } = ownedOf(sel);
+  const stale = new Set(Object.values(build).filter((p): p is Part => !!p && !owned.has(p.slot) && (pausedPrice(p, savedAt) || (!checked && estimateFigure(p, savedAt)))).map((p) => p.id));
   return Object.fromEntries(Object.entries(prices).filter(([id]) => !stale.has(id)));
 }
 

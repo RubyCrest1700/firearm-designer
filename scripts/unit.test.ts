@@ -8,13 +8,13 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { awarenessFor } from '../src/awareness';
 import { PLATFORMS } from '../src/data/index';
 import { NFA_SHORT_NOTICE, PAUSED, SBR_MESSAGE, VERTICAL_GRIP_MESSAGE, parts as buildParts, shortBarrelStockIssue } from '../src/data/helpers';
-import { biggestDrops, daysAgo, hasHistory, partSeries, priceOn, recentChange, seriesOf } from '../src/data/history';
+import { biggestDrops, daysAgo, firstLiveDay, hasHistory, partSeries, priceOn, recentChange, seriesOf } from '../src/data/history';
 import { baseSelection, bestOffer, candidateIssues, issuesFor, listedParts, noPriceNote, ownedOf, placementOf, presetSelection, priceRange, selectionTokens, singleRetailerCarts, toBuild, toBuyIds, unpricedCount, worst, type Selection } from '../src/engine';
 import { estimateNote, estimatedCount, isEstimate, money, priceLabel, totalNotes } from '../src/engine';
 import { findParts } from '../src/find';
 import { Candidate } from '../src/Picker';
 import { buildStatus, statesFor } from '../src/status';
-import { PRICE_CHECK_CUTOVER, droppedBuilds } from '../src/store';
+import { droppedBuilds, savedPrices } from '../src/store';
 import { loadSavedBuilds, priceChanges, priceSnapshot, readSharedBuild, selectionFromParts, storeSavedBuilds, totalOf, unpricedOf, type SavedBuild } from '../src/store';
 import { Dock, PartsList, Summary, toLegalNotice } from '../src/BuilderPage';
 import { ChipTotal } from '../src/BuilderPage';
@@ -30,6 +30,7 @@ import { SavedPage } from '../src/SavedPage';
 import { GUIDES, type FitChart } from '../src/guides/content';
 import { RETAILERS } from '../src/data/retailers';
 import { priceIndex } from './og-index';
+import { recordHistory } from './price-history.mjs';
 import { cardTotalWords } from './og-index';
 import { retailersFrom } from './sources.mjs';
 import { cardNotice } from './og-notice';
@@ -700,7 +701,7 @@ test('a stored figure for a part that was never live goes, so it can\'t read as 
   assert.deepEqual(rows(live), []);
 });
 
-test('an estimate today with live history before the save is the old live price, so it is held', (t) => {
+test('an estimate today with live history before the save keeps the stored price', (t) => {
   setPrice(t, estimateOffer(150), [['2026-10-09', 200]]);
   const loaded = loadAt('2026-10-31T12:00:00Z', onlyMover({ [MOVER]: 200 }));
   assert.deepEqual(loaded.prices, { [MOVER]: 200 });
@@ -708,19 +709,185 @@ test('an estimate today with live history before the save is the old live price,
   assert.deepEqual(priceChanges(loaded), noMove);
 });
 
-test('the history check stops at the cut-over day: a price dated that day or later stands', (t) => {
-  assert.match(PRICE_CHECK_CUTOVER, /^\d{4}-\d{2}-\d{2}$/);
-  const day = Date.parse(PRICE_CHECK_CUTOVER);
-  const iso = (days: number) => new Date(day + days * 864e5).toISOString();
-  // A first live point far in the future, so only the cut-over day can spare the price.
-  setPrice(t, liveOffer(150), [[iso(30).slice(0, 10), 150]]);
-  const build = (savedAt: string) => { const b = onlyMover({ [MOVER]: 200 }); b.savedAt = savedAt; return b; };
-  assert.deepEqual(loadAt(iso(40), build(iso(0))).prices, { [MOVER]: 200 });
-  assert.equal(loadAt(iso(40), build(iso(0))).pricesAt, undefined);
-  assert.deepEqual(loadAt(iso(40), build(iso(-1))).prices, { [MOVER]: 150 });
-  // A later reset date counts as the price's date as well as the save's.
-  const reset = { ...build(iso(-5)), pricesAt: iso(0) };
-  assert.deepEqual(loadAt(iso(40), reset).prices, { [MOVER]: 200 });
+/* The history check runs once per build (SavedBuild.pricesChecked): these go through several page loads, on what is stored. */
+const putStored = (build: unknown) => { storage.clear(); storage.set(KEY, JSON.stringify([build])); };
+const storedBuild = () => JSON.parse(storage.get(KEY)!)[0];
+/** A page load of what's already stored, followed by App's save of what it loaded. */
+function visit(when: string) {
+  mock.timers.enable({ apis: ['Date'], now: Date.parse(when) });
+  try {
+    const [loaded] = loadSavedBuilds();
+    storeSavedBuilds([loaded]);
+    return loaded;
+  } finally {
+    mock.timers.reset();
+  }
+}
+const handguardOnly = (over: Partial<SavedBuild>) => moverBuild({ selection: { handguard: MOVER }, savedAt: '2026-11-05T12:00:00Z', ...over });
+/** Live at $150 on 11-08 and $120 from 11-12: the $150 must stand on every later load, so the drop stays. */
+function holdsTheDrop(t: TestContext, pricesAt?: string) {
+  setPrice(t, liveOffer(120), [['2026-11-08', 150], ['2026-11-12', 120]]);
+  for (const when of ['2026-11-13T12:00:00Z', '2026-11-14T12:00:00Z', '2027-01-10T12:00:00Z']) {
+    const later = visit(when);
+    assert.deepEqual(later.prices, { [MOVER]: 150 }, when);
+    assert.deepEqual(storedBuild().prices, { [MOVER]: 150 }, when);
+    assert.equal(later.pricesAt, pricesAt, when);
+    assert.deepEqual(rows(later), [[150, 120]], when);
+    assert.deepEqual(counted(later), ['m'], when);
+  }
+}
+
+const FROM_ESTIMATE: [string, Partial<SavedBuild>, string?][] = [
+  ['a build saved since estimates stay out', { prices: {}, pricesChecked: true }],
+  ['an old build with nothing stored for the part', { prices: {} }],
+  ['an old build that stored the estimate', { prices: { [MOVER]: 90 } }, 'reset'],
+  ['an old build reset before the part went live', { prices: {}, pricesAt: '2026-11-02T12:00:00Z' }, 'keep'],
+];
+for (const [name, over, dated] of FROM_ESTIMATE) {
+  test(`${name}: a live price stored after the save stands, and its drop shows on every later load`, (t) => {
+    setPrice(t, estimateOffer(90));
+    putStored(handguardOnly(over));
+    const first = visit('2026-11-06T12:00:00Z');
+    assert.deepEqual(first.prices, {});
+    setPrice(t, liveOffer(150), [['2026-11-08', 150]]);
+    const filled = visit('2026-11-09T12:00:00Z');
+    assert.deepEqual(filled.prices, { [MOVER]: 150 });
+    assert.deepEqual(priceChanges(filled), noMove);
+    const pricesAt = dated === 'reset' ? new Date('2026-11-06T12:00:00Z').toISOString() : dated === 'keep' ? over.pricesAt : undefined;
+    holdsTheDrop(t, pricesAt);
+  });
+}
+
+test('a reset on the same day as the part\'s first live point stands, and its drop shows on every later load', (t) => {
+  setPrice(t, liveOffer(150), [['2026-11-08', 150]]);
+  putStored(handguardOnly({ prices: { [MOVER]: 200 } }));
+  const reset = visit('2026-11-08T20:00:00Z');
+  assert.deepEqual(reset.prices, { [MOVER]: 150 });
+  assert.equal(reset.pricesAt, new Date('2026-11-08T20:00:00Z').toISOString());
+  holdsTheDrop(t, reset.pricesAt);
+});
+
+test('a genuine price survives the history file trimming away the part\'s first points', (t) => {
+  let file: Parameters<typeof recordHistory>[0] = { parts: {} };
+  const night = (day: string, price: number) => {
+    file = recordHistory(file, { [MOVER]: { OP: { price, inStock: true } } }, new Date(`${day}T08:17:00Z`));
+    setPrice(t, liveOffer(price), file.parts[MOVER]);
+  };
+  night('2026-10-09', 200);
+  putStored(handguardOnly({ savedAt: '2026-10-20T12:00:00Z', prices: { [MOVER]: 200 } }));
+  assert.deepEqual(visit('2026-10-25T12:00:00Z').prices, { [MOVER]: 200 });
+  for (const [day, price] of [['2026-11-01', 190], ['2026-12-01', 170], ['2027-03-01', 160], ['2027-03-15', 155]] as const) night(day, price);
+  assert.ok(firstLiveDay(part(ar15, MOVER))! > '2026-10-20', 'the trim has moved the first point past the save');
+  for (const when of ['2027-03-16T12:00:00Z', '2027-03-20T12:00:00Z']) {
+    const later = visit(when);
+    assert.deepEqual(later.prices, { [MOVER]: 200 }, when);
+    assert.equal(later.pricesAt, undefined, when);
+    assert.deepEqual(rows(later), [[200, 155]], when);
+  }
+});
+
+test('the first load marks a build that passes, leaves its prices and dates alone, and it is never checked again', (t) => {
+  setPrice(t, liveOffer(150), [['2026-10-09', 200], ['2026-10-25', 150]]);
+  putStored(onlyMover({ [MOVER]: 200 }));
+  assert.equal(storedBuild().pricesChecked, undefined);
+  const first = visit('2026-10-31T12:00:00Z');
+  assert.equal(first.pricesChecked, true);
+  assert.equal(storedBuild().pricesChecked, true, 'written to storage');
+  assert.deepEqual(first.prices, { [MOVER]: 200 });
+  assert.equal(first.pricesAt, undefined);
+  assert.equal(storedBuild().pricesAt, undefined);
+  const written = storage.get(KEY);
+  visit('2026-11-20T12:00:00Z');
+  assert.equal(storage.get(KEY), written, 'a later load writes the same thing');
+  // Everything the check looks at now says the price can't be trusted, and it isn't looked at.
+  setPrice(t, liveOffer(150), [['2026-11-25', 150]]);
+  const later = visit('2026-11-30T12:00:00Z');
+  assert.deepEqual(later.prices, { [MOVER]: 200 });
+  assert.equal(later.pricesAt, undefined);
+});
+
+test('a reset date later than the first live point counts as the price\'s date on the one check', (t) => {
+  setPrice(t, liveOffer(150), [['2026-10-09', 150]]);
+  putStored(handguardOnly({ savedAt: '2026-10-05T12:00:00Z', pricesAt: '2026-10-12T12:00:00Z', prices: { [MOVER]: 200 } }));
+  const loaded = visit('2026-10-31T12:00:00Z');
+  assert.deepEqual(loaded.prices, { [MOVER]: 200 });
+  assert.equal(loaded.pricesAt, '2026-10-12T12:00:00Z');
+});
+
+test('a marker that isn\'t exactly true counts as missing', (t) => {
+  setPrice(t, liveOffer(150), [['2026-10-09', 150]]);
+  putStored(handguardOnly({ savedAt: '2026-10-05T12:00:00Z', prices: { [MOVER]: 200 }, pricesChecked: 'yes' as never }));
+  const loaded = visit('2026-10-31T12:00:00Z');
+  assert.deepEqual(loaded.prices, { [MOVER]: 150 });
+  assert.equal(loaded.pricesChecked, true);
+});
+
+test('a checked build still resets, once, for a retailer paused later', (t) => {
+  setPrice(t, liveOffer(150), LONG_HISTORY);
+  putStored(handguardOnly({ savedAt: '2026-10-20T12:00:00Z', prices: { [MOVER]: 200 }, pricesChecked: true }));
+  part(ar15, MOVER).pausedThrough = '2026-10-24';
+  const reset = visit('2026-10-31T12:00:00Z');
+  assert.deepEqual(reset.prices, { [MOVER]: 150 });
+  assert.equal(reset.pricesAt, new Date('2026-10-31T12:00:00Z').toISOString());
+  assert.equal(visit('2026-11-10T12:00:00Z').pricesAt, reset.pricesAt);
+});
+
+test('a new save, a re-save and a copy are marked, so a part first live on the day keeps its price', (t) => {
+  setPrice(t, liveOffer(150), [['2026-10-31', 150]]);
+  const sel = { handguard: MOVER };
+  mock.timers.enable({ apis: ['Date'], now: Date.parse('2026-10-31T12:00:00Z') });
+  let made: SavedBuild;
+  try {
+    made = { id: 'm', name: 'New', platform: 'ar15', selection: sel, ...savedPrices('ar15', sel) };
+  } finally {
+    mock.timers.reset();
+  }
+  assert.equal(made.savedAt, new Date('2026-10-31T12:00:00Z').toISOString());
+  assert.equal(made.pricesChecked, true);
+  assert.deepEqual(made.prices, { [MOVER]: 150 });
+  setPrice(t, liveOffer(120), [['2026-10-31', 150], ['2026-11-02', 120]]);
+  putStored(made);
+  const loaded = visit('2026-11-03T12:00:00Z');
+  assert.deepEqual(rows(loaded), [[150, 120]]);
+  // A re-save holds the earlier price, and App's copy of a saved build carries the marker along with `...s`.
+  const resaved: SavedBuild = { ...loaded, ...savedPrices('ar15', sel, loaded.prices) };
+  assert.deepEqual(resaved.prices, { [MOVER]: 150 });
+  assert.equal(resaved.pricesChecked, true);
+  putStored({ ...loaded, id: 'c', savedAt: '2026-10-31T00:00:00Z' });
+  assert.equal(storedBuild().pricesChecked, true);
+  assert.deepEqual(visit('2026-11-04T12:00:00Z').prices, { [MOVER]: 150 });
+  // Every save in App goes through savedPrices. A shared link gives a selection, which only becomes a saved build by a save.
+  const app = readFileSync('src/App.tsx', 'utf8');
+  assert.equal(app.match(/\.\.\.savedPrices\(/g)?.length, 3);
+  assert.doesNotMatch(app, /priceSnapshot/);
+});
+
+test('an owned part\'s stale figure doesn\'t date the build; one still to buy does', (t) => {
+  const sel = { handguard: MOVER, '+handguard': 'own' };
+  const old = { savedAt: '2026-10-05T12:00:00Z', selection: sel, prices: { [MOVER]: 200 } };
+  setPrice(t, liveOffer(150), [['2026-10-25', 150]]);
+  const estimate = loadAt('2026-10-31T12:00:00Z', moverBuild(old));
+  assert.deepEqual(estimate.prices, {});
+  assert.equal(estimate.pricesAt, undefined);
+  part(ar15, MOVER).pausedThrough = '2026-10-24';
+  const paused = loadAt('2026-10-31T12:00:00Z', moverBuild(old));
+  assert.deepEqual(paused.prices, {});
+  assert.equal(paused.pricesAt, undefined);
+  setPrice(t, liveOffer(30), [['2026-10-25', 30]], OTHER);
+  const toBuy = loadAt('2026-10-31T12:00:00Z', moverBuild({ ...old, selection: { ...sel, grip: OTHER }, prices: { [MOVER]: 200, [OTHER]: 40 } }));
+  assert.deepEqual(toBuy.prices, { [OTHER]: 30 });
+  assert.ok(toBuy.pricesAt);
+});
+
+test('firstLiveDay keeps a paused retailer\'s points, so a price saved after the pause isn\'t judged by the points kept', (t) => {
+  setPrice(t, liveOffer(150), [['2026-10-09', 200], ['2026-10-30', 150]]);
+  part(ar15, MOVER).pausedThrough = '2026-10-24';
+  assert.equal(firstLiveDay(part(ar15, MOVER)), '2026-10-09');
+  assert.deepEqual(seriesOf(part(ar15, MOVER)), [['2026-10-30', 150]]);
+  const build = handguardOnly({ savedAt: '2026-10-25T12:00:00Z', prices: { [MOVER]: 200 } });
+  const loaded = loadAt('2026-10-31T12:00:00Z', build);
+  assert.deepEqual(loaded.prices, { [MOVER]: 200 });
+  assert.equal(loaded.pricesAt, undefined);
 });
 
 test('owned parts stay out of a build\'s prices, with or without an estimate', (t) => {
@@ -1646,6 +1813,8 @@ test('the builder rows, Compare cells and the owned finder label an estimate; sa
   assert.doesNotMatch(estHtml, /<s>\$[\d,.]+<\/s>/, est.id);
   assert.doesNotMatch(estHtml, /<small class="to-buy"> Estimate<\/small>/, est.id);
   check(live.id);
+  const liveNow = bestOffer(live)!.price;
+  assert.ok(savedHtml(live.id).includes(`<s>${money(liveNow + 50)}</s><b>${money(liveNow)}</b>`), live.id);
 });
 
 test('each total shows the estimate note exactly when it has an estimate', () => {
