@@ -29,8 +29,10 @@ const NO_FETCH_HOSTS = readNoFetchHosts();
 const previous = JSON.parse(readFileSync('data/prices.json', 'utf8'));
 const now = new Date();
 
-// What the first-read guard needs. None of these can stop the night: a file that's missing or broken gets a warning,
-// and any pair left with no baseline is held and logged, which is the cautious outcome (scripts/first-read-guard.mjs).
+// What the first-read guard needs. Here, a file that's missing or broken only gets a warning, and any pair left with no
+// baseline is held and logged, which is the cautious outcome (scripts/first-read-guard.mjs). That covers this script
+// alone: a broken data/price-approvals.json or data/price-holds.json in the repo still fails npm test, and that runs
+// ahead of the price step at night. check-data fails on broken approvals before a deploy too.
 const warnings = [];
 function loaded(file, reader) {
   const { value, problem } = reader(() => readFileSync(file, 'utf8'));
@@ -144,14 +146,21 @@ console.log(`\nDone: ${report.ok} updated, ${report.kept} kept from last run, ${
 if (summary) console.log(`\n${summary}`);
 if (!dryRun) {
   writeFileSync('data/prices.json', JSON.stringify(out, null, 2) + '\n');
-  writeFileSync('data/price-holds.json', formatHolds(holds));
-  // The owner's nightly notice in the Actions run. Losing it is no reason to lose the night's prices.
-  if (summary && process.env.GITHUB_STEP_SUMMARY) {
-    try { appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary); } catch (err) { console.log(`::warning::step summary not written: ${err.message}`); }
-  }
   // History records what the site shows: the lowest over every offer written, kept ones included. Leaving out a
   // kept price would log a false rise whenever the cheapest store's read fails for a night.
   let history = null;
   try { history = JSON.parse(readFileSync('data/price-history.json', 'utf8')); } catch { /* first run */ }
   writeFileSync('data/price-history.json', formatHistory(recordHistory(history, offers, now)));
+  // Last, and never fatal: the prices and history above are already on disk, so a failed write here can't lose them.
+  let notice = summary;
+  try {
+    writeFileSync('data/price-holds.json', formatHolds(holds));
+  } catch (err) {
+    console.log(`::warning::data/price-holds.json not written: ${err.message}`);
+    notice += `**Warning:** data/price-holds.json not written: ${err.message}\n\n`;
+  }
+  // The owner's nightly notice in the Actions run. Losing it is no reason to lose the night's prices.
+  if (notice && process.env.GITHUB_STEP_SUMMARY) {
+    try { appendFileSync(process.env.GITHUB_STEP_SUMMARY, notice); } catch (err) { console.log(`::warning::step summary not written: ${err.message}`); }
+  }
 }

@@ -114,6 +114,16 @@ test('update-prices gets past a missing estimates file, and writes nothing on a 
   assert.ok(updatePrices.indexOf('appendFileSync(process') > start, 'no step summary ahead of it either');
 });
 
+test('update-prices writes holds last, and a failed holds write warns instead of failing the step', () => {
+  const prices = updatePrices.indexOf("writeFileSync('data/prices.json'");
+  const history = updatePrices.indexOf("writeFileSync('data/price-history.json'");
+  const holds = updatePrices.indexOf("writeFileSync('data/price-holds.json'");
+  assert.ok(prices !== -1 && prices < history && history < holds, 'prices, then history, then holds');
+  assert.match(updatePrices, /try \{\s*writeFileSync\('data\/price-holds\.json', formatHolds\(holds\)\);\s*\} catch \(err\) \{\s*console\.log\(`::warning::[^\n]*\n\s*notice \+= /);
+  // The notice goes out after the write, so the warning can reach the step summary.
+  assert.ok(updatePrices.indexOf('appendFileSync(process.env.GITHUB_STEP_SUMMARY, notice)') > holds);
+});
+
 test('update-prices checks a read right after implausiblePrice, and a held read writes no offer', () => {
   const odd = updatePrices.indexOf('if (odd) {');
   const hold = updatePrices.indexOf('const hold = firstReadHold(');
