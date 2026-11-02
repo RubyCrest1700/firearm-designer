@@ -16,6 +16,7 @@ Glock 20 / 21, Sig P320, Sig P365, S&W M&P 2.0, Springfield Hellcat. The AKs and
     npm run build          # type-check + production build to dist/, then the guide pages
     npm run guides         # write dist/faq/ (and /guides/ forwards), sitemap.xml and robots.txt (runs as part of build)
     npm run update-prices  # refresh data/prices.json from retailer pages
+    npm run estimates      # write data/estimates.json from the catalog (the nightly job does this; no need to run it)
     npm run artifact       # inline the build into dist/artifact.html (single-file preview)
 
 ## Guide pages
@@ -42,6 +43,30 @@ How prices are collected:
 - Results go to `data/prices.json`. They override the sample price for that retailer and show
   as "Live" with the date they were checked. Parts without a tracked URL keep their sample price,
   labeled "Estimate". If a fetch fails, the last good price is kept for up to 7 days.
+
+First reads are held for review. When a part and store have no entry in the previous `data/prices.json`,
+the read must be within 40% of a baseline, either way and in stock or not (`scripts/first-read-guard.mjs`).
+Exactly 40.00% passes. A held read is not written to `data/prices.json` or `data/price-history.json`, so
+the site doesn't change, and the next night is another first read. Prices already live aren't checked.
+The baseline is the first of these that exists:
+
+1. the owner's approved figure in `data/price-approvals.json`
+2. the part's last price history point
+3. its hand-checked list price in `data/list-prices.json`
+4. its lowest in-stock estimate at a store that isn't paused, or at a paused store if every store with an
+   estimate is paused
+
+With no baseline at all, the read is held.
+
+- `data/price-holds.json` is the bot's file: each hold's part, store, price, baseline, baseline type and
+  first-held date. The nightly run commits it and lists it in the run's step summary. A hold stays through a
+  failed read, and drops when the pair passes or its link is gone, paused or links only. Never edit this file.
+- `data/price-approvals.json` is the owner's file, and the bot never writes it. To release a hold, add the
+  price you checked by hand: `{ "part-id": { "RETAILER": 616.99 } }`. That figure becomes the baseline, still
+  ±40%. `npm run check-data` fails on an unknown part, a store with no link, or a price that isn't positive.
+- `data/estimates.json` is not committed. The nightly job generates it from the catalog's sample prices just
+  before the price run (`scripts/estimates.mjs`). If that fails, or the file can't be read, the run warns and
+  carries on, and pairs with no other baseline are held.
 
 Some retailers' terms of use restrict automated price collection. The longer-term plan is to use
 free affiliate product feeds (for example AvantLink, which Palmetto State Armory uses) where
