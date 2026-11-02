@@ -132,6 +132,9 @@ export const readActiveSources = () => activeSources(readSources(), readRetailer
 /** The paused retailers' sites alone. The link check uses readNoFetchHosts. */
 export const readPausedHosts = () => pausedHosts(readSources(), readRetailers());
 
+/** The paused retailer ids. The first-read guard uses them to pick estimates; nothing fetches from this. */
+export const readPausedIds = () => pausedIds(readSources(), readRetailers());
+
 /** The links the price job and the weight reader may fetch: data/sources.json without the paused and links-only retailers. */
 export const readFetchableSources = () => fetchableSources(readSources(), readRetailers());
 

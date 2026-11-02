@@ -5,13 +5,15 @@
 //   node scripts/update-prices.mjs            # update everything
 //   node scripts/update-prices.mjs --dry-run  # print results, don't write
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
 import { extractPrice, implausiblePrice } from './extract-price.mjs';
+import { firstReadHold, formatHolds, holdKey, holdsSummary, mergeHolds, readEstimates, readHolds, readJsonObject } from './first-read-guard.mjs';
 import { robotsGate } from './robots.mjs';
 import { readPage } from './robots.mjs';
 import { recordHistory, formatHistory } from './price-history.mjs';
 import { readFetchableSources } from './sources.mjs';
 import { readNoFetchHosts } from './sources.mjs';
+import { readPausedIds } from './sources.mjs';
 
 const USER_AGENT = 'FirearmDesignerPriceBot/0.1 (+https://github.com/RubyCrest1700/firearm-designer)';
 const HOST_DELAY_MS = 5000;
@@ -26,6 +28,28 @@ const sources = readFetchableSources();
 const NO_FETCH_HOSTS = readNoFetchHosts();
 const previous = JSON.parse(readFileSync('data/prices.json', 'utf8'));
 const now = new Date();
+
+// What the first-read guard needs. None of these can stop the night: a file that's missing or broken gets a warning,
+// and any pair left with no baseline is held and logged, which is the cautious outcome (scripts/first-read-guard.mjs).
+const warnings = [];
+function loaded(file, reader) {
+  const { value, problem } = reader(() => readFileSync(file, 'utf8'));
+  if (problem) {
+    warnings.push(`${file} ${problem}. Pairs that needed it may be held.`);
+    console.log(`::warning::${warnings.at(-1)}`);
+  }
+  return value;
+}
+const guardData = {
+  approvals: loaded('data/price-approvals.json', readJsonObject),
+  history: loaded('data/price-history.json', readJsonObject),
+  listPrices: loaded('data/list-prices.json', readJsonObject),
+  estimates: loaded('data/estimates.json', readEstimates),
+  paused: readPausedIds(),
+};
+const previousHolds = loaded('data/price-holds.json', readHolds);
+const held = [];
+const passed = new Set();
 
 const lastHit = new Map();
 
@@ -43,7 +67,7 @@ async function politeFetch(url, init = {}) {
 // 401, 403, 429, unreachable, timeout) blocks the host (scripts/robots.mjs).
 const { safeGet } = robotsGate({ get: politeFetch, agent: USER_AGENT });
 
-const report = { ok: 0, blocked: 0, offsite: 0, failed: 0, kept: 0, rejected: 0 };
+const report = { ok: 0, blocked: 0, offsite: 0, failed: 0, kept: 0, rejected: 0, held: 0 };
 
 async function readOffer(partId, retailer, url) {
   let entry = null;
@@ -67,9 +91,17 @@ async function readOffer(partId, retailer, url) {
         others: Object.entries(before).filter(([r]) => r !== retailer).map(([, o]) => o.price),
       });
       if (odd) { report.rejected++; throw new Error(`ignored, looks like a misread: ${odd}`); }
-      entry = { price: found.price, inStock: found.inStock, url, checkedAt: now.toISOString() };
-      report.ok++;
-      console.log(`${partId} @ ${retailer}: $${found.price}${found.inStock ? '' : ' (out of stock)'}`);
+      const hold = firstReadHold({ part: partId, store: retailer, price: found.price, hadOffer: Boolean(before[retailer]) }, guardData);
+      if (hold) {
+        held.push(hold);
+        report.held++;
+        console.log(`${partId} @ ${retailer}: $${found.price} held for review, ${hold.baseline === null ? 'no baseline' : `more than 40% from its ${hold.baselineType} baseline $${hold.baseline}`}`);
+      } else {
+        entry = { price: found.price, inStock: found.inStock, url, checkedAt: now.toISOString() };
+        passed.add(holdKey(partId, retailer));
+        report.ok++;
+        console.log(`${partId} @ ${retailer}: $${found.price}${found.inStock ? '' : ' (out of stock)'}`);
+      }
     }
   } catch (err) {
     report.failed++;
@@ -105,9 +137,18 @@ const offers = {};
 for (const { partId, retailer, entry } of jobs) if (entry) (offers[partId] ??= {})[retailer] = entry;
 
 const out = { updatedAt: report.ok ? now.toISOString() : previous.updatedAt ?? null, offers };
-console.log(`\nDone: ${report.ok} updated, ${report.kept} kept from last run, ${report.failed} failed (${report.rejected} of them ignored as likely misreads), ${report.blocked} blocked by robots.txt, ${report.offsite} redirected off-site`);
+// Only links we may read count as tracked, so a hold whose link is gone, paused or links only drops out.
+const holds = mergeHolds(previousHolds, { held, passed, tracked: new Set(jobs.map((j) => holdKey(j.partId, j.retailer))), day: now.toISOString().slice(0, 10) });
+const summary = holdsSummary(holds, warnings);
+console.log(`\nDone: ${report.ok} updated, ${report.kept} kept from last run, ${report.held} held for review, ${report.failed} failed (${report.rejected} of them ignored as likely misreads), ${report.blocked} blocked by robots.txt, ${report.offsite} redirected off-site`);
+if (summary) console.log(`\n${summary}`);
 if (!dryRun) {
   writeFileSync('data/prices.json', JSON.stringify(out, null, 2) + '\n');
+  writeFileSync('data/price-holds.json', formatHolds(holds));
+  // The owner's nightly notice in the Actions run. Losing it is no reason to lose the night's prices.
+  if (summary && process.env.GITHUB_STEP_SUMMARY) {
+    try { appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary); } catch (err) { console.log(`::warning::step summary not written: ${err.message}`); }
+  }
   // History records what the site shows: the lowest over every offer written, kept ones included. Leaving out a
   // kept price would log a false rise whenever the cheapest store's read fails for a night.
   let history = null;
