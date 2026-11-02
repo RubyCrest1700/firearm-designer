@@ -1919,11 +1919,13 @@ test('the builder rows, Compare cells and the owned finder label an estimate; sa
     const { issues, states } = statesFor(p, build);
     return strip(renderToStaticMarkup(createElement(PartsList, { platform: p, build, issues, states, hover: null, onHover: noop, onOpen: noop, onRemove: noop, mounts: {}, onMount: noop, owned: ownedOf(sel), onToggleOwn: noop })));
   };
-  assert.match(rows(allPriced([SAMPLE])), /<span class="src">Brownells · Estimate<\/span>/);
-  assert.match(rows(allPriced([LIST])), /<span class="src">[^<]* · List Price<\/span>/);
-  assert.match(rows(allPriced([FACTORY_DATED])), /<span class="src">[^<]* · Factory Part<\/span>/);
-  assert.match(rows(allPriced([FACTORY_UNDATED])), /<span class="src">[^<]* · Factory Part, Estimate<\/span>/);
-  assert.doesNotMatch(rows(allPriced([LIVE])), /<span class="src">[^<]* · /);
+  // A non-breaking space before the dot: it reads the same, and a wrapped row can't start with it.
+  assert.match(rows(allPriced([SAMPLE])), /<span class="src">Brownells · Estimate<\/span>/);
+  assert.match(rows(allPriced([LIST])), /<span class="src">[^<]* · List Price<\/span>/);
+  assert.match(rows(allPriced([FACTORY_DATED])), /<span class="src">[^<]* · Factory Part<\/span>/);
+  assert.match(rows(allPriced([FACTORY_UNDATED])), /<span class="src">[^<]* · Factory Part, Estimate<\/span>/);
+  assert.doesNotMatch(rows(allPriced([LIVE])), /<span class="src">[^<]*\s· /);
+  assert.doesNotMatch(rows(allPriced([SAMPLE])), /<span class="src">[^<]* · /);
 
   const barrel = part(ar15, baseSelection(ar15).barrel);
   const found = (p: Part) => strip(renderToStaticMarkup(createElement(FoundRow, { f: { part: p, platform: ar15 } as never, build: {}, owned: ownedOf({}), onOwn: noop })));
@@ -1950,6 +1952,13 @@ test('the builder rows, Compare cells and the owned finder label an estimate; sa
   check(live.id);
   const liveNow = bestOffer(live)!.price;
   assert.ok(savedHtml(live.id).includes(`<s>${money(liveNow + 50)}</s><b>${money(liveNow)}</b>`), live.id);
+});
+
+test('a starter chip that wraps is left-aligned on a phone, and only on a phone', () => {
+  const css = readFileSync('src/styles.css', 'utf8');
+  assert.match(css, /@media \(max-width: 479px\) \{ \.bp-toolbar \.chip \{ text-align: left; \} \}/);
+  // Nothing outside that one rule sets the chips' alignment, so wider screens stay as they were.
+  assert.equal(css.split(/\.bp-toolbar \.chip \{[^}]*text-align/).length - 1, 1);
 });
 
 test('each total shows the estimate note exactly when it has an estimate', () => {

@@ -345,6 +345,8 @@ h1 { font: 700 clamp(28px, 4.2vw, 40px)/1.08 var(--f-head); letter-spacing: -.00
   .bp-toolbar .chip { padding: 8px 12px; font-size: 14px; }
   .chip-clear { margin-left: 0; }
 }
+/* A chip that runs to two lines reads left to right like the rest of the toolbar, not centred. */
+@media (max-width: 479px) { .bp-toolbar .chip { text-align: left; } }
 .chip-clear { margin-left: auto; color: var(--err); border-color: transparent; background: none; }
 .chip-clear:hover { background: var(--err-soft); border-color: transparent; }
 
