@@ -293,6 +293,10 @@ export function totalOf(platform: Platform, build: Build, skip?: Set<string>) {
   return platform.slots.reduce((sum, s) => sum + (build[s.id] && !skip?.has(s.id) ? bestOffer(build[s.id]!)?.price ?? 0 : 0), 0);
 }
 
+/** The parts totalOf adds up, in its order, so the Build Total chart ends on the same figure as the card. */
+export const totalParts = (platform: Platform, build: Build, skip?: Set<string>) =>
+  platform.slots.filter((s) => build[s.id] && !skip?.has(s.id)).map((s) => build[s.id]!);
+
 /** How many parts totalOf leaves out for having no price, for the note beside the total (noPriceNote). */
 export const unpricedOf = (platform: Platform, build: Build, skip?: Set<string>) =>
   unpricedCount(platform.slots.filter((s) => !skip?.has(s.id)).map((s) => build[s.id]));

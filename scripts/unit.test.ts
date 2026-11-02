@@ -9,6 +9,9 @@ import { awarenessFor } from '../src/awareness';
 import { PLATFORMS } from '../src/data/index';
 import { NFA_SHORT_NOTICE, PAUSED, SBR_MESSAGE, VERTICAL_GRIP_MESSAGE, parts as buildParts, shortBarrelStockIssue } from '../src/data/helpers';
 import { biggestDrops, daysAgo, firstLiveDay, hasHistory, partSeries, priceOn, recentChange, seriesOf } from '../src/data/history';
+import { totalSeries } from '../src/data/history';
+import { PriceChart } from '../src/PriceChart';
+import { totalParts } from '../src/store';
 import { baseSelection, bestOffer, candidateIssues, issuesFor, listedParts, noPriceNote, ownedOf, placementOf, presetSelection, priceRange, selectionTokens, singleRetailerCarts, toBuild, toBuyIds, unpricedCount, worst, type Selection } from '../src/engine';
 import { estimateNote, estimatedCount, isEstimate, money, priceLabel, totalNotes } from '../src/engine';
 import { findParts } from '../src/find';
@@ -1952,6 +1955,98 @@ test('the builder rows, Compare cells and the owned finder label an estimate; sa
   check(live.id);
   const liveNow = bestOffer(live)!.price;
   assert.ok(savedHtml(live.id).includes(`<s>${money(liveNow + 50)}</s><b>${money(liveNow)}</b>`), live.id);
+});
+
+/* ------------------------------------------------------------------ the Build Total chart */
+
+const hellcat = platform('hellcat');
+const CHART_FROM = '2026-10-20';
+const CHART_TO = '2026-11-01';
+/** The chart's points for a selection, as SavedPage gets them, between two fixed days. */
+const chartOf = (p: Platform, sel: Selection) => totalSeries(totalParts(p, toBuild(p, sel), ownedOf(sel).owned), CHART_FROM, CHART_TO);
+const figures = (points: [string, number][]) => points.map(([, price]) => price);
+const endOf = (points: [string, number][]) => points[points.length - 1][1];
+/** A real selection that keeps only the slots this platform totals, so a part's offers decide each case. */
+const HC_SLIDE = { slide: 'hc-slide-tp', mag: 'hc-mag-11' };
+
+test('the chart holds a part shown at an estimate at that price, not its old live figure', (t) => {
+  // The part from the report: $395 shown, with an old live $312.49 still in the history file.
+  setPrice(t, estimateOffer(395), [['2026-10-09', 312.49]], 'hc-slide-tp', hellcat);
+  setPrice(t, liveOffer(20), undefined, 'hc-mag-11', hellcat);
+  assert.deepEqual(figures(chartOf(hellcat, HC_SLIDE)), [415, 415]);
+});
+
+test('an estimate part\'s recorded changes make no move on the chart', (t) => {
+  setPrice(t, estimateOffer(395), [['2026-10-09', 312.49], ['2026-10-22', 300], ['2026-10-25', 350]], 'hc-slide-tp', hellcat);
+  setPrice(t, liveOffer(20), undefined, 'hc-mag-11', hellcat);
+  const points = chartOf(hellcat, HC_SLIDE);
+  assert.ok(points.length > 2, 'the changes still come through as days');
+  assert.ok(figures(points).every((price) => price === 415), JSON.stringify(points));
+});
+
+test('a live part\'s move still moves the chart, beside an estimate held flat', (t) => {
+  setPrice(t, liveOffer(90), [['2026-10-06', 100], ['2026-10-25', 90]]);
+  setPrice(t, estimateOffer(30), [['2026-10-06', 25]], OTHER);
+  assert.deepEqual(chartOf(ar15, { handguard: MOVER, grip: OTHER }), [[CHART_FROM, 130], ['2026-10-25', 120], [CHART_TO, 120]]);
+});
+
+test('an owned part is left out of the chart, as it is of the card\'s total', (t) => {
+  setPrice(t, liveOffer(90), [['2026-10-06', 100], ['2026-10-25', 90]]);
+  setPrice(t, estimateOffer(30), undefined, OTHER);
+  const sel = { handguard: MOVER, grip: OTHER, '+handguard': 'own' };
+  assert.ok(figures(chartOf(ar15, sel)).every((price) => price === 30));
+  assert.equal(endOf(chartOf(ar15, sel)), totalOf(ar15, toBuild(ar15, sel), ownedOf(sel).owned));
+});
+
+test('a hand-checked part stays in at its shown price, and an estimate never lowers a live day', (t) => {
+  const listed: Offer = { retailer: 'OP', price: 50, inStock: true, basis: 'list', asOf: '2026-10-01' };
+  setPrice(t, [listed], [['2026-10-06', 70], ['2026-10-25', 60]]);
+  assert.ok(figures(chartOf(ar15, { handguard: MOVER })).every((price) => price === 50));
+  // priceOn's floor would read the out-of-stock estimate here; the chart reads the live figures only.
+  setPrice(t, [...liveOffer(100), { retailer: 'BRN', price: 80, inStock: false }], [['2026-10-06', 110], ['2026-10-25', 100]], OTHER);
+  assert.deepEqual(figures(chartOf(ar15, { grip: OTHER })), [110, 100, 100]);
+});
+
+test('the chart ends on the card\'s total for every shape a saved build can take', (t) => {
+  const check = (p: Platform, sel: Selection, name: string) => {
+    const build = toBuild(p, sel);
+    const skip = ownedOf(sel).owned;
+    assert.equal(endOf(totalSeries(totalParts(p, build, skip), CHART_FROM)), totalOf(p, build, skip), name);
+  };
+  for (const fb of FEATURED) {
+    check(fb.platform, fb.selection, fb.id);
+    const [slot] = Object.keys(fb.selection);
+    check(fb.platform, { ...fb.selection, ['+' + slot]: 'own' }, `${fb.id} with one part owned`);
+    // Stored under a slot this platform doesn't have: the card's total skips it, so the chart must too.
+    check(fb.platform, { ...fb.selection, retired: fb.selection[slot] }, `${fb.id} with a retired slot`);
+  }
+  // A part with no price, a paused store's part, and a part the builder has their own of.
+  const hg = baseSelection(ar15);
+  check(ar15, { ...hg, handguard: 'ar-hg-mi9' }, 'no price');
+  const paused = ar15.parts.find((x) => x.pausedThrough && bestOffer(x))!;
+  check(ar15, { ...hg, [paused.slot]: paused.id }, paused.id);
+  check(ar15, { ...hg, '+optic': 'other' }, 'their own part');
+  // A live part whose last history point isn't today's price still ends on the price shown.
+  setPrice(t, liveOffer(100), [['2026-10-06', 90]]);
+  assert.equal(endOf(chartOf(ar15, { handguard: MOVER })), 100);
+});
+
+test('the saved card shows the same figure at the end of its chart and in its total', (t) => {
+  setPrice(t, estimateOffer(395), [['2026-10-09', 312.49]], 'hc-slide-tp', hellcat);
+  setPrice(t, liveOffer(20), undefined, 'hc-mag-11', hellcat);
+  const s: SavedBuild = { id: 's', name: 'N', platform: 'hellcat', selection: HC_SLIDE, prices: { 'hc-mag-11': 20 }, savedAt: '2026-10-20T12:00:00Z' };
+  const html = strip(renderToStaticMarkup(createElement(SavedPage, { saved: [s], alerts: null, onOpen: noop, onRename: noop, onDuplicate: noop, onDelete: noop, onCopyLink: noop, onCompare: noop, onCompareAll: noop, onStart: noop, onBrowse: noop })));
+  assert.ok(html.includes('$415.00 → <b>$415.00</b>'), 'the chart reads the shown prices');
+  assert.ok(html.includes('<span class="amt big">$415.00'), 'the card reads the same');
+  assert.doesNotMatch(html, /\$332\.49/);
+});
+
+test('a build with no live part draws as flat data', (t) => {
+  setPrice(t, estimateOffer(395), [['2026-10-09', 312.49]], 'hc-slide-tp', hellcat);
+  setPrice(t, estimateOffer(20), undefined, 'hc-mag-11', hellcat);
+  const points = chartOf(hellcat, HC_SLIDE);
+  assert.deepEqual(figures(points), [415, 415]);
+  assert.match(renderToStaticMarkup(createElement(PriceChart, { points, label: 'L' })), /class="price-chart flat"/);
 });
 
 test('a starter chip that wraps is left-aligned on a phone, and only on a phone', () => {
