@@ -42,7 +42,8 @@ How prices are collected:
   retailers publish for search engines (`scripts/extract-price.mjs`).
 - Results go to `data/prices.json`. They override the sample price for that retailer and show
   as "Live" with the date they were checked. Parts without a tracked URL keep their sample price,
-  labeled "Estimate". If a fetch fails, the last good price is kept for up to 7 days.
+  labeled "Estimate", and so does a tracked part whose read is held (see below). If a fetch fails, the
+  last good price is kept for up to 7 days.
 
 First reads are held for review. When a part and store have no entry in the previous `data/prices.json`,
 the read must be within 40% of a baseline, either way and in stock or not (`scripts/first-read-guard.mjs`).
@@ -65,8 +66,14 @@ With no baseline at all, the read is held.
   price you checked by hand: `{ "part-id": { "RETAILER": 616.99 } }`. That figure becomes the baseline, still
   ±40%. `npm run check-data` fails on an unknown part, a store with no link, or a price that isn't positive.
 - `data/estimates.json` is not committed. The nightly job generates it from the catalog's sample prices just
-  before the price run (`scripts/estimates.mjs`). If that fails, or the file can't be read, the run warns and
-  carries on, and pairs with no other baseline are held.
+  before the price run (`scripts/estimates.mjs`), so there's never a stale copy to trip over. If that step
+  fails, or the file can't be read, `update-prices` warns and pairs with no other baseline are held.
+
+That tolerance belongs to `update-prices` alone. `npm test` runs at the top of the nightly, and `npm test` and
+`check-data` run again before a deploy. `npm test` fails on a broken `data/price-approvals.json`, a broken
+`data/price-holds.json` or a broken generator, and `check-data` fails on a broken or invalid approvals file. Any
+of those stops that night's prices or deploy like any other failing check, so a bad approvals edit should be
+caught on its pull request.
 
 Some retailers' terms of use restrict automated price collection. The longer-term plan is to use
 free affiliate product feeds (for example AvantLink, which Palmetto State Armory uses) where

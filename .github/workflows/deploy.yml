@@ -52,7 +52,9 @@ jobs:
       - run: npm ci
       - run: npm test
       # data/estimates.json is a last-resort baseline for first reads. It's ignored by git, so it's made fresh here and
-      # nothing commits it. A failure never stops the night: update-prices warns and holds the pairs that needed it.
+      # nothing commits it, so there's no stale copy to trip over. If this step fails, the job goes on: update-prices warns
+      # and holds the pairs that needed it. A generator that's truly broken still fails its test in the npm test above,
+      # which stops the night like any failing test.
       - name: Generate estimates
         # The inner timeout comes first, so a hang gets the same warning as a failure.
         continue-on-error: true

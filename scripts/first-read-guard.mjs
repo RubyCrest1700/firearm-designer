@@ -122,7 +122,10 @@ export function readEstimates(read) {
   return { value: value.parts };
 }
 
-/** data/price-holds.json's holds. A broken file starts over, which only resets the firstHeld dates. */
+/**
+ * data/price-holds.json's holds. At price-run time a broken file starts over, which resets the firstHeld dates. It can't
+ * get that far from the repo as committed: npm test reads the file back and fails first, and that stops the night.
+ */
 export function readHolds(read) {
   const { value, problem } = readJsonObject(read);
   if (problem) return { value: [], problem };
