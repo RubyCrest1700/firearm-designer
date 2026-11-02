@@ -1,7 +1,9 @@
 // Test stand-in, loaded with --import ahead of update-prices.mjs by scripts/price-run.test.mjs. Nothing else uses it.
 // Fake store pages replace fetch, real sockets and DNS are refused, and a virtual clock (FAKE_NOW) makes the 5-second
 // host pace take no real time. Every fetch, socket attempt and file write goes to STUB_LOG for the test to read.
-// STUB_PAGES: a JSON file of { url: { price, inStock } }. STUB_UNWRITABLE: a path whose write throws, on any OS or user.
+// Fetches are logged with their virtual time, so the test can check the pace.
+// STUB_PAGES: a JSON file of { url: { price, inStock } }, or { url: null } for a read that fails.
+// STUB_UNWRITABLE: a path whose write throws, on any OS or user.
 
 import fs, { readFileSync } from 'node:fs';
 import dns from 'node:dns';
@@ -56,7 +58,7 @@ const html = ({ price, inStock }) => `<html><head><script type="application/ld+j
 
 globalThis.fetch = async (url) => {
   const href = String(url);
-  note(`FETCH ${href}`);
+  note(`FETCH ${Date.now()} ${href}`);
   if (href.endsWith('/robots.txt')) return new Response('', { status: 404 });
   if (!pages[href]) throw new Error(`stub has no page for ${href}`);
   return new Response(html(pages[href]), { status: 200, headers: { 'content-type': 'text/html' } });

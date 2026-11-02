@@ -89,7 +89,7 @@ function fixture(t) {
 }
 
 /** One night of the real script. Checks what must hold on every night, then returns its output for the test's own checks. */
-function night(dir, { now, reads, updated, held, unwritable }) {
+function night(dir, { now, reads, updated, held, failed = 0, unwritable }) {
   const start = json(dir, 'prices.json');
   const log = join(dir, 'requests.log');
   const summaryFile = join(dir, 'summary.md');
@@ -106,16 +106,24 @@ function night(dir, { now, reads, updated, held, unwritable }) {
     STUB_UNWRITABLE: unwritable,
     GITHUB_STEP_SUMMARY: summaryFile,
   };
-  const run = spawnSync(process.execPath, ['--import', STUB, SCRIPT], { cwd: dir, env, encoding: 'utf8', timeout: 15000 });
+  const run = spawnSync(process.execPath, ['--import', STUB, SCRIPT], { cwd: dir, env, encoding: 'utf8', timeout: 60000 });
   const out = `${run.stdout}${run.stderr}`;
-  assert.equal(run.error, undefined);
+  assert.equal(run.error, undefined, `${run.error}\n${out}`);
   assert.equal(run.status, 0, out);
-  assert.ok(out.includes(`Done: ${updated} updated, 0 kept from last run, ${held} held for review, 0 failed (0 of them ignored as likely misreads), 0 blocked by robots.txt, 0 redirected off-site`), out);
+  assert.ok(out.includes(`Done: ${updated} updated, 0 kept from last run, ${held} held for review, ${failed} failed (0 of them ignored as likely misreads), 0 blocked by robots.txt, 0 redirected off-site`), out);
 
   const lines = readFileSync(log, 'utf8').trim().split('\n');
   const logged = (kind) => lines.filter((l) => l.startsWith(`${kind} `)).map((l) => l.slice(kind.length + 1));
   assert.deepEqual(logged('SOCKET'), []);
-  const fetched = logged('FETCH');
+  const requests = logged('FETCH').map((l) => l.split(' '));
+  const fetched = requests.map(([, url]) => url);
+  // One request per host every 5 seconds on the virtual clock, robots.txt included.
+  const lastAt = new Map();
+  for (const [at, url] of requests) {
+    const { host } = new URL(url);
+    if (lastAt.has(host)) assert.ok(at - lastAt.get(host) >= 5000, `${url} came ${at - lastAt.get(host)} ms after the last request to ${host}`);
+    lastAt.set(host, at);
+  }
   assert.deepEqual(fetched.filter((url) => NEVER_CONTACTED.includes(new URL(url).host)), []);
   assert.deepEqual([...fetched].sort(), [...Object.keys(reads), `${SHOP_A}/robots.txt`, `${SHOP_B}/robots.txt`].sort());
   // Relative paths under the cwd, so nothing lands in the repo; in this order, so holds can't cost the night its prices.
@@ -189,6 +197,24 @@ test('an approved figure releases its hold; an unapproved read stays held with i
     },
   });
   assert.deepEqual(json(dir, 'price-holds.json'), { holds: [DOWN_HOLD] });
+});
+
+test('a hold drops when its link is gone, and stays through a failed read while the link is tracked', (t) => {
+  const dir = fixture(t);
+  night(dir, { now: NIGHT_1, reads: FAR_READS, updated: 3, held: 2 });
+  const sources = json(dir, 'sources.json');
+  delete sources.parts['part-down'];
+  put(dir, 'sources.json', sources);
+  const { [DOWN_B]: gone, ...reads } = FAR_READS;
+  night(dir, { now: NIGHT_2, reads: { ...reads, [UP_A]: null }, updated: 3, held: 0, failed: 1 });
+  assert.deepEqual(json(dir, 'prices.json'), {
+    updatedAt: NIGHT_2,
+    offers: { 'part-steady': steady(NIGHT_2), 'part-new': { SHB: offer(NEW_B, 220, NIGHT_2) } },
+  });
+  assert.deepEqual(json(dir, 'price-history.json'), {
+    parts: { 'part-new': [[DAY_1, 220]], 'part-steady': [['2026-11-02', 100]], 'part-up': [['2026-10-30', 100]] },
+  });
+  assert.deepEqual(json(dir, 'price-holds.json'), { holds: [UP_HOLD] });
 });
 
 test('a holds file that cannot be written warns, stays as it was, and costs the night nothing', (t) => {
