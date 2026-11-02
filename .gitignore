@@ -3,6 +3,7 @@ dist/
 .DS_Store
 *.log
 weights-found.json
+data/estimates.json
 .env
 .env.*
 !.env.example
