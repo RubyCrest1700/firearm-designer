@@ -63,6 +63,76 @@ test('a failed prices job stops build, and a failed build stops deploy', () => {
   assert.equal(jobIf(deploy), "${{ !cancelled() && needs.build.result == 'success' && github.event_name != 'pull_request' }}");
 });
 
+/** A step's whole text, from its name to the next step or the end of the job. */
+const stepNamed = (name) => {
+  const start = prices.indexOf(`- name: ${name}\n`);
+  assert.notEqual(start, -1, name);
+  const end = prices.indexOf('\n      - ', start);
+  return prices.slice(start, end === -1 ? undefined : end);
+};
+const updatePrices = readFileSync(new URL('update-prices.mjs', import.meta.url), 'utf8');
+
+test('every tracked data file update-prices writes is committed by the "Commit updated prices" step', () => {
+  // A written file left out of these lines stays dirty, the rebase refuses to run, and the night's prices are lost.
+  const written = [...updatePrices.matchAll(/writeFileSync\('([^']+)'/g)].map((m) => m[1]);
+  assert.deepEqual([...new Set(written)].sort(), ['data/price-history.json', 'data/price-holds.json', 'data/prices.json']);
+  assert.equal(updatePrices.match(/writeFileSync\(/g).length, written.length, 'every write names its file where the test can see it');
+  const step = stepNamed('Commit updated prices');
+  const porcelain = step.match(/git status --porcelain ([^)]*)\)/)[1].split(' ');
+  const added = step.match(/git add (.*)$/m)[1].split(' ');
+  assert.deepEqual([...porcelain].sort(), [...new Set(written)].sort());
+  assert.deepEqual([...added].sort(), [...new Set(written)].sort());
+});
+
+test('data/estimates.json is generated, ignored by git and never committed', () => {
+  assert.ok(readFileSync(new URL('../.gitignore', import.meta.url), 'utf8').split(/\r?\n/).includes('data/estimates.json'));
+  for (const text of [workflow, ...prices.match(/git add .*/g)]) assert.doesNotMatch(text.replace(/^\s*#.*$/gm, ''), /git add[^\n]*estimates/);
+  // Made in the prices job right before the price run, which is the only thing that reads it.
+  assert.ok(prices.indexOf('- name: Generate estimates') < prices.indexOf('- name: Refresh prices'));
+  assert.equal(prices.match(/npm run estimates/g).length, 1);
+  assert.doesNotMatch(build, /estimates/);
+  assert.doesNotMatch(readFileSync(new URL('check-presets.ts', import.meta.url), 'utf8'), /estimates\.json/);
+});
+
+test('a failed estimates generator warns and never fails the job', () => {
+  const step = stepNamed('Generate estimates');
+  assert.match(step, /^ {8}continue-on-error: true$/m);
+  assert.match(step, /^ {8}timeout-minutes: \d+$/m);
+  assert.match(step, /if ! timeout \d+ npm run estimates; then/);
+  assert.match(step, /echo "::warning::/);
+  assert.match(step, />> "\$GITHUB_STEP_SUMMARY"/);
+  assert.doesNotMatch(step, /exit 1/);
+});
+
+test('update-prices gets past a missing estimates file, and writes nothing on a dry run', () => {
+  // It runs on import, so this is checked as text. The readers themselves are tested in first-read-guard.test.mjs.
+  assert.ok(updatePrices.includes("estimates: loaded('data/estimates.json', readEstimates),"));
+  assert.doesNotMatch(updatePrices, /estimates\.json'[^\n]*readFileSync|readFileSync\('data\/estimates/);
+  const start = updatePrices.indexOf('if (!dryRun) {');
+  assert.notEqual(start, -1);
+  assert.ok(updatePrices.indexOf('writeFileSync(') > start, 'no write ahead of the dry-run check');
+  assert.ok(updatePrices.indexOf('appendFileSync(process') > start, 'no step summary ahead of it either');
+});
+
+test('update-prices writes holds last, and a failed holds write warns instead of failing the step', () => {
+  const prices = updatePrices.indexOf("writeFileSync('data/prices.json'");
+  const history = updatePrices.indexOf("writeFileSync('data/price-history.json'");
+  const holds = updatePrices.indexOf("writeFileSync('data/price-holds.json'");
+  assert.ok(prices !== -1 && prices < history && history < holds, 'prices, then history, then holds');
+  assert.match(updatePrices, /try \{\s*writeFileSync\('data\/price-holds\.json', formatHolds\(holds\)\);\s*\} catch \(err\) \{\s*console\.log\(`::warning::[^\n]*\n\s*notice \+= /);
+  // The notice goes out after the write, so the warning can reach the step summary.
+  assert.ok(updatePrices.indexOf('appendFileSync(process.env.GITHUB_STEP_SUMMARY, notice)') > holds);
+});
+
+test('update-prices checks a read right after implausiblePrice, and a held read writes no offer', () => {
+  const odd = updatePrices.indexOf('if (odd) {');
+  const hold = updatePrices.indexOf('const hold = firstReadHold(');
+  const entry = updatePrices.indexOf('entry = { price: found.price');
+  assert.ok(odd !== -1 && odd < hold && hold < entry);
+  assert.ok(updatePrices.includes('hadOffer: Boolean(before[retailer])'));
+  assert.match(updatePrices.slice(hold, entry), /if \(hold\) \{[\s\S]*report\.held\+\+[\s\S]*\} else \{\s*$/);
+});
+
 test('the Worker deploys only from main, even on a manual run', () => {
   // workflow_dispatch can pick any branch, and this job applies migrations and deploys with the production secrets.
   assert.ok(workerWorkflow.includes('workflow_dispatch'));

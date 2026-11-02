@@ -137,7 +137,8 @@ const PLACEHOLDER_PRICES = [6543.21];
  * store we haven't read before, from what the other stores charge) is far more likely a misread, such as a
  * bundle, a single-part variant or a placeholder, than a real change, and would otherwise reach the site,
  * the price charts and the alert emails. Returns why the price looks wrong, or null when it's fine.
- * A store whose price really did move that far is accepted again once its old price ages out (7 days).
+ * A store whose price really did move that far is measured against this no longer once its old price ages out (7 days):
+ * the next read is then a first read, and scripts/first-read-guard.mjs may hold it for the owner.
  */
 export const MAX_PRICE_MOVE = 2.5;
 export function implausiblePrice(price, { last, others = [] } = {}) {

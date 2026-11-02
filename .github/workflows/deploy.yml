@@ -51,15 +51,28 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      # data/estimates.json is a last-resort baseline for first reads. It's ignored by git, so it's made fresh here and
+      # nothing commits it, so there's no stale copy to trip over. If this step fails, the job goes on: update-prices warns
+      # and holds the pairs that needed it. A generator that's truly broken still fails its test in the npm test above,
+      # which stops the night like any failing test.
+      - name: Generate estimates
+        # The inner timeout comes first, so a hang gets the same warning as a failure.
+        continue-on-error: true
+        timeout-minutes: 3
+        run: |
+          if ! timeout 120 npm run estimates; then
+            echo "::warning::Estimates couldn't be generated. Prices still refresh, but pairs with no other baseline are held."
+            echo "**Warning:** estimates couldn't be generated. Prices still refresh, but pairs with no other baseline are held." >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Refresh prices
         run: npm run update-prices
       - name: Commit updated prices
         id: commit
         run: |
-          if [ -n "$(git status --porcelain data/prices.json data/price-history.json)" ]; then
+          if [ -n "$(git status --porcelain data/prices.json data/price-history.json data/price-holds.json)" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add data/prices.json data/price-history.json
+            git add data/prices.json data/price-history.json data/price-holds.json
             git commit -m "Update prices"
             # main may have moved during the run; only this job writes these files, so a rebase applies cleanly.
             for try in 1 2 3; do

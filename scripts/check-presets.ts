@@ -14,6 +14,8 @@ import sources from '../data/sources.json';
 import PRICES from '../data/prices.json';
 import HISTORY from '../data/price-history.json';
 import CHECKS from '../data/retailer-checks.json';
+import APPROVALS from '../data/price-approvals.json';
+import { approvalProblems } from './first-read-guard.mjs';
 import { pausedPriceProblems } from './pause-guard.mjs';
 import { advanceChecks, renderRetailerList, retailerListProblems } from './retailer-list.mjs';
 
@@ -318,6 +320,8 @@ for (const [id, e] of Object.entries((sources as unknown as { paused?: Record<st
   for (const problem of pausedPriceProblems(SOURCES.paused, PRICES, HISTORY)) { console.log(problem); bad++; }
   console.log(`Paused retailers: ${[...PAUSED].join(', ') || 'none'}. Parts with no price left: ${unpriced.size} (${[...unpriced].join(', ')}). Parts whose older price history is ignored: ${pausedHistory.size}.`);
 }
+// The owner's price approvals name real parts and links (scripts/first-read-guard.mjs).
+for (const problem of approvalProblems(APPROVALS, { partIds: new Set(PLATFORMS.flatMap((p) => p.parts.map((part) => part.id))), links: SOURCES.parts })) { console.log(problem); bad++; }
 // The home page's FAQ links keep their own copy of each guide's question.
 for (const pick of FAQ_PICKS) {
   const g = GUIDES.find((x) => x.slug === pick.slug);
