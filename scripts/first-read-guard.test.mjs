@@ -193,9 +193,17 @@ test('unchanged holds write the same bytes, with no timestamp, and the file read
   assert.deepEqual(Object.keys(JSON.parse(first).holds[0]), ['part', 'store', 'price', 'baseline', 'baselineType', 'firstHeld']);
 });
 
-test('the committed starting files are empty, and match what the code writes', () => {
-  assert.equal(read('data/price-holds.json').replace(/\r\n/g, '\n'), formatHolds([]));
-  assert.deepEqual(JSON.parse(read('data/price-approvals.json')), {});
+test('the committed files read back cleanly, and the holds file is as the code writes it', () => {
+  // Not "empty": npm test runs again after the nightly commits real holds, and the owner fills in approvals.
+  const text = read('data/price-holds.json').replace(/\r\n/g, '\n');
+  const holds = readHolds(() => text);
+  assert.equal(holds.problem, undefined);
+  assert.equal(formatHolds(holds.value), text);
+  assert.equal(readJsonObject(() => read('data/price-approvals.json')).problem, undefined);
+});
+
+test('an empty holds list is written the way the file starts out', () => {
+  assert.equal(formatHolds([]), '{\n  "holds": []\n}\n');
 });
 
 test('the step summary lists each hold, and says nothing when there is nothing to say', () => {
