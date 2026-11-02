@@ -58,9 +58,22 @@ export type Point = [day: string, price: number];
 /** A part's best price from `from` to today, one point per change. */
 export const partSeries = (part: Part, from: string, to = today()): Point[] => changeDays([part], from, to).map((d) => [d, priceOn(part, d)]);
 
-/** A build's total at best prices from `from` to today, one point per change. */
+/**
+ * A part's figure on the Build Total chart on a day. Only a live price moves: a part shown at an estimate or a
+ * hand-checked price holds that shown price every day, whatever its history says. On the chart's last day (`to`) every
+ * part is at its shown price, so the line ends on the card's total. A part with no price adds nothing, as in totalOf.
+ */
+function chartPriceOn(part: Part, day: string, to: string): number {
+  const best = bestOffer(part);
+  if (!best) return 0;
+  if (!best.checkedAt || day >= to || !hasHistory(part)) return best.price;
+  const series = seriesOf(part);
+  return (series.filter(([d]) => d <= day).pop() ?? series[0])[1];
+}
+
+/** A build's total from `from` to today, one point per change. Pass the parts the total adds up (totalParts). */
 export const totalSeries = (parts: Part[], from: string, to = today()): Point[] =>
-  changeDays(parts, from, to).map((d) => [d, parts.reduce((sum, p) => sum + priceOn(p, d), 0)]);
+  changeDays(parts, from, to).map((d) => [d, parts.reduce((sum, p) => sum + chartPriceOn(p, d, to), 0)]);
 
 export interface Change { was: number; now: number; by: number }
 
