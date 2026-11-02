@@ -1923,10 +1923,10 @@ test('the builder rows, Compare cells and the owned finder label an estimate; sa
     return strip(renderToStaticMarkup(createElement(PartsList, { platform: p, build, issues, states, hover: null, onHover: noop, onOpen: noop, onRemove: noop, mounts: {}, onMount: noop, owned: ownedOf(sel), onToggleOwn: noop })));
   };
   // A non-breaking space before the dot: it reads the same, and a wrapped row can't start with it.
-  assert.match(rows(allPriced([SAMPLE])), /<span class="src">Brownells · Estimate<\/span>/);
-  assert.match(rows(allPriced([LIST])), /<span class="src">[^<]* · List Price<\/span>/);
-  assert.match(rows(allPriced([FACTORY_DATED])), /<span class="src">[^<]* · Factory Part<\/span>/);
-  assert.match(rows(allPriced([FACTORY_UNDATED])), /<span class="src">[^<]* · Factory Part, Estimate<\/span>/);
+  assert.match(rows(allPriced([SAMPLE])), /<span class="src">Brownells\u00a0· Estimate<\/span>/);
+  assert.match(rows(allPriced([LIST])), /<span class="src">[^<]*\u00a0· List Price<\/span>/);
+  assert.match(rows(allPriced([FACTORY_DATED])), /<span class="src">[^<]*\u00a0· Factory Part<\/span>/);
+  assert.match(rows(allPriced([FACTORY_UNDATED])), /<span class="src">[^<]*\u00a0· Factory Part, Estimate<\/span>/);
   assert.doesNotMatch(rows(allPriced([LIVE])), /<span class="src">[^<]*\s· /);
   assert.doesNotMatch(rows(allPriced([SAMPLE])), /<span class="src">[^<]* · /);
 
@@ -2039,6 +2039,18 @@ test('the saved card shows the same figure at the end of its chart and in its to
   assert.ok(html.includes('$415.00 → <b>$415.00</b>'), 'the chart reads the shown prices');
   assert.ok(html.includes('<span class="amt big">$415.00'), 'the card reads the same');
   assert.doesNotMatch(html, /\$332\.49/);
+});
+
+test('an all-zero series draws flat, with no NaN in the drawing', () => {
+  const html = renderToStaticMarkup(createElement(PriceChart, { points: [[CHART_FROM, 0], [CHART_TO, 0]], label: 'L' }));
+  assert.match(html, /class="price-chart flat"/);
+  assert.doesNotMatch(html, /NaN/);
+});
+
+test('the builder row writes its non-breaking space as an escape, so it shows in the source', () => {
+  const src = readFileSync('src/BuilderPage.tsx', 'utf8');
+  assert.ok(src.includes('`\\u00a0· ${label}`'));
+  assert.ok(!src.includes(String.fromCharCode(0xa0)));
 });
 
 test('a build with no live part draws as flat data', (t) => {

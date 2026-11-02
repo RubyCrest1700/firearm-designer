@@ -21,7 +21,7 @@ export function PriceChart({ points, label, height = 56 }: { points: Point[]; la
   const prices = points.map(([, p]) => p);
   let lo = Math.min(...prices);
   let hi = Math.max(...prices);
-  if (hi - lo < hi * 0.02) { lo -= hi * 0.01 + 1; hi += hi * 0.01 + 1; } // flat lines sit mid-chart
+  if (hi === lo || hi - lo < hi * 0.02) { lo -= hi * 0.01 + 1; hi += hi * 0.01 + 1; } // flat lines sit mid-chart
   const x = (d: string) => pad.l + ((t(d) - t0) / (t1 - t0)) * (W - pad.l - pad.r);
   const y = (p: number) => pad.t + (1 - (p - lo) / (hi - lo)) * (H - pad.t - pad.b);
   let d = `M${x(points[0][0])},${y(points[0][1])}`;
