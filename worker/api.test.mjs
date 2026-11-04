@@ -1237,8 +1237,8 @@ const SHORT_NOTICE_TEXT = 'May be regulated under the NFA. Not legal advice: che
 const CONFIRM_PRICE = 'Prices change; confirm at the retailer.';
 const privacyLink = (html) => (html.match(new RegExp(`<a [^>]*href="${PRIVACY.replace(/[.]/g, '\\.')}"[^>]*>Privacy Policy</a>`, 'g')) ?? []).length;
 
-test('the re-baseline mark is the estimate moves bump', () => {
-  assert.equal(REBASELINE, '2026-11-estimate-moves');
+test('the re-baseline mark is the Gritr links-only bump', () => {
+  assert.equal(REBASELINE, '2026-11-gritr-links-only');
 });
 
 test('a run with a stale re-baseline mark re-baselines every signup quietly, and the next run stays quiet too', async () => {
@@ -1256,7 +1256,7 @@ test('a run with a stale re-baseline mark re-baselines every signup quietly, and
   assert.equal(e.outbox.length, 0);
   for (const row of (await e.DB.prepare('SELECT seen FROM alerts').all()).results)
     assert.deepEqual(JSON.parse(row.seen), { 'glock9/g-fcg-apex5': 200, 'glock9/g19-slide-mos': 300 });
-  assert.equal((await e.DB.prepare("SELECT value FROM meta WHERE key = 'rebaseline'").first()).value, '2026-11-estimate-moves');
+  assert.equal((await e.DB.prepare("SELECT value FROM meta WHERE key = 'rebaseline'").first()).value, '2026-11-gritr-links-only');
   // The next run with the same index: nothing moved, nothing sent.
   assert.deepEqual(await withIndex(index, () => runAlerts(e, now + DAY)), { sent: 0, deferred: 0, failed: 0, watched: 2 });
   assert.equal(e.outbox.length, 0);
