@@ -74,13 +74,13 @@ export const rifleAddonParts: Part[] = [
   ]),
   ...parts('case', [
     { id: 'r-case-sav36', brand: 'Savior Equipment', name: 'American Classic Double Rifle Case, 36"', specs: ['Soft', '35" interior', 'Two rifles'], attrs: { interior: 35 },
-      offers: [['BRN', 87.97]] },
+      offers: [['BRN', 87.97], ['GRITR', 56.99, false]] },
     { id: 'r-case-sav42', brand: 'Savior Equipment', name: 'American Classic Double Rifle Case, 42"', specs: ['Soft', '41" interior', 'Two rifles'], attrs: { interior: 41 },
       offers: [['BRN', 92.97]] },
     { id: 'r-case-v700', brand: 'Pelican', name: 'Vault V700 Takedown Case', specs: ['Hard', '36.5" interior'], attrs: { interior: 36.5 },
-      offers: [['OP', 169.95]] },
+      offers: [['OP', 169.95], ['GRITR', 169.95]] },
     { id: 'r-case-v730', brand: 'Pelican', name: 'Vault V730 Tactical Rifle Case', specs: ['Hard', '44" interior'], attrs: { interior: 44 },
-      offers: [['OP', 209.95]] },
+      offers: [['OP', 209.95], ['GRITR', 209.95]] },
   ]),
 ];
 
@@ -247,9 +247,9 @@ export const pistolLights: Part[] = parts('light', [
   { id: 'p-light-tlr7a', brand: 'Streamlight', name: 'TLR-7A', specs: ['500 lm', 'Glock and 1913 rail keys'], attrs: { rails: ['glock', 'pic'], light: 'tlr7a' },
     offers: [['BRN', 139.99], ['PA', 134.99]] },
   { id: 'p-light-x300', brand: 'SureFire', name: 'X300U-A', specs: ['1,000 lm', 'Universal and Picatinny mounts'], attrs: { rails: ['glock', 'pic'], light: 'x300' },
-    offers: [['BRN', 379.0], ['OP', 389.0]] },
+    offers: [['BRN', 379.0], ['OP', 389.0], ['GRITR', 341]] },
   { id: 'p-light-tlr7sub-g', brand: 'Streamlight', name: 'TLR-7 Sub, Glock 43X / 48 Rail', specs: ['500 lm', 'Glock slimline rail'], attrs: { rails: ['glockslim'], light: 'tlr7sub' },
-    offers: [['BRN', 145.0]] },
+    offers: [['BRN', 145.0], ['GRITR', 139.99, false]] },
   { id: 'p-light-tlr7sub-s', brand: 'Streamlight', name: 'TLR-7 Sub, Sig P365 / XL', specs: ['500 lm', 'P365 rail'], attrs: { rails: ['p365'], light: 'tlr7sub' },
     offers: [['BRN', 145.0]] },
   { id: 'p-light-tlr7sub-h', brand: 'Streamlight', name: 'TLR-7 Sub, Springfield Hellcat', specs: ['500 lm', '3" Hellcat rail'], attrs: { rails: ['hellcat'], light: 'tlr7sub' },
@@ -276,7 +276,7 @@ export function holsters(prefix: string, sizes: [fit: string, label: string][], 
 
 export const pistolCases: Part[] = parts('case', [
   { id: 'p-case-savior', brand: 'Savior Equipment', name: 'Specialist Double Pistol Case, 14"', specs: ['Soft', 'Two pistols', 'Mag pouches'], attrs: {},
-    offers: [['BRN', 54.97]] },
+    offers: [['BRN', 54.97], ['GRITR', 29.97]] },
   { id: 'p-case-pelican', brand: 'Pelican', name: '1170 Protector Case', specs: ['Hard', 'Watertight', 'Lockable'], attrs: {},
     offers: [['OP', 109.95]] },
 ]);

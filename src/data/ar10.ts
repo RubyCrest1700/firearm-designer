@@ -163,7 +163,7 @@ const allParts = [
     { id: 'a10-opt-vortex', brand: 'Vortex', name: 'Strike Eagle 1-8x24 + Mount', specs: ['LPVO', '1-8x'], attrs: { kind: 'lpvo' },
       offers: [['PA', 349.99], ['OP', 359.99]], pick: pick('value', 'Versatile from close range out to 600 yards.') },
     { id: 'a10-opt-venom', brand: 'Vortex', name: 'Venom 5-25x56 FFP + Mount', specs: ['Precision scope', 'FFP'], attrs: { kind: 'scope' },
-      offers: [['PA', 649.99], ['OP', 639.99]], pick: pick('premium', 'First-focal-plane scope for long-range 6.5 CM.') },
+      offers: [['PA', 649.99], ['OP', 639.99], ['GRITR', 499]], pick: pick('premium', 'First-focal-plane scope for long-range 6.5 CM.') },
     { id: 'a10-opt-slx16', brand: 'Primary Arms', name: 'SLx 1-6x24 SFP Gen IV + Mount', specs: ['LPVO', '1-6x', 'Mount included'], attrs: { kind: 'lpvo' },
       offers: [['PA', 399.98]] },
   ]),

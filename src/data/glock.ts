@@ -83,12 +83,14 @@ function modelParts(M: Model): Part[] {
   const n = M.slice(1);
   const t = (s: string) => s.replace(/\{M\}/g, M).replace(/\{m\}/g, n);
   const d = M === 'G17' ? 5 : M === 'G26' ? -5 : 0; // small per-model price spread
+  /** A Gritr Sports estimate for the one model it has a link for, so the other models' offers stay as they are. */
+  const gritr = (model: Model, price: number): [string, number][] => (M === model ? [['GRITR', price]] : []);
   const list: Part[] = [
     ...parts('frame', [
       { id: `g${n}-frame-g3`, brand: 'Glock', name: t('{M} Gen3 Frame (OEM, stripped)'), specs: ['Gen3', 'Rails', 'Finger grooves'], attrs: { gen: 'gen3', model: M }, serialized: true,
         offers: [['GS', 159.99 + d], ['BRN', 169.99 + d, false]], pick: pick('budget', 'Gen3 has the widest selection of cheap aftermarket parts.') },
       ...(M !== 'G26' ? [{ id: `g${n}-frame-lw`, brand: 'Lone Wolf', name: t('Timberwolf {M} Frame'), specs: ['Gen3 compatible', 'Interchangeable backstraps', 'No finger grooves'], attrs: { gen: 'gen3', model: M }, serialized: true,
-        offers: [['BRN', 164.99 + d], ['MID', 169.99 + d]] as [string, number][], pick: pick('value', 'Better ergonomics than OEM Gen3, and still takes cheap Gen3 parts.') }] : []),
+        offers: [['BRN', 164.99 + d], ['MID', 169.99 + d], ...gritr('G19', 139.95)] as [string, number][], pick: pick('value', 'Better ergonomics than OEM Gen3, and still takes cheap Gen3 parts.') }] : []),
       { id: `g${n}-frame-g4`, brand: 'Glock', name: t('{M} Gen4 Frame (OEM, stripped)'), specs: ['Gen4', 'Backstraps', 'Dual-spring channel'], attrs: { gen: 'gen4', model: M }, serialized: true,
         offers: [['GS', 164.99 + d]], ...(M === 'G26' ? { pick: pick('value', 'Backstraps let you fit the short grip to your hand.') } : {}) },
       { id: `g${n}-frame-g5`, brand: 'Glock', name: t('{M} Gen5 Frame (OEM, stripped)'), specs: ['Gen5', 'Ambi slide stop', 'No finger grooves'], attrs: { gen: 'gen5', model: M }, serialized: true,
@@ -117,7 +119,7 @@ function modelParts(M: Model): Part[] {
         offers: [['BRN', 129.99 + d]] },
       ...(M !== 'G26' ? [
         { id: `g${n}-bbl-faxon`, brand: 'Faxon', name: t('{M} Duty Series Barrel'), specs: ['Gen3/4', 'Match grade', 'Nitride'], attrs: { len: M, bbl: M, family: 'Gen3/4', threaded: false },
-          offers: [['BRN', 169.99 + d], ['OP', 164.99 + d]] as [string, number][], pick: pick('value', 'Match-grade accuracy for less than most aftermarket barrels.') },
+          offers: [['BRN', 169.99 + d], ['OP', 164.99 + d], ...gritr('G17', 92)] as [string, number][], pick: pick('value', 'Match-grade accuracy for less than most aftermarket barrels.') },
         { id: `g${n}-bbl-faxont`, brand: 'Faxon', name: t('{M} Duty Series Barrel, Threaded 1/2x28'), specs: ['Gen3/4', 'Threaded 1/2x28', 'Match grade'], attrs: { len: M, bbl: M, family: 'Gen3/4', threaded: true, thread: '1/2x28' },
           offers: [['BRN', 189.99 + d], ['OP', 184.99 + d]] as [string, number][] },
         { id: `g${n}-bbl-ba`, brand: 'Ballistic Advantage', name: t('Premium Series {M} Barrel, Threaded 1/2x28'), specs: ['Gen3/4', 'Threaded 1/2x28', 'Stainless'], attrs: { len: M, bbl: M, family: 'Gen3/4', threaded: true, thread: '1/2x28' },
@@ -162,7 +164,7 @@ const g34Parts: Part[] = [
   ]),
   ...parts('barrel', [
     { id: 'g34-bbl-oem34', brand: 'Glock', name: 'G34 Barrel, Gen3/4 (OEM)', specs: ['Gen3/4', '5.31"', 'Polygonal rifling'], attrs: { len: 'G34', family: 'Gen3/4', threaded: false },
-      offers: [['GS', 129.99]], pick: pick('budget', 'Factory long barrel.') },
+      offers: [['GS', 129.99], ['GRITR', 167.99, false]], pick: pick('budget', 'Factory long barrel.') },
     { id: 'g34-bbl-lw', brand: 'Lone Wolf', name: 'AlphaWolf G34 Barrel, Threaded 1/2x28', specs: ['Gen3/4', 'Threaded 1/2x28', 'Conventional rifling'], attrs: { len: 'G34', family: 'Gen3/4', threaded: true, thread: '1/2x28' },
       offers: [['BRN', 139.99], ['MID', 144.99]] },
     { id: 'g34-bbl-faxon', brand: 'Faxon', name: 'G34 Duty Series Barrel', specs: ['Gen3/4', 'Match grade', 'Nitride'], attrs: { len: 'G34', family: 'Gen3/4', threaded: false },
@@ -233,7 +235,7 @@ const shared: Part[] = [
     { id: 'g-opt-507k', brand: 'Holosun', name: 'HS507K X2', specs: ['Holosun K footprint', 'Compact'], attrs: { footprint: 'k' },
       offers: [['PA', 269.99], ['OP', 274.99]] },
     { id: 'g-opt-acro', brand: 'Aimpoint', name: 'Acro P-2', specs: ['Acro footprint', 'Enclosed emitter'], attrs: { footprint: 'acro' },
-      offers: [['BRN', 519.0], ['OP', 509.99]] },
+      offers: [['BRN', 519.0], ['OP', 509.99], ['GRITR', 599]] },
     { id: 'g-opt-407c', brand: 'Holosun', name: 'HS407C X2', specs: ['RMR footprint', '2 MOA dot', 'Solar'], attrs: { footprint: 'rmr' },
       offers: [['PA', 249.99], ['OP', 254.99]] },
     { id: 'g-opt-sro', brand: 'Trijicon', name: 'SRO 2.5 MOA', specs: ['RMR footprint', 'Large window'], attrs: { footprint: 'rmr' },
@@ -241,7 +243,7 @@ const shared: Part[] = [
     { id: 'g-opt-epsc', brand: 'Holosun', name: 'EPS Carry', specs: ['Holosun K footprint', 'Enclosed emitter'], attrs: { footprint: 'k' },
       offers: [['PA', 349.99], ['OP', 354.99]] },
     { id: 'g-opt-mps', brand: 'Steiner', name: 'MPS Micro Pistol Sight', specs: ['Acro footprint', 'Enclosed emitter'], attrs: { footprint: 'acro' },
-      offers: [['OP', 479.99], ['BRN', 489.99]] },
+      offers: [['OP', 479.99], ['BRN', 489.99], ['GRITR', 318.99]] },
   ]),
   ...parts('plate', [
     { id: 'g-plate-rmr', brand: 'C&H Precision', name: 'MOS Adapter Plate, RMR / SRO / 407C / 507C', specs: ['RMR footprint', 'Steel'], attrs: { fits: ['rmr'] },
