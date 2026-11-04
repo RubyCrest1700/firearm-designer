@@ -329,7 +329,7 @@ test('a part sold only by a paused retailer has no price and renders without one
 /* ------------------------------------------------------------------ links-only retailers */
 
 // Links only stops the scripts' requests and nothing else: to the site these stores are ordinary retailers.
-const LINKS_ONLY_IDS = ['BRN', 'CTD', 'PSA', 'SIG'];
+const LINKS_ONLY_IDS = ['BRN', 'CTD', 'GRITR', 'PSA', 'SIG'];
 const RAW_LINKS = (sources as unknown as { parts: Record<string, Record<string, string>> }).parts;
 
 test('the links-only retailers are not paused, and one of them alone gives a part no pausedThrough', () => {
