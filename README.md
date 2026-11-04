@@ -102,7 +102,9 @@ first links-only test, the host list in "listing the links-only retailers leaves
 they are", the URLs in "a no-fetch host's robots.txt counts as unreadable", the redirect target in "a
 robots.txt that redirects onto a no-fetch host", and both host lists in "the no-fetch hosts cover the
 links-only retailers' whole sites" (take that store's hosts out). In `scripts/unit.test.ts`:
-`LINKS_ONLY_IDS`. Listing a new store means adding it in the same places.
+`LINKS_ONLY_IDS`. Listing a new store means adding it in the same places, except the redirect test,
+which uses one example store and can stay. A store with no estimates in `src/data/*.ts` shows nowhere
+once its live prices drop, so add its estimate offers in the same PR if it should stay visible.
 `RETAILERS.md` shows the status, so either change needs `npm run retailers` in the same PR.
 
 ## Where things live
