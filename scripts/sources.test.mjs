@@ -217,17 +217,20 @@ test('a retailer listed under both "paused" and "linksOnly" fails', () => {
  * then run `npm run retailers`.
  */
 const LINKS_ONLY_DAY = '2026-10-31';
+/** The day we stopped requesting Gritr Sports. Set it to the merge day (UTC) here and in data/sources.json, then run `npm run retailers`. */
+const LINKS_ONLY_DAY_2 = '2026-11-06';
 /** Every links-only retailer, with its date and reason, exactly as data/sources.json must have them. */
 const LINKS_ONLY = {
   BRN: [LINKS_ONLY_DAY, 'its product pages answer the price bot with a 403'],
   CTD: [LINKS_ONLY_DAY, 'its robots.txt answers the price bot with a 403'],
+  GRITR: [LINKS_ONLY_DAY_2, 'its product pages often answer the price bot with a 403'],
   PSA: [LINKS_ONLY_DAY, 'its product pages answer the price bot with a 403'],
   SIG: [LINKS_ONLY_DAY, 'its product pages answer the price bot with a 403'],
 };
 const LINKS_ONLY_NOW = Object.keys(LINKS_ONLY).sort();
 
-test(`Brownells, Cheaper Than Dirt, Palmetto State Armory and Sig Sauer are links only since ${LINKS_ONLY_DAY}, each with its reason, and none is paused`, () => {
-  assert.deepEqual(LINKS_ONLY_NOW, ['BRN', 'CTD', 'PSA', 'SIG']);
+test(`Brownells, Cheaper Than Dirt, Palmetto State Armory and Sig Sauer are links only since ${LINKS_ONLY_DAY}, Gritr Sports since ${LINKS_ONLY_DAY_2}, each with its reason, and none is paused`, () => {
+  assert.deepEqual(LINKS_ONLY_NOW, ['BRN', 'CTD', 'GRITR', 'PSA', 'SIG']);
   assert.deepEqual([...linksOnlyIds(sources, retailers)].sort(), LINKS_ONLY_NOW);
   assert.deepEqual(Object.keys(sources.linksOnly).sort(), LINKS_ONLY_NOW);
   for (const [id, entry] of Object.entries(sources.linksOnly)) {
@@ -263,7 +266,7 @@ test('listing the links-only retailers leaves the paused results as they are', (
   assert.deepEqual([...pausedIds(sources, retailers)].sort(), PAUSED_NOW);
   assert.deepEqual(activeSources(sources, retailers), activeSources(withoutThem, retailers));
   assert.deepEqual([...pausedHosts(sources, retailers)].sort(), [...pausedHosts(withoutThem, retailers)].sort());
-  for (const h of ['www.cheaperthandirt.com', 'www.brownells.com', 'www.sigsauer.com', 'palmettostatearmory.com']) assert.ok(!pausedHosts(sources, retailers).has(h), h);
+  for (const h of ['www.cheaperthandirt.com', 'www.brownells.com', 'www.sigsauer.com', 'palmettostatearmory.com', 'gritrsports.com']) assert.ok(!pausedHosts(sources, retailers).has(h), h);
   assert.ok(Object.values(activeSources(sources, retailers)).some((b) => b.CTD), 'activeSources still holds their links');
 });
 
@@ -291,7 +294,7 @@ const guardedGate = (answer, refuse = (u) => noFetchHosts(sources, retailers).ha
 
 test('a no-fetch host\'s robots.txt counts as unreadable, so that host is disallowed and nothing reaches it', async () => {
   const g = guardedGate(() => new Response('', { status: 200 }));
-  for (const url of ['https://www.brownells.com/p', 'https://blog.cheaperthandirt.com/p', 'https://www.primaryarms.com/p']) {
+  for (const url of ['https://www.brownells.com/p', 'https://blog.cheaperthandirt.com/p', 'https://gritrsports.com/p', 'https://www.primaryarms.com/p']) {
     const got = await g.safeGet(url);
     assert.equal(got.blocked, url);
     assert.equal(got.unreadable, true, url);
@@ -321,7 +324,7 @@ test('a page refused after its robots.txt was read rejects, into the script\'s o
 
 test('the no-fetch hosts cover the links-only retailers\' whole sites, the paused ones, and no one else', () => {
   const hosts = noFetchHosts(sources, retailers);
-  for (const h of ['www.cheaperthandirt.com', 'blog.cheaperthandirt.com', 'cheaperthandirt.com', 'www.brownells.com', 'brownells.com', 'www.sigsauer.com', 'palmettostatearmory.com', 'www.palmettostatearmory.com', ...pausedHosts(sources, retailers)]) assert.ok(hosts.has(h), h);
-  for (const h of ['notcheaperthandirt.com', 'cheaperthandirt.com.example.net', 'blog.cheaperthandirt.example', 'mybrownells.com', 'sigsauer.co', 'palmettostatearmory.org', 'magpul.com']) assert.ok(!hosts.has(h), h);
+  for (const h of ['www.cheaperthandirt.com', 'blog.cheaperthandirt.com', 'cheaperthandirt.com', 'www.brownells.com', 'brownells.com', 'www.sigsauer.com', 'palmettostatearmory.com', 'www.palmettostatearmory.com', 'gritrsports.com', 'www.gritrsports.com', ...pausedHosts(sources, retailers)]) assert.ok(hosts.has(h), h);
+  for (const h of ['notcheaperthandirt.com', 'cheaperthandirt.com.example.net', 'blog.cheaperthandirt.example', 'mybrownells.com', 'sigsauer.co', 'palmettostatearmory.org', 'notgritrsports.com', 'gritrsports.com.example.net', 'gritrsports.com.evil.test', 'magpul.com']) assert.ok(!hosts.has(h), h);
   for (const id of Object.keys(retailers).filter((id) => !PAUSED_NOW.includes(id) && !LINKS_ONLY_NOW.includes(id))) assert.ok(!hosts.has(new URL(retailers[id].search).host), id);
 });

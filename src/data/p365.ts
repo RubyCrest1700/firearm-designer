@@ -36,13 +36,13 @@ const allParts = [
   ]),
   ...parts('slide', [
     { id: 'p365-slide-std', brand: 'Sig Sauer', name: 'P365 Slide Assembly, 3.1", Optic Ready', specs: ['3.1"', 'RMSc cut', 'X-Ray3 sights'], attrs: { len: 'std', barrelLen: 'std', springLen: 'std', cut: 'rmsc' },
-      offers: [['SIG', 299.99], ['BRN', 309.99]], pick: pick('budget', 'Short slide that still takes a micro dot.') },
+      offers: [['SIG', 299.99], ['BRN', 309.99], ['GRITR', 265.99, false]], pick: pick('budget', 'Short slide that still takes a micro dot.') },
     { id: 'p365-slide-xl', brand: 'Sig Sauer', name: 'P365XL Slide Assembly, 3.7", Optic Ready', specs: ['3.7"', 'RMSc cut', 'X-Ray3 sights'], attrs: { len: 'xl', barrelLen: 'xl', springLen: 'xl', cut: 'rmsc' },
       offers: [['SIG', 319.99], ['BRN', 329.99]], pick: pick('value', 'Longer sight radius and less muzzle flip.') },
     { id: 'p365-slide-spectre', brand: 'Sig Sauer', name: 'P365XL Spectre Comp Slide Assembly', specs: ['XL length', 'Takes 3.1" barrel + XL spring', 'Integrated comp', 'RMSc cut'],
       // Sig: 3.1" barrel length; fits P365 models with a 3.1" barrel and a P365XL recoil spring assembly.
       attrs: { len: 'xl', barrelLen: 'std', springLen: 'xl', cut: 'rmsc', comp: true },
-      offers: [['SIG', 449.99]], pick: pick('premium', 'Built-in compensator noticeably flattens recoil.') },
+      offers: [['SIG', 449.99], ['GRITR', 389.99, false]], pick: pick('premium', 'Built-in compensator noticeably flattens recoil.') },
     // ZEV's Octane slides come stripped (no striker, extractor or sights).
     { id: 'p365-slide-zev', brand: 'ZEV', name: 'Z365 Octane Stripped Slide, RMSc Cut', specs: ['3.1"', 'RMSc cut', 'Stripped', 'Black DLC'], attrs: { len: 'std', barrelLen: 'std', springLen: 'std', cut: 'rmsc', stripped: true },
       offers: [['RA', 432.18, false], ['ABIDE', 432.18, false], ['FORGE', 432.18, false]] },
@@ -57,13 +57,13 @@ const allParts = [
     { id: 'p365-bbl-xlthr', brand: 'Sig Sauer', name: 'P365XL Barrel, 3.7", Threaded', specs: ['3.7"', 'Threaded 1/2x28'], attrs: { len: 'xl', threaded: true, thread: '1/2x28' },
       offers: [['SIG', 139.99], ['BRN', 144.99]] },
     { id: 'p365-bbl-tpstd', brand: 'True Precision', name: 'P365 Axiom Barrel, 3.1"', specs: ['3.1"', 'Match grade'], attrs: { len: 'std' },
-      offers: [['BRN', 179.99], ['OP', 174.99]] },
+      offers: [['BRN', 179.99], ['OP', 174.99], ['GRITR', 170.99, false]] },
     { id: 'p365-bbl-tp', brand: 'True Precision', name: 'P365XL Axiom Barrel', specs: ['3.7"', 'Match grade'], attrs: { len: 'xl' },
-      offers: [['BRN', 189.99], ['OP', 184.99]] },
+      offers: [['BRN', 189.99], ['OP', 184.99], ['GRITR', 146.2]] },
   ]),
   ...parts('spring', [
     { id: 'p365-spr-std', brand: 'Sig Sauer', name: 'P365 Recoil Spring Assembly', specs: ['3.1" slide'], attrs: { len: 'std' }, offers: [['SIG', 19.99], ['BRN', 22.99]] },
-    { id: 'p365-spr-xl', brand: 'Sig Sauer', name: 'P365XL Recoil Spring Assembly', specs: ['3.7" slide'], attrs: { len: 'xl' }, offers: [['SIG', 19.99], ['BRN', 22.99]] },
+    { id: 'p365-spr-xl', brand: 'Sig Sauer', name: 'P365XL Recoil Spring Assembly', specs: ['3.7" slide'], attrs: { len: 'xl' }, offers: [['SIG', 19.99], ['BRN', 22.99], ['GRITR', 36.99]] },
   ]),
   // Sig #8 front and #8 rear dovetails, shared with the P320. Sample price until a price source is added.
   ...parts('sights', [
@@ -72,13 +72,13 @@ const allParts = [
   ]),
   ...parts('optic', [
     { id: 'p365-opt-r0', brand: 'Sig Sauer', name: 'RomeoZero Elite', specs: ['RMSc footprint', 'Direct mount'], attrs: { footprint: 'rmsc' },
-      offers: [['SIG', 199.99], ['OP', 189.99]], pick: pick('budget', 'Cheapest dot that mounts directly.') },
+      offers: [['SIG', 199.99], ['OP', 189.99], ['GRITR', 132.99, false]], pick: pick('budget', 'Cheapest dot that mounts directly.') },
     { id: 'p365-opt-507k', brand: 'Holosun', name: 'HS507K X2', specs: ['Holosun K footprint', 'Multi-reticle'], attrs: { footprint: 'k' },
       offers: [['PA', 269.99], ['OP', 274.99]], pick: pick('value', 'The most common P365 dot. Fits with no plate.') },
     { id: 'p365-opt-eps', brand: 'Holosun', name: 'EPS Carry', specs: ['Holosun K footprint', 'Enclosed emitter'], attrs: { footprint: 'k' },
       offers: [['PA', 349.99], ['OP', 359.99]], pick: pick('premium', 'Enclosed emitter keeps lint and rain off the lens.') },
     { id: 'p365-opt-407k', brand: 'Holosun', name: 'HS407K X2', specs: ['Holosun K footprint', '6 MOA dot'], attrs: { footprint: 'k' },
-      offers: [['PA', 229.99], ['OP', 234.99]] },
+      offers: [['PA', 229.99], ['OP', 234.99], ['GRITR', 224.99]] },
     { id: 'p365-opt-rmsc', brand: 'Shield', name: 'RMSc 4 MOA', specs: ['RMSc footprint', 'Very low profile'], attrs: { footprint: 'rmsc' },
       offers: [['BRN', 299.99], ['OP', 289.99]] },
     { id: 'p365-opt-rmrcc', brand: 'Trijicon', name: 'RMRcc 3.25 MOA', specs: ['RMRcc footprint'], attrs: { footprint: 'rmrcc' },

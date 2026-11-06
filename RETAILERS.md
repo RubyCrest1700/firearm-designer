@@ -28,7 +28,7 @@ In the Status column, "active" only means the retailer is neither paused nor lin
 | Forged Armory | forged-armory.odoo.com | active | - | - | 5 | 2026-11-05 |
 | GlockStore | glockstore.com | active | - | - | 12 | 2026-11-05 |
 | Grey Ghost Precision | greyghostprecision.com | active | - | - | 2 | 2026-11-05 |
-| Gritr Sports | gritrsports.com | active | - | - | 52 | 2026-11-05 |
+| Gritr Sports | gritrsports.com | links only | 2026-11-06 | its product pages often answer the price bot with a 403 | 52 | 2026-11-05 |
 | Impact Guns | impactguns.com | active | - | - | 18 | 2026-11-05 |
 | KAK Industry | kakindustry.com | active | - | - | 1 | 2026-11-05 |
 | KYGunCo | kygunco.com | active | - | - | 82 | 2026-11-05 |

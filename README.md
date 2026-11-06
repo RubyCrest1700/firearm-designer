@@ -95,8 +95,16 @@ included, but the site keeps its links and estimated prices as they were. An id 
 `"paused"` and `"linksOnly"`, and the same checks apply to an unknown id or a missing date or reason.
 A store's estimated price and link show only on parts with no live or list price. Listing a store that has
 live prices drops them on the next nightly run, so measure the effect on shown prices first and use
-Plan A, the merge order that keeps price-alert emails quiet. To undo, delete the entry and remove the id
-from `LINKS_ONLY` in `scripts/sources.test.mjs` and `LINKS_ONLY_IDS` in `scripts/unit.test.ts`.
+Plan A, the merge order that keeps price-alert emails quiet. To undo, delete the entry, then edit every
+place the tests list the links-only stores. In `scripts/sources.test.mjs`: `LINKS_ONLY` (and its date
+constant, `LINKS_ONLY_DAY` or `LINKS_ONLY_DAY_2`, once no store uses it), the store list and title of the
+first links-only test, the host list in "listing the links-only retailers leaves the paused results as
+they are", the URLs in "a no-fetch host's robots.txt counts as unreadable", the redirect target in "a
+robots.txt that redirects onto a no-fetch host", and both host lists in "the no-fetch hosts cover the
+links-only retailers' whole sites" (take that store's hosts out). In `scripts/unit.test.ts`:
+`LINKS_ONLY_IDS`. Listing a new store means adding it in the same places, except the redirect test,
+which uses one example store and can stay. A store with no estimates in `src/data/*.ts` shows nowhere
+once its live prices drop, so add its estimate offers in the same PR if it should stay visible.
 `RETAILERS.md` shows the status, so either change needs `npm run retailers` in the same PR.
 
 ## Where things live
