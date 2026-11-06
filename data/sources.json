@@ -15,7 +15,7 @@
     "BRN": { "since": "2026-10-31", "reason": "its product pages answer the price bot with a 403" },
     "SIG": { "since": "2026-10-31", "reason": "its product pages answer the price bot with a 403" },
     "PSA": { "since": "2026-10-31", "reason": "its product pages answer the price bot with a 403" },
-    "GRITR": { "since": "2026-11-05", "reason": "its product pages often answer the price bot with a 403" }
+    "GRITR": { "since": "2026-11-06", "reason": "its product pages often answer the price bot with a 403" }
   },
   "parts": {
     "a10-bcg-jp": {

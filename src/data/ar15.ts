@@ -99,7 +99,7 @@ const allParts = [
     { id: 'ar-grip-k2', brand: 'Magpul', name: 'MOE-K2+ Grip', specs: ['Rubber overmold', 'Near-vertical'], attrs: {},
       offers: [['PA', 27.95], ['OP', 26.5]] },
     { id: 'ar-grip-hogue', brand: 'Hogue', name: 'OverMolded Grip', specs: ['Rubber overmold', 'Finger grooves'], attrs: {},
-      offers: [['PA', 19.95], ['BRN', 21.99], ['MID', 20.99], ['GRITR', 25.46, false]] },
+      offers: [['PA', 19.95], ['BRN', 21.99], ['MID', 20.99], ['GRITR', 25.46]] },
     { id: 'ar-grip-moeplus', brand: 'Magpul', name: 'MOE+ Grip', specs: ['Rubber overmold', 'Storage core'], attrs: {},
       offers: [['PA', 24.95], ['BRN', 26.95]] },
   ]),

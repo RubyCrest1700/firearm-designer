@@ -218,7 +218,7 @@ test('a retailer listed under both "paused" and "linksOnly" fails', () => {
  */
 const LINKS_ONLY_DAY = '2026-10-31';
 /** The day we stopped requesting Gritr Sports. Set it to the merge day (UTC) here and in data/sources.json, then run `npm run retailers`. */
-const LINKS_ONLY_DAY_2 = '2026-11-05';
+const LINKS_ONLY_DAY_2 = '2026-11-06';
 /** Every links-only retailer, with its date and reason, exactly as data/sources.json must have them. */
 const LINKS_ONLY = {
   BRN: [LINKS_ONLY_DAY, 'its product pages answer the price bot with a 403'],
