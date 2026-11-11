@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { PLATFORMS, PRICES_UPDATED_AT, canonicalPlatform, currentSelection } from './data';
+import { PLATFORMS, PRICES_READ_ON, canonicalPlatform, currentSelection } from './data';
 import { ownsAny, partIds, baseSelection, selectionTokens, withoutOwned, type Selection } from './engine';
 import { ComparePage, loadCompare, storeCompare, type CompareItem } from './Compare';
 import { droppedBuilds, loadSavedBuilds, priceChanges, newId, readSharedBuild, savedPrices, selectionFromParts, shareUrl, checkShareLinks, storeSavedBuilds, type SavedBuild } from './store';
@@ -10,7 +10,7 @@ import { BuilderPage } from './BuilderPage';
 import { CommunityPage } from './CommunityPage';
 import { HomePage } from './HomePage';
 import { AlertsPanel, SavedPage } from './SavedPage';
-import { shortDate } from './ui';
+import { priceStatus } from './ui';
 
 const STORE_KEY = 'firearm-designer:v2';
 /** The home page's title, the same as the <title> in index.html. */
@@ -176,6 +176,9 @@ export default function App() {
     document.title = page ? `${page} | Drop-In Builds` : HOME_TITLE;
   }, [route, platformId]);
 
+  // The header's price line, worked out against the visitor's clock each time the page draws.
+  const prices = priceStatus(PRICES_READ_ON);
+
   return (
     <div className="site">
       <header className="site-header">
@@ -195,8 +198,8 @@ export default function App() {
             <a className="nav-link" href="./faq/">FAQ</a>
           </nav>
           <p className="price-status">
-            <span className={'pulse' + (PRICES_UPDATED_AT ? ' live' : '')} aria-hidden="true" />
-            {PRICES_UPDATED_AT ? <>Prices checked {shortDate(PRICES_UPDATED_AT, true)}</> : <>Estimated prices</>}
+            <span className={'pulse' + (prices?.live ? ' live' : '')} aria-hidden="true" />
+            {prices ? <>{`${prices.lead} `}{prices.date}</> : <>Estimated prices</>}
           </p>
         </div>
       </header>

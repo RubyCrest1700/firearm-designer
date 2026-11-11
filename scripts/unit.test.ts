@@ -57,6 +57,10 @@ import { missingWeightProblem, sameProductProblems } from './same-product-guard.
 import LIST_PRICES_JSON from '../data/list-prices.json';
 import WEIGHTS_JSON from '../data/weights.json';
 import APPROVALS_JSON from '../data/price-approvals.json';
+import { PRICES_READ_ON, readOnDay } from '../src/data/index';
+import { liveCheckedAts } from '../src/data/helpers';
+import { STALE_AFTER_MS, STALE_OFFER_LABEL, STALE_PRICES_LABEL, isStale, offerAgeLabel, priceStatus, shortDate } from '../src/ui';
+import App from '../src/App';
 
 /** The catalog's offers from stores missing from RETAILERS, as noted while it was built: taken before any test adds its own. */
 const CATALOG_UNKNOWN_AT_LOAD = [...UNKNOWN_RETAILER_OFFERS];
@@ -2951,6 +2955,215 @@ test('every part marked sameAs in the real catalog passes the same-product guard
   const check = readFileSync('scripts/check-presets.ts', 'utf8');
   assert.ok(check.includes('({ id: part.id, sameAs: part.sameAs, brand: part.brand, name: part.name, mpn: part.mpn, serialized: part.serialized, offers: INLINE_OFFERS[part.id] })'));
   assert.match(check, /for \(const problem of sameProductProblems\(catalog, \{ sources: SOURCES, listPrices: LIST_PRICES, approvals: APPROVALS, weights: WEIGHTS \}\)\) \{ console\.log\(problem\); bad\+\+; \}/);
+});
+
+/* ------------------------------------------------------------ honest price dates */
+
+test('readOnDay is the latest day with at least half of the prices read on or after it', () => {
+  const today = '2026-11-20T08:17:00.000Z';
+  const yesterday = '2026-11-19T08:17:00.000Z';
+  const threeAgo = '2026-11-17T08:17:00.000Z';
+  // Every price read today.
+  assert.equal(readOnDay([today, today, today]), '2026-11-20');
+  // One read today and the rest three days ago: a mostly failed night doesn't look fresh.
+  assert.equal(readOnDay([today, threeAgo, threeAgo, threeAgo, threeAgo]), '2026-11-17');
+  // Exactly half today counts as today; one short of half doesn't.
+  assert.equal(readOnDay([today, today, threeAgo, threeAgo]), '2026-11-20');
+  assert.equal(readOnDay([today, today, threeAgo, threeAgo, threeAgo]), '2026-11-17');
+  // Nothing live.
+  assert.equal(readOnDay([]), null);
+  // Mixed days: 1 of 6 on or after the 20th, 3 of 6 on or after the 19th.
+  assert.equal(readOnDay([today, yesterday, yesterday, threeAgo, threeAgo, '2026-11-10T08:17:00.000Z']), '2026-11-19');
+  // The order given doesn't matter, and one price is its own day.
+  assert.equal(readOnDay([threeAgo, '2026-11-10T08:17:00.000Z', yesterday, today, threeAgo, yesterday]), '2026-11-19');
+  assert.equal(readOnDay([threeAgo]), '2026-11-17');
+  // The day is the UTC day, whatever the clock of the machine building the site.
+  assert.equal(readOnDay(['2026-11-20T00:00:00.000Z', '2026-11-19T23:59:59.999Z']), '2026-11-20');
+  assert.equal(readOnDay(['2026-11-19T23:59:59.999Z']), '2026-11-19');
+  // A time that can't be read is a price never read: it counts against the half and never throws.
+  assert.equal(readOnDay([today, '', 'not a date']), null);
+  assert.equal(readOnDay([today, today, '', 'not a date']), '2026-11-20');
+  assert.equal(readOnDay(['', 'not a date']), null);
+});
+
+test('the day most prices were read comes from the live prices the site can show, not from the nightly run time', (t) => {
+  const all = liveCheckedAts();
+  assert.equal(PRICES_READ_ON, readOnDay(all));
+  // True whatever tonight's prices are: a date with no time (or nothing), and at least half read on or after it.
+  if (PRICES_READ_ON === null) assert.equal(all.length, 0);
+  else {
+    assert.match(PRICES_READ_ON, /^\d{4}-\d{2}-\d{2}$/);
+    assert.ok(all.filter((iso) => iso.slice(0, 10) >= PRICES_READ_ON!).length * 2 >= all.length);
+  }
+  // A paused store's row, and a row at a store that isn't in RETAILERS, are left out as parts() leaves them out; a
+  // shown store's row is in.
+  const live = (PRICES_JSON as unknown as { offers: Record<string, Record<string, Offer>> }).offers;
+  const id = 'syn-price-age';
+  t.after(() => { delete live[id]; });
+  const [paused] = [...PAUSED];
+  assert.ok(paused);
+  live[id] = {
+    [paused]: { retailer: paused, price: 1, inStock: true, checkedAt: '2099-01-01T00:00:00.000Z' },
+    'NO-SUCH-STORE': { retailer: 'NO-SUCH-STORE', price: 1, inStock: true, checkedAt: '2099-01-02T00:00:00.000Z' },
+    BRD: { retailer: 'BRD', price: 1, inStock: true, checkedAt: '2099-01-03T00:00:00.000Z' },
+  };
+  const now = liveCheckedAts();
+  assert.equal(now.length, all.length + 1);
+  assert.ok(now.includes('2099-01-03T00:00:00.000Z'));
+  assert.ok(!now.includes('2099-01-01T00:00:00.000Z') && !now.includes('2099-01-02T00:00:00.000Z'));
+  // The nightly run time is no longer what the pages print.
+  for (const file of ['src/data/index.ts', 'src/App.tsx', 'src/guides/render.ts', 'src/ui.tsx', 'src/Picker.tsx'])
+    assert.doesNotMatch(readFileSync(file, 'utf8'), /PRICES_UPDATED_AT|\.updatedAt/, file);
+  assert.ok(readFileSync('src/data/index.ts', 'utf8').includes('export const PRICES_READ_ON: string | null = readOnDay(liveCheckedAts());'));
+});
+
+test('isStale: a price is stale once it is more than 48 hours old', () => {
+  const HOUR = 60 * 60 * 1000;
+  assert.equal(STALE_AFTER_MS, 48 * HOUR);
+  const read = '2026-11-18T08:17:00.000Z';
+  const at = (hours: number) => Date.parse(read) + hours * HOUR;
+  assert.equal(isStale(read, at(47)), false);
+  assert.equal(isStale(read, at(49)), true);
+  assert.equal(isStale(read, at(48)), false, 'exactly 48 hours is not yet stale');
+  assert.equal(isStale(read, at(48) + 1), true);
+  assert.equal(isStale(read, at(0)), false);
+  // A day with no time counts from its UTC midnight.
+  assert.equal(isStale('2026-11-18', Date.parse('2026-11-20T00:00:00.000Z')), false);
+  assert.equal(isStale('2026-11-18', Date.parse('2026-11-20T00:00:00.001Z')), true);
+  // Bad input doesn't throw, and is never called fresh.
+  for (const bad of ['', 'not a date', undefined, null, {}] as unknown as string[]) assert.equal(isStale(bad, at(0)), true, String(bad));
+  // The clock defaults to now.
+  mock.timers.enable({ apis: ['Date'], now: at(49) });
+  try {
+    assert.equal(isStale(read), true);
+    mock.timers.setTime(at(47));
+    assert.equal(isStale(read), false);
+  } finally {
+    mock.timers.reset();
+  }
+});
+
+test("the picker's price table says Live for a fresh price and Checked for a stale one, never both", () => {
+  const HOUR = 60 * 60 * 1000;
+  const now = Date.parse('2026-11-20T12:00:00.000Z');
+  const ago = (hours: number) => new Date(now - hours * HOUR).toISOString();
+  // Made-up offers on a made-up part: the cheapest one is stale and in stock.
+  const offers: Offer[] = [
+    { retailer: 'BRD', price: 101, inStock: true, checkedAt: ago(49) },
+    { retailer: 'AERO', price: 102, inStock: true, checkedAt: ago(47) },
+    { retailer: 'KYG', price: 103, inStock: false, checkedAt: ago(48) },
+    { retailer: 'BUDS', price: 104, inStock: false, checkedAt: ago(24 * 30) },
+    { retailer: 'BRN', price: 105, inStock: true },
+    { retailer: 'MAGPUL', price: 106, inStock: true, basis: 'list', asOf: '2026-10-09' },
+  ];
+  const made: Part = { ...part(ar15, 'ar-mz-vg6'), id: 'no-such-aged-part', offers };
+  mock.timers.enable({ apis: ['Date'], now });
+  let html = '';
+  try {
+    html = strip(candidate(made));
+  } finally {
+    mock.timers.reset();
+  }
+  const rows = [...html.matchAll(/<tr[^>]*>(?:(?!<\/tr>)[\s\S])*<td class="dim">([^<]*)<\/td>(?:(?!<\/tr>)[\s\S])*<\/tr>/g)].map((m) => ({ row: m[0], when: m[1] }));
+  assert.deepEqual(rows.map((r) => r.when), [
+    `Checked ${shortDate(ago(49))}`,
+    `Live ${shortDate(ago(47))}`,
+    `Live ${shortDate(ago(48))}`,
+    `Checked ${shortDate(ago(24 * 30))}`,
+    'Estimate',
+    `List Price ${shortDate('2026-10-09')}`,
+  ]);
+  for (const r of rows) assert.ok(!(r.when.includes('Live') && r.when.includes('Checked')), r.when);
+  // Only the words before the date change: the stale price is still the best price, at its own figure, In Stock or Out as read.
+  assert.equal(bestOffer(made)?.retailer, 'BRD');
+  assert.match(rows[0].row, /^<tr class="best"><td>Black Rifle Depot<\/td><td class="num">\$101\.00<\/td><td>In Stock<\/td>/);
+  assert.match(rows[3].row, /^<tr class=""><td>[^<]+<\/td><td class="num">\$104\.00<\/td><td><span class="oos">Out<\/span><\/td>/);
+  assert.ok(html.includes('<span class="amt">$101.00</span>'));
+  // The words themselves, and where the table gets them.
+  assert.equal(STALE_OFFER_LABEL, 'Checked');
+  assert.equal(offerAgeLabel(ago(47), now), 'Live');
+  assert.equal(offerAgeLabel(ago(49), now), 'Checked');
+  assert.ok(readFileSync('src/Picker.tsx', 'utf8').includes('{o.checkedAt ? `${offerAgeLabel(o.checkedAt)} ${shortDate(o.checkedAt)}` : o.asOf ? `${priceLabel(o)} ${shortDate(o.asOf)}` : priceLabel(o)}'));
+  assert.doesNotMatch(readFileSync('src/Picker.tsx', 'utf8'), /Live \$\{/);
+  assert.match(readFileSync('src/ui.tsx', 'utf8'), /\/\*\* Owner-approved wording \(2026-11-10\)\. \*\/\r?\nexport const STALE_OFFER_LABEL = 'Checked';/);
+});
+
+test('the header says Prices checked while the read day is fresh, Prices last checked once it is stale, and Estimated prices with nothing live', () => {
+  const day = '2026-11-18';
+  const midnight = Date.parse('2026-11-18T00:00:00.000Z');
+  const HOUR = 60 * 60 * 1000;
+  assert.deepEqual(priceStatus(day, midnight + 30 * HOUR), { live: true, lead: 'Prices checked', date: 'Nov 18, 2026' });
+  assert.deepEqual(priceStatus(day, midnight + 48 * HOUR), { live: true, lead: 'Prices checked', date: 'Nov 18, 2026' });
+  assert.deepEqual(priceStatus(day, midnight + 49 * HOUR), { live: false, lead: 'Prices last checked', date: 'Nov 18, 2026' });
+  assert.deepEqual(priceStatus(day, midnight + 24 * 400 * HOUR), { live: false, lead: 'Prices last checked', date: 'Nov 18, 2026' });
+  assert.equal(priceStatus(null, midnight), null);
+  assert.equal(STALE_PRICES_LABEL, 'Prices last checked');
+  assert.match(readFileSync('src/ui.tsx', 'utf8'), /\/\*\* Owner-approved wording \(2026-11-10\)\. \*\/\r?\nexport const STALE_PRICES_LABEL = 'Prices last checked';/);
+  // The header uses it, against the visitor's clock, for both the words and the live dot.
+  const app = readFileSync('src/App.tsx', 'utf8');
+  assert.ok(app.includes('const prices = priceStatus(PRICES_READ_ON);'));
+  assert.ok(app.includes(`<span className={'pulse' + (prices?.live ? ' live' : '')} aria-hidden="true" />`));
+  assert.ok(app.includes('{prices ? <>{`${prices.lead} `}{prices.date}</> : <>Estimated prices</>}'));
+});
+
+test('the header as drawn: fresh on the read day, stale three days on', (t) => {
+  if (PRICES_READ_ON === null) return t.skip('no live prices in data/prices.json');
+  const header = (now: number) => {
+    const had = Object.getOwnPropertyDescriptor(globalThis, 'location');
+    Object.defineProperty(globalThis, 'location', { value: { pathname: '/', search: '', hash: '' }, configurable: true, writable: true });
+    mock.timers.enable({ apis: ['Date'], now });
+    try {
+      return strip(renderToStaticMarkup(createElement(App))).match(/<p class="price-status">[\s\S]*?<\/p>/)?.[0];
+    } finally {
+      mock.timers.reset();
+      if (had) Object.defineProperty(globalThis, 'location', had);
+      else delete (globalThis as { location?: unknown }).location;
+    }
+  };
+  const midnight = Date.parse(PRICES_READ_ON);
+  const date = shortDate(PRICES_READ_ON, true);
+  assert.equal(header(midnight + 12 * 60 * 60 * 1000), `<p class="price-status"><span class="pulse live" aria-hidden="true"></span>Prices checked ${date}</p>`);
+  assert.equal(header(midnight + 72 * 60 * 60 * 1000), `<p class="price-status"><span class="pulse" aria-hidden="true"></span>Prices last checked ${date}</p>`);
+});
+
+test('a date with no time prints as that day in every time zone, and a full time still prints in local time', () => {
+  // A date with no time parses as UTC midnight, which is still the evening before in the Americas. Each zone is set
+  // for real (process.env.TZ), and the first two lines of each round prove the switch took: the same instant falls on
+  // a different local day in each zone.
+  const had = process.env.TZ;
+  const instant = '2026-10-09T02:00:00.000Z';
+  try {
+    process.env.TZ = 'America/New_York';
+    assert.equal(new Date(instant).getDate(), 8, 'the test is running on New York time');
+    assert.equal(new Date('2026-10-09').getDate(), 8, 'where a bare date read in local time is the day before');
+    assert.equal(shortDate('2026-10-09'), 'Oct 9');
+    assert.equal(shortDate('2026-10-09', true), 'Oct 9, 2026');
+    assert.equal(shortDate('2026-01-01', true), 'Jan 1, 2026');
+    // A full time keeps the visitor's own day.
+    assert.equal(shortDate(instant), 'Oct 8');
+    assert.equal(shortDate(instant, true), 'Oct 8, 2026');
+    assert.deepEqual(priceStatus('2026-10-09', Date.parse(instant)), { live: true, lead: 'Prices checked', date: 'Oct 9, 2026' });
+
+    process.env.TZ = 'Pacific/Auckland';
+    assert.equal(new Date(instant).getDate(), 9, 'the test is running on Auckland time');
+    assert.equal(new Date('2026-10-09T13:00:00.000Z').getDate(), 10);
+    assert.equal(shortDate('2026-10-09'), 'Oct 9');
+    assert.equal(shortDate('2026-10-09', true), 'Oct 9, 2026');
+    assert.equal(shortDate('2026-12-31', true), 'Dec 31, 2026');
+    assert.equal(shortDate(instant), 'Oct 9');
+    assert.equal(shortDate('2026-10-09T13:00:00.000Z', true), 'Oct 10, 2026');
+  } finally {
+    if (had === undefined) delete process.env.TZ;
+    else process.env.TZ = had;
+  }
+  // The built guide and platform pages print every date in UTC, and now print the day most prices were read.
+  const render = readFileSync('src/guides/render.ts', 'utf8');
+  assert.ok(render.includes("return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });"));
+  assert.equal(render.split('${PRICES_READ_ON ? ` (prices last checked ${shortDate(PRICES_READ_ON)})` : \'\'}').length - 1, 2);
+  if (PRICES_READ_ON !== null) {
+    const when = `(prices last checked ${new Date(PRICES_READ_ON).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })})`;
+    assert.ok(platformPage(PAGE_VIEWS[0]).includes(when));
+  }
 });
 
 test('the made-up same-product parts leave nothing behind in the data the other tests read', () => {

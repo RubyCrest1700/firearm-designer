@@ -8,7 +8,7 @@ import { hellcat } from './hellcat';
 import { ar9 } from './ar9';
 import { p320 } from './p320';
 import { p365 } from './p365';
-import prices from '../../data/prices.json';
+import { liveCheckedAts } from './helpers';
 import type { Platform } from '../types';
 
 export const PLATFORMS: Platform[] = [ar15, ar10, ar9, glock9, glockSlim, glockLarge, p320, p365, mp, hellcat];
@@ -30,5 +30,23 @@ export const currentId = (id: string) => (Object.prototype.hasOwnProperty.call(R
 export const currentSelection = (sel: Record<string, string>): Record<string, string> =>
   Object.fromEntries(Object.entries(sel).map(([k, v]) => [k, currentId(v)]));
 
-/** When the nightly job last ran, or null if every price is still sample data. */
-export const PRICES_UPDATED_AT: string | null = (prices as unknown as { updatedAt: string | null }).updatedAt;
+/**
+ * The day most prices were read: the latest UTC day (YYYY-MM-DD) with at least half of these read times on or after
+ * it. Null when there are none. A time that can't be read counts as a price never read.
+ */
+export function readOnDay(checkedAts: string[]): string | null {
+  const days = checkedAts
+    .map((iso) => new Date(iso).getTime())
+    .filter((t) => !Number.isNaN(t))
+    .map((t) => new Date(t).toISOString().slice(0, 10))
+    .sort()
+    .reverse();
+  return days[Math.ceil(checkedAts.length / 2) - 1] ?? null;
+}
+
+/**
+ * The day most live prices were read (readOnDay over every live price the site can show), or null if every price is
+ * still an estimate. The nightly job's own run time (updatedAt in data/prices.json) moves on even when most reads
+ * failed, so the pages show this day instead.
+ */
+export const PRICES_READ_ON: string | null = readOnDay(liveCheckedAts());
