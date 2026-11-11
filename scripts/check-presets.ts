@@ -17,11 +17,13 @@ import CHECKS from '../data/retailer-checks.json';
 import APPROVALS from '../data/price-approvals.json';
 import LIST_PRICES from '../data/list-prices.json';
 import WEIGHTS from '../data/weights.json';
+import SAME_NAME from '../data/same-name-parts.json';
 import { approvalProblems } from './first-read-guard.mjs';
 import { pausedPriceProblems } from './pause-guard.mjs';
 import { unknownRetailerProblems } from './retailer-id-guard.mjs';
 import { advanceChecks, renderRetailerList, retailerListProblems } from './retailer-list.mjs';
 import { missingWeightProblem, sameProductLeftovers, sameProductProblems } from './same-product-guard.mjs';
+import { sameNameCounts, sameNameProblems } from './same-name-guard.mjs';
 
 const SOURCES = sources as unknown as { parts?: Record<string, Record<string, string>>; paused?: Record<string, { since: string; reason: string }>; linksOnly?: Record<string, { since: string; reason: string }> };
 
@@ -341,6 +343,11 @@ for (const problem of approvalProblems(APPROVALS, { partIds: new Set(PLATFORMS.f
   const copies = new Set(catalog.filter((part) => part.sameAs !== undefined).map((part) => part.id)).size;
   const leftovers = sameProductLeftovers(catalog, { 'data/prices.json': (PRICES as unknown as { offers?: unknown }).offers, 'data/price-history.json': (HISTORY as unknown as { parts?: unknown }).parts });
   console.log(`Same-product copies (sameAs): ${copies}.${leftovers.map((f) => ` Note, not a failure: ${f.file} still has rows the site ignores for ${f.parts.join(', ')}.`).join('')}`);
+  // Parts that look like one product listed twice (same brand and name, or the same product link) are either grouped
+  // with sameAs or on the owner's list, data/same-name-parts.json (scripts/same-name-guard.mjs).
+  for (const problem of sameNameProblems(catalog, SOURCES, SAME_NAME)) { console.log(problem); bad++; }
+  const listed = sameNameCounts(SAME_NAME);
+  console.log(`Same-name sets listed in data/same-name-parts.json: ${listed.unchecked} unchecked, ${listed.different} different.`);
 }
 // The home page's FAQ links keep their own copy of each guide's question.
 for (const pick of FAQ_PICKS) {
