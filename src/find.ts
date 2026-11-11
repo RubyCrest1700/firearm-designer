@@ -102,7 +102,8 @@ function lengthFit(text: string, w: string): number {
 
 /**
  * A part's text as the search reads it. Only a marked length (16") is read as one: "in" or "inch" inside a part's own
- * name, specs or part number stays as written, so "Glock 19 in FDE" is not 19 inches and BAR-16IN-556 is still found.
+ * name, specs or part number stays as written, so "Glock 19 in FDE" is not 19 inches and BAR16IN556 typed bare is still found. Typed with its dashes and no brand,
+ * such a part number is read as a length first and is only found when no part matches that length.
  */
 function haystack(platform: Platform, part: Part): string {
   const slot = platform.slots.find((s) => s.id === part.slot)?.name ?? '';
