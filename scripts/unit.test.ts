@@ -349,11 +349,15 @@ test('a part sold only by a paused retailer has no price and renders without one
 const LINKS_ONLY_IDS = ['BRN', 'CTD', 'GRITR', 'PSA', 'SIG'];
 const RAW_LINKS = (sources as unknown as { parts: Record<string, Record<string, string>> }).parts;
 
-test('the links-only retailers are not paused, and one of them alone gives a part no pausedThrough', () => {
+test('the links-only retailers are not paused, and one of them alone gives a part no pausedThrough', (t) => {
   assert.deepEqual(Object.keys((sources as unknown as { linksOnly: object }).linksOnly).sort(), LINKS_ONLY_IDS);
   for (const id of LINKS_ONLY_IDS) assert.ok(!PAUSED.has(id), id);
   const clean = Object.entries(RAW_LINKS).filter(([, b]) => LINKS_ONLY_IDS.some((r) => b[r]) && !Object.keys(b).some((r) => PAUSED.has(r)));
   assert.ok(clean.length > 50, `${clean.length} parts`);
+  // Building a real id with a made-up offer puts that offer on record as the part's catalog estimate. Put the real
+  // ones back, so the same-product guard further down still compares what src/data says.
+  const written = Object.fromEntries(clean.map(([id]) => [id, INLINE_OFFERS[id]]));
+  t.after(() => { for (const [id, offers] of Object.entries(written)) if (offers) INLINE_OFFERS[id] = offers; else delete INLINE_OFFERS[id]; });
   for (const [id, byRetailer] of clean) {
     const retailer = LINKS_ONLY_IDS.find((r) => byRetailer[r])!;
     const [built] = buildParts('slot', [{ id, offers: [[retailer, 100]] } as never]);
@@ -643,18 +647,22 @@ const estimateOffer = (price: number): Offer[] => [{ retailer: 'OP', price, inSt
 /** The AR-15 handguard these tests move about, and a second part to prove the rest of a build is left alone. */
 const MOVER = 'ar-hg-mi';
 const OTHER = 'ar-grip-moe';
-/** Puts offers and history on the moving part, for the test only, so nothing here depends on tonight's prices. */
+/**
+ * Puts offers and history on the moving part, for the test only, so nothing here depends on tonight's prices. History
+ * is filed where the site reads it: under the part's product key, which for a copy (sameAs) is its main copy's id.
+ */
 function setPrice(t: TestContext, offers: Offer[], series?: [string, number][], id = MOVER, on = ar15) {
   const x = part(on, id);
-  const was = { offers: x.offers, paused: x.pausedThrough, series: RAW_HISTORY[id] };
+  const key = productKey(x);
+  const was = { offers: x.offers, paused: x.pausedThrough, series: RAW_HISTORY[key] };
   t.after(() => {
     x.offers = was.offers;
     x.pausedThrough = was.paused;
-    if (was.series) RAW_HISTORY[id] = was.series; else delete RAW_HISTORY[id];
+    if (was.series) RAW_HISTORY[key] = was.series; else delete RAW_HISTORY[key];
   });
   x.offers = offers;
   x.pausedThrough = undefined;
-  if (series) RAW_HISTORY[id] = series; else delete RAW_HISTORY[id];
+  if (series) RAW_HISTORY[key] = series; else delete RAW_HISTORY[key];
 }
 /** Past the one-time estimate-era clear unless a test says otherwise: MOVER is a listed part, and these tests are about everything else. */
 const moverBuild = (over: Partial<SavedBuild>): SavedBuild => ({ id: 'm', name: 'Mover', platform: 'ar15', selection: { ...baseSelection(ar15), handguard: MOVER }, savedAt: '2026-10-20T12:00:00Z', estimateEraCleared: true, ...over });
@@ -1253,7 +1261,11 @@ test('starter build cards and the platform page note parts with no price; totals
 
 test('the home page counts every part (once) but not paused retailers, and notes a starter build with no-price parts', () => {
   const html = renderToStaticMarkup(createElement(HomePage, { onPick: () => {}, onStart: () => {}, onBrowse: () => {} })).replace(/<!-- -->/g, '');
-  const parts = new Set(PLATFORMS.flatMap((p) => p.parts.map((x) => x.id))).size;
+  // A copy (sameAs) is its main copy's product under a second id, so it adds an id and no part.
+  const all = PLATFORMS.flatMap((p) => p.parts);
+  const copies = new Set(all.filter((x) => x.sameAs !== undefined).map((x) => x.id)).size;
+  const parts = new Set(all.map((x) => x.id)).size - copies;
+  assert.equal(parts, new Set(all.map(productKey)).size);
   const stores = Object.keys(RETAILERS).length - PAUSED.size;
   assert.equal(html.match(/(\d+) parts · /)?.[1], String(parts));
   assert.ok(html.includes(`${PLATFORMS.length} platforms · ${parts} parts · ${stores} retailers compared`), 'hero facts');
@@ -2850,6 +2862,7 @@ test('the home page counts a copy and its main copy as one part and lists their 
   const render = () => renderToStaticMarkup(createElement(HomePage, { onPick: () => {}, onStart: () => {}, onBrowse: () => {} })).replace(/<!-- -->/g, '');
   const count = (html: string) => Number(html.match(/(\d+) parts · /)![1]);
   const before = count(render());
+  const idsBefore = new Set(PLATFORMS.flatMap((p) => p.parts.map((x) => x.id))).size;
   // A drop no real part can outdo this week, on a real AR-15 part, so the list has it whatever tonight's prices are.
   setPrice(t, liveOffer(100), [[daysAgo(30), 100_000], [daysAgo(2), 100]]);
   const main = part(ar15, MOVER);
@@ -2859,7 +2872,7 @@ test('the home page counts a copy and its main copy as one part and lists their 
   ar9.parts.push(copy);
   const html = render();
   assert.equal(count(html), before, 'the copy adds nothing to the part count');
-  assert.equal(new Set(PLATFORMS.flatMap((p) => p.parts.map((x) => x.id))).size, before + 1, 'though it is one more id');
+  assert.equal(new Set(PLATFORMS.flatMap((p) => p.parts.map((x) => x.id))).size, idsBefore + 1, 'though it is one more id');
   assert.equal(html.split('class="drop-card card"').length - 1 > 0, true);
   const shownName = main.name.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
   assert.equal(html.split(`</span> ${shownName}</span>`).length - 1, 1, 'the main copy is listed once');

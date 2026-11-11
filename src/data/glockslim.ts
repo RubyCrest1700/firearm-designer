@@ -77,7 +77,7 @@ const allParts = [
       offers: [['BRN', 299.99], ['OP', 289.99]], pick: pick('value', 'Fits the slim MOS cut directly, no plate.') },
     { id: 'gs-opt-epsc', brand: 'Holosun', name: 'EPS Carry', specs: ['Holosun K footprint', 'Enclosed emitter'], attrs: { footprint: 'k' },
       offers: [['PA', 349.99], ['OP', 354.99]] },
-    { id: 'gs-opt-rmr', brand: 'Trijicon', name: 'RMR Type 2, 3.25 MOA', specs: ['RMR footprint'], attrs: { footprint: 'rmr' },
+    { id: 'gs-opt-rmr', sameAs: 'gl-opt-rmr', brand: 'Trijicon', name: 'RMR Type 2, 3.25 MOA', specs: ['RMR footprint'], attrs: { footprint: 'rmr' },
       offers: [['BRN', 449.99], ['OP', 439.99]] },
   ]),
   ...parts('mag', [

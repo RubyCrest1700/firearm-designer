@@ -76,18 +76,8 @@
       "basis": "estimate",
       "src": null
     },
-    "a10-gb-sa750": {
-      "oz": 1.6,
-      "basis": "estimate",
-      "src": null
-    },
     "a10-grip-bcm": {
       "oz": 2.7,
-      "basis": "estimate",
-      "src": null
-    },
-    "a10-grip-moe": {
-      "oz": 2.9,
       "basis": "estimate",
       "src": null
     },
@@ -195,16 +185,6 @@
       "oz": 23.0,
       "basis": "estimate",
       "src": null
-    },
-    "a10-stock-ctr": {
-      "oz": 10.4,
-      "basis": "estimate",
-      "src": null
-    },
-    "a10-stock-moesl": {
-      "oz": 9.3,
-      "basis": "published",
-      "src": "https://magpul.com/moe-sl-carbine-stock-mil-spec.html"
     },
     "a10-stock-psa": {
       "oz": 7.5,
@@ -351,20 +331,10 @@
       "basis": "estimate",
       "src": null
     },
-    "a9-grip-bcm": {
-      "oz": 2.4,
-      "basis": "estimate",
-      "src": null
-    },
     "a9-grip-k2": {
       "oz": 3.1,
       "basis": "published",
       "src": "https://magpul.com/moe-k2-plus-grip-ar15-m4.html"
-    },
-    "a9-grip-moe": {
-      "oz": 2.6,
-      "basis": "estimate",
-      "src": null
     },
     "a9-hg-aero15": {
       "oz": 7.95,
@@ -393,21 +363,6 @@
     },
     "a9-hg-psa": {
       "oz": 10.5,
-      "basis": "estimate",
-      "src": null
-    },
-    "a9-irons-mbus": {
-      "oz": 2.3,
-      "basis": "estimate",
-      "src": null
-    },
-    "a9-irons-mbuspro": {
-      "oz": 5.0,
-      "basis": "estimate",
-      "src": null
-    },
-    "a9-irons-troy": {
-      "oz": 4.0,
       "basis": "estimate",
       "src": null
     },
@@ -473,11 +428,6 @@
     },
     "a9-mag-psasmg": {
       "oz": 5.0,
-      "basis": "estimate",
-      "src": null
-    },
-    "a9-mz-a2": {
-      "oz": 2.0,
       "basis": "estimate",
       "src": null
     },
@@ -701,11 +651,6 @@
       "basis": "estimate",
       "src": null
     },
-    "ar-ch-bcm": {
-      "oz": 1.9,
-      "basis": "estimate",
-      "src": null
-    },
     "ar-ch-geissele": {
       "oz": 1.4,
       "basis": "estimate",
@@ -718,11 +663,6 @@
     },
     "ar-gb-aero625": {
       "oz": 1.0,
-      "basis": "estimate",
-      "src": null
-    },
-    "ar-gb-aero750": {
-      "oz": 1.3,
       "basis": "estimate",
       "src": null
     },
@@ -743,11 +683,6 @@
     },
     "ar-gb-slr750": {
       "oz": 1.3,
-      "basis": "estimate",
-      "src": null
-    },
-    "ar-grip-bcm": {
-      "oz": 2.4,
       "basis": "estimate",
       "src": null
     },
@@ -801,11 +736,6 @@
       "basis": "estimate",
       "src": null
     },
-    "ar-hg-bcm": {
-      "oz": 9.9,
-      "basis": "estimate",
-      "src": null
-    },
     "ar-hg-bcm10": {
       "oz": 8.0,
       "basis": "estimate",
@@ -848,26 +778,6 @@
     },
     "ar-hg-psa": {
       "oz": 10.5,
-      "basis": "estimate",
-      "src": null
-    },
-    "ar-irons-mbus": {
-      "oz": 2.3,
-      "basis": "estimate",
-      "src": null
-    },
-    "ar-irons-mbuspro": {
-      "oz": 5.0,
-      "basis": "estimate",
-      "src": null
-    },
-    "ar-irons-mbusr": {
-      "oz": 1.2,
-      "basis": "estimate",
-      "src": null
-    },
-    "ar-irons-troy": {
-      "oz": 4.0,
       "basis": "estimate",
       "src": null
     },
@@ -926,11 +836,6 @@
       "basis": "estimate",
       "src": null
     },
-    "ar-mz-pa": {
-      "oz": 2.9,
-      "basis": "estimate",
-      "src": null
-    },
     "ar-mz-sf3p": {
       "oz": 2.0,
       "basis": "estimate",
@@ -971,11 +876,6 @@
       "basis": "published",
       "src": "https://www.sigsauer.com/romeo5x-1x20-mm.html"
     },
-    "ar-opt-slx16": {
-      "oz": 18.0,
-      "basis": "estimate",
-      "src": null
-    },
     "ar-opt-vortex": {
       "oz": 24.5,
       "basis": "estimate",
@@ -983,11 +883,6 @@
     },
     "ar-stock-a2": {
       "oz": 16.0,
-      "basis": "estimate",
-      "src": null
-    },
-    "ar-stock-b5": {
-      "oz": 8.5,
       "basis": "estimate",
       "src": null
     },
@@ -1021,11 +916,6 @@
       "basis": "estimate",
       "src": null
     },
-    "ar-stock-ubr": {
-      "oz": 21.3,
-      "basis": "published",
-      "src": "https://magpul.com/ubr-gen2-collapsible-stock.html"
-    },
     "ar-trig-alg": {
       "oz": 2.3,
       "basis": "estimate",
@@ -1033,21 +923,6 @@
     },
     "ar-trig-cmc": {
       "oz": 3.4,
-      "basis": "estimate",
-      "src": null
-    },
-    "ar-trig-geissele": {
-      "oz": 2.4,
-      "basis": "estimate",
-      "src": null
-    },
-    "ar-trig-larue": {
-      "oz": 3.0,
-      "basis": "estimate",
-      "src": null
-    },
-    "ar-trig-psa": {
-      "oz": 2.4,
       "basis": "estimate",
       "src": null
     },
@@ -1811,18 +1686,8 @@
       "basis": "estimate",
       "src": null
     },
-    "gl-opt-acro": {
-      "oz": 2.1,
-      "basis": "estimate",
-      "src": null
-    },
     "gl-opt-rmr": {
       "oz": 1.3,
-      "basis": "estimate",
-      "src": null
-    },
-    "gl-opt-sro": {
-      "oz": 1.6,
       "basis": "estimate",
       "src": null
     },
@@ -1991,11 +1856,6 @@
       "basis": "estimate",
       "src": null
     },
-    "gs-opt-rmr": {
-      "oz": 1.2,
-      "basis": "estimate",
-      "src": null
-    },
     "gs-opt-rmsc": {
       "oz": 0.6,
       "basis": "estimate",
@@ -2156,11 +2016,6 @@
       "basis": "estimate",
       "src": null
     },
-    "hc-opt-rmsc": {
-      "oz": 0.6,
-      "basis": "estimate",
-      "src": null
-    },
     "hc-pro": {
       "oz": 21.0,
       "basis": "estimate",
@@ -2306,28 +2161,8 @@
       "basis": "estimate",
       "src": null
     },
-    "mp-opt-407k": {
-      "oz": 1.0,
-      "basis": "estimate",
-      "src": null
-    },
-    "mp-opt-507c": {
-      "oz": 1.5,
-      "basis": "estimate",
-      "src": null
-    },
-    "mp-opt-acro": {
-      "oz": 2.1,
-      "basis": "estimate",
-      "src": null
-    },
     "mp-opt-dpp": {
       "oz": 1.9,
-      "basis": "estimate",
-      "src": null
-    },
-    "mp-opt-rmr": {
-      "oz": 1.2,
       "basis": "estimate",
       "src": null
     },
@@ -2513,16 +2348,6 @@
     },
     "p-mag-sig45": {
       "oz": 3.3,
-      "basis": "estimate",
-      "src": null
-    },
-    "p-opt-407c": {
-      "oz": 1.5,
-      "basis": "estimate",
-      "src": null
-    },
-    "p-opt-507c": {
-      "oz": 1.5,
       "basis": "estimate",
       "src": null
     },
@@ -2746,11 +2571,6 @@
       "basis": "estimate",
       "src": null
     },
-    "p365-opt-407k": {
-      "oz": 1.0,
-      "basis": "estimate",
-      "src": null
-    },
     "p365-opt-507k": {
       "oz": 1.0,
       "basis": "published",
@@ -2761,23 +2581,8 @@
       "basis": "published",
       "src": "https://www.holosun.com/products/eps-carry-rd-mrs"
     },
-    "p365-opt-r0": {
-      "oz": 1.0,
-      "basis": "estimate",
-      "src": null
-    },
     "p365-opt-rmrcc": {
       "oz": 1.1,
-      "basis": "estimate",
-      "src": null
-    },
-    "p365-opt-rmsc": {
-      "oz": 0.6,
-      "basis": "estimate",
-      "src": null
-    },
-    "p365-sight-nf": {
-      "oz": 0.4,
       "basis": "estimate",
       "src": null
     },

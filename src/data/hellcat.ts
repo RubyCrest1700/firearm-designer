@@ -77,7 +77,7 @@ const allParts = [
       offers: [['OP', 33.57]], pick: pick('value', 'Inexpensive tall sights for a dot.') },
   ]),
   ...parts('optic', [
-    { id: 'hc-opt-rmsc', brand: 'Shield', name: 'RMSc 4 MOA', specs: ['RMSc footprint', 'Very low profile'], attrs: { footprint: 'rmsc' },
+    { id: 'hc-opt-rmsc', sameAs: 'gs-opt-rmsc', brand: 'Shield', name: 'RMSc 4 MOA', specs: ['RMSc footprint', 'Very low profile'], attrs: { footprint: 'rmsc' },
       offers: [['BRN', 299.99], ['OP', 289.99]] },
     { id: 'hc-opt-r0', brand: 'Sig Sauer', name: 'RomeoZero Elite', specs: ['RMSc footprint', 'Direct mount'], attrs: { footprint: 'rmsc' },
       offers: [['OP', 189.99], ['GRITR', 132.99, false]] },
