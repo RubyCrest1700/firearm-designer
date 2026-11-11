@@ -1,5 +1,5 @@
 import { PLATFORMS } from './data';
-import { RETAILERS } from './data/retailers';
+import { RETAILERS, retailerName } from './data/retailers';
 import { PAUSED } from './data/helpers';
 import { bestOffer, estimateNote, money, noPriceNote, presetSelection, baseSelection, toBuild } from './engine';
 import { Blueprint } from './drawings';
@@ -80,7 +80,7 @@ export function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string, p
                   <li key={part.id}>
                     <button className="drop-card card" onClick={() => onPick(platform.id, part)}>
                       <span className="drop-name"><span className="brand-dim">{part.brand}</span> {part.name}</span>
-                      <span className="drop-meta">{platform.name} · {RETAILERS[bestOffer(part)!.retailer].name}</span>
+                      <span className="drop-meta">{platform.name} · {retailerName(bestOffer(part)!.retailer)}</span>
                       <span className="drop-price">
                         <s>{money(was)}</s> <b>{money(now)}</b>
                         <span className="change-chip down">↓ {money(by)} ({Math.round((by / was) * 100)}%)</span>

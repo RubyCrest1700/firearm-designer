@@ -609,6 +609,8 @@ tr:first-child td { border-top: 0; }
 .empty-state { padding: 36px 24px; text-align: center; display: grid; gap: 10px; justify-items: center; max-width: 560px; }
 .empty-state h2 { font: 700 24px/1.2 var(--f-head); }
 .empty-state p { color: var(--muted); }
+/* The screen shown when a page fails to draw (ErrorBoundary in src/ui.tsx). */
+.error-screen { padding-top: 48px; display: grid; justify-items: center; }
 
 /* ------------------------------------------------------------------- footer */
 

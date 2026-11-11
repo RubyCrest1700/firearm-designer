@@ -68,9 +68,16 @@ export const RETAILERS: Record<string, Retailer> = {
   RSUP: { id: 'RSUP', name: 'Rifle Supply', search: 'https://riflesupply.com/search.php?search_query=' },
 };
 
-export function offerUrl(retailerId: string, query: string): string {
-  const r = RETAILERS[retailerId];
-  return r.search + encodeURIComponent(query);
+/** Whether this id is a store in RETAILERS. Data naming any other id fails `npm run check-data`. */
+export const knownRetailer = (id: string) => Object.prototype.hasOwnProperty.call(RETAILERS, id);
+
+/** A store's name for the page. An id that isn't in RETAILERS shows as the id itself, so a page never fails on one. */
+export const retailerName = (id: string) => (knownRetailer(id) ? RETAILERS[id].name : id);
+
+/** The store's search for these words. Nothing for an id that isn't in RETAILERS: the caller shows no link. */
+export function offerUrl(retailerId: string, query: string): string | undefined {
+  if (!knownRetailer(retailerId)) return undefined;
+  return RETAILERS[retailerId].search + encodeURIComponent(query);
 }
 
 /**
@@ -78,6 +85,8 @@ export function offerUrl(retailerId: string, query: string): string {
  * own visitor stats. That's the proof merchants look for before inviting a site into their affiliate program.
  * Links we can't parse are left as they are.
  */
+// A per-retailer affiliate parameter would plug in here later: buyUrl would pass the retailer id, and this would set
+// that store's own parameter beside the two below. None is set today (the site has no affiliate links).
 export function tagged(url: string): string {
   try {
     const u = new URL(url);
@@ -89,5 +98,11 @@ export function tagged(url: string): string {
   }
 }
 
-/** Where a price links to: the product page we read the price from, or the store's search for the part. */
-export const buyUrl = (o: { retailer: string; url?: string }, partName: string) => tagged(o.url ?? offerUrl(o.retailer, partName));
+/**
+ * Where a price links to: the product page we read the price from, or the store's search for the part. Nothing for
+ * a store that isn't in RETAILERS, product page or not: the caller shows no link.
+ */
+export const buyUrl = (o: { retailer: string; url?: string }, partName: string): string | undefined => {
+  const url = knownRetailer(o.retailer) ? o.url ?? offerUrl(o.retailer, partName) : undefined;
+  return url === undefined ? undefined : tagged(url);
+};
