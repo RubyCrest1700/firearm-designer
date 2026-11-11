@@ -44,10 +44,6 @@
       "BCM": "https://bravocompanyusa.com/bcm-grip-mod-3-black/",
       "RTB": "https://www.righttobear.com/bcm-gunfighter-grip-mod-3-black-bcm-gfg-mod-3-blk/"
     },
-    "a10-grip-moe": {
-      "PSA": "https://palmettostatearmory.com/magpul-moe-grip-ar15-m16-mag415-blk-mfg-retail-kit.html",
-      "MAGPUL": "https://magpul.com/moe-grip-ar15-m4.html"
-    },
     "a10-hg-atlas": {
       "AERO": "https://www.aeroprecisionusa.com/m5-15-atlas-s-one-m-lok-handguard-anodized-black"
     },
@@ -72,9 +68,6 @@
       "PA": "https://www.primaryarms.com/Magpul-UBR-GEN2-Collapsible-Stock-Black",
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-stocks-parts/ar-15-ubr-2.0-collapsible-stock-collapsible-a5-length/",
       "MAGPUL": "https://magpul.com/ubr-gen2-collapsible-stock.html"
-    },
-    "a10-trig-alg": {
-      "PA": "https://www.primaryarms.com/alg-defense-combat-trigger-act"
     },
     "a10-trig-geissele": {
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-triggers-parts/ssa-e-super-sem-automatic-enhanced-2-stage-trigger-for-ar-15/",
@@ -112,21 +105,10 @@
     "ar-ch-aero": {
       "AERO": "https://www.aeroprecisionusa.com/ar15-charging-handle"
     },
-    "ar-ch-bcm": {
-      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-charging-handle-parts/ar-15-bcmgunfighter-charging-handle-gen-2-black/?sku=100027144",
-      "MID": "https://www.midwayusa.com/product/1025635734",
-      "RTB": "https://www.righttobear.com/bcm-vltor-charging-handle-mod-4b-medium-latch-bcm-gfh-mod4b-556/",
-      "ARD": "https://ar15discounts.com/products/bcmgunfighter-charging-handle-5-56mm-223-w-mod-4b-medium-latch/"
-    },
     "ar-ch-radian": {
       "PA": "https://www.primaryarms.com/radian-weapons-ar15-m16-raptor-ambidextrous-charging-handle-black",
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-charging-handle-parts/ar-15-raptor-charging-handle-5.56/",
       "IMP": "https://www.impactguns.com/ar-15-lower-receiver-parts/radian-weapons-raptor-ambidextrous-charging-handle-5-56mm-black-finish-817093020477-r0001"
-    },
-    "ar-grip-bcm": {
-      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-grips/ar-15-mod-3-gunfighter-grip/?sku=100013641",
-      "RTB": "https://www.righttobear.com/bcm-gunfighter-grip-mod-3-black-bcm-gfg-mod-3-blk/",
-      "PA": "https://www.primaryarms.com/bravo-company-gunfighter-grip-mod-3-black-bcm-gfg-mod-3-black"
     },
     "ar-grip-k2": {
       "PA": "https://www.primaryarms.com/magpul-moe-k2-plus-pistol-grip-black",
@@ -135,18 +117,11 @@
     "ar-grip-moe": {
       "PSA": "https://palmettostatearmory.com/magpul-moe-grip-ar15-m16-mag415-blk-mfg-retail-kit.html",
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-grips/ar-15-moe-grip-a0040530/",
-      "AA": "https://aerospacearms.com/magpul-industries-moe-grip-ar15-m4-black/"
+      "AA": "https://aerospacearms.com/magpul-industries-moe-grip-ar15-m4-black/",
+      "MAGPUL": "https://magpul.com/moe-grip-ar15-m4.html"
     },
     "ar-gt-carbine": {
       "AERO": "https://www.aeroprecisionusa.com/gas-tube-carbine-length-melonite"
-    },
-    "ar-hg-bcm": {
-      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-handguards-parts/ar-15-bcmgunfighter--mcmr-handguard-m-lok-free-float/?sku=100026763",
-      "RA": "https://www.rainierarms.com/bcm-gunfighter-ar-15-mcmr-223-5-56mm-rail-m-lok-compatible-mounting-slots-13/",
-      "PA": "https://www.primaryarms.com/bcm-13-mlok-compatible-modular-rail-bcm-mcmr-13-556-blk",
-      "BCM": "https://bravocompanyusa.com/bcm-mcmr-13-m-lok-compatible-modular-rail/",
-      "RTB": "https://www.righttobear.com/bcm-mcmr-m-lok-free-float-handguard-13-bcm-mcmr-13-556-blk/",
-      "GRITR": "https://gritrsports.com/bravo-company-mcmr-556-13in-rail-bcm-mcmr-13-556-blk"
     },
     "ar-hg-mi": {
       "PA": "https://www.primaryarms.com/midwest-industries-15in-combat-rail-m-lok-ar-15-handguard-black"
@@ -789,9 +764,6 @@
       "BRD": "https://blackrifledepot.com/bcm-gunfighter-m-lok-mod-3-vertical-grip-black/",
       "PA": "https://www.primaryarms.com/bcm-gunfighter-mod-3-vertical-grip-m-lok-black"
     },
-    "ar-mz-pa": {
-      "PA": "https://www.primaryarms.com/precision-armament-m4-72-severe-duty-7-62-compensator-5-8x24-black"
-    },
     "a10-trig-larue": {
       "BRD": "https://blackrifledepot.com/larue-tactical-mbt-2s-ar-15-trigger/",
       "PA": "https://www.primaryarms.com/larue-tactical-mbt-2s-ar-15-trigger-straight-bow"
@@ -813,9 +785,6 @@
     },
     "r-laser-cmr301": {
       "PA": "https://www.primaryarms.com/crimson-trace-cmr-301-rail-master-pro-green-laser-sight-tactical-light-system-for-ar-type-rifles"
-    },
-    "a10-gb-sa750": {
-      "PA": "https://www.primaryarms.com/superlative-arms-bleed-off-adjustable-gas-block-set-screw-750-melonite"
     },
     "a10-gb-875": {
       "PA": "https://www.primaryarms.com/superlative-arms-bleed-off-adjustable-gas-block-set-screw-875-melonite"
@@ -877,9 +846,6 @@
     "p-sight-xray3s": {
       "KYG": "https://www.kygunco.com/product/sig-sauer-sox10009-xray3-sight-set-day-night-super-tall",
       "RA": "https://www.rainierarms.com/sig-sauer-xray3-day-night-super-tall-sight-set/"
-    },
-    "a9-grip-moe": {
-      "AA": "https://aerospacearms.com/magpul-industries-moe-grip-ar15-m4-black/"
     },
     "ar-grip-hogue": {
       "WING": "https://www.wingtactical.com/firearm-parts-accessories/hogue-overmolded-ar-15-rubberized-grip/",
@@ -976,9 +942,6 @@
     },
     "a9-brace-sba4": {
       "WING": "https://www.wingtactical.com/firearm-parts-accessories/sb-tactical-sba4-pistol-stabilizing-brace/"
-    },
-    "a9-grip-bcm": {
-      "KYG": "https://www.kygunco.com/product/bravo-company-bcm-gfg-mod-3-black-bcm-gunfighter-grip-mod-3-black"
     },
     "a9-grip-k2": {
       "WING": "https://www.wingtactical.com/firearm-parts/ar-15-parts/grips-foregrips/pistol-grips/magpul-moe-k2-ar-15-grip/"
@@ -1390,11 +1353,19 @@
     "a9-hg-bcm13": {
       "BUDS": "https://www.budsgunshop.com/products/gun-parts-furniture/bravo-company-bcm-gunfighter-mcmr-13in-m-lok-black-45070",
       "GRITR": "https://gritrsports.com/bravo-company-mcmr-556-13in-rail-bcm-mcmr-13-556-blk",
-      "KYG": "https://www.kygunco.com/product/bravo-company-bcm-mcmr-13-556-blk-bcm-gunfighter-mcmr-aluminum-rail-5.56-13-blk"
+      "KYG": "https://www.kygunco.com/product/bravo-company-bcm-mcmr-13-556-blk-bcm-gunfighter-mcmr-aluminum-rail-5.56-13-blk",
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-handguards-parts/ar-15-bcmgunfighter--mcmr-handguard-m-lok-free-float/?sku=100026763",
+      "RA": "https://www.rainierarms.com/bcm-gunfighter-ar-15-mcmr-223-5-56mm-rail-m-lok-compatible-mounting-slots-13/",
+      "PA": "https://www.primaryarms.com/bcm-13-mlok-compatible-modular-rail-bcm-mcmr-13-556-blk",
+      "BCM": "https://bravocompanyusa.com/bcm-mcmr-13-m-lok-compatible-modular-rail/",
+      "RTB": "https://www.righttobear.com/bcm-mcmr-m-lok-free-float-handguard-13-bcm-mcmr-13-556-blk/"
     },
     "a9-ch-bcm": {
       "ARD": "https://ar15discounts.com/products/bcmgunfighter-charging-handle-5-56mm-223-w-mod-4b-medium-latch/",
-      "AA": "https://aerospacearms.com/bravo-company-bcmgunfighter-charging-handle-556-mod-4b-medium-latch/"
+      "AA": "https://aerospacearms.com/bravo-company-bcmgunfighter-charging-handle-556-mod-4b-medium-latch/",
+      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-charging-handle-parts/ar-15-bcmgunfighter-charging-handle-gen-2-black/?sku=100027144",
+      "MID": "https://www.midwayusa.com/product/1025635734",
+      "RTB": "https://www.righttobear.com/bcm-vltor-charging-handle-mod-4b-medium-latch-bcm-gfh-mod4b-556/"
     },
     "a9-mz-odin": {
       "BUDS": "https://www.budsgunshop.com/products/gun-parts-muzzle-devices/odin-works-atlas-comp-9mm-1-2-28-muzzle-brake-166534",

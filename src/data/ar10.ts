@@ -57,8 +57,8 @@ const allParts = [
   ...parts('trigger', [
     { id: 'a10-trig-psa', brand: 'Palmetto State Armory', name: 'EPT Enhanced Polished Trigger', specs: ['Single stage', '~6 lb', 'Polished'], attrs: {},
       offers: [['PSA', 39.99]], pick: pick('budget', 'Smoother than mil-spec for little more.') },
-    { id: 'a10-trig-alg', brand: 'ALG Defense', name: 'ACT Trigger', specs: ['Single stage', '~5.5 lb'], attrs: {},
-      offers: [['BRN', 69.0], ['PA', 69.99]], pick: pick('value', 'The best trigger under $100.') },
+    { id: 'a10-trig-alg', sameAs: 'ar-trig-alg', brand: 'ALG Defense', name: 'ACT Trigger', specs: ['Single stage', '~5.5 lb'], attrs: {},
+      offers: [['BRN', 69.0], ['PA', 69.99], ['MID', 71.99]], pick: pick('value', 'The best trigger under $100.') },
     { id: 'a10-trig-geissele', brand: 'Geissele', name: 'SSA-E Two Stage', specs: ['Two stage', '3.5 lb total'], attrs: {},
       offers: [['BRN', 240.0], ['PA', 240.0]], pick: pick('premium', 'A two-stage suits a precision .308.') },
     { id: 'a10-trig-larue', brand: 'LaRue Tactical', name: 'MBT-2S Two Stage', specs: ['Two stage', '~4.5 lb total'], attrs: {},
@@ -81,8 +81,8 @@ const allParts = [
       offers: [['PA', 69.95], ['BRN', 74.95], ['MID', 72.99]] },
   ]),
   ...parts('grip', [
-    { id: 'a10-grip-moe', brand: 'Magpul', name: 'MOE Grip', specs: ['Polymer'], attrs: {},
-      offers: [['PA', 19.95], ['PSA', 19.99]], pick: pick('budget', 'The default grip.') },
+    { id: 'a10-grip-moe', sameAs: 'ar-grip-moe', brand: 'Magpul', name: 'MOE Grip', specs: ['Polymer'], attrs: {},
+      offers: [['PA', 19.95], ['PSA', 19.99], ['BRN', 21.95]], pick: pick('budget', 'The default grip.') },
     { id: 'a10-grip-bcm', brand: 'Bravo Company', name: 'Gunfighter Grip Mod 3', specs: ['Steeper angle'], attrs: {},
       offers: [['BRN', 19.95]], pick: pick('value', 'More vertical angle.') },
   ]),
@@ -112,8 +112,8 @@ const allParts = [
   ...parts('gasblock', [
     { id: 'a10-gb-750', brand: 'Aero Precision', name: 'Low Profile Gas Block .750', specs: ['.750', 'Low profile'], attrs: { journal: '.750' },
       offers: [['AERO', 24.99], ['PA', 22.99]], pick: pick('value', 'Simple, fits under any free-float rail.') },
-    { id: 'a10-gb-sa750', brand: 'Superlative Arms', name: 'Adjustable Bleed-Off Gas Block .750', specs: ['.750', 'Adjustable'], attrs: { journal: '.750' },
-      offers: [['BRN', 84.99]] },
+    { id: 'a10-gb-sa750', sameAs: 'ar-gb-sa750', brand: 'Superlative Arms', name: 'Adjustable Bleed-Off Gas Block .750', specs: ['.750', 'Adjustable'], attrs: { journal: '.750' },
+      offers: [['BRN', 84.99], ['OP', 89.0]] },
     { id: 'a10-gb-875', brand: 'Superlative Arms', name: 'Adjustable Bleed-Off Gas Block .875', specs: ['.875', 'Adjustable'], attrs: { journal: '.875' },
       offers: [['BRN', 89.99], ['OP', 92.0]], pick: pick('premium', 'Tune gas for suppressed or hot loads.') },
   ]),

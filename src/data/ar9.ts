@@ -90,9 +90,9 @@ const allParts = [
       offers: [['PA', 119.99]] },
   ]),
   ...parts('grip', [
-    { id: 'a9-grip-moe', brand: 'Magpul', name: 'MOE Grip', specs: ['Polymer', 'Storage core'], attrs: {},
-      offers: [['PA', 19.95], ['PSA', 19.99]], pick: pick('budget', 'The default grip.') },
-    { id: 'a9-grip-bcm', brand: 'Bravo Company', name: 'Gunfighter Grip Mod 3', specs: ['Steeper angle'], attrs: {},
+    { id: 'a9-grip-moe', sameAs: 'ar-grip-moe', brand: 'Magpul', name: 'MOE Grip', specs: ['Polymer', 'Storage core'], attrs: {},
+      offers: [['PA', 19.95], ['PSA', 19.99], ['BRN', 21.95]], pick: pick('budget', 'The default grip.') },
+    { id: 'a9-grip-bcm', sameAs: 'a10-grip-bcm', brand: 'Bravo Company', name: 'Gunfighter Grip Mod 3', specs: ['Steeper angle'], attrs: {},
       offers: [['BRN', 19.95]], pick: pick('value', 'More vertical angle suits a short PCC.') },
     { id: 'a9-grip-k2', brand: 'Magpul', name: 'MOE-K2+ Grip', specs: ['Rubber overmold', 'Near-vertical'], attrs: {},
       offers: [['PA', 29.95], ['BRN', 29.95]], pick: pick('premium', 'Grippy and near-vertical.') },

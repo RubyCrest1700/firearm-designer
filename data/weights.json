@@ -76,18 +76,8 @@
       "basis": "estimate",
       "src": null
     },
-    "a10-gb-sa750": {
-      "oz": 1.6,
-      "basis": "estimate",
-      "src": null
-    },
     "a10-grip-bcm": {
       "oz": 2.7,
-      "basis": "estimate",
-      "src": null
-    },
-    "a10-grip-moe": {
-      "oz": 2.9,
       "basis": "estimate",
       "src": null
     },
@@ -205,11 +195,6 @@
       "oz": 21.3,
       "basis": "published",
       "src": "https://magpul.com/ubr-gen2-collapsible-stock.html"
-    },
-    "a10-trig-alg": {
-      "oz": 2.0,
-      "basis": "estimate",
-      "src": null
     },
     "a10-trig-geissele": {
       "oz": 2.3,
@@ -341,20 +326,10 @@
       "basis": "estimate",
       "src": null
     },
-    "a9-grip-bcm": {
-      "oz": 2.4,
-      "basis": "estimate",
-      "src": null
-    },
     "a9-grip-k2": {
       "oz": 3.1,
       "basis": "published",
       "src": "https://magpul.com/moe-k2-plus-grip-ar15-m4.html"
-    },
-    "a9-grip-moe": {
-      "oz": 2.6,
-      "basis": "estimate",
-      "src": null
     },
     "a9-hg-aero15": {
       "oz": 7.95,
@@ -671,11 +646,6 @@
       "basis": "estimate",
       "src": null
     },
-    "ar-ch-bcm": {
-      "oz": 1.9,
-      "basis": "estimate",
-      "src": null
-    },
     "ar-ch-geissele": {
       "oz": 1.4,
       "basis": "estimate",
@@ -708,11 +678,6 @@
     },
     "ar-gb-slr750": {
       "oz": 1.3,
-      "basis": "estimate",
-      "src": null
-    },
-    "ar-grip-bcm": {
-      "oz": 2.4,
       "basis": "estimate",
       "src": null
     },
@@ -763,11 +728,6 @@
     },
     "ar-hg-aero9": {
       "oz": 8.5,
-      "basis": "estimate",
-      "src": null
-    },
-    "ar-hg-bcm": {
-      "oz": 9.9,
       "basis": "estimate",
       "src": null
     },
@@ -868,11 +828,6 @@
     },
     "ar-mz-lantac": {
       "oz": 2.6,
-      "basis": "estimate",
-      "src": null
-    },
-    "ar-mz-pa": {
-      "oz": 2.9,
       "basis": "estimate",
       "src": null
     },

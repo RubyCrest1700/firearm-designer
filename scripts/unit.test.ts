@@ -647,18 +647,22 @@ const estimateOffer = (price: number): Offer[] => [{ retailer: 'OP', price, inSt
 /** The AR-15 handguard these tests move about, and a second part to prove the rest of a build is left alone. */
 const MOVER = 'ar-hg-mi';
 const OTHER = 'ar-grip-moe';
-/** Puts offers and history on the moving part, for the test only, so nothing here depends on tonight's prices. */
+/**
+ * Puts offers and history on the moving part, for the test only, so nothing here depends on tonight's prices. History
+ * is filed where the site reads it: under the part's product key, which for a copy (sameAs) is its main copy's id.
+ */
 function setPrice(t: TestContext, offers: Offer[], series?: [string, number][], id = MOVER, on = ar15) {
   const x = part(on, id);
-  const was = { offers: x.offers, paused: x.pausedThrough, series: RAW_HISTORY[id] };
+  const key = productKey(x);
+  const was = { offers: x.offers, paused: x.pausedThrough, series: RAW_HISTORY[key] };
   t.after(() => {
     x.offers = was.offers;
     x.pausedThrough = was.paused;
-    if (was.series) RAW_HISTORY[id] = was.series; else delete RAW_HISTORY[id];
+    if (was.series) RAW_HISTORY[key] = was.series; else delete RAW_HISTORY[key];
   });
   x.offers = offers;
   x.pausedThrough = undefined;
-  if (series) RAW_HISTORY[id] = series; else delete RAW_HISTORY[id];
+  if (series) RAW_HISTORY[key] = series; else delete RAW_HISTORY[key];
 }
 /** Past the one-time estimate-era clear unless a test says otherwise: MOVER is a listed part, and these tests are about everything else. */
 const moverBuild = (over: Partial<SavedBuild>): SavedBuild => ({ id: 'm', name: 'Mover', platform: 'ar15', selection: { ...baseSelection(ar15), handguard: MOVER }, savedAt: '2026-10-20T12:00:00Z', estimateEraCleared: true, ...over });
