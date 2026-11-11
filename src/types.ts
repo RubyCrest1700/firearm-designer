@@ -36,6 +36,11 @@ export interface Part {
   pick?: { tier: Tier; note: string };
   /** Maker's part number or SKU, when we have it. The "Parts I Own" search matches it. */
   mpn?: string;
+  /**
+   * This part is the same product as the part with this id (the main copy). It shares the main copy's store links,
+   * live and list prices and price history; fit attrs, slot and specs stay its own.
+   */
+  sameAs?: string;
   /** Serialized part (marked FFL): ships to a licensed dealer */
   serialized?: boolean;
   /** Weight as sold, from data/weights.json. `published` is false when it's our typical-figure estimate. */
