@@ -17,6 +17,7 @@ import { totalParts } from '../src/store';
 import { baseSelection, bestOffer, candidateIssues, issuesFor, listedParts, noPriceNote, ownedOf, placementOf, presetSelection, priceRange, selectionTokens, singleRetailerCarts, toBuild, toBuyIds, unpricedCount, worst, type Selection } from '../src/engine';
 import { estimateNote, estimatedCount, isEstimate, money, priceLabel, totalNotes } from '../src/engine';
 import { findParts } from '../src/find';
+import { isLink } from '../src/find';
 import { Candidate } from '../src/Picker';
 import { buildStatus, statesFor } from '../src/status';
 import { droppedBuilds, savedPrices } from '../src/store';
@@ -191,8 +192,8 @@ test('the short AR-15 barrels are listed in the picker and search, and open from
   for (const id of SHORT_AR15) {
     assert.ok(!('hidden' in part(ar15, id)), `${id} has no hidden flag`);
     assert.ok(listed.includes(id), id);
-    // The name without its inch marks: search reads `9"` as "9 in", and the 9" barrel's text has no "in" (a search quirk).
-    assert.ok(findParts(part(ar15, id).name.replace(/"/g, ''), ar15).here.some((f) => f.part.id === id), `${id} found by name`);
+    // The name exactly as listed, inch marks and all.
+    assert.ok(findParts(part(ar15, id).name, ar15).here.some((f) => f.part.id === id), `${id} found by name`);
     const url = part(ar15, id).offers.find((o) => o.url)?.url;
     assert.ok(url, `${id} has a product link`);
     assert.ok(findParts(url, ar15).here.some((f) => f.part.id === id), `${id} found by link`);
@@ -3299,6 +3300,270 @@ test('the header prints the read time as the visitor\'s local date; the built pa
   assert.ok(render.includes("return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });"));
   assert.equal(render.split('${PRICES_READ_AT ? ` (prices last checked ${shortDate(PRICES_READ_AT)})` : \'\'}').length - 1, 2);
   if (PRICES_READ_AT !== null) assert.ok(platformPage(PAGE_VIEWS[0]).includes(`(prices last checked ${utc(PRICES_READ_AT)})`));
+});
+
+/* ------------------------------------------------------------------ Parts I Own: search by name, length and pasted link */
+
+/** A part's text as the search reads it, as written in the catalog. */
+const searchText = (p: Platform, x: Part) => [x.brand, x.name, p.slots.find((s) => s.id === x.slot)?.name ?? '', x.mpn ?? '', ...x.specs].join(' ');
+/** True when the text carries this length in inches as a whole figure: 16" but not 116", 1.16" or 1-7/16". */
+const hasInches = (text: string, n: string) => new RegExp(`(^|[^\\d./])${n.replace('.', '\\.')}"`).test(text);
+const foundIds = (list: { part: Part }[]) => list.map((f) => f.part.id);
+/** A made-up part added to a platform for one test. Its brand has no "in" in it, and no real part has it. */
+function findPart(t: TestContext, p: Platform, id: string, name: string, more: Partial<Part> = {}, urls: string[] = []): Part {
+  const x: Part = { id: `syn-find-${id}`, slot: 'barrel', brand: 'Zzqx', name, specs: [], attrs: {}, offers: urls.map((url) => ({ retailer: 'BRN', price: 1, inStock: true, url })), ...more };
+  t.after(() => { p.parts.splice(p.parts.indexOf(x), 1); });
+  p.parts.push(x);
+  return x;
+}
+
+test('search finds every part on every platform by its exact brand and name', () => {
+  const missed = PLATFORMS.flatMap((p) => p.parts.filter((x) => !findParts(`${x.brand} ${x.name}`, p).here.some((f) => f.part.id === x.id)).map((x) => `${p.id}: ${x.id} (${x.brand} ${x.name})`));
+  assert.deepEqual(missed, []);
+  // And by its name alone, which is what the box says.
+  const byName = PLATFORMS.flatMap((p) => p.parts.filter((x) => !findParts(x.name, p).here.some((f) => f.part.id === x.id)).map((x) => `${p.id}: ${x.id} (${x.name})`));
+  assert.deepEqual(byName, []);
+  assert.ok(PLATFORMS.some((p) => p.parts.some((x) => x.name.includes('"'))), 'the catalog has names with inch marks');
+});
+
+test('search reads a length in inches the same however it is typed', () => {
+  const run = (q: string) => foundIds(findParts(q, ar15).here);
+  const sixteen = run('16" barrel');
+  assert.ok(sixteen.length > 0);
+  for (const q of ['16 inch barrel', '16in barrel', '16-inch barrel', '16 inches barrel', '16 in barrel', '16in. barrel', '16 " barrel', '16” barrel', '16″ barrel', '16 INCH Barrel', '16.0" barrel'])
+    assert.deepEqual(run(q), sixteen, q);
+  for (const id of sixteen) {
+    const x = part(ar15, id);
+    assert.ok(hasInches(searchText(ar15, x), '16'), `${id} carries a 16" length`);
+    assert.ok(x.slot !== 'barrel' || x.attrs.length === 16, `${id} is not a barrel of another length`);
+  }
+  // Every 16" AR-15 barrel named that way is there, and no 10.3" or 18" barrel.
+  const barrels = (len: number) => ar15.parts.filter((x) => x.slot === 'barrel' && x.attrs.length === len && hasInches(x.name, String(len))).map((x) => x.id);
+  assert.ok(barrels(16).length >= 5 && barrels(10.3).length >= 1 && barrels(18).length >= 1);
+  for (const id of barrels(16)) assert.ok(sixteen.includes(id), id);
+  for (const id of [...barrels(10.3), ...barrels(18)]) assert.ok(!sixteen.includes(id), id);
+  // The length on its own.
+  assert.deepEqual(run('16 inch').sort(), run('16"').sort());
+  for (const id of barrels(16)) assert.ok(run('16"').includes(id), id);
+  for (const id of run('16"')) assert.ok(hasInches(searchText(ar15, part(ar15, id)), '16'), id);
+  // Decimals survive.
+  for (const q of ['10.3 inch', '10.3"', '10.3in', '10.3-inch barrel']) {
+    assert.ok(run(q).length > 0, q);
+    for (const id of barrels(10.3)) assert.ok(run(q).includes(id), `${q}: ${id}`);
+    for (const id of run(q)) assert.ok(hasInches(searchText(ar15, part(ar15, id)), '10.3'), `${q}: ${id}`);
+  }
+  // 15" handguards only.
+  const rails = run('15 inch handguard');
+  assert.ok(rails.length > 0);
+  assert.deepEqual(rails, run('15" handguard'));
+  for (const id of rails) {
+    assert.equal(part(ar15, id).slot, 'handguard', id);
+    assert.ok(hasInches(searchText(ar15, part(ar15, id)), '15'), id);
+  }
+});
+
+test('search matches a whole length, and leaves fractions, plain "in" and other figures alone', (t) => {
+  const rod = findPart(t, ar15, 'rod', '16" Rod');
+  const tube = findPart(t, ar15, 'tube', '4.61" Tube');
+  const nut = findPart(t, ar15, 'nut', '1-7/16" Nut');
+  const pin = findPart(t, ar15, 'pin', 'Model 19 Pin');
+  const spec = findPart(t, ar15, 'spec', 'Flat Bar', { specs: ['16" long', '1/2x28', '.308'] });
+  const run = (q: string) => foundIds(findParts(q, ar15).here).filter((id) => id.startsWith('syn-find-'));
+  assert.ok(!/in/i.test(searchText(ar15, rod)), 'the made-up rod has no "in" in its text');
+  // A typed length is the whole figure: 6" is not 16", and the 16 in 1-7/16" is not a length.
+  assert.deepEqual(run('zzqx 16"'), [rod.id, spec.id]);
+  assert.deepEqual(run('zzqx 16 inches'), [rod.id, spec.id]);
+  assert.deepEqual(run('zzqx 6"'), []);
+  assert.deepEqual(run('zzqx 1"'), []);
+  assert.deepEqual(run('zzqx 7/16'), [nut.id]);
+  assert.deepEqual(run('zzqx 1-7/16"'), [nut.id]);
+  // A length typed to fewer decimal places finds the longer figure; a different whole number does not.
+  assert.deepEqual(run('zzqx 4.61"'), [tube.id]);
+  assert.deepEqual(run('zzqx 4.6 inch'), [tube.id]);
+  assert.deepEqual(run('zzqx 4"'), []);
+  assert.deepEqual(run('zzqx 61"'), []);
+  // A plain number still finds the part, as before.
+  assert.deepEqual(run('zzqx 16'), [rod.id, nut.id, spec.id]);
+  // Name hits rank above spec hits.
+  assert.deepEqual(run('zzqx 16" flat'), [spec.id]);
+  assert.deepEqual(run('16" zzqx'), [rod.id, spec.id]);
+  // "in" that is not a length is the plain word: it doesn't find a part just because its text has an inch mark.
+  assert.deepEqual(run('zzqx in'), [pin.id]);
+  assert.deepEqual(run('zzqx rod in'), []);
+  assert.deepEqual(run('zzqx built in'), []);
+  // "19 in" reads as a length first; nothing we list is a 19" Zzqx, so "in" is taken as the word.
+  assert.deepEqual(run('zzqx 19 in'), [pin.id]);
+  assert.deepEqual(run('zzqx 19"'), []);
+  // Thread specs and calibers are untouched.
+  assert.deepEqual(run('zzqx 1/2x28'), [spec.id]);
+  assert.deepEqual(run('zzqx .308'), [spec.id]);
+});
+
+test('search still finds drop-in parts, thread specs, calibers and part numbers on the real catalog', () => {
+  const lower = (p: Platform, f: { part: Part }) => searchText(p, f.part).toLowerCase();
+  const dropIn = findParts('drop-in', ar15).here;
+  assert.ok(dropIn.length > 0);
+  assert.deepEqual(foundIds(findParts('drop in', ar15).here), foundIds(dropIn));
+  assert.deepEqual(foundIds(findParts('Drop-In', ar15).here), foundIds(dropIn));
+  for (const f of dropIn) assert.ok(/drop.in/.test(lower(ar15, f)), f.part.id);
+  // A bare "in" finds only parts with "in" written in their own text, never one that merely has an inch mark.
+  for (const q of ['in', 'built in', 'barrel in']) {
+    for (const f of findParts(q, ar15).here) assert.ok(lower(ar15, f).includes('in'), `${q}: ${f.part.id}`);
+    const marked = ar15.parts.filter((x) => x.name.includes('"') && !searchText(ar15, x).toLowerCase().includes('in'));
+    for (const x of marked) assert.ok(!findParts(q, ar15).here.some((f) => f.part.id === x.id), `${q}: ${x.id}`);
+  }
+  for (const [q, p] of [['1/2x28', ar15], ['5/8x24', ar15], ['5.56', ar15], ['.308', ar10], ['9mm', ar9], ['m13.5x1', glock], ['.578x28', platform('glock20')]] as const) {
+    const hits = findParts(q, p).here;
+    assert.ok(hits.length > 0, q);
+    for (const f of hits) assert.ok(lower(p, f).includes(q), `${q}: ${f.part.id}`);
+  }
+  // Part numbers, as written and without their dashes and spaces.
+  const numbered = PLATFORMS.flatMap((p) => p.parts.filter((x) => x.mpn).map((x) => ({ p, x })));
+  assert.ok(numbered.length > 0);
+  for (const { p, x } of numbered) {
+    assert.ok(findParts(x.mpn!, p).here.some((f) => f.part.id === x.id), `${x.id} by part number`);
+    assert.ok(findParts(x.mpn!.replace(/[^a-z0-9]/gi, ''), p).here.some((f) => f.part.id === x.id), `${x.id} by bare part number`);
+  }
+});
+
+test('a pasted store link whose page sells several parts finds the one its parameters name', (t) => {
+  // Three recoil springs share one Brownells page and differ by ?sku=. The links come from data/sources.json.
+  const SPRINGS = ['g17-rsa-g3', 'g19-rsa-g3', 'gs-rsa-48'];
+  const links = (sources as unknown as { parts: Record<string, Record<string, string>> }).parts;
+  const where = (id: string) => PLATFORMS.find((p) => p.parts.some((x) => x.id === id))!;
+  const all = (r: { here: { part: Part }[]; elsewhere: { part: Part }[] }) => [...r.here, ...r.elsewhere].map((f) => f.part);
+  for (const id of SPRINGS) {
+    const url = links[id]?.BRN;
+    assert.ok(url, `${id} has a Brownells link`);
+    // As the catalog stands (the site may not show this store's link on the part), the link never finds another product.
+    for (const x of all(findParts(url, where(id)))) assert.equal(productKey(x), productKey(part(where(id), id)), `${url} finds ${x.id}`);
+  }
+  // With each link shown on its part, each finds exactly its own part.
+  for (const id of SPRINGS) {
+    const x = part(where(id), id);
+    const offers = x.offers;
+    t.after(() => { x.offers = offers; });
+    x.offers = [...offers.filter((o) => o.url !== links[id].BRN), { retailer: 'BRN', price: 1, inStock: true, url: links[id].BRN }];
+  }
+  for (const id of SPRINGS) {
+    const r = findParts(links[id].BRN, where(id));
+    assert.ok(r.here.some((f) => f.part.id === id), `${id} found by its link`);
+    for (const x of all(r)) assert.equal(productKey(x), productKey(part(where(id), id)), `${links[id].BRN} finds ${x.id}`);
+    assert.ok(r.here.every((f) => f.byLink));
+    // Our own "View" links add these two.
+    const tagged = new URL(links[id].BRN);
+    tagged.searchParams.set('utm_source', 'dropinbuilds');
+    tagged.searchParams.set('utm_medium', 'referral');
+    assert.deepEqual(foundIds(findParts(tagged.toString(), where(id)).here), foundIds(r.here), tagged.toString());
+    // The page without its parameter names several products when the three share it, so it finds none of them.
+    const bare = new URL(links[id].BRN);
+    bare.search = '';
+    const others = SPRINGS.filter((o) => o !== id && new URL(links[o].BRN).pathname === bare.pathname && productKey(part(where(o), o)) !== productKey(part(where(id), id)));
+    if (others.length) assert.deepEqual(all(findParts(bare.toString(), where(id))), [], bare.toString());
+  }
+});
+
+test('a pasted link matches through tracking codes, http, www and a trailing slash', (t) => {
+  const stored = 'https://www.zzqx-store.test/Products/Widget-One/?sku=A1&color=black';
+  const x = findPart(t, ar15, 'widget', 'Widget One', {}, [stored]);
+  const plain = findPart(t, ar15, 'plain', 'Widget Plain', {}, ['https://zzqx-store.test/products/widget-plain']);
+  const run = (url: string) => { const r = findParts(url, ar15); return [...r.here, ...r.elsewhere].map((f) => f.part.id); };
+  for (const url of [
+    stored,
+    `${stored}&utm_source=dropinbuilds&utm_medium=referral`,
+    'https://www.zzqx-store.test/Products/Widget-One/?utm_source=dropinbuilds&utm_medium=referral&sku=A1&color=black',
+    'http://www.zzqx-store.test/Products/Widget-One/?sku=A1&color=black',
+    'https://zzqx-store.test/Products/Widget-One/?sku=A1&color=black',
+    'https://WWW.ZZQX-STORE.TEST/products/widget-one?sku=A1&color=black',
+    'https://www.zzqx-store.test/Products/Widget-One?color=black&sku=A1',
+    'https://www.zzqx-store.test/Products/Widget-One///?sku=A1&color=black#reviews',
+    `  ${stored}&gclid=x&fbclid=x&msclkid=x&mc_cid=x&mc_eid=x&srsltid=x&utm_campaign=x&utm_term=x  `,
+  ]) assert.deepEqual(run(url), [x.id], url);
+  for (const url of [
+    'https://zzqx-store.test/products/widget-plain',
+    'https://zzqx-store.test/products/widget-plain/',
+    'http://www.zzqx-store.test/products/widget-plain',
+    'https://www.zzqx-store.test/products/widget-plain/?utm_source=dropinbuilds&utm_medium=referral',
+    // A parameter we don't store, on a page that is one product: the page alone decides.
+    'https://zzqx-store.test/products/widget-plain?variant=12345',
+  ]) assert.deepEqual(run(url), [plain.id], url);
+  assert.ok(findParts(stored, ar15).here.every((f) => f.byLink));
+  // A link no store we track has: nothing found, and the finder knows it was a link.
+  for (const url of ['https://zzqx-store.test/products/widget-two', 'https://example.com/products/widget-one/?sku=A1&color=black', 'https://zzqx-store.test/']) {
+    assert.deepEqual(findParts(url, ar15), { here: [], elsewhere: [] }, url);
+    assert.equal(isLink(url), true);
+  }
+  assert.equal(isLink('zzqx widget'), false);
+});
+
+test('a pasted link that names a page, not a product, finds nothing when the page sells different parts', (t) => {
+  const page = 'https://www.zzqx-store.test/parts/springs/';
+  const light = findPart(t, ar15, 'spring-a', 'Light Spring', {}, [`${page}?sku=100`]);
+  const heavy = findPart(t, ar15, 'spring-b', 'Heavy Spring', {}, [`${page}?sku=200`]);
+  const other = findPart(t, ar9, 'spring-c', 'Short Spring', {}, [`${page}?sku=300`]);
+  const run = (url: string, p = ar15) => { const r = findParts(url, p); return { here: foundIds(r.here), elsewhere: foundIds(r.elsewhere) }; };
+  assert.deepEqual(run(`${page}?sku=100`), { here: [light.id], elsewhere: [] });
+  assert.deepEqual(run(`${page}?sku=200&utm_source=dropinbuilds&utm_medium=referral`), { here: [heavy.id], elsewhere: [] });
+  assert.deepEqual(run(`${page}?sku=300`), { here: [], elsewhere: [other.id] });
+  assert.deepEqual(run(`${page}?sku=300`, ar9), { here: [other.id], elsewhere: [] });
+  // The page alone, or with a parameter that names none of them, could be any of the three.
+  for (const url of [page, 'https://zzqx-store.test/parts/springs', `${page}?sku=999`, `${page}?utm_source=dropinbuilds&utm_medium=referral`, `${page}?SKU=100`])
+    for (const p of [ar15, ar9]) {
+      assert.deepEqual(run(url, p), { here: [], elsewhere: [] }, url);
+      assert.equal(isLink(url), true);
+    }
+  // Two listings of one product (same brand and name) on a page: the page alone is enough.
+  const one = 'https://zzqx-store.test/parts/one-cap';
+  const capA = findPart(t, ar15, 'cap-a', 'End Cap', {}, [`${one}?sku=1`]);
+  const capB = findPart(t, ar9, 'cap-b', 'End Cap', {}, [`${one}?sku=2`]);
+  assert.deepEqual(run(one), { here: [capA.id], elsewhere: [capB.id] });
+  assert.deepEqual(run(`${one}?sku=2`), { here: [], elsewhere: [capB.id] });
+});
+
+test('a product link shared by a main copy and its copies finds them all, split by platform', (t) => {
+  const url = 'https://zzqx-store.test/products/shared-rail';
+  const main = findPart(t, ar15, 'main', 'Shared Rail', {}, [url]);
+  const copy = findPart(t, ar9, 'copy', 'Shared Rail for the AR-9', { sameAs: main.id }, [url]);
+  const copy2 = findPart(t, ar10, 'copy2', 'Shared Rail, Long', { sameAs: main.id }, [`${url}?size=long`]);
+  const run = (link: string, p: Platform) => { const r = findParts(link, p); return { here: foundIds(r.here), elsewhere: foundIds(r.elsewhere) }; };
+  assert.deepEqual(run(url, ar15), { here: [main.id], elsewhere: [copy.id] });
+  assert.deepEqual(run(`${url}/?utm_source=dropinbuilds&utm_medium=referral`, ar9), { here: [copy.id], elsewhere: [main.id] });
+  assert.deepEqual(run(url, glock), { here: [], elsewhere: [main.id, copy.id] });
+  // A parameter none of them has: the page alone decides, and it is one product, so all three listings come back.
+  assert.deepEqual(run(`${url}?size=short`, ar10), { here: [copy2.id], elsewhere: [main.id, copy.id] });
+  // The real catalog: a copy's link finds the copy here and its main copy on the main copy's platform.
+  const copies = PLATFORMS.flatMap((p) => p.parts.filter((x) => x.sameAs).map((x) => ({ p, x })));
+  assert.ok(copies.length > 0);
+  for (const { p, x } of copies) {
+    const mainAt = PLATFORMS.find((m) => m.parts.some((y) => y.id === x.sameAs))!;
+    const real = part(mainAt, x.sameAs!);
+    for (const link of x.offers.flatMap((o) => (o.url && real.offers.some((m) => m.url === o.url) ? [o.url] : []))) {
+      const r = findParts(link, p);
+      assert.ok(r.here.some((f) => f.part.id === x.id), `${x.id} by ${link}`);
+      assert.ok((mainAt.id === p.id ? r.here : r.elsewhere).some((f) => f.part.id === real.id), `${real.id} by ${link}`);
+    }
+  }
+});
+
+test('every product link the site shows finds its own part, and no unrelated one', () => {
+  let links = 0;
+  for (const p of PLATFORMS)
+    for (const x of p.parts)
+      for (const url of new Set(x.offers.flatMap((o) => (o.url ? [o.url] : [])))) {
+        links++;
+        const r = findParts(url, p);
+        assert.ok(r.here.some((f) => f.part.id === x.id), `${p.id} ${x.id} by ${url}`);
+        for (const f of [...r.here, ...r.elsewhere])
+          assert.ok(productKey(f.part) === productKey(x) || f.part.offers.some((o) => o.url === url), `${url} also finds ${f.part.id}`);
+        // The same link as our own "View" links send it, over http and with the slash the other way.
+        const sent = new URL(url);
+        sent.protocol = 'http:';
+        sent.pathname = sent.pathname.endsWith('/') ? sent.pathname.replace(/\/+$/, '') || '/' : `${sent.pathname}/`;
+        sent.searchParams.set('utm_source', 'dropinbuilds');
+        sent.searchParams.set('utm_medium', 'referral');
+        assert.deepEqual(foundIds(findParts(sent.toString(), p).here), foundIds(r.here), sent.toString());
+      }
+  assert.ok(links > 100);
 });
 
 test('the made-up same-product parts leave nothing behind in the data the other tests read', () => {
