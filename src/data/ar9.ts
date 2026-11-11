@@ -162,7 +162,7 @@ const allParts = [
       offers: [['PSA', 29.99]], pick: pick('value', 'Keeps blast off to the side, for indoor ranges.') },
     { id: 'a9-mz-odin', brand: 'Odin Works', name: 'Atlas 9 Compensator 1/2x28', specs: ['1/2x28', 'Compensator', '9mm'], attrs: { thread: '1/2x28', kind: 'comp', bore: .38 },
       offers: [['OP', 74.99]], pick: pick('premium', 'Flattens muzzle rise for competition.') },
-    { id: 'a9-mz-a2', brand: 'Generic', name: 'A2 Birdcage 5.56 (1/2x28)', specs: ['1/2x28', 'Flash hider', '5.56 bore'], attrs: { thread: '1/2x28', kind: 'flash', bore: .224 },
+    { id: 'a9-mz-a2', sameAs: 'a10-mz-a2-556', brand: 'Generic', name: 'A2 Birdcage 5.56 (1/2x28)', specs: ['1/2x28', 'Flash hider', '5.56 bore'], attrs: { thread: '1/2x28', kind: 'flash', bore: .224 },
       offers: [['PSA', 9.99]] },
   ]),
   ...parts('mag', [

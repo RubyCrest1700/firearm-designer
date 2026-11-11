@@ -106,9 +106,9 @@ const allParts = [
       offers: [['SIG', 249.99], ['OP', 239.99], ['PA', 244.99]], pick: pick('value', 'Mounts straight to Sig optic-ready slides, no plate.') },
     { id: 'p-opt-romeox', brand: 'Sig Sauer', name: 'RomeoX Pro', specs: ['Romeo1Pro footprint', 'Larger window'], attrs: { footprint: 'romeo1pro' },
       offers: [['SIG', 349.99], ['OP', 339.99]], pick: pick('premium', 'Bigger window, same direct-mount footprint.') },
-    { id: 'p-opt-407c', brand: 'Holosun', name: 'HS407C X2', specs: ['RMR footprint', '2 MOA dot'], attrs: { footprint: 'rmr' },
+    { id: 'p-opt-407c', sameAs: 'gl-opt-407c', brand: 'Holosun', name: 'HS407C X2', specs: ['RMR footprint', '2 MOA dot'], attrs: { footprint: 'rmr' },
       offers: [['PA', 249.99], ['OP', 254.99]] },
-    { id: 'p-opt-507c', brand: 'Holosun', name: 'HS507C X2', specs: ['RMR footprint'], attrs: { footprint: 'rmr' },
+    { id: 'p-opt-507c', sameAs: 'gl-opt-507c', brand: 'Holosun', name: 'HS507C X2', specs: ['RMR footprint'], attrs: { footprint: 'rmr' },
       offers: [['PA', 299.99], ['OP', 309.99]] },
   ]),
   ...parts('mag', [

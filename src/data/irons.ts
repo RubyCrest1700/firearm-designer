@@ -9,17 +9,24 @@ import { parts, pick } from './helpers';
  */
 export const ironsSlot = { id: 'irons', name: 'Iron Sights', group: 'Accessories', required: false, hint: 'Flip-up front and rear sights for the top rail. Needed when there is no optic.' } as const;
 
-/** `fsb`: the platform has an A2 front sight base gas block, so a rear-only sight is offered. */
+/** The platform prefix whose sights are the main copies. Their links, prices and weights are filed under its ids. */
+const MAIN = 'a10';
+
+/**
+ * `fsb`: the platform has an A2 front sight base gas block, so a rear-only sight is offered. The same four sights are
+ * listed for every AR platform, so every platform's but the AR-10's are copies (Part.sameAs) of the AR-10's.
+ */
 export function ironParts(prefix: string, fsb = true): Part[] {
+  const copyOf = (sight: string) => (prefix === MAIN ? {} : { sameAs: `${MAIN}-irons-${sight}` });
   return parts('irons', [
-    { id: `${prefix}-irons-mbus`, brand: 'Magpul', name: 'MBUS Gen 3 Front and Rear Sights', specs: ['Flip-up', 'Polymer', 'Front and rear'], attrs: { front: true, rear: true },
+    { id: `${prefix}-irons-mbus`, ...copyOf('mbus'), brand: 'Magpul', name: 'MBUS Gen 3 Front and Rear Sights', specs: ['Flip-up', 'Polymer', 'Front and rear'], attrs: { front: true, rear: true },
       offers: [['MAGPUL', 99.95], ['BRN', 99.99]], pick: pick('budget', 'Light polymer flip-up sights. The common pick.') },
-    { id: `${prefix}-irons-mbusr`, brand: 'Magpul', name: 'MBUS Gen 3 Rear Sight', specs: ['Flip-up', 'Polymer', 'Rear only'], attrs: { front: false, rear: true },
+    { id: `${prefix}-irons-mbusr`, ...copyOf('mbusr'), brand: 'Magpul', name: 'MBUS Gen 3 Rear Sight', specs: ['Flip-up', 'Polymer', 'Rear only'], attrs: { front: false, rear: true },
       offers: [['MAGPUL', 49.95]], pick: pick('value', 'Pairs with an A2 front sight base.') },
   ]).filter((p) => fsb || p.attrs.front).concat(parts('irons', [
-    { id: `${prefix}-irons-troy`, brand: 'Troy Industries', name: 'Folding BattleSight Front and Rear Set', specs: ['Flip-up', 'Aluminum', 'Front and rear'], attrs: { front: true, rear: true },
+    { id: `${prefix}-irons-troy`, ...copyOf('troy'), brand: 'Troy Industries', name: 'Folding BattleSight Front and Rear Set', specs: ['Flip-up', 'Aluminum', 'Front and rear'], attrs: { front: true, rear: true },
       offers: [['BRN', 209.0]] },
-    { id: `${prefix}-irons-mbuspro`, brand: 'Magpul', name: 'MBUS Pro Front and Rear Sights', specs: ['Flip-up', 'Steel', 'Front and rear'], attrs: { front: true, rear: true },
+    { id: `${prefix}-irons-mbuspro`, ...copyOf('mbuspro'), brand: 'Magpul', name: 'MBUS Pro Front and Rear Sights', specs: ['Flip-up', 'Steel', 'Front and rear'], attrs: { front: true, rear: true },
       offers: [['MAGPUL', 219.95], ['BRN', 219.99]], pick: pick('premium', 'Low-profile steel sights that stay out of an optic\'s way.') },
   ]));
 }

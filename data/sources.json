@@ -68,11 +68,6 @@
       "RA": "https://www.rainierarms.com/precision-armament-m4-72-severe-duty-compensator-7-62mm-308/",
       "WING": "https://www.wingtactical.com/firearm-parts/ar-15-parts/muzzle-devices/precision-armament-m4-72-severe-duty-compensator-308-7-62/"
     },
-    "a10-stock-moesl": {
-      "PA": "https://www.primaryarms.com/magpul-moe-slim-line-carbine-stock-mil-spec-black-mag347-blk",
-      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-stocks-parts/ar-15-moe-sl-stock-collapsible-mil-spec/?sku=100015169",
-      "MAGPUL": "https://magpul.com/moe-sl-carbine-stock-mil-spec.html"
-    },
     "a10-stock-ubr": {
       "PA": "https://www.primaryarms.com/Magpul-UBR-GEN2-Collapsible-Stock-Black",
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-stocks-parts/ar-15-ubr-2.0-collapsible-stock-collapsible-a5-length/",
@@ -127,9 +122,6 @@
       "PA": "https://www.primaryarms.com/radian-weapons-ar15-m16-raptor-ambidextrous-charging-handle-black",
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-charging-handle-parts/ar-15-raptor-charging-handle-5.56/",
       "IMP": "https://www.impactguns.com/ar-15-lower-receiver-parts/radian-weapons-raptor-ambidextrous-charging-handle-5-56mm-black-finish-817093020477-r0001"
-    },
-    "ar-gb-aero750": {
-      "AERO": "https://www.aeroprecisionusa.com/750-low-profile-gas-block-w-aero-logo-nitride"
     },
     "ar-grip-bcm": {
       "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-grips/ar-15-mod-3-gunfighter-grip/?sku=100013641",
@@ -205,15 +197,6 @@
       "PA": "https://www.primaryarms.com/alg-defense-combat-trigger-act",
       "IMP": "https://www.impactguns.com/AR-15-Parts/ALG-Defense-Combat-Trigger-AR15-M4-6lb-Pull-854014005212-ACT/",
       "RSUP": "https://riflesupply.com/ALG-Defense-ACT-Advanced-Combat-Trigger-AR-15-AR-10-Chrome-moly-Steel-05-199-_p_6664.html"
-    },
-    "ar-trig-geissele": {
-      "BRN": "https://www.brownells.com/gun-parts/rifle-parts/rifle-triggers-parts/ssa-e-super-sem-automatic-enhanced-2-stage-trigger-for-ar-15/",
-      "PA": "https://www.primaryarms.com/geissele-automatics-super-semi-automatic-enhanced-ssa-e-two-stage-ar-15-trigger-.154in",
-      "KYG": "https://www.kygunco.com/product/geissele-ssa-e-super-semi-auto-enhanced-trigg",
-      "RTB": "https://www.righttobear.com/geissele-super-semi-automatic-enhanced-ssa-e-ssa-e/"
-    },
-    "ar-trig-psa": {
-      "PSA": "https://palmettostatearmory.com/psa-ar15-pa10-enhanced-polished-trigger.html"
     },
     "ar-upper-aero": {
       "AERO": "https://www.aeroprecisionusa.com/m4e1-threaded-stripped-upper-receiver-anodized-black"
@@ -531,9 +514,6 @@
       "SIG": "https://www.sigsauer.com/romeo5x-1x20-mm.html",
       "ARD": "https://ar15discounts.com/products/sig-sauer-romeo5x-gen-ii-compact-red-dot-sight-1x20mm-2-moa-red-dot-1-moa-adj-aaa-m1913-black/"
     },
-    "ar-opt-slx16": {
-      "PA": "https://www.primaryarms.com/KIT-PA-SLX-1-6X24S-NOVA-PADLXSM"
-    },
     "a10-opt-slx16": {
       "PA": "https://www.primaryarms.com/KIT-PA-SLX-1-6X24S-NOVA-PADLXSM"
     },
@@ -593,10 +573,6 @@
       "BRD": "https://blackrifledepot.com/aero-precision-ar-15-rifle-buffer-kit/",
       "ARD": "https://ar15discounts.com/products/aero-precision-ar-15-rifle-buffer-kit-no-stock/"
     },
-    "ar-stock-ubr": {
-      "MAGPUL": "https://magpul.com/ubr-gen2-collapsible-stock.html",
-      "PA": "https://www.primaryarms.com/Magpul-UBR-GEN2-Collapsible-Stock-Black"
-    },
     "ar-bbl-ba115": {
       "BRD": "https://blackrifledepot.com/ballistic-advantage-modern-series-5-56-barrel-gov-carbine-11-5/",
       "RTB": "https://www.righttobear.com/ballistic-advantage-11-5-carbine-length-barrel-babl556023m/",
@@ -609,10 +585,6 @@
     },
     "ar-lower-seekins": {
       "KYG": "https://www.kygunco.com/product/seekins-precision-110008-sp223-gen2-billet-lower-receiver-223-rem-black"
-    },
-    "ar-stock-b5": {
-      "WING": "https://www.wingtactical.com/firearm-parts-accessories/ar-15-parts/ar-stocks-and-accessories/b5-systems-bravo-stock/",
-      "PA": "https://www.primaryarms.com/b5-systems-bravo-stock-mil-spec-black"
     },
     "g17-bbl-faxont": {
       "FAX": "https://faxonfirearms.com/faxon-barrel-threaded-4150-nitride-for-g17/"
@@ -721,10 +693,6 @@
       "AT3": "https://www.at3tactical.com/products/cmc-ar-15-match-trigger-flat-sp-91503",
       "PA": "https://www.primaryarms.com/cmc-ar-15-ar10-drop-in-single-stage-3.5lb-flat-trigger-mil-spec-.145in"
     },
-    "ar-trig-larue": {
-      "BRD": "https://blackrifledepot.com/larue-tactical-mbt-2s-ar-15-trigger/",
-      "PA": "https://www.primaryarms.com/larue-tactical-mbt-2s-ar-15-trigger-straight-bow"
-    },
     "gs-hol-g48": {
       "VED": "https://www.vedderholsters.com/holsters/lighttuck/glock-48-9mm-iwb-holster/"
     },
@@ -773,9 +741,6 @@
     },
     "p320-hol-subcompact": {
       "VED": "https://www.vedderholsters.com/sig-sauer-p320-subcompact-w-rail-rounded-trigger-guard-iwb-holster-lighttuck/"
-    },
-    "a10-stock-ctr": {
-      "MAGPUL": "https://magpul.com/ctr-carbine-stock-mil-spec.html"
     },
     "r-light-m600": {
       "RA": "https://www.rainierarms.com/surefire-m600-dual-fuel-led-scout-light/",
@@ -895,38 +860,6 @@
       "KYG": "https://www.kygunco.com/product/magpul-mag1167-blk-mbus-3-sight-rear",
       "RA": "https://www.rainierarms.com/magpul-mbus-gen-3-rear-sight/"
     },
-    "a9-irons-mbus": {
-      "ARD": "https://ar15discounts.com/products/6421158/",
-      "AT3": "https://www.at3tactical.com/products/magpul-mbus-gen-3-front-and-rear-back-up-sight-kit",
-      "PA": "https://www.primaryarms.com/magpul-mbus-3-sight-set-black",
-      "BRD": "https://blackrifledepot.com/magpul-mbus-gen-3-sight-set-black/"
-    },
-    "a9-irons-mbuspro": {
-      "PA": "https://www.primaryarms.com/magpul-mbus-pro-flip-up-sight-set-black",
-      "ARD": "https://ar15discounts.com/products/magpul-mbus-pro-flip-up-sight-set/",
-      "AT3": "https://www.at3tactical.com/products/magpul-mbus-pro-front-and-rear-back-up-sight-kit",
-      "BRD": "https://blackrifledepot.com/magpul-mbus-pro-sight-set/"
-    },
-    "ar-irons-mbus": {
-      "ARD": "https://ar15discounts.com/products/6421158/",
-      "AT3": "https://www.at3tactical.com/products/magpul-mbus-gen-3-front-and-rear-back-up-sight-kit",
-      "PA": "https://www.primaryarms.com/magpul-mbus-3-sight-set-black",
-      "BRD": "https://blackrifledepot.com/magpul-mbus-gen-3-sight-set-black/"
-    },
-    "ar-irons-mbuspro": {
-      "PA": "https://www.primaryarms.com/magpul-mbus-pro-flip-up-sight-set-black",
-      "ARD": "https://ar15discounts.com/products/magpul-mbus-pro-flip-up-sight-set/",
-      "AT3": "https://www.at3tactical.com/products/magpul-mbus-pro-front-and-rear-back-up-sight-kit",
-      "BRD": "https://blackrifledepot.com/magpul-mbus-pro-sight-set/"
-    },
-    "ar-irons-mbusr": {
-      "MAGPUL": "https://magpul.com/mbus-3-sight-rear.html",
-      "AT3": "https://www.at3tactical.com/products/magpul-mbus-gen-3-rear-back-up-sight-mag1167",
-      "PA": "https://www.primaryarms.com/magpul-mbus-3-rear-sight-black",
-      "BRD": "https://blackrifledepot.com/magpul-mbus-3-rear-sight-black/",
-      "KYG": "https://www.kygunco.com/product/magpul-mag1167-blk-mbus-3-sight-rear",
-      "RA": "https://www.rainierarms.com/magpul-mbus-gen-3-rear-sight/"
-    },
     "p-sight-nf": {
       "NF": "https://www.nightfision.com/product/night-fision-suppressor-height-sights-for-sig-sauer",
       "RA": "https://www.rainierarms.com/night-fision-suppressor-height-sig-sauer-tritium-sight-set-square-rear/"
@@ -944,10 +877,6 @@
     "p-sight-xray3s": {
       "KYG": "https://www.kygunco.com/product/sig-sauer-sox10009-xray3-sight-set-day-night-super-tall",
       "RA": "https://www.rainierarms.com/sig-sauer-xray3-day-night-super-tall-sight-set/"
-    },
-    "p365-sight-nf": {
-      "NF": "https://www.nightfision.com/product/night-fision-suppressor-height-sights-for-sig-sauer",
-      "RA": "https://www.rainierarms.com/night-fision-suppressor-height-sig-sauer-tritium-sight-set-square-rear/"
     },
     "a9-grip-moe": {
       "AA": "https://aerospacearms.com/magpul-industries-moe-grip-ar15-m4-black/"
@@ -1032,7 +961,8 @@
     "a9-stock-b5": {
       "WING": "https://www.wingtactical.com/firearm-parts-accessories/ar-15-parts/ar-stocks-and-accessories/b5-systems-bravo-stock/",
       "RA": "https://www.rainierarms.com/b5-systems-bravo-stock/",
-      "KYG": "https://www.kygunco.com/product/b5-systems-brv-1082-bravo-stock-black-mil-spec-size"
+      "KYG": "https://www.kygunco.com/product/b5-systems-brv-1082-bravo-stock-black-mil-spec-size",
+      "PA": "https://www.primaryarms.com/b5-systems-bravo-stock-mil-spec-black"
     },
     "a9-stock-ctr": {
       "RA": "https://www.rainierarms.com/magpul-ctr-carbine-stock-mil-spec/",
@@ -1108,9 +1038,6 @@
     "g-opt-sro": {
       "WC": "https://wilsoncombat.com/optic-trijicon-sro-2-5-moa.html"
     },
-    "gl-opt-sro": {
-      "WC": "https://wilsoncombat.com/optic-trijicon-sro-2-5-moa.html"
-    },
     "g-opt-epsc": {
       "RA": "https://www.rainierarms.com/holosun-eps-carry-multireticle/"
     },
@@ -1130,19 +1057,7 @@
     "gs-opt-rmsc": {
       "WC": "https://wilsoncombat.com/optic-shield-rmsc-4-moa.html"
     },
-    "p365-opt-rmsc": {
-      "WC": "https://wilsoncombat.com/optic-shield-rmsc-4-moa.html"
-    },
-    "hc-opt-rmsc": {
-      "WC": "https://wilsoncombat.com/optic-shield-rmsc-4-moa.html"
-    },
-    "gs-opt-rmr": {
-      "WC": "https://wilsoncombat.com/optic-trijicon-rmr-type-2-3-25-moa.html"
-    },
     "gl-opt-rmr": {
-      "WC": "https://wilsoncombat.com/optic-trijicon-rmr-type-2-3-25-moa.html"
-    },
-    "mp-opt-rmr": {
       "WC": "https://wilsoncombat.com/optic-trijicon-rmr-type-2-3-25-moa.html"
     },
     "gl-frame-lw": {
@@ -1155,18 +1070,7 @@
       "RA": "https://www.rainierarms.com/holosun-hs507c-x2-circle-dot-sight/",
       "MI": "https://midwestindustriesinc.com/holosun-hs507c-x2-reflex-sight/"
     },
-    "p-opt-507c": {
-      "RA": "https://www.rainierarms.com/holosun-hs507c-x2-circle-dot-sight/",
-      "MI": "https://midwestindustriesinc.com/holosun-hs507c-x2-reflex-sight/"
-    },
-    "mp-opt-507c": {
-      "RA": "https://www.rainierarms.com/holosun-hs507c-x2-circle-dot-sight/",
-      "MI": "https://midwestindustriesinc.com/holosun-hs507c-x2-reflex-sight/"
-    },
     "gl-opt-407c": {
-      "RA": "https://www.rainierarms.com/holosun-hs407c-x2-dot-sight-2-moa/"
-    },
-    "p-opt-407c": {
       "RA": "https://www.rainierarms.com/holosun-hs407c-x2-dot-sight-2-moa/"
     },
     "p-grip-carry": {
@@ -1183,12 +1087,6 @@
     "gl-bbl-20lwt": {
       "GRITR": "https://gritrsports.com/lone-wolf-alphawolf-10mm-barrel-for-glock-20-aw-2010th",
       "CTD": "https://www.cheaperthandirt.com/lone-wolf-alpha-wolf-drop-in-replacement-threaded-barrel-for-glock-20-10mm-auto-threaded-916x24-salt-bath-nitride-finish/fc-639737069891.html"
-    },
-    "p365-opt-407k": {
-      "GRITR": "https://gritrsports.com/holosun-hs407k-6-moa-reflex-sight-hs407k-x2"
-    },
-    "mp-opt-407k": {
-      "GRITR": "https://gritrsports.com/holosun-hs407k-6-moa-reflex-sight-hs407k-x2"
     },
     "hc-opt-407k": {
       "GRITR": "https://gritrsports.com/holosun-hs407k-6-moa-reflex-sight-hs407k-x2"
@@ -1307,16 +1205,6 @@
       "RA": "https://www.rainierarms.com/aimpoint-acro-p-2-red-dot-reflex-sight/",
       "GRITR": "https://gritrsports.com/aimpoint-acro-p-2-red-dot-reflex-sight-200691"
     },
-    "gl-opt-acro": {
-      "SPW": "https://www.sportsmans.com/hunting-gear-supplies/optics-binoculars-scopes-rangefinders/red-dots/aimpoint-acro-p-2-1x-red-dot-35-moa/p/1863833",
-      "RA": "https://www.rainierarms.com/aimpoint-acro-p-2-red-dot-reflex-sight/",
-      "GRITR": "https://gritrsports.com/aimpoint-acro-p-2-red-dot-reflex-sight-200691"
-    },
-    "mp-opt-acro": {
-      "SPW": "https://www.sportsmans.com/hunting-gear-supplies/optics-binoculars-scopes-rangefinders/red-dots/aimpoint-acro-p-2-1x-red-dot-35-moa/p/1863833",
-      "RA": "https://www.rainierarms.com/aimpoint-acro-p-2-red-dot-reflex-sight/",
-      "GRITR": "https://gritrsports.com/aimpoint-acro-p-2-red-dot-reflex-sight-200691"
-    },
     "g-plate-rmr": {
       "ARD": "https://ar15discounts.com/products/ch-precision-v4-optic-plate-glock-mos-to-rmr-sro-holosun-407c-507c-508t-507-comp-black/",
       "GS": "https://www.glockstore.com/C-H-Precision-Weapons-V4-Glock-MOS-Adapter-Plate"
@@ -1376,12 +1264,6 @@
     },
     "p365-bbl-xlthr": {
       "BUDS": "https://www.budsgunshop.com/products/uncategorized/sig-sauer-p365xl-9mm-3-7-threaded-barrel-1-2-28-192221"
-    },
-    "p365-opt-r0": {
-      "SPW": "https://www.sportsmans.com/hunting-gear-supplies/optics-binoculars-scopes-rangefinders/red-dots/sig-sauer-romeo-zero-elite-1x-red-dot-3-moa-dot/p/1814313",
-      "KYG": "https://www.kygunco.com/product/sig-sauer-sor01030-romeozero-elite-reflex-sight-3-moa-red-dot",
-      "GRITR": "https://gritrsports.com/sig-sauer-romeozero-elite-red-dot-reflex-sight-sor01030",
-      "CTD": "https://www.cheaperthandirt.com/sig-sauer-romeozero-elite-red-dot-sight-3moa-red-dot/fc-798681665877.html"
     },
     "hc-opt-r0": {
       "SPW": "https://www.sportsmans.com/hunting-gear-supplies/optics-binoculars-scopes-rangefinders/red-dots/sig-sauer-romeo-zero-elite-1x-red-dot-3-moa-dot/p/1814313",
@@ -1541,12 +1423,6 @@
       "KYG": "https://www.kygunco.com/product/one-horse-.30-cal-a2-flash-hider-and-crush-washer-5-8x24"
     },
     "a10-mz-a2-556": {
-      "BUDS": "https://www.budsgunshop.com/products/gun-parts-gunsmithing-tools-and-supplies/wilson-combat-a2-birdcage-flash-hider-556mm-157566",
-      "WING": "https://www.wingtactical.com/firearm-parts/ar-15/muzzle-devices/aero-precision-a2-birdcage-flash-hider-5-56-223/",
-      "WC": "https://wilsoncombat.com/flash-hider-a2-birdcage-5-56-nato.html",
-      "AA": "https://aerospacearms.com/aero-precision-ar-15-a2-birdcage-flash-hider-1-2x28/"
-    },
-    "a9-mz-a2": {
       "BUDS": "https://www.budsgunshop.com/products/gun-parts-gunsmithing-tools-and-supplies/wilson-combat-a2-birdcage-flash-hider-556mm-157566",
       "WING": "https://www.wingtactical.com/firearm-parts/ar-15/muzzle-devices/aero-precision-a2-birdcage-flash-hider-5-56-223/",
       "WC": "https://wilsoncombat.com/flash-hider-a2-birdcage-5-56-nato.html",
@@ -1952,13 +1828,7 @@
     "mp-bbl-faxfs": {
       "FAX": "https://faxonfirearms.com/MPB910NFLOQ-T"
     },
-    "ar-irons-troy": {
-      "PA": "https://www.primaryarms.com/troy-industries-m4-style-folding-battle-sight-set"
-    },
     "a10-irons-troy": {
-      "PA": "https://www.primaryarms.com/troy-industries-m4-style-folding-battle-sight-set"
-    },
-    "a9-irons-troy": {
       "PA": "https://www.primaryarms.com/troy-industries-m4-style-folding-battle-sight-set"
     },
     "p-slide-zev-xfull": {

@@ -71,14 +71,14 @@ const allParts = [
       offers: [['PSA', 49.99]], pick: pick('budget', 'Complete kit for a tight budget.') },
   ]),
   ...parts('stock', [
-    { id: 'a10-stock-moesl', brand: 'Magpul', name: 'MOE SL Carbine Stock', specs: ['Collapsible', 'QD socket'], attrs: { qd: true },
-      offers: [['PA', 49.95], ['BRN', 54.95]], pick: pick('value', 'Light, solid, fits AR-10 carbine tubes.') },
+    { id: 'a10-stock-moesl', sameAs: 'ar-stock-moesl', brand: 'Magpul', name: 'MOE SL Carbine Stock', specs: ['Collapsible', 'QD socket'], attrs: { qd: true },
+      offers: [['PA', 49.95], ['BRN', 54.95], ['PSA', 49.99], ['MID', 51.99]], pick: pick('value', 'Light, solid, fits AR-10 carbine tubes.') },
     { id: 'a10-stock-psa', brand: 'Palmetto State Armory', name: 'Classic M4 Stock', specs: ['Collapsible'], attrs: {},
       offers: [['PSA', 19.99]], pick: pick('budget', 'Basic and cheap.') },
     { id: 'a10-stock-ubr', brand: 'Magpul', name: 'UBR Gen2 Collapsible Stock', specs: ['Collapsible', 'Adjustable cheek', 'QD sockets'], attrs: { qd: true },
       offers: [['PA', 239.95], ['BRN', 249.95]], pick: pick('premium', 'Precision-style stock that still collapses.') },
-    { id: 'a10-stock-ctr', brand: 'Magpul', name: 'CTR Carbine Stock', specs: ['Collapsible', 'Friction lock', 'QD socket'], attrs: { qd: true },
-      offers: [['PA', 69.95], ['BRN', 74.95]] },
+    { id: 'a10-stock-ctr', sameAs: 'ar-stock-ctr', brand: 'Magpul', name: 'CTR Carbine Stock', specs: ['Collapsible', 'Friction lock', 'QD socket'], attrs: { qd: true },
+      offers: [['PA', 69.95], ['BRN', 74.95], ['MID', 72.99]] },
   ]),
   ...parts('grip', [
     { id: 'a10-grip-moe', brand: 'Magpul', name: 'MOE Grip', specs: ['Polymer'], attrs: {},
