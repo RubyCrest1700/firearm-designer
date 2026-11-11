@@ -40,6 +40,12 @@ export const INLINE_OFFERS: Record<string, OfferTuple[]> = {};
 /** An offer the site can show: its store is in RETAILERS and isn't paused. */
 const shown = (retailer: string) => knownRetailer(retailer) && !PAUSED.has(retailer);
 /**
+ * When each live price the site can show was read: every row of data/prices.json at a store parts() keeps (in
+ * RETAILERS and not paused), one entry per row. A row with no date gives ''.
+ */
+export const liveCheckedAts = (): string[] =>
+  Object.values(LIVE).flatMap((byRetailer) => Object.entries(byRetailer).filter(([retailer]) => shown(retailer)).map(([, o]) => o.checkedAt ?? ''));
+/**
  * Parts no tracked store sells or prices: holsters whose live price is the base page's ("From"), Glock factory parts
  * with only an estimate ("Factory Part"), and hand-checked list prices, each shown with its label and the day it was checked.
  */

@@ -64,8 +64,38 @@ export class ErrorBoundary extends Component<{ children?: ReactNode }, { failed:
   }
 }
 
+/** A date with no time ("2026-10-09"): a hand-checked day. */
+const DAY_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+/** "Oct 9". A date with no time is that day everywhere (read as UTC, which is how it parses); a full time shows in the visitor's own time zone. */
 export const shortDate = (iso: string, year = false) =>
-  new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(year ? { year: 'numeric' } : {}) });
+  new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(year ? { year: 'numeric' } : {}), ...(DAY_ONLY.test(iso) ? { timeZone: 'UTC' } : {}) });
+
+/** How long after it was read a price still counts as fresh. */
+export const STALE_AFTER_MS = 48 * 60 * 60 * 1000;
+/** Whether a price read at this time is more than 48 hours old. A time that can't be read is stale. */
+export const isStale = (iso: string, now = Date.now()) => !(now - Date.parse(iso) <= STALE_AFTER_MS);
+
+/** Owner-approved wording (2026-11-10). */
+export const STALE_OFFER_LABEL = 'Checked';
+/** The words before the date of a live price in the picker's price table: "Live", or "Checked" once the price is stale. */
+export const offerAgeLabel = (checkedAt: string, now = Date.now()) => (isStale(checkedAt, now) ? STALE_OFFER_LABEL : 'Live');
+/** Those words with the day the price was read ("Live Nov 9", "Checked Nov 9"), or "Checked" alone when the time can't be read. */
+export const offerAgeText = (checkedAt: string, now = Date.now()) =>
+  Number.isNaN(Date.parse(checkedAt)) ? STALE_OFFER_LABEL : `${offerAgeLabel(checkedAt, now)} ${shortDate(checkedAt)}`;
+
+/** Owner-approved wording (2026-11-10). */
+export const STALE_PRICES_LABEL = 'Prices last checked';
+/**
+ * The header's price line for when most prices were read (PRICES_READ_AT): "Prices checked" with the live dot while
+ * that time is no more than 48 hours ago (the same clock the picker's rows use), "Prices last checked" without it
+ * once it is stale, and nothing (the header then says "Estimated prices") when no price is live. The date is the
+ * visitor's own local date.
+ */
+export function priceStatus(readAt: string | null, now = Date.now()): { live: boolean; lead: string; date: string } | null {
+  if (!readAt) return null;
+  const stale = isStale(readAt, now);
+  return { live: !stale, lead: stale ? STALE_PRICES_LABEL : 'Prices checked', date: shortDate(readAt, true) };
+}
 
 /** One "Change platform" button next to the builder's title; its panel lists rifles and pistols side by side, grouped by maker. */
 export function PlatformMenu({ current, onPick }: { current: Platform; onPick: (id: string) => void }) {
