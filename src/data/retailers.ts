@@ -85,8 +85,6 @@ export function offerUrl(retailerId: string, query: string): string | undefined 
  * own visitor stats. That's the proof merchants look for before inviting a site into their affiliate program.
  * Links we can't parse are left as they are.
  */
-// A per-retailer affiliate parameter would plug in here later: buyUrl would pass the retailer id, and this would set
-// that store's own parameter beside the two below. None is set today (the site has no affiliate links).
 export function tagged(url: string): string {
   try {
     const u = new URL(url);
