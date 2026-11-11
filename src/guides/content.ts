@@ -451,7 +451,6 @@ export const GUIDES: Guide[] = [
     ],
     picks: ['slide', 'barrel'],
     sources: [
-      { label: 'Lone Wolf: G20, G21, G40 and G41 barrels', url: 'https://lonewolfdist.com/barrels/glock-compatible-barrels/g20-21-40-41-full-size/' },
       { label: '3C Tactical: are Gen3 and Gen4 slides compatible?', url: 'https://3crtactical.com/blog/are-glock-gen-3-and-gen-4-slides-compatible/' },
       { label: 'Wikipedia: Glock', url: 'https://en.wikipedia.org/wiki/Glock' },
     ],

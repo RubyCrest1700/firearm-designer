@@ -32,7 +32,7 @@ In the Status column, "active" only means the retailer is neither paused nor lin
 | Impact Guns | impactguns.com | active | - | - | 18 | 2026-11-10 |
 | KAK Industry | kakindustry.com | active | - | - | 1 | 2026-11-10 |
 | KYGunCo | kygunco.com | active | - | - | 82 | 2026-11-10 |
-| Lone Wolf Arms | lonewolfdist.com | active | - | - | 9 | 2026-11-10 |
+| Lone Wolf Arms | lonewolfdist.com | active | - | - | 5 | 2026-11-10 |
 | Magpul | magpul.com | active | - | - | 26 | 2026-11-10 |
 | MidwayUSA | midwayusa.com | paused | 2026-10-26 | robots.txt refuses the price bot | 6 | none recorded |
 | Midwest Industries | midwestindustriesinc.com | active | - | - | 4 | 2026-11-10 |
