@@ -50,6 +50,13 @@ const DROPS_SEEN_KEY = 'firearm-designer:drops-seen:v1';
 /** What a `storage` event (a change made in another tab) means here: which of My Builds and the alert signup to read again. A null key is all of storage cleared. */
 export const storageChange = (key: string | null) => ({ saved: key === null || key === SAVED_KEY, signup: key === null || key === ALERTS_KEY });
 
+/**
+ * The signup to keep once a check or sync made with `token` has answered `next` (null: the service no longer has it).
+ * The answer counts only while that signup is still the current one: if another tab has stopped alerts or signed up
+ * again since, the current signup stays as it is.
+ */
+export const signupAfter = (current: AlertSignup | null, token: string, next: AlertSignup | null) => (current?.token === token ? next : current);
+
 export default function App() {
   const persisted = useMemo(loadPersisted, []);
   const shared = useMemo(readSharedBuild, []);
@@ -97,17 +104,20 @@ export default function App() {
   useEffect(() => {
     void alertsAvailable().then(setAlertsOn);
     const s = loadAlertSignup();
-    if (s) void checkAlertSignup(s).then(setSignup);
+    if (s) void checkAlertSignup(s).then((next) => setSignup((cur) => signupAfter(cur, s.token, next)));
   }, []);
   // My Builds and the alert signup follow a change made in another tab, so this tab never stores an older list over it.
   useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      const changed = storageChange(e.key);
+    const readAgain = (changed: { saved: boolean; signup: boolean }) => {
       if (changed.saved) { const list = loadSavedBuilds(); fromOtherTab.current = list; setSaved(list); }
       if (changed.signup) setSignup(loadAlertSignup());
     };
+    const onStorage = (e: StorageEvent) => readAgain(storageChange(e.key));
+    // A page brought back by Back or Forward as it was left heard of no change made while it was away: it reads both again.
+    const onPageShow = (e: PageTransitionEvent) => { if (e.persisted) readAgain(storageChange(null)); };
     window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    window.addEventListener('pageshow', onPageShow);
+    return () => { window.removeEventListener('storage', onStorage); window.removeEventListener('pageshow', onPageShow); };
   }, []);
   // Keep the emailed list in step with My builds; a signup that was unsubscribed by email is forgotten.
   const firstSync = useRef(true);
@@ -118,7 +128,7 @@ export default function App() {
     if (saved !== fromOtherTab.current) unsent.current = true;
     if (!signup) { unsent.current = false; return; }
     if (!unsent.current) return;
-    const t = setTimeout(() => { unsent.current = false; void syncAlertBuilds(signup, saved).then((ok) => { if (!ok) setSignup(null); }); }, 1000);
+    const t = setTimeout(() => { unsent.current = false; void syncAlertBuilds(signup, saved).then((ok) => { if (!ok) setSignup((cur) => signupAfter(cur, signup.token, null)); }); }, 1000);
     return () => clearTimeout(t);
   }, [saved]);
   // Tell a returning visitor once when a saved build gets cheaper; a new drop tells them again.
@@ -266,7 +276,7 @@ export default function App() {
             alerts={alertsOn ? (
               <AlertsPanel signup={signup} hasBuilds={saved.length > 0}
                 onSignUp={async (email) => { const s = await signUpForAlerts(email, saved); setSignup(s); }}
-                onRefresh={() => { if (signup) void checkAlertSignup(signup).then(setSignup); }}
+                onRefresh={() => { if (signup) void checkAlertSignup(signup).then((next) => setSignup((cur) => signupAfter(cur, signup.token, next))); }}
                 onStop={async () => { if (signup) await stopAlerts(signup); setSignup(null); setToast('Price alert emails are off.'); }} />
             ) : null}
             onOpen={(s) => openInBuilder(s.platform, s.selection, s.id)}

@@ -59,10 +59,11 @@ import WEIGHTS_JSON from '../data/weights.json';
 import APPROVALS_JSON from '../data/price-approvals.json';
 import { PRICES_READ_AT, readAtInstant } from '../src/data/index';
 import { mergeSavedBuilds } from '../src/store';
-import { storageChange } from '../src/App';
+import { signupAfter, storageChange } from '../src/App';
+import { checkAlertSignup, loadAlertSignup, stopAlerts, storeAlertSignup, syncAlertBuilds, type AlertSignup } from '../src/alerts';
 import { loadWithRetry } from '../src/drawings';
 import { stockedRange } from '../src/engine';
-import { featuredBuilds, getBuild, listBuilds, recordBuyClick, reportBuild, shareBuild } from '../src/community';
+import { featuredBuilds, getBuild, listBuilds, recordBuyClick, reportBuild, setVote, shareBuild } from '../src/community';
 import { liveCheckedAts } from '../src/data/helpers';
 import { STALE_AFTER_MS, STALE_OFFER_LABEL, STALE_PRICES_LABEL, isStale, offerAgeLabel, offerAgeText, priceStatus, shortDate } from '../src/ui';
 import App from '../src/App';
@@ -514,16 +515,32 @@ test('two tabs: a build saved in one is not erased by an edit in the other, and 
 });
 
 test('the tab\'s own record of what it has had: a build stored elsewhere survives a save here until this tab has read it', () => {
+  // `tab` is the record of one pretend tab, or undefined for the record the app itself keeps.
+  const run = (here: string, elsewhere: string, tab?: Set<string>) => {
+    storage.clear();
+    storage.set(KEY, JSON.stringify([tabBuild(here)]));
+    const mine = loadSavedBuilds(tab);
+    storage.set(KEY, JSON.stringify([tabBuild(elsewhere), ...mine]));
+    storeSavedBuilds(mine.map((s) => ({ ...s, name: 'Renamed' })), tab);
+    assert.deepEqual(storedList().map((s) => [s.id, s.name]), [[elsewhere, `Build ${elsewhere}`], [here, 'Renamed']]);
+    // Once read here, leaving it out of the list is a delete.
+    assert.deepEqual(ids(loadSavedBuilds(tab)), [elsewhere, here]);
+    storeSavedBuilds(mine, tab);
+    assert.deepEqual(ids(storedList()), [here]);
+  };
+  // A record of this test's own: nothing an earlier test read or stored can be in it.
+  const own = new Set<string>();
+  run('here-1', 'elsewhere-1', own);
+  assert.deepEqual([...own].sort(), ['elsewhere-1', 'here-1']);
+  // The app's record behaves the same. These two ids are used nowhere else in this file, so it can't hold them yet.
+  run('app-record-here', 'app-record-elsewhere');
+  // The two records are separate: a tab with a fresh record keeps what the app's record has already had.
+  storage.set(KEY, JSON.stringify([tabBuild('app-record-elsewhere'), tabBuild('app-record-here')]));
+  storeSavedBuilds([], new Set());
+  assert.deepEqual(ids(storedList()), ['app-record-elsewhere', 'app-record-here']);
+  storeSavedBuilds([]);
+  assert.deepEqual(ids(storedList()), []);
   storage.clear();
-  storage.set(KEY, JSON.stringify([tabBuild('here-1')]));
-  const mine = loadSavedBuilds();
-  storage.set(KEY, JSON.stringify([tabBuild('elsewhere-1'), ...mine]));
-  storeSavedBuilds(mine.map((s) => ({ ...s, name: 'Renamed' })));
-  assert.deepEqual(storedList().map((s) => [s.id, s.name]), [['elsewhere-1', 'Build elsewhere-1'], ['here-1', 'Renamed']]);
-  // Once read here, leaving it out of the list is a delete.
-  assert.deepEqual(ids(loadSavedBuilds()), ['elsewhere-1', 'here-1']);
-  storeSavedBuilds(mine);
-  assert.deepEqual(ids(storedList()), ['here-1']);
 });
 
 test('with storage switched off, saved builds load empty and storing does nothing, without throwing', () => {
@@ -550,26 +567,109 @@ test('the app reads My Builds and the alert signup again when another tab change
   const app = readFileSync('src/App.tsx', 'utf8').replace(/\r\n/g, '\n');
   // The listener, added once and removed with the page.
   assert.ok(app.includes([
-    '    const onStorage = (e: StorageEvent) => {',
-    '      const changed = storageChange(e.key);',
+    '    const readAgain = (changed: { saved: boolean; signup: boolean }) => {',
     '      if (changed.saved) { const list = loadSavedBuilds(); fromOtherTab.current = list; setSaved(list); }',
     '      if (changed.signup) setSignup(loadAlertSignup());',
     '    };',
+    '    const onStorage = (e: StorageEvent) => readAgain(storageChange(e.key));',
+    '    // A page brought back by Back or Forward as it was left heard of no change made while it was away: it reads both again.',
+    '    const onPageShow = (e: PageTransitionEvent) => { if (e.persisted) readAgain(storageChange(null)); };',
     "    window.addEventListener('storage', onStorage);",
-    "    return () => window.removeEventListener('storage', onStorage);",
+    "    window.addEventListener('pageshow', onPageShow);",
+    "    return () => { window.removeEventListener('storage', onStorage); window.removeEventListener('pageshow', onPageShow); };",
     '  }, []);',
   ].join('\n')));
+  // Back and Forward read through the same path, so that list isn't stored or sent back either; a first showing of the page reads nothing again.
+  assert.equal(app.match(/readAgain\(/g)?.length, 2);
+  assert.equal(app.match(/loadSavedBuilds\(\)/g)?.length, 1);
+  assert.equal(app.match(/'pageshow'/g)?.length, 2);
   // The list another tab stored isn't stored again, and isn't sent to the alert service unless a change made here is still waiting.
   assert.ok(app.includes('useEffect(() => { if (saved !== fromOtherTab.current) storeSavedBuilds(saved); }, [saved]);'));
   assert.ok(app.includes([
     '    if (saved !== fromOtherTab.current) unsent.current = true;',
     '    if (!signup) { unsent.current = false; return; }',
     '    if (!unsent.current) return;',
-    '    const t = setTimeout(() => { unsent.current = false; void syncAlertBuilds(signup, saved).then((ok) => { if (!ok) setSignup(null); }); }, 1000);',
+    '    const t = setTimeout(() => { unsent.current = false; void syncAlertBuilds(signup, saved).then((ok) => { if (!ok) setSignup((cur) => signupAfter(cur, signup.token, null)); }); }, 1000);',
   ].join('\n')));
   // Nothing else in the app stores the list or sets the marker.
   assert.equal(app.match(/storeSavedBuilds\(/g)?.length, 1);
   assert.equal(app.match(/fromOtherTab\.current = /g)?.length, 1);
+});
+
+/* ------------------------------------------------------------------ the alert signup kept in this browser */
+
+const ALERTS = 'firearm-designer:alerts:v1';
+const TOKEN_X = '0123456789abcdef0123456789abcdef';
+const TOKEN_Y = 'fedcba9876543210fedcba9876543210';
+const signupX: AlertSignup = { token: TOKEN_X, email: 'builder@example.com', confirmed: false };
+
+test('an answer about a signup that has since been replaced or stopped changes nothing', () => {
+  const signupY: AlertSignup = { token: TOKEN_Y, email: 'builder@example.com', confirmed: false };
+  const confirmedX = { ...signupX, confirmed: true };
+  // Still the current signup: the answer is taken, whether it is the signup's new state or that the service no longer has it.
+  assert.equal(signupAfter(signupX, TOKEN_X, confirmedX), confirmedX);
+  assert.equal(signupAfter(signupX, TOKEN_X, null), null);
+  // Another tab stopped alerts and signed up again while the call was out: the new signup stays.
+  assert.equal(signupAfter(signupY, TOKEN_X, null), signupY);
+  assert.equal(signupAfter(signupY, TOKEN_X, confirmedX), signupY);
+  // Stopped in another tab meanwhile: a late answer doesn't bring the old signup back.
+  assert.equal(signupAfter(null, TOKEN_X, confirmedX), null);
+  assert.equal(signupAfter(null, TOKEN_X, null), null);
+  // Every place the app takes such an answer goes through it, and only Turn Off forgets the signup outright.
+  const app = readFileSync('src/App.tsx', 'utf8').replace(/\r\n/g, '\n');
+  assert.ok(app.includes('    if (s) void checkAlertSignup(s).then((next) => setSignup((cur) => signupAfter(cur, s.token, next)));'));
+  assert.ok(app.includes('void syncAlertBuilds(signup, saved).then((ok) => { if (!ok) setSignup((cur) => signupAfter(cur, signup.token, null)); });'));
+  assert.ok(app.includes('onRefresh={() => { if (signup) void checkAlertSignup(signup).then((next) => setSignup((cur) => signupAfter(cur, signup.token, next))); }}'));
+  assert.doesNotMatch(app, /then\(setSignup\)/);
+  assert.equal(app.match(/checkAlertSignup\(/g)?.length, 2);
+  assert.equal(app.match(/syncAlertBuilds\(/g)?.length, 1);
+  assert.equal(app.match(/setSignup\(null\)/g)?.length, 1);
+  assert.ok(app.includes("onStop={async () => { if (signup) await stopAlerts(signup); setSignup(null); setToast('Price alert emails are off.'); }} />"));
+});
+
+test('a stored alert signup loads only when it has the shape the alert service gives one', (t) => {
+  t.after(() => { storage.delete(ALERTS); });
+  const load = (value: unknown) => { storage.set(ALERTS, typeof value === 'string' ? value : JSON.stringify(value)); return loadAlertSignup(); };
+  // What the site stores: the service's answer to a signup, then the same with its confirmed state read again.
+  storage.delete(ALERTS);
+  storeAlertSignup(signupX);
+  assert.deepEqual(loadAlertSignup(), signupX);
+  storeAlertSignup({ ...signupX, confirmed: true });
+  assert.deepEqual(loadAlertSignup(), { ...signupX, confirmed: true });
+  for (const token of [TOKEN_Y, '0'.repeat(32), 'f'.repeat(32)]) assert.deepEqual(load({ ...signupX, token }), { ...signupX, token }, token);
+  // A field the app doesn't know is left out, not a reason to drop the signup.
+  assert.deepEqual(load({ ...signupX, extra: 'x' }), signupX);
+  // Nothing stored.
+  storage.delete(ALERTS);
+  assert.equal(loadAlertSignup(), null);
+  // A token that isn't 32 lowercase hex characters, the form the service makes and accepts.
+  for (const token of ['', 'abc', TOKEN_X.slice(1), TOKEN_X + '0', TOKEN_X.toUpperCase(), 'g' + TOKEN_X.slice(1), '../builds/' + TOKEN_X.slice(10), TOKEN_X + '?x=1', TOKEN_X + '\n', ' ' + TOKEN_X, 5, null, undefined, [TOKEN_X], { length: 32 }])
+    assert.equal(load({ ...signupX, token }), null, JSON.stringify(token));
+  // An email or confirmed state of the wrong type.
+  for (const email of [5, null, undefined, {}, ['builder@example.com'], true]) assert.equal(load({ ...signupX, email }), null, JSON.stringify(email));
+  for (const confirmed of [1, 0, 'true', null, undefined, {}]) assert.equal(load({ ...signupX, confirmed }), null, JSON.stringify(confirmed));
+  // Not an object at all, and text that isn't JSON.
+  for (const value of [[signupX], [], 'null', '5', 'true', JSON.stringify(TOKEN_X), '{', 'not json', '{"token":']) assert.equal(load(value), null, JSON.stringify(value));
+  // The same answers when another tab's change is read mid-visit: the app reads the signup only through this function.
+  const app = readFileSync('src/App.tsx', 'utf8');
+  assert.equal(app.match(/loadAlertSignup/g)?.length, 4);
+  assert.doesNotMatch(app, /getItem\(ALERTS_KEY/);
+  // The pattern is the service's own.
+  assert.ok(readFileSync('src/alerts.ts', 'utf8').includes('const TOKEN = /^[a-f0-9]{32}$/;'));
+  assert.ok(readFileSync('worker/src/alerts.js', 'utf8').includes('const TOKEN = /^[a-f0-9]{32}$/;'));
+});
+
+test('with storage switched off, the alert signup loads as none, without throwing', () => {
+  const local = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')!;
+  const off = () => { throw new Error('storage is off'); };
+  Object.defineProperty(globalThis, 'localStorage', { value: { getItem: off, setItem: off, removeItem: off }, configurable: true });
+  try {
+    assert.equal(loadAlertSignup(), null);
+    storeAlertSignup(signupX);
+    storeAlertSignup(null);
+  } finally {
+    Object.defineProperty(globalThis, 'localStorage', local);
+  }
 });
 
 /* ------------------------------------------------------------------ one slimline recoil spring, and its retired id */
@@ -3559,8 +3659,13 @@ test('every community call carries a 10 second time limit', async (t) => {
     await shareBuild('ar15', 'A build', '', []);
     await recordBuyClick('b1');
     await reportBuild('b1');
-    assert.equal(seen.calls.length, 6);
-    assert.deepEqual(seen.waits, Array(6).fill(10000));
+    t.after(() => { storage.delete('firearm-designer:votes:v1'); });
+    await setVote('b1', true);
+    await setVote('b1', false);
+    assert.deepEqual(seen.calls.map((c) => c.url.replace('https://share.dropinbuilds.com', '')), [
+      '/api/builds?sort=top', '/api/featured', '/api/builds/b1', '/api/builds', '/api/builds/b1/click', '/api/builds/b1/report', '/api/builds/b1/vote', '/api/builds/b1/unvote',
+    ]);
+    assert.deepEqual(seen.waits, Array(8).fill(10000));
     for (const c of seen.calls) {
       assert.ok(c.init.signal instanceof AbortSignal, c.url);
       assert.ok(c.url.startsWith('https://share.dropinbuilds.com/api/'), c.url);
@@ -3568,11 +3673,90 @@ test('every community call carries a 10 second time limit', async (t) => {
     // The rest of each request is as it was: a body is sent as JSON, and a call without one sends no header.
     assert.deepEqual(seen.calls.map((c) => [c.init.method, c.init.headers]), [
       [undefined, undefined], [undefined, undefined], [undefined, undefined],
-      ['POST', { 'content-type': 'application/json' }], ['POST', undefined], ['POST', undefined],
+      ['POST', { 'content-type': 'application/json' }], ['POST', undefined], ['POST', undefined], ['POST', undefined], ['POST', undefined],
     ]);
   });
-  assert.match(readFileSync('src/community.ts', 'utf8'), /const signal = AbortSignal\.timeout\(10000\);/);
-  assert.equal(readFileSync('src/community.ts', 'utf8').split(UNREACHABLE).length - 1, 1);
+  const source = readFileSync('src/community.ts', 'utf8');
+  assert.ok(source.includes("const signal = typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function' ? AbortSignal.timeout(10000) : undefined;"));
+  // Those are all the calls there are: api() is the only place that sends anything, and it is used in the seven places tried above (the vote one both ways).
+  assert.equal(source.match(/\bfetch\(/g)?.length, 1);
+  assert.equal(source.match(/\bapi[<(]/g)?.length, 1 + 7);
+  assert.equal(source.split(UNREACHABLE).length - 1, 1);
+});
+
+test('in a browser without AbortSignal.timeout, community calls are sent with no time limit, as they were before', async () => {
+  const had = Object.getOwnPropertyDescriptor(AbortSignal, 'timeout')!;
+  const real = globalThis.fetch;
+  const calls: { url: string; init: RequestInit }[] = [];
+  const good = async () => ({ ok: true, json: async () => ({ builds: [], build: { id: 'b1', platform: 'ar15', name: 'n', note: '', parts: [], createdAt: '', votes: 0, clicks: 0 } }) });
+  let answer: () => Promise<unknown> = good;
+  globalThis.fetch = ((url: string, init: RequestInit) => { calls.push({ url, init }); return answer(); }) as typeof fetch;
+  const votes = storage.get('firearm-designer:votes:v1');
+  try {
+    // Never there (an older browser), and there but not a function.
+    for (const missing of [() => { delete (AbortSignal as { timeout?: unknown }).timeout; }, () => { Object.defineProperty(AbortSignal, 'timeout', { value: undefined, configurable: true, writable: true }); }]) {
+      missing();
+      assert.notEqual(typeof AbortSignal.timeout, 'function');
+      calls.length = 0;
+      answer = good;
+      assert.deepEqual(await listBuilds(null, 'top'), []);
+      await featuredBuilds();
+      assert.equal((await getBuild('b1'))?.id, 'b1');
+      assert.equal((await shareBuild('ar15', 'A build', '', [])).id, 'b1');
+      await recordBuyClick('b1');
+      await reportBuild('b1');
+      await setVote('b1', true);
+      await setVote('b1', false);
+      assert.equal(calls.length, 8);
+      // The request is exactly the one sent before there was a limit: no signal at all.
+      for (const c of calls) assert.ok(!('signal' in c.init), c.url);
+      assert.deepEqual(calls.map((c) => [c.init.method, c.init.headers, c.init.body]), [
+        [undefined, undefined, undefined], [undefined, undefined, undefined], [undefined, undefined, undefined],
+        ['POST', { 'content-type': 'application/json' }, JSON.stringify({ platform: 'ar15', name: 'A build', note: '', parts: [] })],
+        ['POST', undefined, undefined], ['POST', undefined, undefined], ['POST', undefined, undefined], ['POST', undefined, undefined],
+      ]);
+      // Failures read as they did: unreachable for a network failure, the service's own message for an answer.
+      answer = async () => { throw new TypeError('Failed to fetch'); };
+      await assert.rejects(listBuilds(null, 'top'), { message: UNREACHABLE });
+      await assert.rejects(setVote('b1', true), { message: UNREACHABLE });
+      await recordBuyClick('b1');
+      answer = async () => ({ ok: false, json: async () => ({ error: 'Too many builds shared. Try again later.' }) });
+      await assert.rejects(shareBuild('ar15', 'A build', '', []), { message: 'Too many builds shared. Try again later.' });
+      answer = async () => ({ ok: false, json: async () => { throw new SyntaxError('not json'); } });
+      await assert.rejects(listBuilds(null, 'top'), { message: 'The community service is not responding. Please try again.' });
+      Object.defineProperty(AbortSignal, 'timeout', had);
+    }
+  } finally {
+    Object.defineProperty(AbortSignal, 'timeout', had);
+    globalThis.fetch = real;
+    if (votes === undefined) storage.delete('firearm-designer:votes:v1'); else storage.set('firearm-designer:votes:v1', votes);
+  }
+  // Put back as it was, for the tests after this one.
+  assert.equal(typeof AbortSignal.timeout, 'function');
+  assert.deepEqual(Object.getOwnPropertyDescriptor(AbortSignal, 'timeout'), had);
+});
+
+test('the alert calls put a valid token in the address unchanged', async (t) => {
+  const answer = { ok: true, status: 200, json: async () => ({ email: 'builder@example.com', confirmed: true }) };
+  await withFakeFetch(t, async () => answer, async (seen) => {
+    assert.deepEqual(await checkAlertSignup(signupX), { ...signupX, confirmed: true });
+    assert.equal(await syncAlertBuilds(signupX, []), true);
+    await stopAlerts(signupX);
+    assert.deepEqual(seen.calls.map((c) => [c.init.method, c.url]), [
+      [undefined, `https://share.dropinbuilds.com/api/alerts/${TOKEN_X}`],
+      ['PUT', `https://share.dropinbuilds.com/api/alerts/${TOKEN_X}`],
+      ['POST', `https://share.dropinbuilds.com/alerts/stop?t=${TOKEN_X}`],
+    ]);
+  });
+  // Every token the service makes is unchanged by the encoding: it has only characters that are never escaped.
+  for (const token of [TOKEN_X, TOKEN_Y, '0123456789abcdef'.repeat(2)]) assert.equal(encodeURIComponent(token), token);
+  // A signup that didn't come through the stored-shape check still can't reach another address.
+  await withFakeFetch(t, async () => ({ ok: false, status: 404, json: async () => ({ error: 'Not found' }) }), async (seen) => {
+    assert.equal(await checkAlertSignup({ ...signupX, token: '../builds/b1?x=1#y' }), null);
+    assert.equal(seen.calls[0].url, 'https://share.dropinbuilds.com/api/alerts/..%2Fbuilds%2Fb1%3Fx%3D1%23y');
+  });
+  assert.equal(readFileSync('src/alerts.ts', 'utf8').match(/\$\{s\.token\}/g), null);
+  assert.equal(readFileSync('src/alerts.ts', 'utf8').match(/\$\{encodeURIComponent\(s\.token\)\}/g)?.length, 3);
 });
 
 test('a community call that runs out of time reads as the service being unreachable, in the words used before', async (t) => {
