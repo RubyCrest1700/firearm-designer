@@ -339,7 +339,9 @@
       "OP": "https://www.opticsplanet.com/holosun-sub-compact-hs507k-x2-red-dot-sights.html"
     },
     "gs-rsa-48": {
-      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-recoil-parts/recoil-spring-assembly/?sku=100700158"
+      "BRN": "https://www.brownells.com/gun-parts/handgun-parts/handgun-recoil-parts/recoil-spring-assembly/?sku=100700158",
+      "CP": "https://copsplus.com/handgun-internals/glock-sp33379-oem-factory-guide-rod-recoil-spring-assembly-dual-for-43-g43-slim/",
+      "TGS": "https://www.topgunsupply.com/glock-recoil-spring-assembly-g43.html"
     },
     "p-bbl-c9": {
       "SIG": "https://www.sigsauer.com/barrel-p320-p250-9mm-compact.html",

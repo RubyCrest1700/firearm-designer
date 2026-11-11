@@ -20,7 +20,7 @@ In the Status column, "active" only means the retailer is neither paused nor lin
 | Cheaper Than Dirt | cheaperthandirt.com | links only | 2026-10-31 | its robots.txt answers the price bot with a 403 | 49 | 2026-10-16 |
 | Classic Firearms | classicfirearms.com | active | - | - | 8 | 2026-11-10 |
 | CMC Triggers | cmctriggers.com | active | - | - | 1 | 2026-11-10 |
-| CopsPlus | copsplus.com | active | - | - | 12 | 2026-11-10 |
+| CopsPlus | copsplus.com | active | - | - | 13 | 2026-11-10 |
 | DK Firearms | dkfirearms.com | active | - | - | 3 | 2026-11-10 |
 | Ed Brown | edbrown.com | active | - | - | 1 | 2026-11-10 |
 | EuroOptic | eurooptic.com | active | - | - | 0 | none recorded |
@@ -53,7 +53,7 @@ In the Status column, "active" only means the retailer is neither paused nor lin
 | Springfield Armory | store.springfield-armory.com | active | - | - | 2 | 2026-11-10 |
 | Strike Industries | strikeindustries.com | active | - | - | 1 | 2026-11-09 |
 | Timney Triggers | timneytriggers.com | active | - | - | 1 | 2026-11-10 |
-| Top Gun Supply | topgunsupply.com | active | - | - | 24 | 2026-11-10 |
+| Top Gun Supply | topgunsupply.com | active | - | - | 25 | 2026-11-10 |
 | Vedder Holsters | vedderholsters.com | paused | 2026-10-24 | paused pending review of the retailer's terms on automated price collection | 45 | 2026-10-23 |
 | Wilson Combat | wilsoncombat.com | active | - | - | 15 | 2026-11-10 |
 | Wing Tactical | wingtactical.com | active | - | - | 25 | 2026-11-10 |
