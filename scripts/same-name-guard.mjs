@@ -5,7 +5,9 @@
 // slip in unnoticed. The nightly job never writes that file.
 //
 // Rule 1, names: parts whose brand and name are equal (case and spacing aside) and that are not all one product need
-//   one entry whose ids are exactly that set's ids.
+//   one entry that holds every id of that set. The entry may hold more ids only when each of them is tied to the set
+//   by a shared name or a shared product link, directly or through other parts of the entry (a and b share a name,
+//   b and c share a link: one entry a, b, c).
 // Rule 2, links: a product link in data/sources.json filed under more than one product needs all of those parts
 //   inside one entry.
 // The list itself must be sound: known ids, no id in two entries, at least two ids, a status and a reason, and no
@@ -39,7 +41,6 @@ export function linkKey(url) {
 }
 
 const listed = (ids) => (ids.length <= 1 ? ids.join('') : `${ids.slice(0, -1).join(', ')} and ${ids[ids.length - 1]}`);
-const sameSet = (a, b) => a.size === b.size && [...a].every((x) => b.has(x));
 
 /**
  * Problems as plain sentences; an empty list means every look-alike set is grouped or listed, and the list is sound.
@@ -112,10 +113,29 @@ export function sameNameProblems(parts, sources, list) {
     e.sound = ok;
   }
 
-  // Rule 1: one entry with exactly the set's ids.
+  const holds = (e, ids) => [...ids].every((id) => e.ids.has(id));
+  /**
+   * True when every part of the entry is tied to the name set `ids`: reached from it through the name sets and link
+   * sets that lie wholly inside the entry. An entry of exactly the set's ids always is.
+   */
+  const tiedTo = (e, ids) => {
+    const groups = [...nameSets.filter((s) => holds(e, s)).map(keysOf), ...[...linkSets.values()].filter(({ keys }) => holds(e, keys)).map(({ keys }) => keys)];
+    const reached = keysOf(ids);
+    for (let grew = true; grew;) {
+      grew = false;
+      for (const g of groups) {
+        if (![...g].some((k) => reached.has(k)) || [...g].every((k) => reached.has(k))) continue;
+        for (const k of g) reached.add(k);
+        grew = true;
+      }
+    }
+    return [...e.ids].every((id) => reached.has(keyOf.get(id)));
+  };
+
+  // Rule 1: one entry holding the whole set, and nothing that isn't tied to it.
   const unmet = new Set();
   for (const ids of nameSets) {
-    if (entries.some((e) => sameSet(e.ids, ids))) continue;
+    if (entries.some((e) => holds(e, ids) && tiedTo(e, ids))) continue;
     const near = entries.filter((e) => [...e.ids].some((id) => ids.has(id)));
     for (const e of near) unmet.add(e);
     const name = `${partOf.get([...ids][0]).brand} ${partOf.get([...ids][0]).name}`;
@@ -132,8 +152,8 @@ export function sameNameProblems(parts, sources, list) {
   for (const e of entries) {
     if (!e.sound || unmet.has(e)) continue;
     const wanted = new Set();
-    for (const ids of nameSets) if (sameSet(e.ids, ids)) for (const id of ids) wanted.add(keyOf.get(id));
-    for (const { keys } of linkSets.values()) if ([...keys].every((id) => e.ids.has(id))) for (const k of keys) wanted.add(k);
+    for (const ids of nameSets) if (holds(e, ids)) for (const id of ids) wanted.add(keyOf.get(id));
+    for (const { keys } of linkSets.values()) if (holds(e, keys)) for (const k of keys) wanted.add(k);
     if (!wanted.size) { out.push(`${e.label}: no longer needed; its parts are now one product, or share neither a name nor a product link. Remove the entry`); continue; }
     const extra = [...e.ids].filter((id) => !wanted.has(keyOf.get(id)));
     if (extra.length) out.push(`${e.label}: ${listed(extra)} ${extra.length > 1 ? 'share' : 'shares'} neither a name nor a product link with the rest; take ${extra.length > 1 ? 'them' : 'it'} out`);

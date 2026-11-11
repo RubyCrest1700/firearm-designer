@@ -196,6 +196,11 @@
       "basis": "published",
       "src": "https://magpul.com/ubr-gen2-collapsible-stock.html"
     },
+    "a10-trig-alg": {
+      "oz": 2.0,
+      "basis": "estimate",
+      "src": null
+    },
     "a10-trig-geissele": {
       "oz": 2.3,
       "basis": "estimate",

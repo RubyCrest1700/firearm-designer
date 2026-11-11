@@ -89,6 +89,42 @@ test('rule 2: a product link filed under two products needs both in one entry', 
   assert.deepEqual(problems({ sources: stray }), []);
 });
 
+test('a set whose parts are tied to another name through a shared link fits in one entry that holds them all', () => {
+  // a-pin and b-pin share a name; b-pin and c-pin (another name) share a product link; d-pin shares nothing.
+  const c = [
+    { id: 'a-pin', brand: 'Acme', name: 'Pin' },
+    { id: 'b-pin', brand: 'Acme', name: 'Pin' },
+    { id: 'c-pin', brand: 'Acme', name: 'Pin (long)' },
+    { id: 'd-pin', brand: 'Acme', name: 'Pin (short)' },
+  ];
+  const s = { parts: { 'a-pin': { BRN: 'https://example.com/pin-a' }, 'b-pin': { BRN: 'https://example.com/pin' }, 'c-pin': { OP: 'https://example.com/pin' }, 'd-pin': { BRN: 'https://example.com/pin-d' } } };
+  const entry = (...ids) => ({ ids, status: 'unchecked', reason: 'not yet compared' });
+  const got = (...entries) => sameNameProblems(c, s, { entries });
+  const NAME = `catalog (src/data): a-pin and b-pin share the name "Acme Pin" but are not one product; group them (sameAs) or list exactly these ids in one entry of ${FILE}`;
+  const LINK = `data/sources.json parts: b-pin and c-pin track the same product link (https://example.com/pin) but are not one product; group them (sameAs) or list them together in one entry of ${FILE}`;
+  // One entry with all three passes: c-pin is tied to the set through b-pin's link. The order of the ids is free.
+  assert.deepEqual(got(entry('a-pin', 'b-pin', 'c-pin')), []);
+  assert.deepEqual(got(entry('c-pin', 'a-pin', 'b-pin')), []);
+  // The name set alone leaves the link out.
+  assert.deepEqual(got(entry('a-pin', 'b-pin')), [LINK]);
+  // The link pair alone leaves the name set out.
+  assert.deepEqual(got(entry('b-pin', 'c-pin')), [`${NAME} (entry 1 (b-pin, c-pin) does not match)`]);
+  // Two entries can't share b-pin.
+  assert.deepEqual(got(entry('a-pin', 'b-pin'), entry('b-pin', 'c-pin')), [`${FILE} entry 2 (b-pin, c-pin): b-pin is already in another entry (a-pin, b-pin); a part belongs in one entry`]);
+  // An id that shares neither a name nor a link with the rest still fails.
+  assert.deepEqual(got(entry('a-pin', 'b-pin', 'c-pin', 'd-pin')), [`${NAME} (entry 1 (a-pin, b-pin, c-pin, d-pin) does not match)`]);
+  // So does a second, unrelated look-alike pair put in the same entry: every part must be tied to the name set.
+  const more = [...c, { id: 'e-pin', brand: 'Acme', name: 'Pin (short)' }];
+  assert.deepEqual(sameNameProblems(more, s, { entries: [entry('a-pin', 'b-pin', 'c-pin'), entry('d-pin', 'e-pin')] }), []);
+  const mixed = sameNameProblems(more, s, { entries: [entry('a-pin', 'b-pin', 'c-pin', 'd-pin', 'e-pin')] });
+  assert.equal(mixed.length, 2);
+  assert.match(mixed[0], /^catalog \(src\/data\): a-pin and b-pin share the name "Acme Pin" .* does not match\)$/);
+  assert.match(mixed[1], /^catalog \(src\/data\): d-pin and e-pin share the name "Acme Pin \(short\)" .* does not match\)$/);
+  // Once the link is gone, the extra id is no longer tied and must come out.
+  const cut = { parts: { ...s.parts, 'c-pin': { OP: 'https://example.com/pin-c' } } };
+  assert.deepEqual(sameNameProblems(c, cut, { entries: [entry('a-pin', 'b-pin', 'c-pin')] }), [`${NAME} (entry 1 (a-pin, b-pin, c-pin) does not match)`]);
+});
+
 test('links are compared without tracking parameters, and with the ones that pick a product', () => {
   assert.equal(linkKey('https://Example.com/dot/?utm_source=x&gclid=1#top'), linkKey('https://example.com/dot'));
   assert.notEqual(linkKey('https://example.com/dot/?sku=1'), linkKey('https://example.com/dot/?sku=2'));

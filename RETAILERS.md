@@ -41,7 +41,7 @@ In the Status column, "active" only means the retailer is neither paused nor lin
 | OpticsPlanet | opticsplanet.com | active | - | - | 10 | 2026-11-08 |
 | Overwatch Precision | overwatchprecision.com | active | - | - | 1 | 2026-11-10 |
 | Palmetto State Armory | palmettostatearmory.com | links only | 2026-10-31 | its product pages answer the price bot with a 403 | 4 | none recorded |
-| Primary Arms | primaryarms.com | paused | 2026-10-24 | paused pending review of the retailer's terms on automated price collection | 63 | 2026-10-23 |
+| Primary Arms | primaryarms.com | paused | 2026-10-24 | paused pending review of the retailer's terms on automated price collection | 64 | 2026-10-23 |
 | Rainier Arms | rainierarms.com | paused | 2026-10-26 | robots.txt refuses the price bot | 50 | 2026-10-26 |
 | Rifle Supply | riflesupply.com | active | - | - | 4 | 2026-11-10 |
 | Right To Bear | righttobear.com | active | - | - | 21 | 2026-11-10 |

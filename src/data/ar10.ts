@@ -57,8 +57,8 @@ const allParts = [
   ...parts('trigger', [
     { id: 'a10-trig-psa', brand: 'Palmetto State Armory', name: 'EPT Enhanced Polished Trigger', specs: ['Single stage', '~6 lb', 'Polished'], attrs: {},
       offers: [['PSA', 39.99]], pick: pick('budget', 'Smoother than mil-spec for little more.') },
-    { id: 'a10-trig-alg', sameAs: 'ar-trig-alg', brand: 'ALG Defense', name: 'ACT Trigger', specs: ['Single stage', '~5.5 lb'], attrs: {},
-      offers: [['BRN', 69.0], ['PA', 69.99], ['MID', 71.99]], pick: pick('value', 'The best trigger under $100.') },
+    { id: 'a10-trig-alg', brand: 'ALG Defense', name: 'ACT Trigger', specs: ['Single stage', '~5.5 lb'], attrs: {},
+      offers: [['BRN', 69.0], ['PA', 69.99]], pick: pick('value', 'The best trigger under $100.') },
     { id: 'a10-trig-geissele', brand: 'Geissele', name: 'SSA-E Two Stage', specs: ['Two stage', '3.5 lb total'], attrs: {},
       offers: [['BRN', 240.0], ['PA', 240.0]], pick: pick('premium', 'A two-stage suits a precision .308.') },
     { id: 'a10-trig-larue', brand: 'LaRue Tactical', name: 'MBT-2S Two Stage', specs: ['Two stage', '~4.5 lb total'], attrs: {},
