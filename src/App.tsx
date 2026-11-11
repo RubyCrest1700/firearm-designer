@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { PLATFORMS, PRICES_UPDATED_AT, canonicalPlatform } from './data';
+import { PLATFORMS, PRICES_UPDATED_AT, canonicalPlatform, currentSelection } from './data';
 import { ownsAny, partIds, baseSelection, selectionTokens, withoutOwned, type Selection } from './engine';
 import { ComparePage, loadCompare, storeCompare, type CompareItem } from './Compare';
 import { droppedBuilds, loadSavedBuilds, priceChanges, newId, readSharedBuild, savedPrices, selectionFromParts, shareUrl, checkShareLinks, storeSavedBuilds, type SavedBuild } from './store';
@@ -23,7 +23,7 @@ interface Persisted { platform: string; selections: Record<string, Selection> }
  * The build in progress lives only for this browser tab (sessionStorage), so a reload keeps it but every new
  * visit starts blank. Builds are kept only when the user saves them to My builds.
  */
-function loadPersisted(): Persisted | null {
+export function loadPersisted(): Persisted | null {
   try {
     localStorage.removeItem(STORE_KEY); // older versions kept the draft forever
     const raw = sessionStorage.getItem(STORE_KEY);
@@ -31,7 +31,7 @@ function loadPersisted(): Persisted | null {
     if (!p) return null;
     // Drafts from before the Glock 17, 19 and 26 became one builder keep their old platform ids.
     const selections: Record<string, Selection> = {};
-    for (const [k, v] of Object.entries(p.selections ?? {})) selections[canonicalPlatform(k)] ??= v;
+    for (const [k, v] of Object.entries(p.selections ?? {})) selections[canonicalPlatform(k)] ??= currentSelection(v);
     return { platform: canonicalPlatform(p.platform), selections };
   } catch {
     return null;

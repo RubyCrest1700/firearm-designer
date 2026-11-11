@@ -13,7 +13,7 @@ import { COMMUNITY_API } from '../src/config';
 import { PLATFORMS, canonicalPlatform } from '../src/data/index';
 import { baseSelection, partIds, type Selection } from '../src/engine';
 import { buildOf, selectionFromParts, totalOf } from '../src/store';
-import { cardTotalWords, priceIndex } from './og-index';
+import { cardTotalWords, publishedIndex } from './og-index';
 import { cardNotice } from './og-notice';
 import type { Platform } from '../src/types';
 
@@ -143,6 +143,6 @@ for (const b of shared) {
   if (platform && /^[a-z0-9]{10}$/.test(b.id)) png(buildCard(b.name, platform, selectionFromParts(platform.id, b.parts)), `${OUT}/c/${b.id}.png`);
 }
 
-const index = priceIndex(PLATFORMS);
+const index = publishedIndex(PLATFORMS);
 writeFileSync(`${OUT}/index.json`, JSON.stringify(index));
 console.log(`Link previews: site, ${PLATFORMS.length} platforms, ${shared.length} community builds (${(readFileSync(`${OUT}/index.json`).length / 1024).toFixed(0)} KB index)`);

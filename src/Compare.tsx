@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { PLATFORMS, canonicalPlatform } from './data';
+import { PLATFORMS, canonicalPlatform, currentSelection } from './data';
 import type { RegionState } from './Blueprint';
 import { Blueprint } from './drawings';
 import { ESTIMATE_LABEL, bestOffer, estimateNote, isEstimate, money, noPriceNote, ownedOf, partIds, totalNotes, type Selection } from './engine';
@@ -20,7 +20,7 @@ export function loadCompare(): (CompareItem | null)[] {
     const raw = sessionStorage.getItem(KEY);
     const list = raw ? (JSON.parse(raw) as (CompareItem | null)[]) : [];
     const ok = (x: CompareItem | null) => {
-      const it = x && { ...x, platform: canonicalPlatform(x.platform) };
+      const it = x && { ...x, platform: canonicalPlatform(x.platform), selection: currentSelection(x.selection) };
       return it && PLATFORMS.some((p) => p.id === it.platform) ? it : null;
     };
     return [ok(list[0] ?? null), ok(list[1] ?? null)];

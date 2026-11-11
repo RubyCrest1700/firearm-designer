@@ -1,5 +1,5 @@
 import { SHARE_BASE } from './config';
-import { PLATFORMS, canonicalPlatform } from './data';
+import { PLATFORMS, canonicalPlatform, currentId, currentSelection } from './data';
 import { MOUNT_CODE, baseSelection, bestOffer, estimatedCount, isEstimate, ownedOf, placementOf, presetSelection, selectionTokens, toBuild, unpricedCount, type Selection } from './engine';
 import { firstLiveDay, worthShowing } from './data/history';
 import ESTIMATE_ERA_PARTS from '../data/estimate-era-parts.json';
@@ -58,10 +58,11 @@ function savedEntry(e: unknown): SavedBuild | null {
     if (!PLATFORMS.some((p) => p.id === platform)) return null;
     // Builds saved before price tracking start from today's prices, and so does a part whose saved price may be a
     // paused retailer's (pausedPrice) or, on a build's first load, an estimate (estimateFigure, ESTIMATE_ERA).
-    const sel = selection as Selection;
+    // A part id the catalog dropped (RETIRED_IDS) becomes its stand-in, and the price saved for it moves with it.
+    const sel = currentSelection(selection as Selection);
     const { pricesAt, pricesChecked, estimateEraCleared, ...entry } = e as unknown as SavedBuild;
     const at = isText(pricesAt) ? { pricesAt } : {};
-    const stored = prices as Record<string, number> | undefined;
+    const stored = prices && Object.fromEntries(Object.entries(prices as Record<string, number>).map(([id, v]) => [currentId(id), v]));
     const kept = stored && trustedPrices(platform, sel, pricedAt({ savedAt: entry.savedAt, ...at }), stored, pricesChecked === true, estimateEraCleared === true);
     const reset = !!stored && Object.keys(kept!).length < Object.keys(stored).length;
     return { ...entry, platform, selection: sel, prices: priceSnapshot(platform, sel, kept), pricesChecked: true, estimateEraCleared: true, ...(reset ? { pricesAt: new Date().toISOString() } : at) };
@@ -240,7 +241,7 @@ export function selectionFromParts(platformId: string, ids: string[]): Selection
       if (platform?.slots.some((s) => s.id === own[2])) selection['+' + own[2]] = own[1] === 'has' ? 'other' : 'own';
       continue;
     }
-    const part = platform?.parts.find((p) => p.id === id);
+    const part = platform?.parts.find((p) => p.id === currentId(id));
     if (part) selection[part.slot] = part.id;
   }
   // Drop owned marks that don't match the slot: `own` needs a part, `other` stands in for one.

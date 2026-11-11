@@ -67,7 +67,6 @@ const IFACES: Iface[] = [
   ['glock9', 'slide', 'family', 'spk', 'family'],
   ['glock9', 'slide', 'rsa', 'rsa', 'rsa'],
   ['glock43x', 'slide', 'len', 'barrel', 'len'],
-  ['glock43x', 'slide', 'len', 'rsa', 'len'],
   ['p320', 'slide', 'length', 'barrel', 'length'],
   ['p320', 'slide', 'caliber', 'barrel', 'caliber'],
   ['p320', 'slide', 'length', 'spring', 'length'],

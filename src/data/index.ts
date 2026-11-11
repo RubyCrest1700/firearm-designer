@@ -20,5 +20,15 @@ export const PLATFORMS: Platform[] = [ar15, ar10, ar9, glock9, glockSlim, glockL
 export const PLATFORM_ALIASES: Record<string, string> = Object.fromEntries(PLATFORMS.flatMap((p) => (p.models ?? []).map((m) => [m.id, p.id])));
 export const canonicalPlatform = (id: string) => PLATFORM_ALIASES[id] ?? id;
 
+/**
+ * Part ids the catalog dropped, and the part that stands in for each. Share links, community builds, saved builds and
+ * the builds kept for a tab made before the change still carry the old ids.
+ */
+export const RETIRED_IDS: Record<string, string> = { 'gs-rsa-43x': 'gs-rsa-48' };
+export const currentId = (id: string) => (Object.prototype.hasOwnProperty.call(RETIRED_IDS, id) ? RETIRED_IDS[id] : id);
+/** A stored selection (slot to part id) with retired part ids swapped for the current ones. */
+export const currentSelection = (sel: Record<string, string>): Record<string, string> =>
+  Object.fromEntries(Object.entries(sel).map(([k, v]) => [k, currentId(v)]));
+
 /** When the nightly job last ran, or null if every price is still sample data. */
 export const PRICES_UPDATED_AT: string | null = (prices as unknown as { updatedAt: string | null }).updatedAt;
