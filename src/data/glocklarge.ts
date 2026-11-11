@@ -72,7 +72,7 @@ const allParts = [
     { id: 'gl-spk-lw', brand: 'Lone Wolf', name: 'Upper Parts Kit, G20/G21', specs: ['Large frame', 'Gen3/4'], attrs: {},
       offers: [['BRN', 59.99]], pick: pick('budget', 'Full kit with the channel liner installed.') },
   ]),
-  // Lone Wolf prices and thread pitches: https://lonewolfdist.com/barrels/glock-compatible-barrels/g20-21-40-41-full-size/
+  // Lone Wolf prices and thread pitches came from its G20/G21 barrel category page (removed from lonewolfdist.com by 2026-11-09).
   ...parts('barrel', [
     { id: 'gl-bbl-20oem', brand: 'Glock', name: 'G20 Barrel (OEM)', specs: ['10mm', '4.61"', 'Polygonal rifling'], attrs: { cal: '10mm', fires: '10mm', threaded: false },
       offers: [['GS', 184.95, false]] },
