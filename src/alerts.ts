@@ -8,7 +8,8 @@ import { toBuyIds, type Selection } from './engine';
 
 export interface AlertSignup { token: string; email: string; confirmed: boolean }
 
-const KEY = 'firearm-designer:alerts:v1';
+export const ALERTS_KEY = 'firearm-designer:alerts:v1';
+const KEY = ALERTS_KEY;
 
 export function loadAlertSignup(): AlertSignup | null {
   try { const raw = localStorage.getItem(KEY); return raw ? (JSON.parse(raw) as AlertSignup) : null; } catch { return null; }

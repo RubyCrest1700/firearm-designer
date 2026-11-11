@@ -23,7 +23,13 @@ export interface SavedBuild {
   estimateEraCleared?: boolean;
 }
 
-const SAVED_KEY = 'firearm-designer:saved:v1';
+export const SAVED_KEY = 'firearm-designer:saved:v1';
+
+/**
+ * Ids of the saved builds this tab has had: loaded, received from another tab, or stored here. A stored build
+ * that isn't among them was saved in another tab and hasn't reached this one yet (mergeSavedBuilds).
+ */
+const SEEN = new Set<string>();
 
 /**
  * Parts with no live price when estimates were kept out of saved builds for good. A figure stored for one may be an
@@ -72,15 +78,28 @@ function savedEntry(e: unknown): SavedBuild | null {
 }
 
 /** Saved builds to show. A damaged entry is skipped on its own, so it can't hide the others. */
-export function loadSavedBuilds(): SavedBuild[] {
+export function loadSavedBuilds(seen: Set<string> = SEEN): SavedBuild[] {
   try {
-    return (readStored() ?? []).map(savedEntry).filter((s): s is SavedBuild => !!s);
+    const list = (readStored() ?? []).map(savedEntry).filter((s): s is SavedBuild => !!s);
+    for (const s of list) seen.add(s.id);
+    return list;
   } catch {
     return [];
   }
 }
 
-export function storeSavedBuilds(list: SavedBuild[]) {
+/**
+ * The list to store: this tab's builds, with the stored builds it has never had put first (a build saved in another
+ * tab, where a new save goes first too). A stored build this tab has had and no longer has was deleted here, so it
+ * stays out. `seen` is the ids this tab has had; `stored` is the stored builds that can be read.
+ */
+export function mergeSavedBuilds<M extends { id: string }, S extends { id: string }>(mine: M[], stored: S[], seen: ReadonlySet<string>): (M | S)[] {
+  const here = new Set(mine.map((s) => s.id));
+  return [...stored.filter((s) => !here.has(s.id) && !seen.has(s.id)), ...mine];
+}
+
+/** `seen` is this tab's ids (see SEEN); the tests pass their own to stand in for a second tab. */
+export function storeSavedBuilds(list: SavedBuild[], seen: Set<string> = SEEN) {
   try {
     // Entries that aren't shown (a shelved platform's builds, or one that can't be read) stay stored as they
     // are, so a platform that comes back brings its builds and a save never wipes what it couldn't read.
@@ -90,8 +109,12 @@ export function storeSavedBuilds(list: SavedBuild[]) {
       const backup = SAVED_KEY + ':unreadable';
       if (!localStorage.getItem(backup)) localStorage.setItem(backup, localStorage.getItem(SAVED_KEY) ?? '');
     }
-    const kept = (stored ?? []).filter((e) => !savedEntry(e));
-    localStorage.setItem(SAVED_KEY, JSON.stringify([...list, ...kept]));
+    const shown = new Set((stored ?? []).filter((e) => savedEntry(e)));
+    const kept = (stored ?? []).filter((e) => !shown.has(e));
+    // A build another tab saved since this one last read the list stays stored as it is, until this tab hears of it.
+    const readable = [...shown] as { id: string }[];
+    localStorage.setItem(SAVED_KEY, JSON.stringify([...mergeSavedBuilds(list, readable, seen), ...kept]));
+    for (const s of list) seen.add(s.id);
   } catch {
     /* storage unavailable: saved builds last for this visit only */
   }

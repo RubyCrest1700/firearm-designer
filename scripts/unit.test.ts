@@ -58,6 +58,8 @@ import LIST_PRICES_JSON from '../data/list-prices.json';
 import WEIGHTS_JSON from '../data/weights.json';
 import APPROVALS_JSON from '../data/price-approvals.json';
 import { PRICES_READ_AT, readAtInstant } from '../src/data/index';
+import { mergeSavedBuilds } from '../src/store';
+import { storageChange } from '../src/App';
 import { liveCheckedAts } from '../src/data/helpers';
 import { STALE_AFTER_MS, STALE_OFFER_LABEL, STALE_PRICES_LABEL, isStale, offerAgeLabel, offerAgeText, priceStatus, shortDate } from '../src/ui';
 import App from '../src/App';
@@ -431,6 +433,140 @@ test('a part that got cheaper since saving shows as a drop, owned parts left out
   assert.deepEqual(changes.map((c) => c.part.id), [sel.barrel]);
   assert.equal(Math.round(drop * 100) / 100, 20);
   assert.equal(priceSnapshot('ar15', saved.selection)[sel.lower], undefined);
+});
+
+/* ------------------------------------------------------------------ saved builds with two tabs open */
+
+const tabBuild = (id: string, name = `Build ${id}`): SavedBuild => ({ id, name, platform: 'ar15', selection: {}, savedAt: '2026-11-01T00:00:00Z' });
+const ids = (list: { id: string }[]) => list.map((s) => s.id);
+const storedList = () => JSON.parse(storage.get(KEY)!) as SavedBuild[];
+
+test('the list to store keeps a stored build this tab has never had, and leaves out one it had and deleted', () => {
+  const x = tabBuild('x');
+  const y = tabBuild('y');
+  // Saved in another tab since this one read the list: kept, first, as the other tab stored it.
+  const merged = mergeSavedBuilds([y], [x, y], new Set(['y']));
+  assert.deepEqual(ids(merged), ['x', 'y']);
+  assert.equal(merged[0], x);
+  // This tab had it and no longer does: deleted here, so it stays deleted.
+  assert.deepEqual(ids(mergeSavedBuilds([y], [x, y], new Set(['x', 'y']))), ['y']);
+  assert.deepEqual(ids(mergeSavedBuilds([], [x, y], new Set(['x', 'y']))), []);
+  // A rename here and a new build there: both kept, and this tab's copy of its own build wins.
+  const renamed = { ...y, name: 'Renamed' };
+  assert.deepEqual(mergeSavedBuilds([renamed], [x, y], new Set(['y'])), [x, renamed]);
+  // A build made here that isn't stored yet, and nothing stored at all.
+  assert.deepEqual(ids(mergeSavedBuilds([tabBuild('n'), y], [y], new Set(['y']))), ['n', 'y']);
+  assert.deepEqual(ids(mergeSavedBuilds([y], [], new Set())), ['y']);
+  // Nothing is listed twice, and the lists passed in are left alone.
+  const mine = [y];
+  const stored = [x, y];
+  assert.deepEqual(ids(mergeSavedBuilds(mine, stored, new Set())), ['x', 'y']);
+  assert.deepEqual([ids(mine), ids(stored)], [['y'], ['x', 'y']]);
+});
+
+test('two tabs: a build saved in one is not erased by an edit in the other, and a deleted build stays deleted', () => {
+  storage.clear();
+  const shelved = { id: 'z', name: 'Shelved', platform: 'retired-platform', selection: {}, savedAt: '2026-01-01T00:00:00Z' };
+  const broken = { id: 'q', name: 'No parts', platform: 'ar15', savedAt: 'x' };
+  storage.set(KEY, JSON.stringify([tabBuild('y'), shelved, broken]));
+  const tabA = new Set<string>();
+  const tabB = new Set<string>();
+  let a = loadSavedBuilds(tabA);
+  let b = loadSavedBuilds(tabB);
+  assert.deepEqual([ids(a), ids(b)], [['y'], ['y']]);
+
+  // Tab A saves X. Before tab B hears of it, tab B renames Y: X is still stored, exactly as tab A stored it.
+  a = [tabBuild('x'), ...a];
+  storeSavedBuilds(a, tabA);
+  const xStored = storedList()[0];
+  b = b.map((s) => ({ ...s, name: 'Renamed in B' }));
+  storeSavedBuilds(b, tabB);
+  assert.deepEqual(storedList().map((s) => [s.id, s.name]), [['x', 'Build x'], ['y', 'Renamed in B'], ['z', 'Shelved'], ['q', 'No parts']]);
+  assert.deepEqual(storedList()[0], xStored);
+  // Storing again before the news arrives still keeps it: tab B has never had X, so it can't have deleted it.
+  storeSavedBuilds(b, tabB);
+  assert.deepEqual(ids(storedList()), ['x', 'y', 'z', 'q']);
+  // Entries neither tab can read are kept as they are, as before.
+  assert.deepEqual(storedList().slice(2), [shelved, broken]);
+
+  // Each tab hears of the other's change (the storage event) and reads the list again.
+  a = loadSavedBuilds(tabA);
+  b = loadSavedBuilds(tabB);
+  assert.deepEqual([a, b].map((list) => list.map((s) => [s.id, s.name])), Array(2).fill([['x', 'Build x'], ['y', 'Renamed in B']]));
+
+  // Tab B deletes X, a build it has now had: it goes, and an unrelated store from tab B doesn't bring it back.
+  b = b.filter((s) => s.id !== 'x');
+  storeSavedBuilds(b, tabB);
+  assert.deepEqual(ids(storedList()), ['y', 'z', 'q']);
+  storeSavedBuilds(b.map((s) => ({ ...s, name: 'Renamed again' })), tabB);
+  assert.deepEqual(ids(storedList()), ['y', 'z', 'q']);
+  // Tab A follows the delete, and its next edit doesn't bring X back either.
+  a = loadSavedBuilds(tabA);
+  assert.deepEqual(ids(a), ['y']);
+  storeSavedBuilds([tabBuild('w'), ...a], tabA);
+  assert.deepEqual(ids(storedList()), ['w', 'y', 'z', 'q']);
+  // The tab that made a build can delete it without ever reading it back.
+  storeSavedBuilds(a, tabA);
+  assert.deepEqual(ids(storedList()), ['y', 'z', 'q']);
+});
+
+test('the tab\'s own record of what it has had: a build stored elsewhere survives a save here until this tab has read it', () => {
+  storage.clear();
+  storage.set(KEY, JSON.stringify([tabBuild('here-1')]));
+  const mine = loadSavedBuilds();
+  storage.set(KEY, JSON.stringify([tabBuild('elsewhere-1'), ...mine]));
+  storeSavedBuilds(mine.map((s) => ({ ...s, name: 'Renamed' })));
+  assert.deepEqual(storedList().map((s) => [s.id, s.name]), [['elsewhere-1', 'Build elsewhere-1'], ['here-1', 'Renamed']]);
+  // Once read here, leaving it out of the list is a delete.
+  assert.deepEqual(ids(loadSavedBuilds()), ['elsewhere-1', 'here-1']);
+  storeSavedBuilds(mine);
+  assert.deepEqual(ids(storedList()), ['here-1']);
+});
+
+test('with storage switched off, saved builds load empty and storing does nothing, without throwing', () => {
+  const local = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')!;
+  const off = () => { throw new Error('storage is off'); };
+  Object.defineProperty(globalThis, 'localStorage', { value: { getItem: off, setItem: off, removeItem: off }, configurable: true });
+  try {
+    const tab = new Set<string>();
+    assert.deepEqual(loadSavedBuilds(tab), []);
+    storeSavedBuilds([tabBuild('x')], tab);
+    assert.equal(tab.size, 0);
+  } finally {
+    Object.defineProperty(globalThis, 'localStorage', local);
+  }
+});
+
+test('the app reads My Builds and the alert signup again when another tab changes them, and does not store or send that list back', () => {
+  assert.deepEqual(storageChange('firearm-designer:saved:v1'), { saved: true, signup: false });
+  assert.deepEqual(storageChange('firearm-designer:alerts:v1'), { saved: false, signup: true });
+  // A null key is storage cleared: both are read again.
+  assert.deepEqual(storageChange(null), { saved: true, signup: true });
+  for (const key of ['firearm-designer:v2', 'firearm-designer:drops-seen:v1', 'firearm-designer:votes:v1', 'firearm-designer:saved:v1:unreadable', ''])
+    assert.deepEqual(storageChange(key), { saved: false, signup: false }, key);
+  const app = readFileSync('src/App.tsx', 'utf8').replace(/\r\n/g, '\n');
+  // The listener, added once and removed with the page.
+  assert.ok(app.includes([
+    '    const onStorage = (e: StorageEvent) => {',
+    '      const changed = storageChange(e.key);',
+    '      if (changed.saved) { const list = loadSavedBuilds(); fromOtherTab.current = list; setSaved(list); }',
+    '      if (changed.signup) setSignup(loadAlertSignup());',
+    '    };',
+    "    window.addEventListener('storage', onStorage);",
+    "    return () => window.removeEventListener('storage', onStorage);",
+    '  }, []);',
+  ].join('\n')));
+  // The list another tab stored isn't stored again, and isn't sent to the alert service unless a change made here is still waiting.
+  assert.ok(app.includes('useEffect(() => { if (saved !== fromOtherTab.current) storeSavedBuilds(saved); }, [saved]);'));
+  assert.ok(app.includes([
+    '    if (saved !== fromOtherTab.current) unsent.current = true;',
+    '    if (!signup) { unsent.current = false; return; }',
+    '    if (!unsent.current) return;',
+    '    const t = setTimeout(() => { unsent.current = false; void syncAlertBuilds(signup, saved).then((ok) => { if (!ok) setSignup(null); }); }, 1000);',
+  ].join('\n')));
+  // Nothing else in the app stores the list or sets the marker.
+  assert.equal(app.match(/storeSavedBuilds\(/g)?.length, 1);
+  assert.equal(app.match(/fromOtherTab\.current = /g)?.length, 1);
 });
 
 /* ------------------------------------------------------------------ one slimline recoil spring, and its retired id */
