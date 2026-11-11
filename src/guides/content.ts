@@ -142,7 +142,7 @@ export const GUIDES: Guide[] = [
     slug: 'glock-43x-48-slide-swap',
     title: 'Glock 43X and 48 Slide Swap: Frames, Barrels, Springs and Optics',
     h1: 'Can you put a Glock 48 slide on a 43X frame?',
-    description: 'The Glock 43X and 48 share one frame, so either slide fits. See which barrels, recoil springs and red dots go with each slimline slide.',
+    description: 'The Glock 43X and 48 share one frame, so either slide fits. See which barrels and red dots go with each slimline slide, and the one recoil spring both use.',
     platform: 'glock43x',
     lede: 'The Glock 43X and 48 use the same frame and the same magazines. The 48 just has a longer slide and barrel, so swapping between them is one of the easiest upgrades in the Glock lineup.',
     answers: [
@@ -161,6 +161,7 @@ export const GUIDES: Guide[] = [
       { label: 'Safariland: Glock 48 vs 43X slimline shootout', url: 'https://inside.safariland.com/blog/glock-48-vs-43x-slimline-shootout/' },
       { label: 'Active Response Training: shooting the new Glock 48 and 43X', url: 'https://www.activeresponsetraining.net/shooting-the-new-glock-48-and-43x' },
       { label: 'Glock: optic mounting (slimline MOS)', url: 'https://us.glock.com/en/about/technology/optic-mounting' },
+      { label: 'Glockmeister: Glock 43, 43X and 48 recoil spring assembly', url: 'https://www.glockmeister.com/GLOCK-G43-Recoil-Spring-Assembly/productinfo/G33379/' },
     ],
   },
   {

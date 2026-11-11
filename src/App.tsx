@@ -23,7 +23,7 @@ interface Persisted { platform: string; selections: Record<string, Selection> }
  * The build in progress lives only for this browser tab (sessionStorage), so a reload keeps it but every new
  * visit starts blank. Builds are kept only when the user saves them to My builds.
  */
-function loadPersisted(): Persisted | null {
+export function loadPersisted(): Persisted | null {
   try {
     localStorage.removeItem(STORE_KEY); // older versions kept the draft forever
     const raw = sessionStorage.getItem(STORE_KEY);
