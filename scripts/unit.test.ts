@@ -7,6 +7,8 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { awarenessFor } from '../src/awareness';
 import { PLATFORMS } from '../src/data/index';
+import { RETIRED_IDS, currentId, currentSelection } from '../src/data/index';
+import { loadCompare } from '../src/Compare';
 import { NFA_SHORT_NOTICE, PAUSED, SBR_MESSAGE, VERTICAL_GRIP_MESSAGE, parts as buildParts, shortBarrelStockIssue } from '../src/data/helpers';
 import { biggestDrops, daysAgo, firstLiveDay, hasHistory, partSeries, priceOn, recentChange, seriesOf } from '../src/data/history';
 import { totalSeries } from '../src/data/history';
@@ -406,6 +408,77 @@ test('a part that got cheaper since saving shows as a drop, owned parts left out
   assert.deepEqual(changes.map((c) => c.part.id), [sel.barrel]);
   assert.equal(Math.round(drop * 100) / 100, 20);
   assert.equal(priceSnapshot('ar15', saved.selection)[sel.lower], undefined);
+});
+
+/* ------------------------------------------------------------------ one slimline recoil spring, and its retired id */
+
+const slim = platform('glock43x');
+const SLIM_SPRING = 'gs-rsa-48';
+const OLD_SLIM_SPRING = 'gs-rsa-43x';
+
+test('the G43X and G48 slides both take the one slimline recoil spring, with no fit issue on it', () => {
+  assert.deepEqual(listedParts(slim, 'rsa').map((p) => p.id), [SLIM_SPRING]);
+  const slides = listedParts(slim, 'slide');
+  assert.deepEqual([...new Set(slides.map((s) => s.attrs.len))].sort(), ['43X', '48']);
+  for (const slide of slides) {
+    const barrel = listedParts(slim, 'barrel').find((b) => b.attrs.len === slide.attrs.len)!;
+    const sel = { ...baseSelection(slim), slide: slide.id, barrel: barrel.id, rsa: SLIM_SPRING };
+    assert.deepEqual(issuesFor(slim, toBuild(slim, sel)).filter((i) => i.slots.includes('rsa')), [], slide.id);
+    assert.deepEqual(errors(slim, sel), [], slide.id);
+    assert.deepEqual(candidateIssues(slim, toBuild(slim, sel), slim.parts.find((p) => p.id === SLIM_SPRING)!), [], slide.id);
+  }
+  // The barrel still has to match the slide.
+  assert.equal(errors(slim, { ...baseSelection(slim), slide: 'gs-slide-43x', barrel: 'gs-bbl-48' }).length, 1);
+});
+
+test('the retired G43X spring id is no longer a part, and every retired id stands for a real part', () => {
+  const ids = new Set(PLATFORMS.flatMap((p) => p.parts.map((x) => x.id)));
+  assert.equal(ids.has(OLD_SLIM_SPRING), false);
+  assert.equal(RETIRED_IDS[OLD_SLIM_SPRING], SLIM_SPRING);
+  for (const [old, now] of Object.entries(RETIRED_IDS)) {
+    assert.equal(ids.has(old), false, `${old} is still in the catalog`);
+    assert.equal(ids.has(now), true, `${old} stands for ${now}, which is not a part`);
+    assert.equal(now in RETIRED_IDS, false, `${now} is retired too`);
+  }
+  assert.equal(currentId(OLD_SLIM_SPRING), SLIM_SPRING);
+  assert.equal(currentId(SLIM_SPRING), SLIM_SPRING);
+  assert.equal(currentId('constructor'), 'constructor');
+});
+
+test('a share link, community build or tab-kept build with the retired spring id opens with the current spring', () => {
+  assert.deepEqual(selectionFromParts('glock43x', ['gs-slide-43x', OLD_SLIM_SPRING, 'own-rsa']), { slide: 'gs-slide-43x', rsa: SLIM_SPRING, '+rsa': 'own' });
+  Object.defineProperty(globalThis, 'location', { value: { search: `?b=${encodeURIComponent(`glock43x~gs-slide-43x.gs-bbl-43x.${OLD_SLIM_SPRING}`)}`, origin: 'https://example.test', pathname: '/' }, configurable: true });
+  assert.deepEqual(readSharedBuild(), { platform: 'glock43x', selection: { slide: 'gs-slide-43x', barrel: 'gs-bbl-43x', rsa: SLIM_SPRING } });
+  // The build in progress and the Compare page's builds are kept for the tab as selections.
+  assert.deepEqual(currentSelection({ slide: 'gs-slide-43x', rsa: OLD_SLIM_SPRING, '+rsa': 'own', light: 'r-light-hlx', '@light': 'r45' }),
+    { slide: 'gs-slide-43x', rsa: SLIM_SPRING, '+rsa': 'own', light: 'r-light-hlx', '@light': 'r45' });
+  const kept = JSON.stringify([{ kind: 'My Builds', name: 'Old 43X', platform: 'glock43x', selection: { slide: 'gs-slide-43x', rsa: OLD_SLIM_SPRING } }]);
+  Object.defineProperty(globalThis, 'sessionStorage', { value: { getItem: () => kept }, configurable: true });
+  try {
+    assert.deepEqual(loadCompare()[0]?.selection, { slide: 'gs-slide-43x', rsa: SLIM_SPRING });
+  } finally {
+    delete (globalThis as { sessionStorage?: unknown }).sessionStorage;
+  }
+});
+
+test('a saved build with the retired spring id loads with the current spring and keeps the price saved for it', (t) => {
+  storage.clear();
+  const sel: Selection = { ...baseSelection(slim), slide: 'gs-slide-43x', barrel: 'gs-bbl-43x', rsa: SLIM_SPRING };
+  liveParts(t, slim, sel);
+  const { [SLIM_SPRING]: springNow, ...others } = priceSnapshot('glock43x', sel);
+  assert.ok(springNow > 0);
+  // Saved far in the future, so no retailer pause date can make its prices untrusted.
+  storage.set(KEY, JSON.stringify([{ id: 's', name: 'Old 43X', platform: 'glock43x', selection: { ...sel, rsa: OLD_SLIM_SPRING }, savedAt: '2099-01-01T00:00:00Z',
+    prices: { ...others, [OLD_SLIM_SPRING]: springNow + 5 }, pricesChecked: true, estimateEraCleared: true }]));
+  const [loaded] = loadSavedBuilds();
+  assert.deepEqual(loaded.selection, sel);
+  assert.deepEqual(loaded.prices, { ...others, [SLIM_SPRING]: springNow + 5 });
+  assert.equal(loaded.pricesAt, undefined); // moving the price to the current id is not a price reset
+  const { changes, drop } = priceChanges(loaded);
+  assert.deepEqual(changes.map((c) => [c.part.id, c.was, c.now]), [[SLIM_SPRING, springNow + 5, springNow]]);
+  assert.equal(Math.round(drop * 100) / 100, 5);
+  assert.equal(totalOf(slim, toBuild(slim, loaded.selection)), totalOf(slim, toBuild(slim, sel)));
+  assert.equal(unpricedOf(slim, toBuild(slim, loaded.selection)), unpricedOf(slim, toBuild(slim, sel)));
 });
 
 /* ------------------------------------------------------------------ paused retailers' price history */

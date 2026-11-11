@@ -61,8 +61,8 @@ const allParts = [
       offers: [['BRN', 214.99], ['OP', 209.99], ['GRITR', 170.99, false]] },
   ]),
   ...parts('rsa', [
-    { id: 'gs-rsa-43x', brand: 'Glock', name: 'G43X Recoil Spring Assembly (OEM)', specs: ['G43X length'], attrs: { len: '43X' }, offers: [['GS', 16.99], ['BRN', 18.99]] },
-    { id: 'gs-rsa-48', brand: 'Glock', name: 'G48 Recoil Spring Assembly (OEM)', specs: ['G48 length'], attrs: { len: '48' }, offers: [['GS', 16.99], ['BRN', 18.99]] },
+    // One spring for both lengths: Glock item 33379 is sold for the G43, G43X and G48.
+    { id: 'gs-rsa-48', brand: 'Glock', name: 'G43X / G48 Recoil Spring Assembly (OEM)', specs: ['Fits G43X and G48', 'Dual spring'], attrs: {}, offers: [['GS', 16.99], ['BRN', 18.99]] },
   ]),
   ...parts('sights', [
     { id: 'gs-sight-oem', brand: 'Glock', name: 'OEM Polymer Sights (Slimline)', specs: ['Standard height'], attrs: { height: 'standard' },
@@ -90,12 +90,10 @@ const allParts = [
 
 function rules(b: Build): Issue[] {
   const out: Issue[] = [];
-  const { slide, barrel, rsa, optic, sights, mag } = b;
+  const { slide, barrel, optic, sights, mag } = b;
   const L = (p: typeof slide) => (p ? LEN[p.attrs.len as string] : 0);
   if (slide && barrel && L(barrel) !== L(slide))
     out.push({ severity: 'error', slots: ['slide', 'barrel'], message: `A G${slide.attrs.len} slide needs a G${slide.attrs.len} barrel.` });
-  if (slide && rsa && L(rsa) !== L(slide))
-    out.push({ severity: 'error', slots: ['slide', 'rsa'], message: `A G${slide.attrs.len} slide needs the G${slide.attrs.len} recoil spring.` });
   if (slide && optic) {
     if (slide.attrs.cut === 'none')
       out.push({ severity: 'error', slots: ['slide', 'optic'], message: 'This slide has no optic cut. Choose a MOS slide or skip the optic.' });

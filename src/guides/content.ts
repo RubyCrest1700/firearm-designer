@@ -147,14 +147,13 @@ export const GUIDES: Guide[] = [
     lede: 'The Glock 43X and 48 use the same frame and the same magazines. The 48 just has a longer slide and barrel, so swapping between them is one of the easiest upgrades in the Glock lineup.',
     answers: [
       '<b>Yes.</b> The G43X and G48 share a frame, so a G48 slide fits a G43X frame and a G43X slide fits a G48 frame.',
-      'The <b>barrel and recoil spring must match the slide</b>: a G48 slide needs the G48 barrel and G48 spring.',
+      'The <b>barrel must match the slide</b>: a G48 slide needs the G48 barrel. Both slides use the same recoil spring.',
       'Slimline <b>MOS slides take the Shield RMSc footprint</b>. Holosun K optics need a plate unless the slide is a newer MOS-K. An RMR is too wide.',
       'Double-stack Glock trigger parts won\'t fit; use slimline parts.',
     ],
     charts: [
       { a: 'frame', b: 'slide', heading: 'Frame and slide', intro: 'Every slimline frame we list, checked against every slide.' },
       { a: 'slide', b: 'barrel', heading: 'Slide and barrel', intro: 'The barrel length has to match the slide.' },
-      { a: 'slide', b: 'rsa', heading: 'Slide and recoil spring', intro: 'So does the recoil spring.' },
       { a: 'slide', b: 'optic', heading: 'Slide and optic', intro: 'Which red dots mount to each slide.' },
     ],
     picks: ['slide', 'optic'],
