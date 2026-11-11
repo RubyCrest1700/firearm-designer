@@ -136,6 +136,18 @@ export function priceRange(part: Part): [number, number] {
   return [Math.min(...ps), Math.max(...ps)];
 }
 
+/**
+ * Lowest and highest price among the offers the best price is picked from (bestOffer): the in-stock ones when there
+ * are any, otherwise all of them. So the low end is the price shown, and a saving never counts a store that's out
+ * of stock while another has the part. [0, 0] for a part with no offers.
+ */
+export function stockedRange(part: Part): [number, number] {
+  const inStock = part.offers.filter((o) => o.inStock);
+  const ps = (inStock.length ? inStock : part.offers).map((o) => o.price);
+  if (!ps.length) return [0, 0];
+  return [Math.min(...ps), Math.max(...ps)];
+}
+
 export function presetSelection(platform: Platform, tier: Tier): Selection {
   return selectionOf(platform, platform.presets[tier]);
 }

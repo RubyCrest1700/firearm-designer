@@ -61,6 +61,7 @@ import { PRICES_READ_AT, readAtInstant } from '../src/data/index';
 import { mergeSavedBuilds } from '../src/store';
 import { storageChange } from '../src/App';
 import { loadWithRetry } from '../src/drawings';
+import { stockedRange } from '../src/engine';
 import { featuredBuilds, getBuild, listBuilds, recordBuyClick, reportBuild, shareBuild } from '../src/community';
 import { liveCheckedAts } from '../src/data/helpers';
 import { STALE_AFTER_MS, STALE_OFFER_LABEL, STALE_PRICES_LABEL, isStale, offerAgeLabel, offerAgeText, priceStatus, shortDate } from '../src/ui';
@@ -3437,6 +3438,101 @@ test('the header prints the read time as the visitor\'s local date; the built pa
   assert.ok(render.includes("return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });"));
   assert.equal(render.split('${PRICES_READ_AT ? ` (prices last checked ${shortDate(PRICES_READ_AT)})` : \'\'}').length - 1, 2);
   if (PRICES_READ_AT !== null) assert.ok(platformPage(PAGE_VIEWS[0]).includes(`(prices last checked ${utc(PRICES_READ_AT)})`));
+});
+
+/* ------------------------------------------------------------------ savings count only the offers the best price is picked from */
+
+const OUT = { retailer: 'CTD', price: 60, inStock: false, checkedAt: '2026-10-30T08:00:00Z' };
+const OUT_HIGH = { retailer: 'OPT', price: 300, inStock: false, checkedAt: '2026-10-30T08:00:00Z' };
+const LIVE_HIGH = { ...LIVE, retailer: 'BRN', price: 120 };
+
+test('the stocked range is the in-stock offers\' low and high, or every offer\'s when none is in stock', () => {
+  const p = part(ar15, 'ar-mz-vg6');
+  // In stock at $100 and $120; out of stock at $60 and $300: the range is the two that can be bought.
+  const mixed = { ...p, offers: [OUT, LIVE, OUT_HIGH, LIVE_HIGH] };
+  assert.deepEqual(stockedRange(mixed), [100, 120]);
+  assert.deepEqual(priceRange(mixed), [60, 300]);
+  assert.equal(bestOffer(mixed)?.price, 100);
+  // Nothing in stock: every offer counts, as it does for the best price.
+  const allOut = { ...p, offers: [OUT, OUT_HIGH] };
+  assert.deepEqual(stockedRange(allOut), [60, 300]);
+  assert.equal(bestOffer(allOut)?.price, 60);
+  // One offer in stock: no range, whatever the out-of-stock ones cost.
+  assert.deepEqual(stockedRange({ ...p, offers: [OUT, LIVE, OUT_HIGH] }), [100, 100]);
+  assert.deepEqual(stockedRange({ ...p, offers: [LIVE] }), [100, 100]);
+  assert.deepEqual(stockedRange({ ...p, offers: [] }), [0, 0]);
+});
+
+test('the picker\'s Save Up to counts only offers the best price is picked from', () => {
+  const p = part(ar15, 'ar-mz-vg6');
+  const saving = (offers: Part['offers']) => strip(candidate({ ...p, offers })).match(/<span class="save">([^<]*)<\/span>/)?.[1];
+  // The saving is between the two in-stock prices, not from the out-of-stock $300 down to the out-of-stock $60.
+  const mixed = strip(candidate({ ...p, offers: [OUT, LIVE, OUT_HIGH, LIVE_HIGH] }));
+  assert.match(mixed, /<span class="amt">\$100\.00<\/span>/);
+  assert.match(mixed, /<span class="save">Save Up to \$20\.00<\/span>/);
+  // Every store is still listed to compare.
+  assert.match(mixed, /<span>Compare 4 Retailers<\/span>/);
+  // One offer in stock: nothing to save between, so no badge.
+  assert.equal(saving([OUT, LIVE, OUT_HIGH]), undefined);
+  assert.equal(saving([LIVE]), undefined);
+  // Nothing in stock: the saving is across every offer, like the best price.
+  assert.equal(saving([OUT, OUT_HIGH]), 'Save Up to $240.00');
+  // Two in-stock offers at one price: no saving.
+  assert.equal(saving([LIVE, { ...LIVE_HIGH, price: 100 }]), undefined);
+  // An estimate anywhere among the offers still drops the saving, as before, in stock or not.
+  assert.equal(saving([LIVE, LIVE_HIGH, { ...SAMPLE, retailer: 'CTD', inStock: false }]), undefined);
+  assert.equal(saving([LIVE, LIVE_HIGH, { ...SAMPLE, retailer: 'CTD' }]), undefined);
+});
+
+test('the builder\'s "below the highest prices" counts only offers the best price is picked from', () => {
+  const sel = baseSelection(ar15);
+  const below = (offers: Part['offers']) => strip(summaryHtml(allPriced(offers), sel)).match(/ · (\$[\d,.]+) below the highest prices/)?.[1];
+  const n = Object.keys(toBuild(ar15, sel)).length;
+  assert.ok(n > 1);
+  // Each part: $100 and $120 in stock, $60 and $300 out of stock. $20 a part below the highest, not $200.
+  assert.equal(below([OUT, LIVE, OUT_HIGH, LIVE_HIGH]), money(20 * n));
+  assert.match(strip(summaryHtml(allPriced([OUT, LIVE, OUT_HIGH, LIVE_HIGH]), sel)), new RegExp(`<p class="total"><span>\\$${(100 * n).toLocaleString('en-US')}</span>`));
+  // One offer in stock for every part: each counts at the price shown, so there is no figure.
+  assert.equal(below([OUT, LIVE, OUT_HIGH]), undefined);
+  assert.equal(below([LIVE]), undefined);
+  // Nothing in stock: every offer counts.
+  assert.equal(below([OUT, OUT_HIGH]), money(240 * n));
+  // Estimates are counted in this figure as they were before.
+  assert.equal(below([SAMPLE, { ...SAMPLE, retailer: 'CTD', price: 120 }]), money(30 * n));
+});
+
+test('for every real part the saving starts from the price shown, and every starter build\'s figure adds up', () => {
+  const pool = (x: Part) => (x.offers.some((o) => o.inStock) ? x.offers.filter((o) => o.inStock) : x.offers);
+  for (const x of everyPart()) {
+    const [lo, hi] = stockedRange(x);
+    const best = bestOffer(x);
+    // The low end is the best price shown beside it; a part with no offers has neither.
+    assert.equal(lo, best?.price ?? 0, x.id);
+    assert.ok(hi >= lo, x.id);
+    assert.equal(hi, pool(x).length ? Math.max(...pool(x).map((o) => o.price)) : 0, x.id);
+    if (!x.offers.length) continue;
+    // The badge, when the picker shows one, is that range; it is never shown for one offer or with an estimate.
+    const html = strip(candidate(x));
+    const shown = html.match(/<span class="save">([^<]*)<\/span>/)?.[1];
+    const want = hi > lo && !x.offers.some(isEstimate) ? `Save Up to ${money(hi - lo)}` : undefined;
+    assert.equal(shown, want, x.id);
+    if (shown) {
+      assert.ok(pool(x).length >= 2, x.id);
+      assert.ok(html.includes(`<span class="amt">${best!.basis === 'from' ? 'From ' : ''}${money(lo)}</span>`), x.id);
+    }
+  }
+  for (const fb of FEATURED) {
+    const build = toBuild(fb.platform, fb.selection);
+    const chosen = Object.values(build).filter((x): x is Part => !!x);
+    const total = totalOf(fb.platform, build);
+    const highest = chosen.reduce((sum, x) => sum + (pool(x).length ? Math.max(...pool(x).map((o) => o.price)) : 0), 0);
+    const shown = strip(summaryHtml(fb.platform, fb.selection)).match(/ · (\$[\d,.]+) below the highest prices/)?.[1];
+    assert.equal(shown, highest > total ? money(highest - total) : undefined, fb.id);
+  }
+  // Both figures come from the one range.
+  assert.ok(readFileSync('src/Picker.tsx', 'utf8').includes('const [lo, hi] = stockedRange(part);'));
+  assert.ok(readFileSync('src/BuilderPage.tsx', 'utf8').includes('const highest = chosen.reduce((sum, p) => sum + stockedRange(p)[1], 0);'));
+  for (const f of ['src/Picker.tsx', 'src/BuilderPage.tsx']) assert.doesNotMatch(readFileSync(f, 'utf8'), /priceRange/, f);
 });
 
 /* ------------------------------------------------------------------ community calls give up after 10 seconds */

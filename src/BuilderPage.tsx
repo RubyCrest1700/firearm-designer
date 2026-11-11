@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { PLATFORMS } from './data';
 import { retailerName } from './data/retailers';
-import { bestOffer, encodeMount, estimateNote, estimatedCount, money, noPriceNote, ownedOf, placementOf, presetSelection, baseSelection, priceLabel, priceRange, singleRetailerCarts, toBuild, totalNotes, unpricedCount, type Owned, type Selection } from './engine';
+import { bestOffer, encodeMount, estimateNote, estimatedCount, money, noPriceNote, ownedOf, placementOf, presetSelection, baseSelection, priceLabel, singleRetailerCarts, stockedRange, toBuild, totalNotes, unpricedCount, type Owned, type Selection } from './engine';
 import type { RegionState } from './Blueprint';
 import { Blueprint, useDrawings } from './drawings';
 import { buildStatus, statesFor } from './status';
@@ -335,7 +335,7 @@ export function Summary({ platform, build, issues, aware, states, status, total,
   const ownedParts = all.filter((p) => owned.owned.has(p.slot));
   const ownedCount = ownedParts.length + owned.other.size;
   const ownedWorth = ownedParts.reduce((sum, p) => sum + (bestOffer(p)?.price ?? 0), 0);
-  const highest = chosen.reduce((sum, p) => sum + priceRange(p)[1], 0);
+  const highest = chosen.reduce((sum, p) => sum + stockedRange(p)[1], 0);
   // A part with no price has no retailer, so it isn't counted as one.
   const retailers = new Set(chosen.map((p) => bestOffer(p)?.retailer).filter(Boolean)).size;
   const noPrice = noPriceNote(unpricedCount(chosen));

@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { buyUrl, retailerName } from './data/retailers';
-import { bestOffer, candidateIssues, isEstimate, listedParts, money, priceLabel, priceRange, priceText, worst } from './engine';
+import { bestOffer, candidateIssues, isEstimate, listedParts, money, priceLabel, priceText, stockedRange, worst } from './engine';
 import type { RegionState } from './Blueprint';
 import { TIER_LABEL } from './store';
 import { daysAgo, hasHistory, partSeries } from './data/history';
@@ -100,7 +100,7 @@ export function Candidate({ part, open, issues, sev, selected, owned, onChoose, 
 }) {
   const [showPrices, setShowPrices] = useState(!!open);
   const best = bestOffer(part);
-  const [lo, hi] = priceRange(part);
+  const [lo, hi] = stockedRange(part);
   const fit: RegionState = sev === 'ok' || sev === 'info' ? 'ok' : sev;
   const label = best ? priceLabel(best) : '';
   return (
