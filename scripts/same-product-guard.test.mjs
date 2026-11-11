@@ -2,7 +2,7 @@
 // scripts/unit.test.ts runs the same guard over the real catalog and data files.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sameProductLeftovers, sameProductProblems } from './same-product-guard.mjs';
+import { missingWeightProblem, sameProductLeftovers, sameProductProblems } from './same-product-guard.mjs';
 
 const MAIN = 'x-opt-dot';
 const COPY = 'y-opt-dot';
@@ -26,6 +26,13 @@ test('a sound copy has no problems: same product, offers in any order, nothing f
   const d = data();
   d.weights.parts[COPY] = { src: 'https://example.com/dot', basis: 'published', oz: 5.1 };
   assert.deepEqual(sameProductProblems(catalog(), d), []);
+  // The same FFL mark on both is fine, and a missing flag counts as false.
+  const both = catalog();
+  both[0].serialized = both[1].serialized = true;
+  assert.deepEqual(sameProductProblems(both, d), []);
+  const unset = catalog();
+  unset[1].serialized = false;
+  assert.deepEqual(sameProductProblems(unset, d), []);
   // A part listed on two platforms is checked once.
   assert.deepEqual(sameProductProblems([...catalog(), catalog()[1]], d), []);
   // A catalog with no copies, missing files and odd shapes never fail or throw here.
@@ -46,6 +53,10 @@ test('each rule fails on its own, naming the copy, its main copy and what is wro
     [(c) => { c[1].name = 'Dot 2 MOA for AR-9'; }, `catalog (src/data): ${marked}, but its name differs ("Dot 2 MOA for AR-9" against ${MAIN}'s "Dot 2 MOA")`],
     [(c) => { c[1].mpn = 'AC-3'; }, `catalog (src/data): ${marked}, but its mpn differs ("AC-3" against ${MAIN}'s "AC-2")`],
     [(c) => { delete c[1].mpn; }, `catalog (src/data): ${marked}, but its mpn differs (none against ${MAIN}'s "AC-2")`],
+    // The FFL mark: on one and not the other, either way round. A missing flag is the same as false.
+    [(c) => { c[1].serialized = true; }, `catalog (src/data): ${marked}, but its serialized mark (FFL) differs (true against ${MAIN}'s false)`],
+    [(c) => { c[0].serialized = true; }, `catalog (src/data): ${marked}, but its serialized mark (FFL) differs (false against ${MAIN}'s true)`],
+    [(c) => { c[0].serialized = true; c[1].serialized = false; }, `catalog (src/data): ${marked}, but its serialized mark (FFL) differs (false against ${MAIN}'s true)`],
     // Offers: another price, another stock flag, a store missing, a store added.
     [(c) => { c[1].offers = [['BRN', 144.99], ['OP', 139.99, false]]; }, `catalog (src/data): ${marked}, but its estimate offers differ (BRN $144.99, OP $139.99 (out of stock) against ${MAIN}'s BRN $149.99, OP $139.99 (out of stock))`],
     [(c) => { c[1].offers = [['BRN', 149.99], ['OP', 139.99]]; }, `catalog (src/data): ${marked}, but its estimate offers differ (BRN $149.99, OP $139.99 against ${MAIN}'s BRN $149.99, OP $139.99 (out of stock))`],
@@ -91,6 +102,42 @@ test('every problem with one copy is reported together', () => {
   d.sources.parts[COPY] = { OP: 'https://example.com/dot-2' };
   d.approvals[COPY] = { OP: 1 };
   assert.equal(sameProductProblems(c, d).length, 3);
+});
+
+test("the weight rule: a part needs its own entry, and a copy without one needs its main copy's", () => {
+  const [main, copy, grip] = catalog();
+  // As filed in data(): the copy has no entry of its own and carries the main copy's.
+  assert.equal(missingWeightProblem(main, data().weights), undefined);
+  assert.equal(missingWeightProblem(copy, data().weights), undefined);
+  assert.equal(missingWeightProblem(grip, data().weights), undefined);
+  // A copy with an entry of its own passes on that, whatever its main copy has.
+  const own = data().weights;
+  own.parts[COPY] = { ...own.parts[MAIN] };
+  assert.equal(missingWeightProblem(copy, own), undefined);
+  delete own.parts[MAIN];
+  assert.equal(missingWeightProblem(copy, own), undefined);
+  assert.equal(missingWeightProblem(main, own), `${MAIN} has no weight in data/weights.json`);
+  // A copy whose main copy has no weight either fails, naming both.
+  const none = data().weights;
+  delete none.parts[MAIN];
+  assert.equal(missingWeightProblem(copy, none), `${COPY} has no weight in data/weights.json, and neither has ${MAIN}, the main copy it is marked sameAs; give ${MAIN} one`);
+  // A part that is nobody's copy fails without an entry of its own, and never borrows one.
+  const bare = data().weights;
+  delete bare.parts['x-grip'];
+  assert.equal(missingWeightProblem(grip, bare), 'x-grip has no weight in data/weights.json');
+  assert.equal(missingWeightProblem({ id: 'x-new' }, data().weights), 'x-new has no weight in data/weights.json');
+  // An entry that isn't an object is no weight, and a missing or odd file fails every part rather than throwing.
+  const odd = data().weights;
+  odd.parts[COPY] = null;
+  assert.equal(missingWeightProblem(copy, odd), undefined, "the main copy's still stands");
+  odd.parts[MAIN] = 5;
+  assert.match(missingWeightProblem(copy, odd), /and neither has x-opt-dot/);
+  for (const w of [undefined, null, 'x', {}, { parts: null }, { parts: [] }]) {
+    assert.equal(missingWeightProblem(grip, w), 'x-grip has no weight in data/weights.json');
+    assert.match(missingWeightProblem(copy, w), /^y-opt-dot has no weight in data\/weights\.json, and neither has x-opt-dot/);
+  }
+  // A part marked as its own copy is judged as an ordinary part (the guard refuses the mark itself).
+  assert.equal(missingWeightProblem({ id: 'x-new', sameAs: 'x-new' }, data().weights), 'x-new has no weight in data/weights.json');
 });
 
 test("rows the price bot left under a copy's id are listed for a note, never as a problem", () => {

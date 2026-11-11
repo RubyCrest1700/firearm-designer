@@ -62,7 +62,8 @@ const WEIGHTS = (weights as unknown as { parts: Record<string, { oz: number; bas
  * that isn't in RETAILERS, which check-data refuses, so that one never reaches a page. A part any paused retailer
  * priced (a sample, live or list price, or a tracked link) gets `pausedThrough`, so its older price history is ignored.
  * A copy (Part.sameAs) reads its links and its live and list prices under its main copy's id (productKey); its sample
- * offers and its weight are its own.
+ * offers are its own. Its weight is its own entry in data/weights.json when it has one (check-data wants that equal to
+ * its main copy's), and otherwise its main copy's.
  */
 export function parts(slot: string, list: Omit<PartInput, 'slot'>[]): Part[] {
   return list.map((p) => {
@@ -78,7 +79,7 @@ export function parts(slot: string, list: Omit<PartInput, 'slot'>[]): Part[] {
     for (const [retailer, offer] of live) byRetailer.set(retailer, { ...offer, retailer, ...(FROM.has(key) ? { basis: 'from' as const } : {}) });
     if (!live.length && listed) byRetailer.set(listed.retailer, { retailer: listed.retailer, price: listed.price, inStock: true, url: listed.url, basis: listed.basis, asOf: listed.asOf });
     else if (!live.length && FACTORY.has(key)) for (const o of byRetailer.values()) o.basis = 'factory';
-    const w = WEIGHTS[p.id];
+    const w = WEIGHTS[p.id] ?? WEIGHTS[key];
     const pausedThrough = pausedDate([...p.offers.map(([r]) => r), ...Object.keys(LIVE[key] ?? {}), ...Object.keys(URLS[key] ?? {}), LISTED.parts[key]?.retailer ?? '']);
     return {
       ...p, slot, offers: [...byRetailer.values()],

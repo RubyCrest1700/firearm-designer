@@ -3,6 +3,9 @@
 // copy's id (productKey in src/data/helpers.ts), so the copy must really be the same product and must keep no price
 // data of its own. check-data runs this and fails, naming the part, its main copy and the rule.
 //
+// Weight is the one thing a copy may file under its own id. An entry of its own must equal its main copy's; with none,
+// the site shows the main copy's weight for it (parts() in src/data/helpers.ts), so the entry can simply be left out.
+//
 // Rows left under a copy's id in data/prices.json and data/price-history.json are the price bot's and are not a
 // failure: the site never reads them. sameProductLeftovers lists them for a note.
 
@@ -30,7 +33,7 @@ function copiesOf(parts) {
 
 /**
  * Problems as plain sentences; an empty list means every copy is sound.
- * `parts`: every catalog part as { id, sameAs?, brand, name, mpn?, offers }, with `offers` the estimate offers as
+ * `parts`: every catalog part as { id, sameAs?, brand, name, mpn?, serialized?, offers }, with `offers` the estimate offers as
  * written in src/data ([store, price, in stock?]), not the ones the site shows. A part listed on several platforms may
  * appear more than once. `data`: { sources, listPrices, approvals, weights }, the data files as parsed.
  */
@@ -50,6 +53,9 @@ export function sameProductProblems(parts, data) {
     if (copyIds.has(target)) { out.push(`catalog (src/data): ${who}, which is itself a copy (sameAs ${quoted(copyIds.get(target))}); name the main copy, no chains`); continue; }
     for (const field of ['brand', 'name', 'mpn'])
       if (copy[field] !== main[field]) out.push(`catalog (src/data): ${who}, but its ${field} differs (${quoted(copy[field])} against ${target}'s ${quoted(main[field])})`);
+    // The FFL mark is about the product, not the platform it is listed on. A part without the flag is not serialized.
+    if (!!copy.serialized !== !!main.serialized)
+      out.push(`catalog (src/data): ${who}, but its serialized mark (FFL) differs (${!!copy.serialized} against ${target}'s ${!!main.serialized})`);
     if (offersText(copy.offers) !== offersText(main.offers))
       out.push(`catalog (src/data): ${who}, but its estimate offers differ (${offersText(copy.offers)} against ${target}'s ${offersText(main.offers)})`);
     if (has(weights?.parts, id) && (!has(weights.parts, target) || weightText(weights.parts[id]) !== weightText(weights.parts[target])))
@@ -61,6 +67,20 @@ export function sameProductProblems(parts, data) {
     if (has(approvals, id)) out.push(`data/price-approvals.json: ${who}, so it must have no approvals of its own; approve prices under ${target}`);
   }
   return out;
+}
+
+/**
+ * check-data's "every part has a weight" rule for one part, as a sentence, or undefined when the part has one. A part's
+ * weight is its own entry in data/weights.json; a copy with no entry of its own carries its main copy's, so it fails
+ * only when its main copy has none either. `weights`: data/weights.json as parsed.
+ */
+export function missingWeightProblem(part, weights) {
+  const { id, sameAs } = isPlainObject(part) ? part : {};
+  const filed = (key) => has(weights?.parts, key) && isPlainObject(weights.parts[key]);
+  if (filed(id)) return undefined;
+  if (sameAs === undefined || sameAs === null || sameAs === id) return `${id} has no weight in data/weights.json`;
+  if (filed(sameAs)) return undefined;
+  return `${id} has no weight in data/weights.json, and neither has ${sameAs}, the main copy it is marked sameAs; give ${sameAs} one`;
 }
 
 /**

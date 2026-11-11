@@ -53,7 +53,7 @@ import ESTIMATE_ERA from '../data/estimate-era-parts.json';
 import sources from '../data/sources.json';
 import type { Issue, Offer, Part, Platform } from '../src/types';
 import { INLINE_OFFERS, productKey } from '../src/data/helpers';
-import { sameProductProblems } from './same-product-guard.mjs';
+import { missingWeightProblem, sameProductProblems } from './same-product-guard.mjs';
 import LIST_PRICES_JSON from '../data/list-prices.json';
 import WEIGHTS_JSON from '../data/weights.json';
 import APPROVALS_JSON from '../data/price-approvals.json';
@@ -2609,8 +2609,9 @@ test('the error screen shows the approved message and a Reload button once a pag
 /* ------------------------------------------------------------------ same product, one price (Part.sameAs) */
 
 // A copy (sameAs) is the same product under a second id, for another platform. Its links, live and list prices and
-// price history are its main copy's; its slot, attrs, specs, weight and its place in saved builds are its own. The
-// parts here are made up, and everything filed for them is in memory only, until the test ends.
+// price history are its main copy's; its slot, attrs, specs and its place in saved builds are its own. Its weight is
+// its own entry in data/weights.json when it has one, and its main copy's otherwise. The parts here are made up, and
+// everything filed for them is in memory only, until the test ends.
 const SYN_MAIN = 'syn-main-dot';
 const SYN_COPY = 'syn-copy-dot';
 const RAW_LIVE = (PRICES_JSON as unknown as { offers: Record<string, Record<string, Offer>> }).offers;
@@ -2675,14 +2676,59 @@ test('a copy built through parts() shows its main copy\'s links and list price, 
   assert.deepEqual(main.weight, { oz: 5, published: true, src: 'https://example.com/main' });
   assert.equal(main.slot, 'optic');
   assert.equal(main.sameAs, undefined);
-  // A copy with no weight entry has no weight: the main copy's isn't borrowed.
+  // A copy with no weight entry of its own carries its main copy's.
   fileRow(t, RAW_WEIGHTS, SYN_COPY, undefined);
-  assert.equal(synPair(t).copy.weight, undefined);
+  assert.deepEqual(synPair(t).copy.weight, { oz: 5, published: true, src: 'https://example.com/main' });
   // The main copy's hand-checked list price replaces the estimates on both.
   fileRow(t, RAW_LIST.parts, SYN_MAIN, { basis: 'list', retailer: 'OP', price: 70, url: 'https://example.com/main-list', asOf: '2026-10-09' });
   ({ main, copy } = synPair(t));
   assert.deepEqual(copy.offers, [{ retailer: 'OP', price: 70, inStock: true, url: 'https://example.com/main-list', basis: 'list', asOf: '2026-10-09' }]);
   assert.deepEqual(copy.offers, main.offers);
+});
+
+test('a copy with no weight entry shows its main copy\'s weight, its own entry wins, and no other part borrows one', (t) => {
+  const mainWeight = { oz: 5, basis: 'published', src: 'https://example.com/main' };
+  const shown = { oz: 5, published: true, src: 'https://example.com/main' };
+  const file = { parts: RAW_WEIGHTS };
+  const { main: mainIn, copy: copyIn } = synInputs();
+  // Neither has an entry: no weight on either, and check-data's rule fails both.
+  let { main, copy } = synPair(t);
+  assert.equal(main.weight, undefined);
+  assert.equal(copy.weight, undefined);
+  assert.equal(missingWeightProblem(mainIn, file), `${SYN_MAIN} has no weight in data/weights.json`);
+  assert.equal(missingWeightProblem(copyIn, file), `${SYN_COPY} has no weight in data/weights.json, and neither has ${SYN_MAIN}, the main copy it is marked sameAs; give ${SYN_MAIN} one`);
+  // Only the main copy has one: the copy shows it, and the rule passes both.
+  fileRow(t, RAW_WEIGHTS, SYN_MAIN, mainWeight);
+  ({ main, copy } = synPair(t));
+  assert.deepEqual(main.weight, shown);
+  assert.deepEqual(copy.weight, shown);
+  assert.equal(missingWeightProblem(mainIn, file), undefined);
+  assert.equal(missingWeightProblem(copyIn, file), undefined);
+  // The copy has an equal entry of its own: the same weight, read from its own row.
+  fileRow(t, RAW_WEIGHTS, SYN_COPY, { ...mainWeight });
+  assert.deepEqual(synPair(t).copy.weight, shown);
+  assert.equal(missingWeightProblem(copyIn, file), undefined);
+  // Its own entry is the one read (check-data refuses a pair that differs, so this never reaches the site).
+  fileRow(t, RAW_WEIGHTS, SYN_COPY, { oz: 7, basis: 'estimate', src: null });
+  assert.deepEqual(synPair(t).copy.weight, { oz: 7, published: false, src: undefined });
+  // Only the copy has one: it keeps it, and the main copy borrows nothing from its copy.
+  fileRow(t, RAW_WEIGHTS, SYN_MAIN, undefined);
+  ({ main, copy } = synPair(t));
+  assert.deepEqual(copy.weight, { oz: 7, published: false, src: undefined });
+  assert.equal(main.weight, undefined);
+  assert.equal(missingWeightProblem(copyIn, file), undefined);
+  assert.equal(missingWeightProblem(mainIn, file), `${SYN_MAIN} has no weight in data/weights.json`);
+  // The same input without sameAs is an ordinary part: with no entry of its own it has no weight, whatever SYN_MAIN has.
+  fileRow(t, RAW_WEIGHTS, SYN_COPY, undefined);
+  fileRow(t, RAW_WEIGHTS, SYN_MAIN, mainWeight);
+  const own = { ...copyIn, sameAs: undefined };
+  assert.equal(buildParts('sight', [own])[0].weight, undefined);
+  assert.equal(missingWeightProblem(own, file), `${SYN_COPY} has no weight in data/weights.json`);
+  // In every case above the rule and the site agree: a part passes exactly when parts() gives it a weight.
+  // check-data applies the rule to every part, and still fails any part the site shows without a weight.
+  const check = readFileSync('scripts/check-presets.ts', 'utf8');
+  assert.ok(check.includes("const problem = missingWeightProblem(part, WEIGHTS) ?? (part.weight ? undefined : `${part.id} has no weight in data/weights.json`);"));
+  assert.ok(check.includes('if (problem) { console.log(`${p.id}: ${problem}`); bad++; }'));
 });
 
 test('a copy shows its main copy\'s live prices, and a part that is not a copy still reads its own', (t) => {
@@ -2850,15 +2896,47 @@ test('saved builds and the price index keep a copy under its own id, at its main
   assert.deepEqual(priceIndex([tiny]).platforms.tiny.estimates, [MOVER, copy.id]);
 });
 
+test('an old saved build that holds a copy is judged by its main copy\'s first live day', (t) => {
+  // How it works today, written down, not a decision: the copy has no history of its own, so "was this figure saved
+  // before the part had a live price" is asked of the main copy's history.
+  setPrice(t, liveOffer(150), [['2026-10-09', 200], ['2026-10-28', 150]]);
+  const main = part(ar15, MOVER);
+  const copy: Part = { ...main, id: 'syn-old-copy', sameAs: MOVER };
+  t.after(() => { ar15.parts.splice(ar15.parts.indexOf(copy), 1); });
+  ar15.parts.push(copy);
+  // Rows under the copy's own id say it was live a month earlier. They are not read.
+  fileRow(t, RAW_HISTORY, copy.id, [['2026-09-01', 200]]);
+  assert.equal(firstLiveDay(copy), '2026-10-09');
+  const old = (savedAt: string): SavedBuild => moverBuild({ selection: { handguard: copy.id }, savedAt, prices: { [copy.id]: 200 } });
+  // Saved after the main copy's first live day: the figure is kept as a live one, and the move since shows.
+  const after = loadAt('2026-10-31T12:00:00Z', old('2026-10-20T12:00:00Z'));
+  assert.deepEqual(after.prices, { [copy.id]: 200 });
+  assert.equal(after.pricesAt, undefined);
+  assert.deepEqual(priceChanges(after).changes.map((c) => [c.part.id, c.was, c.now]), [[copy.id, 200, 150]]);
+  // Saved on or before it (though after the day under the copy's own id): the figure may be an estimate, so it is
+  // dropped and today's price stored in its place, with no move shown.
+  for (const savedAt of ['2026-10-09T12:00:00Z', '2026-10-05T12:00:00Z']) {
+    const before = loadAt('2026-10-31T12:00:00Z', old(savedAt));
+    assert.deepEqual(before.prices, { [copy.id]: 150 }, savedAt);
+    assert.ok(before.pricesAt, savedAt);
+    assert.deepEqual(priceChanges(before), noMove, savedAt);
+  }
+  // The main copy itself, in the same builds, is judged the same way.
+  const mainOld = (savedAt: string) => loadAt('2026-10-31T12:00:00Z', moverBuild({ selection: { handguard: MOVER }, savedAt, prices: { [MOVER]: 200 } }));
+  assert.deepEqual(mainOld('2026-10-20T12:00:00Z').prices, { [MOVER]: 200 });
+  assert.deepEqual(mainOld('2026-10-05T12:00:00Z').prices, { [MOVER]: 150 });
+});
+
 test('every part marked sameAs in the real catalog passes the same-product guard', () => {
-  const catalog = PLATFORMS.flatMap((p) => p.parts.map((x) => ({ id: x.id, sameAs: x.sameAs, brand: x.brand, name: x.name, mpn: x.mpn, offers: INLINE_OFFERS[x.id] })));
+  const catalog = PLATFORMS.flatMap((p) => p.parts.map((x) => ({ id: x.id, sameAs: x.sameAs, brand: x.brand, name: x.name, mpn: x.mpn, serialized: x.serialized, offers: INLINE_OFFERS[x.id] })));
   assert.ok(catalog.every((x) => Array.isArray(x.offers)), 'every catalog part has its estimate offers on record');
   assert.deepEqual(sameProductProblems(catalog, { sources, listPrices: LIST_PRICES_JSON, approvals: APPROVALS_JSON, weights: WEIGHTS_JSON }), []);
   // A copy never has a second copy behind it, so one step always reaches the main copy.
   const byId = new Map(catalog.map((x) => [x.id, x]));
   for (const x of catalog) if (x.sameAs !== undefined) assert.equal(byId.get(x.sameAs)?.sameAs, undefined, x.id);
-  // check-data runs the guard and fails on what it finds.
+  // check-data runs the guard and fails on what it finds, and hands it each part's FFL mark to compare.
   const check = readFileSync('scripts/check-presets.ts', 'utf8');
+  assert.ok(check.includes('({ id: part.id, sameAs: part.sameAs, brand: part.brand, name: part.name, mpn: part.mpn, serialized: part.serialized, offers: INLINE_OFFERS[part.id] })'));
   assert.match(check, /for \(const problem of sameProductProblems\(catalog, \{ sources: SOURCES, listPrices: LIST_PRICES, approvals: APPROVALS, weights: WEIGHTS \}\)\) \{ console\.log\(problem\); bad\+\+; \}/);
 });
 

@@ -5,6 +5,8 @@ export interface CatalogEntry {
   brand: string;
   name: string;
   mpn?: string;
+  /** The FFL mark. Missing means not serialized. */
+  serialized?: boolean;
   /** The estimate offers as written in src/data: [store, price, in stock?]. */
   offers?: readonly (readonly [string, number, boolean?])[];
 }
@@ -17,4 +19,5 @@ export function sameProductProblems(
     weights?: unknown;
   },
 ): string[];
+export function missingWeightProblem(part: { id: string; sameAs?: string }, weights: unknown): string | undefined;
 export function sameProductLeftovers(parts: readonly CatalogEntry[], files: Record<string, unknown>): { file: string; parts: string[] }[];

@@ -21,7 +21,7 @@ import { approvalProblems } from './first-read-guard.mjs';
 import { pausedPriceProblems } from './pause-guard.mjs';
 import { unknownRetailerProblems } from './retailer-id-guard.mjs';
 import { advanceChecks, renderRetailerList, retailerListProblems } from './retailer-list.mjs';
-import { sameProductLeftovers, sameProductProblems } from './same-product-guard.mjs';
+import { missingWeightProblem, sameProductLeftovers, sameProductProblems } from './same-product-guard.mjs';
 
 const SOURCES = sources as unknown as { parts?: Record<string, Record<string, string>>; paused?: Record<string, { since: string; reason: string }>; linksOnly?: Record<string, { since: string; reason: string }> };
 
@@ -227,9 +227,13 @@ for (const p of PLATFORMS)
     if (got !== want) { console.log(`add-ons: ${pid}/${tier} ${JSON.stringify(over)} on ${slot}: expected ${want}, got ${got}`); bad++; }
   }
 }
-// Every part has a weight, and preset builds land near factory rifle and pistol weights.
+// Every part has a weight, and preset builds land near factory rifle and pistol weights. A copy (sameAs) with no entry
+// of its own carries its main copy's (scripts/same-product-guard.mjs), so it fails only when its main copy has none.
 for (const p of PLATFORMS) {
-  for (const part of p.parts) if (!part.weight) { console.log(`${p.id}: ${part.id} has no weight in data/weights.json`); bad++; }
+  for (const part of p.parts) {
+    const problem = missingWeightProblem(part, WEIGHTS) ?? (part.weight ? undefined : `${part.id} has no weight in data/weights.json`);
+    if (problem) { console.log(`${p.id}: ${problem}`); bad++; }
+  }
   const rifle = p.family === 'Rifle';
   console.log(`${p.name} weights: ${(['budget', 'value', 'premium'] as const).map((t) => {
     const b = toBuild(p, presetSelection(p, t));
@@ -332,7 +336,7 @@ for (const problem of approvalProblems(APPROVALS, { partIds: new Set(PLATFORMS.f
 // copy and keeps no price data of its own (scripts/same-product-guard.mjs). Rows the price bot left under a copy's id
 // are only noted: the site never reads them.
 {
-  const catalog = PLATFORMS.flatMap((p) => p.parts.map((part) => ({ id: part.id, sameAs: part.sameAs, brand: part.brand, name: part.name, mpn: part.mpn, offers: INLINE_OFFERS[part.id] })));
+  const catalog = PLATFORMS.flatMap((p) => p.parts.map((part) => ({ id: part.id, sameAs: part.sameAs, brand: part.brand, name: part.name, mpn: part.mpn, serialized: part.serialized, offers: INLINE_OFFERS[part.id] })));
   for (const problem of sameProductProblems(catalog, { sources: SOURCES, listPrices: LIST_PRICES, approvals: APPROVALS, weights: WEIGHTS })) { console.log(problem); bad++; }
   const copies = new Set(catalog.filter((part) => part.sameAs !== undefined).map((part) => part.id)).size;
   const leftovers = sameProductLeftovers(catalog, { 'data/prices.json': (PRICES as unknown as { offers?: unknown }).offers, 'data/price-history.json': (HISTORY as unknown as { parts?: unknown }).parts });
