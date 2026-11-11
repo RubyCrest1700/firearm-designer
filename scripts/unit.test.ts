@@ -52,6 +52,11 @@ import history from '../data/price-history.json';
 import ESTIMATE_ERA from '../data/estimate-era-parts.json';
 import sources from '../data/sources.json';
 import type { Issue, Offer, Part, Platform } from '../src/types';
+import { INLINE_OFFERS, productKey } from '../src/data/helpers';
+import { sameProductProblems } from './same-product-guard.mjs';
+import LIST_PRICES_JSON from '../data/list-prices.json';
+import WEIGHTS_JSON from '../data/weights.json';
+import APPROVALS_JSON from '../data/price-approvals.json';
 
 /** The catalog's offers from stores missing from RETAILERS, as noted while it was built: taken before any test adds its own. */
 const CATALOG_UNKNOWN_AT_LOAD = [...UNKNOWN_RETAILER_OFFERS];
@@ -2599,4 +2604,266 @@ test('the error screen shows the approved message and a Reload button once a pag
   assert.match(readFileSync('src/main.tsx', 'utf8'), /<StrictMode>\r?\n {4}<ErrorBoundary>\r?\n {6}<App \/>\r?\n {4}<\/ErrorBoundary>\r?\n {2}<\/StrictMode>/);
   assert.ok(readFileSync('src/ui.tsx', 'utf8').includes('componentDidCatch(error: unknown) { console.error(error); }'));
   assert.equal((readFileSync('src/ui.tsx', 'utf8').match(/console\.\w+\(/g) ?? []).length, 1);
+});
+
+/* ------------------------------------------------------------------ same product, one price (Part.sameAs) */
+
+// A copy (sameAs) is the same product under a second id, for another platform. Its links, live and list prices and
+// price history are its main copy's; its slot, attrs, specs, weight and its place in saved builds are its own. The
+// parts here are made up, and everything filed for them is in memory only, until the test ends.
+const SYN_MAIN = 'syn-main-dot';
+const SYN_COPY = 'syn-copy-dot';
+const RAW_LIVE = (PRICES_JSON as unknown as { offers: Record<string, Record<string, Offer>> }).offers;
+const RAW_LIST = LIST_PRICES_JSON as unknown as { from: string[]; factory: string[]; parts: Record<string, { basis: 'list' | 'factory'; retailer: string; price: number; url?: string; asOf: string }> };
+const RAW_WEIGHTS = (WEIGHTS_JSON as unknown as { parts: Record<string, { oz: number; basis: string; src: string | null }> }).parts;
+/** Rows fileRow has changed in the running test, so a row changed twice is still put back as the test found it. */
+const FILED = new Map<object, Set<string>>();
+/** Puts a row in a data file's table for the test only. `undefined` takes the row out. */
+function fileRow<T>(t: TestContext, table: Record<string, T>, id: string, row: T | undefined) {
+  const ids = FILED.get(table) ?? new Set<string>();
+  FILED.set(table, ids);
+  if (!ids.has(id)) {
+    ids.add(id);
+    const had = Object.prototype.hasOwnProperty.call(table, id);
+    const was = table[id];
+    t.after(() => { ids.delete(id); if (had) table[id] = was; else delete table[id]; });
+  }
+  if (row === undefined) delete table[id]; else table[id] = row;
+}
+/** The made-up pair as the catalog would write them: equal brand, name, part number and estimate offers. */
+const synInputs = () => {
+  const shared = { brand: 'Synthetic', name: 'Dot 2 MOA', mpn: 'SYN-2', offers: [['BRN', 100], ['OP', 90, false]] as [string, number, boolean?][] };
+  return {
+    main: { ...shared, id: SYN_MAIN, specs: ['Low mount'], attrs: { mount: 'low' } },
+    copy: { ...shared, id: SYN_COPY, sameAs: SYN_MAIN, specs: ['Lower 1/3 mount'], attrs: { mount: 'third', pcc: true } },
+  };
+};
+/** Builds the pair through parts(), each in its own slot, and forgets their catalog offers when the test ends. */
+function synPair(t: TestContext) {
+  t.after(() => { delete INLINE_OFFERS[SYN_MAIN]; delete INLINE_OFFERS[SYN_COPY]; });
+  const { main, copy } = synInputs();
+  return { main: buildParts('optic', [main])[0], copy: buildParts('sight', [copy])[0] };
+}
+
+test('productKey is the main copy\'s id for a copy and the part\'s own id otherwise', () => {
+  assert.equal(productKey({ id: 'a' }), 'a');
+  assert.equal(productKey({ id: 'b', sameAs: 'a' }), 'a');
+});
+
+test('a copy built through parts() shows its main copy\'s links and list price, and keeps its own slot, attrs, specs and weight', (t) => {
+  fileRow(t, RAW_LINKS, SYN_MAIN, { BRN: 'https://example.com/main-brn', OP: 'https://example.com/main-op' });
+  fileRow(t, RAW_WEIGHTS, SYN_MAIN, { oz: 5, basis: 'published', src: 'https://example.com/main' });
+  // Rows under the copy's own id: only the weight is read.
+  fileRow(t, RAW_LINKS, SYN_COPY, { BRN: 'https://example.com/copy-brn' });
+  fileRow(t, RAW_LIVE, SYN_COPY, { OP: { retailer: 'OP', price: 1, inStock: true, checkedAt: LIVE_AT } });
+  fileRow(t, RAW_LIST.parts, SYN_COPY, { basis: 'list', retailer: 'OP', price: 2, asOf: '2026-10-01' });
+  fileRow(t, RAW_WEIGHTS, SYN_COPY, { oz: 6, basis: 'estimate', src: null });
+  let { main, copy } = synPair(t);
+  // Estimates, each with the main copy's product link.
+  assert.deepEqual(copy.offers, [
+    { retailer: 'BRN', price: 100, inStock: true, url: 'https://example.com/main-brn' },
+    { retailer: 'OP', price: 90, inStock: false, url: 'https://example.com/main-op' },
+  ]);
+  assert.deepEqual(copy.offers, main.offers);
+  // Everything about fit and place is the copy's own, and so is its id and its weight.
+  assert.equal(copy.id, SYN_COPY);
+  assert.equal(copy.sameAs, SYN_MAIN);
+  assert.equal(copy.slot, 'sight');
+  assert.deepEqual(copy.attrs, { mount: 'third', pcc: true });
+  assert.deepEqual(copy.specs, ['Lower 1/3 mount']);
+  assert.deepEqual(copy.weight, { oz: 6, published: false, src: undefined });
+  assert.deepEqual(main.weight, { oz: 5, published: true, src: 'https://example.com/main' });
+  assert.equal(main.slot, 'optic');
+  assert.equal(main.sameAs, undefined);
+  // A copy with no weight entry has no weight: the main copy's isn't borrowed.
+  fileRow(t, RAW_WEIGHTS, SYN_COPY, undefined);
+  assert.equal(synPair(t).copy.weight, undefined);
+  // The main copy's hand-checked list price replaces the estimates on both.
+  fileRow(t, RAW_LIST.parts, SYN_MAIN, { basis: 'list', retailer: 'OP', price: 70, url: 'https://example.com/main-list', asOf: '2026-10-09' });
+  ({ main, copy } = synPair(t));
+  assert.deepEqual(copy.offers, [{ retailer: 'OP', price: 70, inStock: true, url: 'https://example.com/main-list', basis: 'list', asOf: '2026-10-09' }]);
+  assert.deepEqual(copy.offers, main.offers);
+});
+
+test('a copy shows its main copy\'s live prices, and a part that is not a copy still reads its own', (t) => {
+  const liveRow = { OP: { retailer: 'OP', price: 80, inStock: true, url: 'https://example.com/main-op', checkedAt: LIVE_AT }, BRN: { retailer: 'BRN', price: 85, inStock: false, url: 'https://example.com/main-brn', checkedAt: LIVE_AT } };
+  fileRow(t, RAW_LIVE, SYN_MAIN, liveRow);
+  fileRow(t, RAW_LIVE, SYN_COPY, { GS: { retailer: 'GS', price: 1, inStock: true, checkedAt: LIVE_AT } });
+  const { main, copy } = synPair(t);
+  assert.deepEqual(copy.offers, [liveRow.OP, liveRow.BRN]);
+  assert.deepEqual(copy.offers, main.offers);
+  assert.equal(bestOffer(copy)!.price, 80);
+  assert.equal(isEstimate(bestOffer(copy)!), false);
+  // The same input without sameAs is an ordinary part again, reading the rows under its own id.
+  const own = { ...synInputs().copy, sameAs: undefined };
+  assert.deepEqual(buildParts('sight', [own])[0].offers.map((o) => [o.retailer, o.price]), [['GS', 1]]);
+});
+
+test('a copy takes "From" and "Factory Part" labels from its main copy\'s place in data/list-prices.json', (t) => {
+  t.after(() => { delete INLINE_OFFERS['syn-from-copy']; delete INLINE_OFFERS['syn-factory-copy']; delete INLINE_OFFERS['syn-plain']; });
+  // Real ids stand in as main copies here, as the two lists are read once when the catalog loads.
+  const fromId = RAW_LIST.from[0];
+  const factoryId = RAW_LIST.factory.find((id) => !RAW_LIST.parts[id])!;
+  assert.ok(fromId && factoryId);
+  fileRow(t, RAW_LIVE, fromId, { OP: { retailer: 'OP', price: 60, inStock: true, checkedAt: LIVE_AT } });
+  const [fromCopy] = buildParts('holster', [{ id: 'syn-from-copy', sameAs: fromId, brand: 'S', name: 'H', specs: [], attrs: {}, offers: [] }]);
+  assert.deepEqual(fromCopy.offers.map((o) => [o.retailer, o.price, o.basis]), [['OP', 60, 'from']]);
+  fileRow(t, RAW_LIVE, factoryId, undefined);
+  const [factoryCopy] = buildParts('frame', [{ id: 'syn-factory-copy', sameAs: factoryId, brand: 'S', name: 'F', specs: [], attrs: {}, offers: [['BRN', 50]] }]);
+  assert.deepEqual(factoryCopy.offers.map((o) => [o.retailer, o.price, o.basis]), [['BRN', 50, 'factory']]);
+  // A made-up part that is nobody's copy gets neither label.
+  fileRow(t, RAW_LIVE, 'syn-plain', { OP: { retailer: 'OP', price: 60, inStock: true, checkedAt: LIVE_AT } });
+  assert.equal(buildParts('holster', [{ id: 'syn-plain', brand: 'S', name: 'P', specs: [], attrs: {}, offers: [] }])[0].offers[0].basis, undefined);
+  fileRow(t, RAW_LIVE, 'syn-plain', undefined);
+  assert.equal(buildParts('frame', [{ id: 'syn-plain', brand: 'S', name: 'P', specs: [], attrs: {}, offers: [['BRN', 50]] }])[0].offers[0].basis, undefined);
+});
+
+test('a copy\'s pausedThrough comes from the stores that priced its main copy, not from rows under its own id', (t) => {
+  // A paused store's link under the copy's id alone counts for nothing.
+  fileRow(t, RAW_LINKS, SYN_COPY, { PA: 'https://example.com/copy-pa' });
+  fileRow(t, RAW_LIVE, SYN_COPY, { RA: { retailer: 'RA', price: 1, inStock: true, checkedAt: LIVE_AT } });
+  fileRow(t, RAW_LIST.parts, SYN_COPY, { basis: 'list', retailer: 'MID', price: 2, asOf: '2026-10-01' });
+  let { main, copy } = synPair(t);
+  assert.equal(main.pausedThrough, undefined);
+  assert.equal(copy.pausedThrough, undefined);
+  // A paused store's link, live price or list price on the main copy dates both.
+  fileRow(t, RAW_LINKS, SYN_MAIN, { PA: 'https://example.com/main-pa' });
+  ({ main, copy } = synPair(t));
+  assert.equal(main.pausedThrough, PAUSE_DAY);
+  assert.equal(copy.pausedThrough, PAUSE_DAY);
+  fileRow(t, RAW_LIVE, SYN_MAIN, { RA: { retailer: 'RA', price: 80, inStock: true, checkedAt: LIVE_AT } });
+  ({ main, copy } = synPair(t));
+  assert.equal(copy.pausedThrough, PAUSE_DAY_2);
+  assert.equal(main.pausedThrough, PAUSE_DAY_2);
+  fileRow(t, RAW_LIVE, SYN_MAIN, undefined);
+  fileRow(t, RAW_LINKS, SYN_MAIN, undefined);
+  fileRow(t, RAW_LIST.parts, SYN_MAIN, { basis: 'list', retailer: 'MID', price: 70, asOf: '2026-10-09' });
+  ({ main, copy } = synPair(t));
+  assert.equal(copy.pausedThrough, PAUSE_DAY_2);
+  assert.equal(main.pausedThrough, PAUSE_DAY_2);
+  // The paused stores' prices themselves stay off both.
+  assert.ok(![...main.offers, ...copy.offers].some((o) => PAUSED.has(o.retailer)));
+  // The copy's own estimate offers still count, as any part's do.
+  const input = { ...synInputs().copy, sameAs: 'syn-nothing-filed', offers: [['PA', 100]] as [string, number][] };
+  assert.equal(buildParts('sight', [input])[0].pausedThrough, PAUSE_DAY);
+});
+
+test('parts() still drops and notes a copy\'s offer from an unknown retailer, under the copy\'s own id', (t) => {
+  const before = UNKNOWN_RETAILER_OFFERS.length;
+  t.after(() => { UNKNOWN_RETAILER_OFFERS.length = before; delete INLINE_OFFERS[SYN_COPY]; });
+  fileRow(t, RAW_LIVE, SYN_MAIN, { NOPE: { retailer: 'NOPE', price: 1, inStock: true, checkedAt: LIVE_AT } });
+  const [copy] = buildParts('sight', [{ ...synInputs().copy, offers: [['NOPE', 50], ['BRN', 100]] }]);
+  assert.deepEqual(copy.offers.map((o) => [o.retailer, o.price]), [['BRN', 100]]);
+  assert.deepEqual(UNKNOWN_RETAILER_OFFERS.slice(before), [{ part: SYN_COPY, retailer: 'NOPE' }]);
+  assert.deepEqual(INLINE_OFFERS[SYN_COPY], [['NOPE', 50], ['BRN', 100]]);
+});
+
+test('price history and the first live day of a copy are its main copy\'s', (t) => {
+  const series: [string, number][] = [['2026-10-01', 120], ['2026-10-20', 100], [daysAgo(3), 80]];
+  fileRow(t, RAW_HISTORY, SYN_MAIN, series);
+  fileRow(t, RAW_HISTORY, SYN_COPY, [['2026-09-01', 5]]);
+  fileRow(t, RAW_LIVE, SYN_MAIN, { OP: { retailer: 'OP', price: 80, inStock: true, checkedAt: LIVE_AT } });
+  const { main, copy } = synPair(t);
+  assert.deepEqual(seriesOf(copy), series);
+  assert.equal(firstLiveDay(copy), '2026-10-01');
+  assert.equal(hasHistory(copy), true);
+  assert.equal(priceOn(copy, '2026-10-05'), 120);
+  assert.equal(priceOn(copy, '2026-10-25'), 100);
+  assert.deepEqual(partSeries(copy, '2026-10-01', '2026-10-31'), partSeries(main, '2026-10-01', '2026-10-31'));
+  assert.deepEqual(recentChange(copy, 30), recentChange(main, 30));
+  assert.ok(recentChange(copy, 30));
+  // The main copy's pause date cuts the copy's history like its own.
+  const paused = { ...copy, pausedThrough: '2026-10-10' };
+  assert.deepEqual(seriesOf(paused), series.slice(1));
+  assert.equal(firstLiveDay(paused), '2026-10-01');
+  // With no rows under the main copy's id, the copy has no history, whatever sits under its own.
+  fileRow(t, RAW_HISTORY, SYN_MAIN, undefined);
+  assert.deepEqual(seriesOf(copy), []);
+  assert.equal(firstLiveDay(copy), undefined);
+  assert.equal(hasHistory(copy), false);
+});
+
+test('biggestDrops counts a copy and its main copy once, even under different names', (t) => {
+  fileRow(t, RAW_HISTORY, SYN_MAIN, [[daysAgo(30), 200], [daysAgo(2), 100]]);
+  fileRow(t, RAW_LIVE, SYN_MAIN, { OP: { retailer: 'OP', price: 100, inStock: true, checkedAt: LIVE_AT } });
+  const { main, copy } = synPair(t);
+  // The name check would hide the pair anyway, so the copy gets another name here.
+  const renamed = { ...copy, name: 'Dot 2 MOA for PCC' };
+  assert.deepEqual(biggestDrops([main, renamed], 7, 10).map((d) => [d.part.id, d.was, d.now]), [[SYN_MAIN, 200, 100]]);
+  assert.deepEqual(biggestDrops([renamed, main], 7, 10).map((d) => [d.part.id, d.was, d.now]), [[SYN_COPY, 200, 100]]);
+  assert.deepEqual(biggestDrops([main, copy, renamed], 7, 10).map((d) => d.part.id), [SYN_MAIN]);
+  // Two copies of one main copy, without it, are one product too.
+  assert.equal(biggestDrops([renamed, { ...copy, id: 'syn-copy-2', name: 'Dot 2 MOA for AR-10' }], 7, 10).length, 1);
+  // Without sameAs they are two products.
+  assert.equal(biggestDrops([main, { ...renamed, id: SYN_MAIN + '-x', sameAs: undefined }], 7, 10).length, 1, 'no history under that id');
+  fileRow(t, RAW_HISTORY, SYN_MAIN + '-x', [[daysAgo(30), 200], [daysAgo(2), 100]]);
+  assert.equal(biggestDrops([main, { ...renamed, id: SYN_MAIN + '-x', sameAs: undefined }], 7, 10).length, 2);
+});
+
+test('the home page counts a copy and its main copy as one part and lists their price drop once', (t) => {
+  const render = () => renderToStaticMarkup(createElement(HomePage, { onPick: () => {}, onStart: () => {}, onBrowse: () => {} })).replace(/<!-- -->/g, '');
+  const count = (html: string) => Number(html.match(/(\d+) parts · /)![1]);
+  const before = count(render());
+  // A drop no real part can outdo this week, on a real AR-15 part, so the list has it whatever tonight's prices are.
+  setPrice(t, liveOffer(100), [[daysAgo(30), 100_000], [daysAgo(2), 100]]);
+  const main = part(ar15, MOVER);
+  const copy: Part = { ...main, id: 'syn-home-copy', sameAs: MOVER, name: `${main.name} (second listing)` };
+  const ar9 = platform('ar9');
+  t.after(() => { ar9.parts.splice(ar9.parts.indexOf(copy), 1); });
+  ar9.parts.push(copy);
+  const html = render();
+  assert.equal(count(html), before, 'the copy adds nothing to the part count');
+  assert.equal(new Set(PLATFORMS.flatMap((p) => p.parts.map((x) => x.id))).size, before + 1, 'though it is one more id');
+  assert.equal(html.split('class="drop-card card"').length - 1 > 0, true);
+  const shownName = main.name.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+  assert.equal(html.split(`</span> ${shownName}</span>`).length - 1, 1, 'the main copy is listed once');
+  assert.ok(!html.includes('(second listing)'), 'and the copy is not listed beside it');
+  // The same part without sameAs is a second part and a second drop.
+  copy.sameAs = undefined;
+  fileRow(t, RAW_HISTORY, copy.id, [[daysAgo(30), 100_000], [daysAgo(2), 100]]);
+  const apart = render();
+  assert.equal(count(apart), before + 1);
+  assert.ok(apart.includes('(second listing)'));
+});
+
+test('saved builds and the price index keep a copy under its own id, at its main copy\'s price', (t) => {
+  storage.clear();
+  setPrice(t, liveOffer(150), [['2026-10-09', 150]]);
+  const main = part(ar15, MOVER);
+  const copy: Part = { ...main, id: 'syn-saved-copy', sameAs: MOVER };
+  t.after(() => { ar15.parts.splice(ar15.parts.indexOf(copy), 1); });
+  ar15.parts.push(copy);
+  // A saved build that holds the copy stores the price under the copy's id, and reads a later move from there.
+  const sel = { ...baseSelection(ar15), handguard: copy.id };
+  assert.equal(priceSnapshot('ar15', sel)[copy.id], 150);
+  assert.equal(priceSnapshot('ar15', sel)[MOVER], undefined);
+  const saved: SavedBuild = { id: 's', name: 'Copy', platform: 'ar15', selection: sel, savedAt: '2099-01-01T00:00:00Z', prices: { [copy.id]: 180 }, pricesChecked: true, estimateEraCleared: true };
+  assert.deepEqual(priceChanges(saved).changes.map((c) => [c.part.id, c.was, c.now]), [[copy.id, 180, 150]]);
+  // A share link that carries the copy's id opens the copy.
+  assert.equal(selectionFromParts('ar15', [copy.id]).handguard, copy.id);
+  // The price index the share service reads has one entry per id, each at the shared price.
+  const tiny = { ...ar15, id: 'tiny', parts: [main, copy] };
+  assert.deepEqual(priceIndex([tiny]).platforms.tiny.parts, { [MOVER]: [`${main.brand} ${main.name}`, 150], [copy.id]: [`${main.brand} ${main.name}`, 150] });
+  assert.deepEqual(priceIndex([tiny]).platforms.tiny.estimates, []);
+  // At an estimate, both ids are on the estimates list.
+  main.offers = copy.offers = estimateOffer(140);
+  assert.deepEqual(priceIndex([tiny]).platforms.tiny.estimates, [MOVER, copy.id]);
+});
+
+test('every part marked sameAs in the real catalog passes the same-product guard', () => {
+  const catalog = PLATFORMS.flatMap((p) => p.parts.map((x) => ({ id: x.id, sameAs: x.sameAs, brand: x.brand, name: x.name, mpn: x.mpn, offers: INLINE_OFFERS[x.id] })));
+  assert.ok(catalog.every((x) => Array.isArray(x.offers)), 'every catalog part has its estimate offers on record');
+  assert.deepEqual(sameProductProblems(catalog, { sources, listPrices: LIST_PRICES_JSON, approvals: APPROVALS_JSON, weights: WEIGHTS_JSON }), []);
+  // A copy never has a second copy behind it, so one step always reaches the main copy.
+  const byId = new Map(catalog.map((x) => [x.id, x]));
+  for (const x of catalog) if (x.sameAs !== undefined) assert.equal(byId.get(x.sameAs)?.sameAs, undefined, x.id);
+  // check-data runs the guard and fails on what it finds.
+  const check = readFileSync('scripts/check-presets.ts', 'utf8');
+  assert.match(check, /for \(const problem of sameProductProblems\(catalog, \{ sources: SOURCES, listPrices: LIST_PRICES, approvals: APPROVALS, weights: WEIGHTS \}\)\) \{ console\.log\(problem\); bad\+\+; \}/);
+});
+
+test('the made-up same-product parts leave nothing behind in the data the other tests read', () => {
+  for (const table of [RAW_LINKS, RAW_LIVE, RAW_LIST.parts, RAW_WEIGHTS, RAW_HISTORY, INLINE_OFFERS] as Record<string, unknown>[])
+    assert.deepEqual(Object.keys(table).filter((id) => id.startsWith('syn-')), []);
+  assert.ok(!PLATFORMS.some((p) => p.parts.some((x) => x.id.startsWith('syn-'))));
 });

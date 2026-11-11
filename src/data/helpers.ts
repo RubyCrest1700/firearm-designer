@@ -7,6 +7,13 @@ import { knownRetailer } from './retailers';
 
 type PartInput = Omit<Part, 'offers'> & { offers: OfferTuple[] };
 
+/**
+ * The id a part's per-product data is filed under: store links, live and list prices and price history. A copy
+ * (Part.sameAs) uses its main copy's id, and every other part its own. Saved builds, share links and the price index
+ * the share service reads go by the part's own id.
+ */
+export const productKey = (part: Pick<Part, 'id' | 'sameAs'>) => part.sameAs ?? part.id;
+
 /** Live prices written by scripts/update-prices.mjs, keyed by part id, then retailer id. */
 const LIVE = (prices as unknown as { offers: Record<string, Record<string, Offer>> }).offers;
 /** Known product page URLs, so "View" links go to the product even before a live price exists. */
@@ -25,6 +32,11 @@ export const PAUSED = new Set(Object.keys(PAUSED_SINCE));
  * notes each one here as it drops it, and `npm run check-data` fails while this list has anything in it.
  */
 export const UNKNOWN_RETAILER_OFFERS: { part: string; retailer: string }[] = [];
+/**
+ * Each part's estimate offers as written in src/data, by part id, before parts() drops or replaces any. check-data
+ * compares a copy's with its main copy's (scripts/same-product-guard.mjs).
+ */
+export const INLINE_OFFERS: Record<string, OfferTuple[]> = {};
 /** An offer the site can show: its store is in RETAILERS and isn't paused. */
 const shown = (retailer: string) => knownRetailer(retailer) && !PAUSED.has(retailer);
 /**
@@ -49,21 +61,25 @@ const WEIGHTS = (weights as unknown as { parts: Record<string, { oz: number; bas
  * offers are dropped first, so a part sold only there has no offers and shows no price; so are offers from a store
  * that isn't in RETAILERS, which check-data refuses, so that one never reaches a page. A part any paused retailer
  * priced (a sample, live or list price, or a tracked link) gets `pausedThrough`, so its older price history is ignored.
+ * A copy (Part.sameAs) reads its links and its live and list prices under its main copy's id (productKey); its sample
+ * offers and its weight are its own.
  */
 export function parts(slot: string, list: Omit<PartInput, 'slot'>[]): Part[] {
   return list.map((p) => {
     for (const [retailer] of p.offers) if (!knownRetailer(retailer)) UNKNOWN_RETAILER_OFFERS.push({ part: p.id, retailer });
+    INLINE_OFFERS[p.id] = p.offers;
+    const key = productKey(p);
     const byRetailer = new Map<string, Offer>(
-      p.offers.filter(([retailer]) => shown(retailer)).map(([retailer, price, inStock]) => [retailer, { retailer, price, inStock: inStock ?? true, url: URLS[p.id]?.[retailer] }]),
+      p.offers.filter(([retailer]) => shown(retailer)).map(([retailer, price, inStock]) => [retailer, { retailer, price, inStock: inStock ?? true, url: URLS[key]?.[retailer] }]),
     );
-    const live = Object.entries(LIVE[p.id] ?? {}).filter(([retailer]) => shown(retailer));
-    const listed = LISTED.parts[p.id] && shown(LISTED.parts[p.id].retailer) ? LISTED.parts[p.id] : undefined;
+    const live = Object.entries(LIVE[key] ?? {}).filter(([retailer]) => shown(retailer));
+    const listed = LISTED.parts[key] && shown(LISTED.parts[key].retailer) ? LISTED.parts[key] : undefined;
     if (live.length || listed) byRetailer.clear();
-    for (const [retailer, offer] of live) byRetailer.set(retailer, { ...offer, retailer, ...(FROM.has(p.id) ? { basis: 'from' as const } : {}) });
+    for (const [retailer, offer] of live) byRetailer.set(retailer, { ...offer, retailer, ...(FROM.has(key) ? { basis: 'from' as const } : {}) });
     if (!live.length && listed) byRetailer.set(listed.retailer, { retailer: listed.retailer, price: listed.price, inStock: true, url: listed.url, basis: listed.basis, asOf: listed.asOf });
-    else if (!live.length && FACTORY.has(p.id)) for (const o of byRetailer.values()) o.basis = 'factory';
+    else if (!live.length && FACTORY.has(key)) for (const o of byRetailer.values()) o.basis = 'factory';
     const w = WEIGHTS[p.id];
-    const pausedThrough = pausedDate([...p.offers.map(([r]) => r), ...Object.keys(LIVE[p.id] ?? {}), ...Object.keys(URLS[p.id] ?? {}), LISTED.parts[p.id]?.retailer ?? '']);
+    const pausedThrough = pausedDate([...p.offers.map(([r]) => r), ...Object.keys(LIVE[key] ?? {}), ...Object.keys(URLS[key] ?? {}), LISTED.parts[key]?.retailer ?? '']);
     return {
       ...p, slot, offers: [...byRetailer.values()],
       ...(w ? { weight: { oz: w.oz, published: w.basis === 'published', src: w.src ?? undefined } } : {}),

@@ -1,8 +1,12 @@
 import history from '../../data/price-history.json';
 import { bestOffer, isEstimate } from '../engine';
 import type { Part } from '../types';
+import { productKey } from './helpers';
 
-/** Days each part's lowest live price changed, written nightly by scripts/price-history.mjs. */
+/**
+ * Days each part's lowest live price changed, written nightly by scripts/price-history.mjs. A copy (Part.sameAs) has
+ * no series of its own: every lookup here goes by productKey, so it reads its main copy's.
+ */
 const SERIES = (history as unknown as { parts: Record<string, [string, number][]> }).parts;
 
 /**
@@ -11,7 +15,7 @@ const SERIES = (history as unknown as { parts: Record<string, [string, number][]
  * is dropped: its low may be that retailer's. Until the part's price next changes it has no history to show.
  */
 export function seriesOf(part: Part): [string, number][] {
-  const series = SERIES[part.id] ?? [];
+  const series = SERIES[productKey(part)] ?? [];
   return part.pausedThrough ? series.filter(([d]) => d > part.pausedThrough!) : series;
 }
 
@@ -19,7 +23,7 @@ export function seriesOf(part: Part): [string, number][] {
  * The first day the file records a live price for a part, if it ever has. Unlike seriesOf this keeps a paused retailer's
  * points: it asks when a live price first existed, not which prices we can show.
  */
-export const firstLiveDay = (part: Part): string | undefined => SERIES[part.id]?.[0]?.[0];
+export const firstLiveDay = (part: Part): string | undefined => SERIES[productKey(part)]?.[0]?.[0];
 
 export const today = () => new Date().toISOString().slice(0, 10);
 export const daysAgo = (n: number, from = new Date()) => new Date(from.getTime() - n * 864e5).toISOString().slice(0, 10);
@@ -103,15 +107,16 @@ const bigDrop = (was: number, now: number) => was - now >= Math.max(5, was * 0.0
 
 /**
  * Parts whose live best price fell the most over the last `days`, biggest dollar drop first. A part listed for
- * several platforms (same id, or same brand and name) counts once.
+ * several platforms (same id, a copy and its main copy, or same brand and name) counts once.
  */
 export function biggestDrops(parts: Part[], days = 7, max = 6): (Change & { part: Part })[] {
   const seen = new Set<string>();
   const drops: (Change & { part: Part })[] = [];
   for (const part of parts) {
     const name = `${part.brand} ${part.name}`;
-    if (seen.has(part.id) || seen.has(name) || !hasHistory(part) || !bestOffer(part)?.checkedAt) continue;
-    seen.add(part.id).add(name);
+    const key = productKey(part);
+    if (seen.has(key) || seen.has(name) || !hasHistory(part) || !bestOffer(part)?.checkedAt) continue;
+    seen.add(key).add(name);
     const was = priceOn(part, daysAgo(days));
     const now = bestOffer(part)!.price;
     if (bigDrop(was, now)) drops.push({ part, was, now, by: was - now });

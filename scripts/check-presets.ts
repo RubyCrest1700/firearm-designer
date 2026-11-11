@@ -2,7 +2,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { awarenessFor } from '../src/awareness';
 import { PLATFORMS, canonicalPlatform } from '../src/data/index';
-import { PAUSED, SBR_MESSAGE, UNKNOWN_RETAILER_OFFERS, VERTICAL_GRIP_MESSAGE } from '../src/data/helpers';
+import { INLINE_OFFERS, PAUSED, SBR_MESSAGE, UNKNOWN_RETAILER_OFFERS, VERTICAL_GRIP_MESSAGE } from '../src/data/helpers';
 import { RETAILERS } from '../src/data/retailers';
 import { baseSelection, issuesFor, ownedOf, placementOf, presetSelection, selectionTokens, toBuild, toBuyIds } from '../src/engine';
 import { GUIDES } from '../src/guides/content';
@@ -16,10 +16,12 @@ import HISTORY from '../data/price-history.json';
 import CHECKS from '../data/retailer-checks.json';
 import APPROVALS from '../data/price-approvals.json';
 import LIST_PRICES from '../data/list-prices.json';
+import WEIGHTS from '../data/weights.json';
 import { approvalProblems } from './first-read-guard.mjs';
 import { pausedPriceProblems } from './pause-guard.mjs';
 import { unknownRetailerProblems } from './retailer-id-guard.mjs';
 import { advanceChecks, renderRetailerList, retailerListProblems } from './retailer-list.mjs';
+import { sameProductLeftovers, sameProductProblems } from './same-product-guard.mjs';
 
 const SOURCES = sources as unknown as { parts?: Record<string, Record<string, string>>; paused?: Record<string, { since: string; reason: string }>; linksOnly?: Record<string, { since: string; reason: string }> };
 
@@ -326,6 +328,16 @@ for (const [id, e] of Object.entries((sources as unknown as { paused?: Record<st
 }
 // The owner's price approvals name real parts and links (scripts/first-read-guard.mjs).
 for (const problem of approvalProblems(APPROVALS, { partIds: new Set(PLATFORMS.flatMap((p) => p.parts.map((part) => part.id))), links: SOURCES.parts })) { console.log(problem); bad++; }
+// A part marked sameAs (a copy of another part, sharing its links, prices and history) is the same product as its main
+// copy and keeps no price data of its own (scripts/same-product-guard.mjs). Rows the price bot left under a copy's id
+// are only noted: the site never reads them.
+{
+  const catalog = PLATFORMS.flatMap((p) => p.parts.map((part) => ({ id: part.id, sameAs: part.sameAs, brand: part.brand, name: part.name, mpn: part.mpn, offers: INLINE_OFFERS[part.id] })));
+  for (const problem of sameProductProblems(catalog, { sources: SOURCES, listPrices: LIST_PRICES, approvals: APPROVALS, weights: WEIGHTS })) { console.log(problem); bad++; }
+  const copies = new Set(catalog.filter((part) => part.sameAs !== undefined).map((part) => part.id)).size;
+  const leftovers = sameProductLeftovers(catalog, { 'data/prices.json': (PRICES as unknown as { offers?: unknown }).offers, 'data/price-history.json': (HISTORY as unknown as { parts?: unknown }).parts });
+  console.log(`Same-product copies (sameAs): ${copies}.${leftovers.map((f) => ` Note, not a failure: ${f.file} still has rows the site ignores for ${f.parts.join(', ')}.`).join('')}`);
+}
 // The home page's FAQ links keep their own copy of each guide's question.
 for (const pick of FAQ_PICKS) {
   const g = GUIDES.find((x) => x.slug === pick.slug);

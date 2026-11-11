@@ -1,6 +1,6 @@
 import { PLATFORMS } from './data';
 import { RETAILERS, retailerName } from './data/retailers';
-import { PAUSED } from './data/helpers';
+import { PAUSED, productKey } from './data/helpers';
 import { bestOffer, estimateNote, money, noPriceNote, presetSelection, baseSelection, toBuild } from './engine';
 import { Blueprint } from './drawings';
 import { statesFor } from './status';
@@ -11,9 +11,9 @@ import type { Part } from './types';
 import { FAMILIES } from './ui';
 
 export function HomePage({ onPick, onStart, onBrowse }: { onPick: (id: string, part?: Part) => void; onStart: () => void; onBrowse: () => void }) {
-  // Shared add-ons (lights, cases) are listed under several platforms; count each once. Paused retailers
-  // (data/sources.json) aren't listed, so they aren't counted.
-  const partCount = new Set(PLATFORMS.flatMap((p) => p.parts.map((x) => x.id))).size;
+  // Shared add-ons (lights, cases) are listed under several platforms, under one id or as a copy of a main copy
+  // (Part.sameAs); count each once. Paused retailers (data/sources.json) aren't listed, so they aren't counted.
+  const partCount = new Set(PLATFORMS.flatMap((p) => p.parts.map(productKey))).size;
   const retailerCount = Object.keys(RETAILERS).filter((id) => !PAUSED.has(id)).length;
   const drops = biggestDrops(PLATFORMS.flatMap((p) => p.parts));
   const hero = buildOf('ar15', baseSelection(PLATFORMS.find((p) => p.id === 'ar15')!));
