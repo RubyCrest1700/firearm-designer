@@ -39,8 +39,10 @@ export const SUPPRESS_FOR = 90 * DAY;
  * retailers were paused, which raised some best prices for no reason a subscriber cares about. 2026-10-26-pause:
  * three more (AT3 Tactical, Rainier Arms, MidwayUSA), whose robots.txt refuses the price bot. 2026-11-estimate-moves:
  * estimates stopped being comparison prices, so any already stored have to go, or one turning live reads as a move.
+ * 2026-11-gritr-links-only: Gritr Sports went links only, so its live prices dropped, which raised some best prices
+ * and moved some parts to estimates for no reason a subscriber cares about.
  */
-export const REBASELINE = '2026-11-estimate-moves';
+export const REBASELINE = '2026-11-gritr-links-only';
 /** Signups updated per `seen` statement: 3 bound parameters each keeps a statement within D1's 100. */
 const SEEN_ROWS = 33;
 /** Most statements the daily run spends on quiet writes; rows past the cap wait for the next day. Counts towards D1's query limit. */
