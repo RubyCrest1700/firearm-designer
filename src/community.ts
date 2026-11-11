@@ -45,17 +45,24 @@ function setMyVote(id: string, on: boolean) {
   writeJson(MY_VOTES_KEY, [...s]);
 }
 
+const UNREACHABLE = "Couldn't reach the community service. Check your connection and try again.";
+
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
+  // A request that hangs is given up on after 10 seconds, like the alert calls (src/alerts.ts), and reads as unreachable.
+  const signal = AbortSignal.timeout(10000);
   let res: Response;
   try {
     res = await fetch(COMMUNITY_API.replace(/\/$/, '') + path, {
       ...init,
       headers: init?.body ? { 'content-type': 'application/json' } : undefined,
+      signal,
     });
   } catch {
-    throw new Error("Couldn't reach the community service. Check your connection and try again.");
+    throw new Error(UNREACHABLE);
   }
   const body = await res.json().catch(() => ({}));
+  // Time ran out while the answer was still arriving: there is no answer to read.
+  if (signal.aborted) throw new Error(UNREACHABLE);
   if (!res.ok) throw new Error(body.error ?? 'The community service is not responding. Please try again.');
   return body as T;
 }

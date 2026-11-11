@@ -60,6 +60,7 @@ import APPROVALS_JSON from '../data/price-approvals.json';
 import { PRICES_READ_AT, readAtInstant } from '../src/data/index';
 import { mergeSavedBuilds } from '../src/store';
 import { storageChange } from '../src/App';
+import { featuredBuilds, getBuild, listBuilds, recordBuyClick, reportBuild, shareBuild } from '../src/community';
 import { liveCheckedAts } from '../src/data/helpers';
 import { STALE_AFTER_MS, STALE_OFFER_LABEL, STALE_PRICES_LABEL, isStale, offerAgeLabel, offerAgeText, priceStatus, shortDate } from '../src/ui';
 import App from '../src/App';
@@ -3435,6 +3436,81 @@ test('the header prints the read time as the visitor\'s local date; the built pa
   assert.ok(render.includes("return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });"));
   assert.equal(render.split('${PRICES_READ_AT ? ` (prices last checked ${shortDate(PRICES_READ_AT)})` : \'\'}').length - 1, 2);
   if (PRICES_READ_AT !== null) assert.ok(platformPage(PAGE_VIEWS[0]).includes(`(prices last checked ${utc(PRICES_READ_AT)})`));
+});
+
+/* ------------------------------------------------------------------ community calls give up after 10 seconds */
+
+const UNREACHABLE = "Couldn't reach the community service. Check your connection and try again.";
+
+/** Runs `fn` with a made-up fetch and a made-up timeout signal the test controls, so nothing is sent and nothing waits. */
+async function withFakeFetch(t: TestContext, fetchFn: (url: string, init: RequestInit, stop: AbortController) => Promise<unknown>, fn: (seen: { waits: number[]; calls: { url: string; init: RequestInit }[] }) => Promise<void>) {
+  const seen = { waits: [] as number[], calls: [] as { url: string; init: RequestInit }[] };
+  const stop = new AbortController();
+  const limit = t.mock.method(AbortSignal, 'timeout', (ms: number) => { seen.waits.push(ms); return stop.signal; });
+  const real = globalThis.fetch;
+  globalThis.fetch = ((url: string, init: RequestInit) => { seen.calls.push({ url, init }); return fetchFn(url, init, stop); }) as typeof fetch;
+  try { await fn(seen); } finally { globalThis.fetch = real; limit.mock.restore(); }
+}
+const timedOut = () => new DOMException('The operation was aborted due to timeout', 'TimeoutError');
+
+test('every community call carries a 10 second time limit', async (t) => {
+  const answer = { ok: true, json: async () => ({ builds: [], build: { id: 'b1', platform: 'ar15', name: 'n', note: '', parts: [], createdAt: '', votes: 0, clicks: 0 } }) };
+  await withFakeFetch(t, async () => answer, async (seen) => {
+    await listBuilds(null, 'top');
+    await featuredBuilds();
+    await getBuild('b1');
+    await shareBuild('ar15', 'A build', '', []);
+    await recordBuyClick('b1');
+    await reportBuild('b1');
+    assert.equal(seen.calls.length, 6);
+    assert.deepEqual(seen.waits, Array(6).fill(10000));
+    for (const c of seen.calls) {
+      assert.ok(c.init.signal instanceof AbortSignal, c.url);
+      assert.ok(c.url.startsWith('https://share.dropinbuilds.com/api/'), c.url);
+    }
+    // The rest of each request is as it was: a body is sent as JSON, and a call without one sends no header.
+    assert.deepEqual(seen.calls.map((c) => [c.init.method, c.init.headers]), [
+      [undefined, undefined], [undefined, undefined], [undefined, undefined],
+      ['POST', { 'content-type': 'application/json' }], ['POST', undefined], ['POST', undefined],
+    ]);
+  });
+  assert.match(readFileSync('src/community.ts', 'utf8'), /const signal = AbortSignal\.timeout\(10000\);/);
+  assert.equal(readFileSync('src/community.ts', 'utf8').split(UNREACHABLE).length - 1, 1);
+});
+
+test('a community call that runs out of time reads as the service being unreachable, in the words used before', async (t) => {
+  // The request itself never answers: fetch fails when the time limit stops it.
+  const hung = (_url: string, init: RequestInit, stop: AbortController) => new Promise((_, reject) => {
+    stop.abort(timedOut());
+    assert.ok(init.signal!.aborted, 'the request was given the time limit');
+    reject(init.signal!.reason);
+  });
+  await withFakeFetch(t, hung, async () => {
+    await assert.rejects(listBuilds(null, 'top'), { message: UNREACHABLE });
+  });
+  await withFakeFetch(t, hung, async () => {
+    await assert.rejects(shareBuild('ar15', 'A build', '', []), { message: UNREACHABLE });
+  });
+  await withFakeFetch(t, hung, async () => {
+    await assert.rejects(reportBuild('b1'), { message: UNREACHABLE });
+    // A retailer click is still never an error for the visitor.
+    await recordBuyClick('b1');
+  });
+  // The answer starts and then stalls: the time limit stops the read, and it is not taken for an empty answer.
+  const stalled = async (_url: string, _init: RequestInit, stop: AbortController) => ({ ok: true, json: async () => { stop.abort(timedOut()); throw stop.signal.reason; } });
+  await withFakeFetch(t, stalled, async () => {
+    await assert.rejects(listBuilds(null, 'top'), { message: UNREACHABLE });
+  });
+  // A plain network failure reads the same, and an answer from the service keeps its own message.
+  await withFakeFetch(t, async () => { throw new TypeError('Failed to fetch'); }, async () => {
+    await assert.rejects(listBuilds(null, 'top'), { message: UNREACHABLE });
+  });
+  await withFakeFetch(t, async () => ({ ok: false, json: async () => ({ error: 'Too many builds shared. Try again later.' }) }), async () => {
+    await assert.rejects(shareBuild('ar15', 'A build', '', []), { message: 'Too many builds shared. Try again later.' });
+  });
+  await withFakeFetch(t, async () => ({ ok: false, json: async () => { throw new SyntaxError('not json'); } }), async () => {
+    await assert.rejects(listBuilds(null, 'top'), { message: 'The community service is not responding. Please try again.' });
+  });
 });
 
 test('the made-up same-product parts leave nothing behind in the data the other tests read', () => {
