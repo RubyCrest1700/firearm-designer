@@ -55,6 +55,6 @@ In the Status column, "active" only means the retailer is neither paused nor lin
 | Timney Triggers | timneytriggers.com | active | - | - | 1 | 2026-11-11 |
 | Top Gun Supply | topgunsupply.com | active | - | - | 24 | 2026-11-11 |
 | Vedder Holsters | vedderholsters.com | paused | 2026-10-24 | paused pending review of the retailer's terms on automated price collection | 45 | 2026-10-23 |
-| Wilson Combat | wilsoncombat.com | active | - | - | 9 | 2026-11-11 |
+| Wilson Combat | wilsoncombat.com | active | - | - | 8 | 2026-11-11 |
 | Wing Tactical | wingtactical.com | active | - | - | 23 | 2026-11-11 |
 | Young Manufacturing | youngmanufacturing.net | active | - | - | 1 | 2026-11-11 |
