@@ -60,6 +60,7 @@ import APPROVALS_JSON from '../data/price-approvals.json';
 import { PRICES_READ_AT, readAtInstant } from '../src/data/index';
 import { mergeSavedBuilds } from '../src/store';
 import { storageChange } from '../src/App';
+import { loadWithRetry } from '../src/drawings';
 import { featuredBuilds, getBuild, listBuilds, recordBuyClick, reportBuild, shareBuild } from '../src/community';
 import { liveCheckedAts } from '../src/data/helpers';
 import { STALE_AFTER_MS, STALE_OFFER_LABEL, STALE_PRICES_LABEL, isStale, offerAgeLabel, offerAgeText, priceStatus, shortDate } from '../src/ui';
@@ -3511,6 +3512,59 @@ test('a community call that runs out of time reads as the service being unreacha
   await withFakeFetch(t, async () => ({ ok: false, json: async () => { throw new SyntaxError('not json'); } }), async () => {
     await assert.rejects(listBuilds(null, 'top'), { message: 'The community service is not responding. Please try again.' });
   });
+});
+
+/* ------------------------------------------------------------------ the drawings download is tried twice */
+
+test('a failed drawings download is tried once more after a short wait, then given up on without an error', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const errors = t.mock.method(console, 'error', () => {});
+  // Only the failed download counts: node prints its own notice about test timers through console.error too.
+  const reported = () => errors.mock.calls.filter((c) => c.arguments[0] instanceof Error).length;
+  const settle = () => new Promise((done) => setImmediate(done));
+  /** A download that fails the first `fails` times it's asked for. */
+  const download = (fails: number) => {
+    const d = { asked: 0, load: async () => { d.asked += 1; if (d.asked <= fails) throw new Error(`download ${d.asked} failed`); return 'drawings'; } };
+    return d;
+  };
+  const result = (p: Promise<unknown>) => { const r = { done: false, value: undefined as unknown }; void p.then((v) => { r.done = true; r.value = v; }); return r; };
+
+  // Works the first time: asked once, no wait.
+  const first = download(0);
+  assert.equal(await loadWithRetry(first.load), 'drawings');
+  assert.equal(first.asked, 1);
+
+  // Fails once: asked again after the wait, not before, and the second answer is used.
+  const second = download(1);
+  const got = result(loadWithRetry(second.load));
+  await settle();
+  t.mock.timers.tick(1999);
+  await settle();
+  assert.deepEqual([second.asked, got.done], [1, false]);
+  t.mock.timers.tick(1);
+  await settle();
+  assert.deepEqual([second.asked, got.done, got.value], [2, true, 'drawings']);
+  assert.equal(reported(), 0);
+
+  // Fails twice: null, nothing thrown, one line in the console, and never asked a third time.
+  const third = download(5);
+  const gave = result(loadWithRetry(third.load));
+  await settle();
+  t.mock.timers.tick(2000);
+  await settle();
+  assert.deepEqual([third.asked, gave.done, gave.value], [2, true, null]);
+  assert.equal(reported(), 1);
+  t.mock.timers.tick(60_000);
+  await settle();
+  assert.equal(third.asked, 2);
+  assert.equal(reported(), 1);
+
+  // The page's own download goes through it, and a page waiting on drawings that never came keeps its placeholder.
+  const src = readFileSync('src/drawings.tsx', 'utf8');
+  assert.ok(src.includes("const loading = loadWithRetry(() => import('./Blueprint')).then((m) => (loaded = m));"));
+  assert.ok(src.includes('if (!m) void loading.then((d) => { if (d) startTransition(() => setM(d)); });'));
+  assert.equal(src.match(/import\('\.\/Blueprint'\)/g)?.length, 2, 'the type and the one download');
+  assert.equal((src.match(/console\.\w+\(/g) ?? []).length, 1);
 });
 
 test('the made-up same-product parts leave nothing behind in the data the other tests read', () => {
