@@ -31,22 +31,22 @@ export const currentSelection = (sel: Record<string, string>): Record<string, st
   Object.fromEntries(Object.entries(sel).map(([k, v]) => [k, currentId(v)]));
 
 /**
- * The day most prices were read: the latest UTC day (YYYY-MM-DD) with at least half of these read times on or after
- * it. Null when there are none. A time that can't be read counts as a price never read.
+ * When most prices were read: the latest moment (a full ISO time) with at least half of these read times at or after
+ * it. Null when there are none, or when fewer than half can be read: a time that can't be read counts as a price
+ * never read.
  */
-export function readOnDay(checkedAts: string[]): string | null {
-  const days = checkedAts
-    .map((iso) => new Date(iso).getTime())
+export function readAtInstant(checkedAts: string[]): string | null {
+  const times = checkedAts
+    .map((iso) => Date.parse(iso))
     .filter((t) => !Number.isNaN(t))
-    .map((t) => new Date(t).toISOString().slice(0, 10))
-    .sort()
-    .reverse();
-  return days[Math.ceil(checkedAts.length / 2) - 1] ?? null;
+    .sort((a, b) => b - a);
+  const at = times[Math.ceil(checkedAts.length / 2) - 1];
+  return at === undefined ? null : new Date(at).toISOString();
 }
 
 /**
- * The day most live prices were read (readOnDay over every live price the site can show), or null if every price is
+ * When most live prices were read (readAtInstant over every live price the site can show), or null if every price is
  * still an estimate. The nightly job's own run time (updatedAt in data/prices.json) moves on even when most reads
- * failed, so the pages show this day instead.
+ * failed, so the pages show this time instead.
  */
-export const PRICES_READ_ON: string | null = readOnDay(liveCheckedAts());
+export const PRICES_READ_AT: string | null = readAtInstant(liveCheckedAts());

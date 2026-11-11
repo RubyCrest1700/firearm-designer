@@ -3,7 +3,7 @@
  * parts, and prices come from the same catalog (sample prices overlaid with the nightly live ones),
  * so a guide never says something the builder disagrees with.
  */
-import { PLATFORMS, PRICES_READ_ON } from '../data';
+import { PLATFORMS, PRICES_READ_AT } from '../data';
 import { buyUrl, retailerName } from '../data/retailers';
 import { baseSelection, bestOffer, estimateNote, estimatedCount, isEstimate, money, noPriceNote, presetSelection, priceLabel, priceText, unpricedCount, worst } from '../engine';
 import type { Part, Platform, Severity, Tier } from '../types';
@@ -302,7 +302,7 @@ export function guidePage(g: Guide, builtAt: string) {
     ${g.charts.map((c) => chartHtml(platform, c)).join('')}
     <section>
       <h2>Parts Worth a Look</h2>
-      <p class="muted">Our picks from the ${esc(platform.name)} catalog, with the lowest price we list${PRICES_READ_ON ? ` (prices last checked ${shortDate(PRICES_READ_ON)})` : ''}. Estimates are marked.</p>
+      <p class="muted">Our picks from the ${esc(platform.name)} catalog, with the lowest price we list${PRICES_READ_AT ? ` (prices last checked ${shortDate(PRICES_READ_AT)})` : ''}. Estimates are marked.</p>
       ${picksHtml(platform, g.picks)}
     </section>
     <section>
@@ -510,7 +510,7 @@ export function platformPage(platform: PageView) {
     </section>
     <section>
       <h2>${esc(platform.name)} Parts and Prices</h2>
-      <p class="muted">Every ${esc(platform.name)} part we list, cheapest first, with the lowest price we list${PRICES_READ_ON ? ` (prices last checked ${shortDate(PRICES_READ_ON)})` : ''}. Estimates are marked. The builder checks how each one fits with the rest of your parts.</p>
+      <p class="muted">Every ${esc(platform.name)} part we list, cheapest first, with the lowest price we list${PRICES_READ_AT ? ` (prices last checked ${shortDate(PRICES_READ_AT)})` : ''}. Estimates are marked. The builder checks how each one fits with the rest of your parts.</p>
       ${slotTableHtml(platform)}
     </section>
     ${related.length ? `<section><h2>Fit Questions</h2><ul class="guide-list">${related.map((g) => `<li><a href="/faq/${g.slug}/">${esc(g.h1)}</a></li>`).join('')}</ul></section>` : ''}

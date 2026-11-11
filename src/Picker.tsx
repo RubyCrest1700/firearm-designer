@@ -8,7 +8,7 @@ import { daysAgo, hasHistory, partSeries } from './data/history';
 import { PriceChart } from './PriceChart';
 import { isPlural, titleCase, withArticle } from './text';
 import type { Build, Issue, Part, Placement, Platform, PlatformModel, Severity, Slot } from './types';
-import { ChangeChip, FitTag, issueClass, legalOnly, offerAgeLabel, shortDate, useDrawer } from './ui';
+import { ChangeChip, FitTag, issueClass, legalOnly, offerAgeText, shortDate, useDrawer } from './ui';
 
 type SortKey = 'fit' | 'price' | 'picks';
 
@@ -143,7 +143,7 @@ export function Candidate({ part, open, issues, sev, selected, owned, onChoose, 
                   <td>{retailerName(o.retailer)}</td>
                   <td className="num">{priceText(o)}</td>
                   <td>{!o.checkedAt ? 'Check store' : o.inStock ? 'In Stock' : <span className="oos">Out</span>}</td>
-                  <td className="dim">{o.checkedAt ? `${offerAgeLabel(o.checkedAt)} ${shortDate(o.checkedAt)}` : o.asOf ? `${priceLabel(o)} ${shortDate(o.asOf)}` : priceLabel(o)}</td>
+                  <td className="dim">{o.checkedAt ? offerAgeText(o.checkedAt) : o.asOf ? `${priceLabel(o)} ${shortDate(o.asOf)}` : priceLabel(o)}</td>
                   <td className="num">{href && <a href={href} target="_blank" rel="sponsored noopener" onClick={onBuyClick}>{o.url ? 'View ↗' : 'Search ↗'}</a>}</td>
                 </tr>
               ); })}

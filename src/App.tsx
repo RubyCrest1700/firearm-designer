@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { PLATFORMS, PRICES_READ_ON, canonicalPlatform, currentSelection } from './data';
+import { PLATFORMS, PRICES_READ_AT, canonicalPlatform, currentSelection } from './data';
 import { ownsAny, partIds, baseSelection, selectionTokens, withoutOwned, type Selection } from './engine';
 import { ComparePage, loadCompare, storeCompare, type CompareItem } from './Compare';
 import { droppedBuilds, loadSavedBuilds, priceChanges, newId, readSharedBuild, savedPrices, selectionFromParts, shareUrl, checkShareLinks, storeSavedBuilds, type SavedBuild } from './store';
@@ -177,7 +177,7 @@ export default function App() {
   }, [route, platformId]);
 
   // The header's price line, worked out against the visitor's clock each time the page draws.
-  const prices = priceStatus(PRICES_READ_ON);
+  const prices = priceStatus(PRICES_READ_AT);
 
   return (
     <div className="site">
