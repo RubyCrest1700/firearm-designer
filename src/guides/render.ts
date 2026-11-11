@@ -4,7 +4,7 @@
  * so a guide never says something the builder disagrees with.
  */
 import { PLATFORMS, PRICES_UPDATED_AT } from '../data';
-import { RETAILERS, buyUrl } from '../data/retailers';
+import { buyUrl, retailerName } from '../data/retailers';
 import { baseSelection, bestOffer, estimateNote, estimatedCount, isEstimate, money, noPriceNote, presetSelection, priceLabel, priceText, unpricedCount, worst } from '../engine';
 import type { Part, Platform, Severity, Tier } from '../types';
 import { GUIDES, type AcrossChart, type FitChart, type Guide, type PairChart } from './content';
@@ -172,14 +172,17 @@ function chartHtml(platform: Platform, c: FitChart) {
 const TIER_LABEL: Record<Tier, string> = { budget: 'Budget Pick', value: 'Best Value Pick', premium: 'Premium Pick' };
 const TIERS: Tier[] = ['budget', 'value', 'premium'];
 
-function priceHtml(part: Part) {
+/** A part's best price and the store it's at, linked to the store (exported for the unit tests). */
+export function priceHtml(part: Part) {
   const o = bestOffer(part);
   if (!o) return '';
-  const store = RETAILERS[o.retailer]?.name ?? o.retailer;
+  const store = retailerName(o.retailer);
   const href = buyUrl(o, `${part.brand} ${part.name}`);
   const label = priceLabel(o).toLowerCase();
   const when = o.checkedAt ? `checked ${shortDate(o.checkedAt)}` : o.asOf ? `${label}, checked ${shortDate(o.asOf)}` : o.basis === 'factory' ? 'factory part, estimated' : 'estimate';
-  return `<p class="price"><b>${priceText(o)}</b> at <a href="${esc(href)}" rel="sponsored nofollow noopener" target="_blank">${esc(store)}</a> <span class="muted">(${when})</span></p>`;
+  // A store that isn't in RETAILERS gets no link (buyUrl gives nothing for it).
+  const at = href ? `<a href="${esc(href)}" rel="sponsored nofollow noopener" target="_blank">${esc(store)}</a>` : esc(store);
+  return `<p class="price"><b>${priceText(o)}</b> at ${at} <span class="muted">(${when})</span></p>`;
 }
 
 function picksHtml(platform: Platform, slots: string[]) {

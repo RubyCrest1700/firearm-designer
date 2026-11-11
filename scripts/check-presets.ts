@@ -2,7 +2,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { awarenessFor } from '../src/awareness';
 import { PLATFORMS, canonicalPlatform } from '../src/data/index';
-import { PAUSED, SBR_MESSAGE, VERTICAL_GRIP_MESSAGE } from '../src/data/helpers';
+import { PAUSED, SBR_MESSAGE, UNKNOWN_RETAILER_OFFERS, VERTICAL_GRIP_MESSAGE } from '../src/data/helpers';
 import { RETAILERS } from '../src/data/retailers';
 import { baseSelection, issuesFor, ownedOf, placementOf, presetSelection, selectionTokens, toBuild, toBuyIds } from '../src/engine';
 import { GUIDES } from '../src/guides/content';
@@ -15,8 +15,10 @@ import PRICES from '../data/prices.json';
 import HISTORY from '../data/price-history.json';
 import CHECKS from '../data/retailer-checks.json';
 import APPROVALS from '../data/price-approvals.json';
+import LIST_PRICES from '../data/list-prices.json';
 import { approvalProblems } from './first-read-guard.mjs';
 import { pausedPriceProblems } from './pause-guard.mjs';
+import { unknownRetailerProblems } from './retailer-id-guard.mjs';
 import { advanceChecks, renderRetailerList, retailerListProblems } from './retailer-list.mjs';
 
 const SOURCES = sources as unknown as { parts?: Record<string, Record<string, string>>; paused?: Record<string, { since: string; reason: string }>; linksOnly?: Record<string, { since: string; reason: string }> };
@@ -303,6 +305,9 @@ for (const p of PLATFORMS) {
 }
 // Every paused retailer ("paused" in data/sources.json) is a real retailer id, and none of its prices reach a part.
 for (const id of PAUSED) if (!RETAILERS[id]) { console.log(`data/sources.json paused: unknown retailer ${id}`); bad++; }
+// So is every other retailer id in the data: links, links-only stores, live and list prices, price approvals, and the
+// catalog's own offers as written, which parts() notes before it drops them (scripts/retailer-id-guard.mjs).
+for (const problem of unknownRetailerProblems(Object.keys(RETAILERS), { sources: SOURCES, prices: PRICES, listPrices: LIST_PRICES, approvals: APPROVALS, catalog: UNKNOWN_RETAILER_OFFERS })) { console.log(problem); bad++; }
 // Each has its pause date, which the site needs to drop the price history from before it (src/data/history.ts).
 for (const [id, e] of Object.entries((sources as unknown as { paused?: Record<string, { since?: unknown }> }).paused ?? {}))
   if (typeof e?.since !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(e.since)) { console.log(`data/sources.json paused ${id}: needs "since": "YYYY-MM-DD"`); bad++; }

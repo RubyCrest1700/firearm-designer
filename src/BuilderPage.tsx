@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { PLATFORMS } from './data';
-import { RETAILERS } from './data/retailers';
+import { retailerName } from './data/retailers';
 import { bestOffer, encodeMount, estimateNote, estimatedCount, money, noPriceNote, ownedOf, placementOf, presetSelection, baseSelection, priceLabel, priceRange, singleRetailerCarts, toBuild, totalNotes, unpricedCount, type Owned, type Selection } from './engine';
 import type { RegionState } from './Blueprint';
 import { Blueprint, useDrawings } from './drawings';
@@ -259,7 +259,7 @@ export function PartsList({ platform, build, issues, states, hover, onHover, onO
                   <span className="part-price">
                     {other ? <span className="src owned-note">You Own It</span>
                       : own && offer ? <><s className="amt dim">{money(offer.price)}</s><span className="src owned-note">You Own It</span></>
-                      : offer ? <><span className="amt">{money(offer.price)}</span><span className="src">{RETAILERS[offer.retailer].name}{label ? `\u00a0· ${label}` : ''}</span>{part && <ChangeChip part={part} />}</> : <span className="amt dim">—</span>}
+                      : offer ? <><span className="amt">{money(offer.price)}</span><span className="src">{retailerName(offer.retailer)}{label ? `\u00a0· ${label}` : ''}</span>{part && <ChangeChip part={part} />}</> : <span className="amt dim">—</span>}
                     {part && (
                       <button className={'own-btn' + (own ? ' on' : '')} aria-pressed={own} onClick={() => onToggleOwn(slot.id)}
                         title={own ? "Count this part's price in the total again" : 'Already have this part? It stays in the fit checks but leaves the total.'}>
@@ -460,7 +460,7 @@ export function Summary({ platform, build, issues, aware, states, status, total,
           <tbody>
             {carts.map((c) => (
               <tr key={c.retailer}>
-                <td>{RETAILERS[c.retailer].name}{c.estimates > 0 && <small className="to-buy"> Includes estimates</small>}</td>
+                <td>{retailerName(c.retailer)}{c.estimates > 0 && <small className="to-buy"> Includes estimates</small>}</td>
                 <td className="num dim">{c.carried} of {chosen.length}</td>
                 <td className="num">{money(c.total)}</td>
               </tr>

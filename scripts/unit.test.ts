@@ -34,6 +34,12 @@ import { AlertsPanel } from '../src/SavedPage';
 import { SavedPage } from '../src/SavedPage';
 import { GUIDES, type FitChart } from '../src/guides/content';
 import { RETAILERS } from '../src/data/retailers';
+import { buyUrl, knownRetailer, offerUrl, retailerName, tagged } from '../src/data/retailers';
+import { UNKNOWN_RETAILER_OFFERS } from '../src/data/helpers';
+import { priceHtml } from '../src/guides/render';
+import { ERROR_MESSAGE, ErrorBoundary } from '../src/ui';
+import type { ReactElement } from 'react';
+import PRICES_JSON from '../data/prices.json';
 import { priceIndex } from './og-index';
 import { publishedIndex } from './og-index';
 import { loadPersisted } from '../src/App';
@@ -47,6 +53,8 @@ import ESTIMATE_ERA from '../data/estimate-era-parts.json';
 import sources from '../data/sources.json';
 import type { Issue, Offer, Part, Platform } from '../src/types';
 
+/** The catalog's offers from stores missing from RETAILERS, as noted while it was built: taken before any test adds its own. */
+const CATALOG_UNKNOWN_AT_LOAD = [...UNKNOWN_RETAILER_OFFERS];
 const platform = (id: string) => PLATFORMS.find((p) => p.id === id)!;
 const ar15 = platform('ar15');
 const glock = platform('glock9');
@@ -2424,4 +2432,171 @@ test('no structured data on the home page or the static pages states a price', (
     assert.doesNotMatch(page, /\$\s?\d/);
     assert.doesNotMatch(page, /"(?:price|lowPrice|highPrice|priceCurrency|offers)"\s*:/);
   }
+});
+
+/* ------------------------------------------------------------------ store links and unknown retailer ids */
+
+// The contract for every link out to a store. Later affiliate work changes these tests on purpose or not at all.
+const UTM = 'utm_source=dropinbuilds&utm_medium=referral';
+
+test('tagged adds our name to a store link and keeps its own query string and fragment', () => {
+  // A real Brownells product link: its ?sku= picks the product, so it must survive.
+  const real = Object.values(RAW_LINKS).map((b) => b.BRN).find((u) => u?.includes('?sku='))!;
+  assert.ok(real, 'a Brownells ?sku= link in data/sources.json');
+  assert.equal(tagged(real), `${real}&${UTM}`);
+  assert.equal(new URL(tagged(real)).searchParams.get('sku'), new URL(real).searchParams.get('sku'));
+  assert.equal(
+    tagged('https://www.brownells.com/gun-parts/rifle-parts/rifle-grips/ar-15-mod-3-gunfighter-grip/?sku=100013641'),
+    `https://www.brownells.com/gun-parts/rifle-parts/rifle-grips/ar-15-mod-3-gunfighter-grip/?sku=100013641&${UTM}`,
+  );
+  assert.equal(tagged('https://example.com/p'), `https://example.com/p?${UTM}`);
+  assert.equal(tagged('https://example.com/p?x=1#reviews'), `https://example.com/p?x=1&${UTM}#reviews`);
+  assert.equal(tagged('https://example.com/p#reviews'), `https://example.com/p?${UTM}#reviews`);
+  // A link that already names a source or medium ends up with ours, once.
+  assert.equal(tagged('https://example.com/p?utm_source=other&a=1'), 'https://example.com/p?utm_source=dropinbuilds&a=1&utm_medium=referral');
+  assert.equal(tagged('https://example.com/p?utm_medium=cpc&utm_source=a&utm_source=b'), 'https://example.com/p?utm_medium=referral&utm_source=dropinbuilds');
+  // Tagging twice changes nothing more.
+  assert.equal(tagged(tagged(real)), tagged(real));
+  // What can't be read as a link is handed back as it came.
+  for (const odd of ['', 'not a link', '/faq/', 'www.example.com/p?x=1']) assert.equal(tagged(odd), odd);
+});
+
+test('buyUrl is the product link when there is one, else the store\'s search for the part, tagged either way', () => {
+  const name = 'BCM Mod 3 Grip & "Kit" 1/2';
+  for (const r of Object.values(RETAILERS)) {
+    assert.equal(offerUrl(r.id, name), r.search + encodeURIComponent(name), r.id);
+    assert.equal(buyUrl({ retailer: r.id }, name), tagged(r.search + encodeURIComponent(name)), r.id);
+    const u = new URL(buyUrl({ retailer: r.id }, name)!);
+    assert.equal(u.searchParams.get('utm_source'), 'dropinbuilds', r.id);
+    assert.equal(u.searchParams.get('utm_medium'), 'referral', r.id);
+    assert.equal(u.origin, new URL(r.search).origin, r.id);
+    // The search words reach the store whole, wherever its search address puts them.
+    const key = [...new URL(r.search).searchParams.keys()].pop();
+    if (r.search.endsWith(`${key}=`)) assert.equal(u.searchParams.get(key!), name, r.id);
+    else assert.ok(u.pathname.endsWith(encodeURIComponent(name)), r.id);
+    const page = `https://${new URL(r.search).host}/some-product?id=7`;
+    assert.equal(buyUrl({ retailer: r.id, url: page }, name), `${page}&${UTM}`, r.id);
+  }
+  assert.equal(buyUrl({ retailer: 'BRN' }, 'Gunfighter Grip'), `https://www.brownells.com/search/?k=Gunfighter+Grip&${UTM}`);
+  assert.equal(buyUrl({ retailer: 'OP' }, 'Gunfighter Grip'), `https://www.opticsplanet.com/s/Gunfighter%20Grip?${UTM}`);
+  assert.equal(
+    buyUrl({ retailer: 'BRN', url: 'https://www.brownells.com/gun-parts/rifle-parts/rifle-grips/ar-15-mod-3-gunfighter-grip/?sku=100013641' }, 'Gunfighter Grip'),
+    `https://www.brownells.com/gun-parts/rifle-parts/rifle-grips/ar-15-mod-3-gunfighter-grip/?sku=100013641&${UTM}`,
+  );
+  // No affiliate parameter of any kind today: a link gains exactly the two tags above.
+  for (const x of everyPart()) for (const o of x.offers) {
+    const before = o.url ?? offerUrl(o.retailer, `${x.brand} ${x.name}`)!;
+    const added = [...new URL(buyUrl(o, `${x.brand} ${x.name}`)!).searchParams.keys()].filter((k) => !new URL(before).searchParams.has(k));
+    assert.deepEqual(added.filter((k) => k !== 'utm_source' && k !== 'utm_medium'), [], `${x.id} @ ${o.retailer}`);
+  }
+});
+
+test('a retailer id that is not in RETAILERS never throws: no name lookup fails, no link is made', () => {
+  for (const id of ['NOPE', '', 'brn', 'constructor', 'toString', '__proto__']) {
+    assert.equal(knownRetailer(id), false, id);
+    assert.equal(retailerName(id), id);
+    assert.equal(offerUrl(id, 'Some Part'), undefined, id);
+    assert.equal(buyUrl({ retailer: id }, 'Some Part'), undefined, id);
+    // Not even with a product link: a store we can't name gets no link.
+    assert.equal(buyUrl({ retailer: id, url: 'https://example.com/p' }, 'Some Part'), undefined, id);
+  }
+  for (const r of Object.values(RETAILERS)) {
+    assert.equal(knownRetailer(r.id), true, r.id);
+    assert.equal(retailerName(r.id), r.name);
+  }
+  // Every store name on a page goes through retailerName; nothing looks a name up directly any more.
+  const files = ['src', 'src/guides'].flatMap((dir) => readdirSync(dir).filter((f) => /\.tsx?$/.test(f)).map((f) => `${dir}/${f}`));
+  assert.ok(files.length > 15);
+  for (const f of files) assert.doesNotMatch(readFileSync(f, 'utf8'), /RETAILERS\[[^\]]*\]\??\.(name|search)/, f);
+});
+
+test('parts() drops catalog and live offers from an unknown retailer, and notes the catalog ones for check-data', (t) => {
+  // The real catalog names none (taken before any test ran).
+  assert.deepEqual(CATALOG_UNKNOWN_AT_LOAD, []);
+  const before = UNKNOWN_RETAILER_OFFERS.length;
+  t.after(() => { UNKNOWN_RETAILER_OFFERS.length = before; });
+  const [sample] = buildParts('slot', [{ id: 'no-such-part', offers: [['NOPE', 50], ['BRN', 100]] } as never]);
+  assert.deepEqual(sample.offers.map((o) => [o.retailer, o.price]), [['BRN', 100]]);
+  assert.deepEqual(UNKNOWN_RETAILER_OFFERS.slice(before), [{ part: 'no-such-part', retailer: 'NOPE' }]);
+  // Sold only there: no offers, so no price, the same as a part only a paused store sells.
+  const [only] = buildParts('slot', [{ id: 'no-such-part', offers: [['NOPE', 50]] } as never]);
+  assert.deepEqual(only.offers, []);
+  assert.equal(bestOffer(only), undefined);
+  // A live price from an unknown store (a made-up part, in memory only) is dropped too, and the sample stays.
+  const live = (PRICES_JSON as unknown as { offers: Record<string, Record<string, Offer>> }).offers;
+  t.after(() => { delete live['no-such-live-part']; });
+  live['no-such-live-part'] = { NOPE: { retailer: 'NOPE', price: 1, inStock: true, checkedAt: '2026-11-09T00:00:00Z' } };
+  const [mixed] = buildParts('slot', [{ id: 'no-such-live-part', offers: [['BRN', 100]] } as never]);
+  assert.deepEqual(mixed.offers.map((o) => [o.retailer, o.price]), [['BRN', 100]]);
+  live['no-such-live-part'].BRN = { retailer: 'BRN', price: 90, inStock: true, checkedAt: '2026-11-09T00:00:00Z' };
+  const [both] = buildParts('slot', [{ id: 'no-such-live-part', offers: [['BRN', 100]] } as never]);
+  assert.deepEqual(both.offers.map((o) => [o.retailer, o.price]), [['BRN', 90]]);
+});
+
+test('store links keep their rel values, and an offer from an unknown retailer shows with no link', () => {
+  const real = part(ar15, 'ar-mz-vg6');
+  const row = (p: Part) => renderToStaticMarkup(createElement(Candidate, { part: p, open: true, issues: [], sev: 'ok', selected: false, owned: false, onChoose: () => {}, onBuyClick: () => {} }));
+  // The picker's price table: sponsored noopener, and no nofollow or noreferrer.
+  const links = [...row(real).matchAll(/<a [^>]*>/g)].map((m) => m[0]);
+  assert.equal(links.length, real.offers.length);
+  for (const o of real.offers)
+    assert.ok(links.includes(`<a href="${buyUrl(o, `${real.brand} ${real.name}`)!.replace(/&/g, '&amp;')}" target="_blank" rel="sponsored noopener">`), o.retailer);
+  assert.match(readFileSync('src/Picker.tsx', 'utf8'), /<a href=\{href\} target="_blank" rel="sponsored noopener" onClick=\{onBuyClick\}>/);
+  // The guide and platform pages: sponsored nofollow noopener, and no noreferrer.
+  const best = bestOffer(real)!;
+  assert.ok(priceHtml(real).includes(` at <a href="${buyUrl(best, `${real.brand} ${real.name}`)!.replace(/&/g, '&amp;')}" rel="sponsored nofollow noopener" target="_blank">${retailerName(best.retailer)}</a> `));
+  for (const f of ['src/Picker.tsx', 'src/guides/render.ts']) {
+    const rels = [...readFileSync(f, 'utf8').matchAll(/rel="([^"]*)"/g)].map((m) => m[1]);
+    assert.deepEqual(rels.filter((r) => r.includes('sponsored')), [f.endsWith('.tsx') ? 'sponsored noopener' : 'sponsored nofollow noopener'], f);
+  }
+  // Should an offer from an unknown store ever reach a page, its row and its price line still draw, without a link.
+  const stray: Part = { ...real, offers: [{ retailer: 'NOPE', price: 50, inStock: true }] };
+  const html = row(stray);
+  assert.ok(html.includes('<td>NOPE</td>'));
+  assert.ok(html.includes('<span class="src">NOPE'));
+  assert.doesNotMatch(html, /<a /);
+  assert.ok(html.includes('<td class="num"></td>'));
+  const line = priceHtml(stray);
+  assert.match(line, /^<p class="price"><b>[^<]+<\/b> at NOPE <span class="muted">\(estimate\)<\/span><\/p>$/);
+  // With a known store beside it, only the known one links.
+  const two: Part = { ...real, offers: [{ retailer: 'NOPE', price: 50, inStock: true }, { retailer: 'BRN', price: 60, inStock: true }] };
+  assert.equal([...row(two).matchAll(/<a /g)].length, 1);
+});
+
+/* ------------------------------------------------------------------ the error screen */
+
+const ERROR_SCREEN_TEXT = 'Something went wrong showing this page. Reload to try again. Your saved builds are still in this browser.';
+
+// What this proves: the wording, that a thrown error flips the boundary into its failed state (the static hook React
+// calls), what the failed state draws, that Reload reloads, and that a working page gains no markup. What it can't:
+// that React calls the hook in a browser, because the server renderer used here never does. That part is React's own.
+test('the error screen shows the approved message and a Reload button once a page has failed, and nothing before', () => {
+  assert.equal(ERROR_MESSAGE, ERROR_SCREEN_TEXT);
+  assert.match(readFileSync('src/ui.tsx', 'utf8'), /\/\*\* Owner-approved wording \(2026-11-10\)\. \*\/\r?\nexport const ERROR_MESSAGE = /);
+  // While the page works it draws its children and nothing else, so the pre-built home page is unchanged.
+  const fine = createElement('p', null, 'fine');
+  assert.equal(renderToStaticMarkup(createElement(ErrorBoundary, null, fine)), '<p>fine</p>');
+  // React hands a thrown error to getDerivedStateFromError and renders again with the state it returns.
+  assert.deepEqual(new ErrorBoundary({}).state, { failed: false });
+  const failed = new ErrorBoundary({ children: fine });
+  failed.state = ErrorBoundary.getDerivedStateFromError();
+  assert.deepEqual(failed.state, { failed: true });
+  const screen = failed.render() as ReactElement;
+  assert.equal(
+    renderToStaticMarkup(screen),
+    `<div class="wrap error-screen"><div class="empty-state card" role="alert"><p>${ERROR_SCREEN_TEXT}</p><button class="btn primary">Reload</button></div></div>`,
+  );
+  // The button reloads the page.
+  const find = (el: ReactElement, type: string): ReactElement | undefined =>
+    el.type === type ? el : [el.props.children].flat().filter((c) => c && typeof c === 'object').map((c) => find(c, type)).find(Boolean);
+  const button = find(screen, 'button')!;
+  const was = Object.getOwnPropertyDescriptor(globalThis, 'location');
+  let reloads = 0;
+  Object.defineProperty(globalThis, 'location', { value: { reload: () => { reloads++; } }, configurable: true });
+  try { button.props.onClick(); } finally { if (was) Object.defineProperty(globalThis, 'location', was); }
+  assert.equal(reloads, 1);
+  // It wraps the whole app, and logs the error alone.
+  assert.match(readFileSync('src/main.tsx', 'utf8'), /<StrictMode>\r?\n {4}<ErrorBoundary>\r?\n {6}<App \/>\r?\n {4}<\/ErrorBoundary>\r?\n {2}<\/StrictMode>/);
+  assert.ok(readFileSync('src/ui.tsx', 'utf8').includes('componentDidCatch(error: unknown) { console.error(error); }'));
+  assert.equal((readFileSync('src/ui.tsx', 'utf8').match(/console\.\w+\(/g) ?? []).length, 1);
 });

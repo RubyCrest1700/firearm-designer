@@ -3,6 +3,7 @@ import prices from '../../data/prices.json';
 import sources from '../../data/sources.json';
 import weights from '../../data/weights.json';
 import listPrices from '../../data/list-prices.json';
+import { knownRetailer } from './retailers';
 
 type PartInput = Omit<Part, 'offers'> & { offers: OfferTuple[] };
 
@@ -19,6 +20,13 @@ const PAUSED_SINCE: Record<string, string> = Object.fromEntries(
   Object.entries((sources as unknown as { paused?: Record<string, { since: string }> }).paused ?? {}).map(([id, e]) => [id, e.since]),
 );
 export const PAUSED = new Set(Object.keys(PAUSED_SINCE));
+/**
+ * Catalog offers, as written in src/data, that name a store missing from RETAILERS (src/data/retailers.ts). parts()
+ * notes each one here as it drops it, and `npm run check-data` fails while this list has anything in it.
+ */
+export const UNKNOWN_RETAILER_OFFERS: { part: string; retailer: string }[] = [];
+/** An offer the site can show: its store is in RETAILERS and isn't paused. */
+const shown = (retailer: string) => knownRetailer(retailer) && !PAUSED.has(retailer);
 /**
  * Parts no tracked store sells or prices: holsters whose live price is the base page's ("From"), Glock factory parts
  * with only an estimate ("Factory Part"), and hand-checked list prices, each shown with its label and the day it was checked.
@@ -38,16 +46,18 @@ const WEIGHTS = (weights as unknown as { parts: Record<string, { oz: number; bas
  * A live price replaces the sample price for the same retailer; new retailers are added. Once a part has any live
  * price, its remaining sample prices are dropped, so a made-up figure never undercuts a real one. A part with no live
  * price but a hand-checked list price (data/list-prices.json) shows that instead of its samples. Paused retailers'
- * offers are dropped first, so a part sold only there has no offers and shows no price. A part any paused retailer
+ * offers are dropped first, so a part sold only there has no offers and shows no price; so are offers from a store
+ * that isn't in RETAILERS, which check-data refuses, so that one never reaches a page. A part any paused retailer
  * priced (a sample, live or list price, or a tracked link) gets `pausedThrough`, so its older price history is ignored.
  */
 export function parts(slot: string, list: Omit<PartInput, 'slot'>[]): Part[] {
   return list.map((p) => {
+    for (const [retailer] of p.offers) if (!knownRetailer(retailer)) UNKNOWN_RETAILER_OFFERS.push({ part: p.id, retailer });
     const byRetailer = new Map<string, Offer>(
-      p.offers.filter(([retailer]) => !PAUSED.has(retailer)).map(([retailer, price, inStock]) => [retailer, { retailer, price, inStock: inStock ?? true, url: URLS[p.id]?.[retailer] }]),
+      p.offers.filter(([retailer]) => shown(retailer)).map(([retailer, price, inStock]) => [retailer, { retailer, price, inStock: inStock ?? true, url: URLS[p.id]?.[retailer] }]),
     );
-    const live = Object.entries(LIVE[p.id] ?? {}).filter(([retailer]) => !PAUSED.has(retailer));
-    const listed = PAUSED.has(LISTED.parts[p.id]?.retailer ?? '') ? undefined : LISTED.parts[p.id];
+    const live = Object.entries(LIVE[p.id] ?? {}).filter(([retailer]) => shown(retailer));
+    const listed = LISTED.parts[p.id] && shown(LISTED.parts[p.id].retailer) ? LISTED.parts[p.id] : undefined;
     if (live.length || listed) byRetailer.clear();
     for (const [retailer, offer] of live) byRetailer.set(retailer, { ...offer, retailer, ...(FROM.has(p.id) ? { basis: 'from' as const } : {}) });
     if (!live.length && listed) byRetailer.set(listed.retailer, { retailer: listed.retailer, price: listed.price, inStock: true, url: listed.url, basis: listed.basis, asOf: listed.asOf });

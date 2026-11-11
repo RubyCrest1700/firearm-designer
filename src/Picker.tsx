@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { RETAILERS, buyUrl } from './data/retailers';
+import { buyUrl, retailerName } from './data/retailers';
 import { bestOffer, candidateIssues, isEstimate, listedParts, money, priceLabel, priceRange, priceText, worst } from './engine';
 import type { RegionState } from './Blueprint';
 import { TIER_LABEL } from './store';
@@ -120,7 +120,7 @@ export function Candidate({ part, open, issues, sev, selected, owned, onChoose, 
         </div>
         <div className="cand-buy">
           {best ? <span className="amt">{priceText(best)}</span> : <span className="amt dim">—</span>}
-          {best && <span className="src">{RETAILERS[best.retailer].name}{label ? ` · ${label}` : ''}</span>}
+          {best && <span className="src">{retailerName(best.retailer)}{label ? ` · ${label}` : ''}</span>}
           <ChangeChip part={part} long />
           {!selected && <button className="btn primary" onClick={() => onChoose(false)}>Add to Build</button>}
           <button className={'own-btn' + (owned ? ' on' : '')} aria-pressed={owned} onClick={() => onChoose(true)}>{owned ? '✓ Owned' : 'I Own This'}</button>
@@ -138,15 +138,15 @@ export function Candidate({ part, open, issues, sev, selected, owned, onChoose, 
           <table className="offers">
             <thead><tr><th>Retailer</th><th className="num">Price</th><th>Stock</th><th>Checked</th><th><span className="sr">Link</span></th></tr></thead>
             <tbody>
-              {[...part.offers].sort((a, b) => a.price - b.price).map((o) => (
+              {[...part.offers].sort((a, b) => a.price - b.price).map((o) => { const href = buyUrl(o, `${part.brand} ${part.name}`); return (
                 <tr key={o.retailer} className={best && o.retailer === best.retailer ? (isEstimate(o) ? 'best est' : 'best') : ''}>
-                  <td>{RETAILERS[o.retailer].name}</td>
+                  <td>{retailerName(o.retailer)}</td>
                   <td className="num">{priceText(o)}</td>
                   <td>{!o.checkedAt ? 'Check store' : o.inStock ? 'In Stock' : <span className="oos">Out</span>}</td>
                   <td className="dim">{o.checkedAt ? `Live ${shortDate(o.checkedAt)}` : o.asOf ? `${priceLabel(o)} ${shortDate(o.asOf)}` : priceLabel(o)}</td>
-                  <td className="num"><a href={buyUrl(o, `${part.brand} ${part.name}`)} target="_blank" rel="sponsored noopener" onClick={onBuyClick}>{o.url ? 'View ↗' : 'Search ↗'}</a></td>
+                  <td className="num">{href && <a href={href} target="_blank" rel="sponsored noopener" onClick={onBuyClick}>{o.url ? 'View ↗' : 'Search ↗'}</a>}</td>
                 </tr>
-              ))}
+              ); })}
             </tbody>
           </table>
         </div>

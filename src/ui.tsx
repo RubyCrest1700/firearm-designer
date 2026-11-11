@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { Component, useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { PLATFORMS } from './data';
 import { estimateNote, money, noPriceNote, ownedOf, type Selection } from './engine';
 import type { RegionState } from './Blueprint';
@@ -38,6 +38,30 @@ export function LegalNotice({ issues, compact, id }: { issues: Issue[]; compact?
       {messages.map((m) => <p key={m}>{m}</p>)}
     </div>
   );
+}
+
+/** Owner-approved wording (2026-11-10). */
+export const ERROR_MESSAGE = 'Something went wrong showing this page. Reload to try again. Your saved builds are still in this browser.';
+
+/**
+ * The screen shown in place of the whole site when drawing a page fails, instead of a blank page. It wraps <App/> in
+ * src/main.tsx and draws nothing of its own while the page works. Only the error itself goes to the console.
+ */
+export class ErrorBoundary extends Component<{ children?: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(error: unknown) { console.error(error); }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <div className="wrap error-screen">
+        <div className="empty-state card" role="alert">
+          <p>{ERROR_MESSAGE}</p>
+          <button className="btn primary" onClick={() => location.reload()}>Reload</button>
+        </div>
+      </div>
+    );
+  }
 }
 
 export const shortDate = (iso: string, year = false) =>
