@@ -24,7 +24,13 @@ export default {
   //   11:00 UTC  price alert emails
   //   11:30 UTC  the feedback digest, and clearing out old personal data
   // A run with any other cron value, or none, does all three. Each logs only counts, or its error's name and message.
-  scheduled: (event, env, ctx) => ctx.waitUntil(runDaily(env, Date.now(), CRON_JOBS[event?.cron])),
+  // The run's promise is returned, because the runtime waits for what a scheduled handler returns (a cron run may
+  // take up to 15 minutes) and waitUntil alone is only documented to keep a run going for up to 30 seconds.
+  scheduled: (event, env, ctx) => {
+    const run = runDaily(env, Date.now(), CRON_JOBS[event?.cron]);
+    ctx.waitUntil(run);
+    return run;
+  },
 };
 
 const JOBS = { 'Price alerts': runAlerts, Feedback: runFeedback, Retention: runRetention };
