@@ -93,7 +93,7 @@ function fixture(t) {
  * `reads` are the pages the night must fetch, each once. `unfetched` are stub entries that must not be fetched as pages
  * (a robots.txt answer, or a page behind a refused redirect).
  */
-function night(dir, { now, reads, updated, held, failed = 0, blocked = 0, offsite = 0, moved = 0, unfetched = {}, unwritable }) {
+function night(dir, { now, reads, updated, held, kept = 0, failed = 0, rejected = 0, blocked = 0, offsite = 0, moved = 0, unfetched = {}, unwritable }) {
   const start = json(dir, 'prices.json');
   const log = join(dir, 'requests.log');
   const summaryFile = join(dir, 'summary.md');
@@ -114,7 +114,7 @@ function night(dir, { now, reads, updated, held, failed = 0, blocked = 0, offsit
   const out = `${run.stdout}${run.stderr}`;
   assert.equal(run.error, undefined, `${run.error}\n${out}`);
   assert.equal(run.status, 0, out);
-  assert.ok(out.includes(`Done: ${updated} updated, 0 kept from last run, ${held} held for review, ${failed} failed (0 of them ignored as likely misreads), ${blocked} blocked by robots.txt, ${offsite} redirected off-site, ${moved} redirected to a different page\n`), out);
+  assert.ok(out.includes(`Done: ${updated} updated, ${kept} kept from last run, ${held} held for review, ${failed} failed (${rejected} of them ignored as likely misreads), ${blocked} blocked by robots.txt, ${offsite} redirected off-site, ${moved} redirected to a different page\n`), out);
 
   const lines = readFileSync(log, 'utf8').trim().split('\n');
   const logged = (kind) => lines.filter((l) => l.startsWith(`${kind} `)).map((l) => l.slice(kind.length + 1));
@@ -376,4 +376,166 @@ test('an off-site redirect and a robots-blocked redirect hop are handled as befo
   assert.deepEqual(movedLines(second.out), []);
   assert.equal(second.summary, '');
   assert.equal(json(blocked, 'prices.json').offers['part-up'], undefined);
+});
+
+// The lines below print text a redirect supplied: the host named in the reason ("why") or in a refusal's message, as
+// well as the address itself. Each must come out as one safe line, and ordinary messages must print as they always did.
+
+const TICK = String.fromCharCode(96);
+/** A path carrying a workflow command, a code tick and 2,000 more characters, then a fragment with a log marker. */
+const HOSTILE_PATH = `/p/x::error::y${TICK}z${'a'.repeat(2000)}#b##[error]c`;
+/** An address URL() accepts whose host name holds a code tick and 2,000 letters. */
+const longHost = (suffix) => `https://a${TICK}b${'a'.repeat(2000)}.${suffix}`;
+/** The longest a cleaned piece of text can be: LOG_TEXT_MAX and its "...". */
+const CAPPED = 303;
+
+/** The one log line that starts (or ends) as given, checked safe: no colon pair, no hash pair and no control character. */
+function safeLine(out, { start, end }) {
+  const found = out.split('\n').filter((l) => (start ? l.startsWith(start) : l.endsWith(end)));
+  assert.equal(found.length, 1, out.slice(0, 3000));
+  const [line] = found;
+  assert.ok(!line.includes('::') && !line.includes('##'), line.slice(0, 1000));
+  assert.ok(![...line].some((c) => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127), line.slice(0, 1000));
+  return line;
+}
+/** No line of the night's log starts a workflow command or a log marker. */
+const noCommands = (out) => {
+  for (const l of out.split('\n')) assert.doesNotMatch(l, /^\s*(::|##\[)/, l.slice(0, 1000));
+};
+
+test('ordinary messages print exactly as before, character for character', (t) => {
+  const dir = fixture(t);
+  // Every read fails in its own ordinary way: a misread, an HTTP error, a robots.txt refusal, an off-site redirect and a page with no price.
+  const reads = {
+    [STEADY_A]: { price: 1000, inStock: true },
+    [STEADY_B]: { status: 404 },
+    [UP_A]: { redirect: `${SHOP_B}/p/up` },
+    [DOWN_B]: { html: '<html><head><title>Gone</title></head><body><h1>Gone</h1></body></html>' },
+  };
+  const { out, summary } = night(dir, {
+    now: NIGHT_1, reads, unfetched: { [`${SHOP_B}/robots.txt`]: { robots: 'User-agent: *\nDisallow: /p/new\n' } },
+    updated: 0, held: 0, kept: 2, failed: 3, rejected: 1, blocked: 1, offsite: 1, moved: 0,
+  });
+  const lines = out.split('\n');
+  for (const expected of [
+    'part-steady @ SHA: ignored, looks like a misread: $1000 is too far from the usual $100',
+    'part-steady @ SHB: HTTP 404',
+    `robots.txt disallows it: ${NEW_B}`,
+    `part-up @ SHA: redirected off-site to shop-b.example (${SHOP_B}/p/up), not read`,
+    'part-down @ SHB: no price found on page',
+  ]) assert.equal(lines.filter((l) => l === expected).length, 1, `${expected}\n${out}`);
+  // Those five, a blank line and the count: nothing else is printed.
+  assert.equal(lines.length, 8, out);
+  assert.equal(summary, '');
+  assert.deepEqual(json(dir, 'prices.json'), { updatedAt: LAST_NIGHT, offers: { 'part-steady': steady(LAST_NIGHT) } });
+});
+
+test('an off-site redirect to a hostile address gives one safe line: the host named and the address are both cleaned', (t) => {
+  const dir = fixture(t);
+  // An IPv6 address is the host form that holds a colon pair; the other host is a code tick and 2,000 letters.
+  const v6 = new URL(`https://[2001:db8::1]${HOSTILE_PATH}`).href;
+  const long = new URL(`${longHost('elsewhere.example')}${HOSTILE_PATH}`).href;
+  assert.ok(v6.startsWith('https://[2001:db8::1]/p/x::error::y') && v6.includes('##[error]') && v6.length > 2000, 'the address still carries the attack once parsed');
+  assert.ok(new URL(long).hostname.startsWith(`a${TICK}b`) && new URL(long).hostname.length > 2000, 'so does the host name');
+  const { out, summary } = night(dir, { now: NIGHT_1, reads: { ...READS, [UP_A]: { redirect: v6 }, [DOWN_B]: { redirect: long } }, updated: 3, held: 0, offsite: 2, moved: 0 });
+
+  const up = safeLine(out, { start: 'part-up @ SHA: ' });
+  assert.ok(up.startsWith(`part-up @ SHA: redirected off-site to [2001:db8%3A:1] (https://[2001:db8%3A:1]/p/x%3A:error%3A:y%60z`), up);
+  assert.ok(up.endsWith('...), not read'), up);
+  assert.ok(up.length < 80 + CAPPED, `${up.length} characters`);
+
+  const down = safeLine(out, { start: 'part-down @ SHB: ' });
+  assert.ok(down.startsWith(`part-down @ SHB: redirected off-site to a${TICK}baaaa`), down.slice(0, 200));
+  assert.match(down, /a\.\.\. \(https:\/\/a.baa+\.\.\.\), not read$/);
+  assert.ok(down.length < 60 + 2 * CAPPED, `${down.length} characters`);
+
+  noCommands(out);
+  assert.equal(out.split('\n').length, 8, 'five reads, a blank line and the count');
+  assert.equal(summary, '');
+  assert.equal(json(dir, 'prices.json').offers['part-up'], undefined);
+  assert.equal(json(dir, 'prices.json').offers['part-down'], undefined);
+});
+
+test('a robots-blocked hop to a hostile address gives one safe line: the reason and the address are both cleaned', (t) => {
+  const dir = fixture(t);
+  const cdnA = 'https://cdn.shop-a.example';
+  const cdnB = 'https://cdn.shop-b.example';
+  const hopA = new URL(`${cdnA}${HOSTILE_PATH}`).href;
+  const hopB = new URL(`${cdnB}${HOSTILE_PATH}`).href;
+  assert.ok(hopA.startsWith(`${cdnA}/p/x::error::y`) && hopA.includes('##[error]') && hopA.length > 2000, 'the address still carries the attack once parsed');
+  // Each hop's host sends its robots.txt to an address that is never requested, so the host is blocked and the reason
+  // names that address: an IPv6 one (a colon pair) and a local name with a code tick and 2,000 letters.
+  const reads = {
+    ...READS,
+    [UP_A]: { redirect: hopA },
+    [`${cdnA}/robots.txt`]: { redirect: 'https://[::1]/robots.txt' },
+    [DOWN_B]: { redirect: hopB },
+    [`${cdnB}/robots.txt`]: { redirect: `${longHost('localhost')}/robots.txt` },
+  };
+  const { out, summary } = night(dir, { now: NIGHT_1, reads, updated: 3, held: 0, blocked: 2, moved: 0 });
+
+  const up = safeLine(out, { end: ` (redirected from ${UP_A})` });
+  assert.ok(up.startsWith(`robots.txt redirect refused: local or private address ([%3A:1]): ${cdnA}/p/x%3A:error%3A:y%60zaaaa`), up);
+  assert.ok(up.endsWith(`a... (redirected from ${UP_A})`), up);
+  assert.ok(up.length < 120 + CAPPED, `${up.length} characters`);
+
+  const down = safeLine(out, { end: ` (redirected from ${DOWN_B})` });
+  assert.ok(down.startsWith(`robots.txt redirect refused: local or private address (a${TICK}baaaa`), down.slice(0, 200));
+  assert.ok(down.includes(`a...: ${cdnB}/p/x%3A:error%3A:y%60zaaaa`), down);
+  assert.ok(down.endsWith(`a... (redirected from ${DOWN_B})`), down);
+  assert.ok(down.length < 60 + 2 * CAPPED, `${down.length} characters`);
+
+  noCommands(out);
+  assert.equal(out.split('\n').length, 8, 'five reads, a blank line and the count');
+  assert.equal(summary, '');
+  assert.equal(json(dir, 'prices.json').offers['part-up'], undefined);
+  assert.equal(json(dir, 'prices.json').offers['part-down'], undefined);
+});
+
+test('a redirect refused for its address fails the read with one safe line', (t) => {
+  const dir = fixture(t);
+  const reads = { ...READS, [UP_A]: { redirect: `https://[::1]${HOSTILE_PATH}` }, [DOWN_B]: { redirect: `${longHost('localhost')}/p/down` } };
+  const { out, summary } = night(dir, { now: NIGHT_1, reads, updated: 3, held: 0, failed: 2, moved: 0 });
+  assert.equal(safeLine(out, { start: 'part-up @ SHA: ' }), 'part-up @ SHA: redirect refused: local or private address ([%3A:1])');
+  const down = safeLine(out, { start: 'part-down @ SHB: ' });
+  assert.ok(down.startsWith(`part-down @ SHB: redirect refused: local or private address (a${TICK}baaaa`), down.slice(0, 200));
+  assert.ok(down.endsWith('a...'), down.slice(-200));
+  assert.ok(down.length < 20 + CAPPED, `${down.length} characters`);
+  noCommands(out);
+  assert.equal(out.split('\n').length, 8, 'five reads, a blank line and the count');
+  assert.equal(summary, '');
+});
+
+test('the step summary lists moved reads by part, then store, whatever order the stores were read in', (t) => {
+  const control = directNight(t);
+  const dir = fixture(t);
+  const mk2 = (url) => `${url}-mk2`;
+  // Four moved reads across both stores. Shop B's queue reads part-steady before part-down, so the log has them in that order.
+  const reads = { [NEW_B]: READS[NEW_B] };
+  for (const url of [STEADY_A, STEADY_B, UP_A, DOWN_B]) Object.assign(reads, { [url]: { redirect: mk2(url) }, [mk2(url)]: READS[url] });
+  const { out, summary } = night(dir, { now: NIGHT_1, reads, updated: 5, held: 0, moved: 4 });
+
+  const logged = movedLines(out);
+  assert.deepEqual([...logged].sort(), [
+    `part-down @ SHB: redirected to a different page (${mk2(DOWN_B)})`,
+    `part-steady @ SHA: redirected to a different page (${mk2(STEADY_A)})`,
+    `part-steady @ SHB: redirected to a different page (${mk2(STEADY_B)})`,
+    `part-up @ SHA: redirected to a different page (${mk2(UP_A)})`,
+  ]);
+  assert.ok(logged.findIndex((l) => l.startsWith('part-steady @ SHB')) < logged.findIndex((l) => l.startsWith('part-down @ SHB')), 'the log is not in the summary order');
+  assert.equal(summary, [
+    '## Redirected to a different page',
+    '',
+    '4 tracked links were redirected to a different page on the same site. Each was still read and priced as usual.',
+    '',
+    '| Part | Store | Redirected to |',
+    '|---|---|---|',
+    `| part-down | SHB | ${TICK}${mk2(DOWN_B)}${TICK} |`,
+    `| part-steady | SHA | ${TICK}${mk2(STEADY_A)}${TICK} |`,
+    `| part-steady | SHB | ${TICK}${mk2(STEADY_B)}${TICK} |`,
+    `| part-up | SHA | ${TICK}${mk2(UP_A)}${TICK} |`,
+    '',
+    '',
+  ].join('\n'));
+  sameFiles(dir, control.dir);
 });

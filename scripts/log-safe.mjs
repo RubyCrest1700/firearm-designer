@@ -24,8 +24,12 @@ export function logSafe(text, max = LOG_TEXT_MAX) {
   return s.length > max ? `${s.slice(0, max)}...` : s;
 }
 
-/** The same text as a Markdown table cell: a code span, so nothing in it is read as Markdown, with ` and | encoded. */
-export const summaryCell = (text, max = LOG_TEXT_MAX) => `\`${logSafe(text, max).replace(/`/g, '%60').replace(/\|/g, '%7C')}\``;
+/**
+ * The same text as a Markdown table cell: a code span, so nothing in it is read as Markdown, with ` and | encoded.
+ * Empty or blank text shows as `(none)`: an empty code span is no code span, and its two ticks would break the row.
+ */
+export const summaryCell = (text, max = LOG_TEXT_MAX) =>
+  String(text).trim() === '' ? '`(none)`' : `\`${logSafe(text, max).replace(/`/g, '%60').replace(/\|/g, '%7C')}\``;
 
 /**
  * The step-summary section for reads that were redirected to a different page: [{ partId, retailer, to }]. '' when

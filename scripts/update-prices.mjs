@@ -81,11 +81,12 @@ async function readOffer(partId, retailer, url) {
     const got = await safeGet(url);
     if (got.blocked) {
       report.blocked++;
-      console.log(`${got.why}: ${logSafe(got.blocked)}${got.blocked !== url ? ` (redirected from ${url})` : ''}`);
+      // `why` can name a host a redirect pointed at, so it is made safe to print too (scripts/log-safe.mjs).
+      console.log(`${logSafe(got.why)}: ${logSafe(got.blocked)}${got.blocked !== url ? ` (redirected from ${url})` : ''}`);
     } else if (got.offsite) {
       // Another site's page isn't this retailer's price: nothing is recorded from it.
       report.offsite++;
-      console.log(`${partId} @ ${retailer}: ${got.why} (${logSafe(got.offsite)}), not read`);
+      console.log(`${partId} @ ${retailer}: ${logSafe(got.why)} (${logSafe(got.offsite)}), not read`);
     } else {
       const { res } = got;
       // Log only, for now: the page it ended on is read, checked and stored below exactly as a direct read is. The
@@ -118,7 +119,8 @@ async function readOffer(partId, retailer, url) {
     }
   } catch (err) {
     report.failed++;
-    console.log(`${partId} @ ${retailer}: ${err.message}`);
+    // A refused redirect's message names the host it pointed at.
+    console.log(`${partId} @ ${retailer}: ${logSafe(err.message)}`);
   }
   if (!entry) {
     // Keep a recent previous price rather than dropping back to sample data.
