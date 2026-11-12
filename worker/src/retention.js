@@ -1,4 +1,4 @@
-// How long the Worker keeps personal data. Runs from the daily cron, whether or not email is set up:
+// How long the Worker keeps personal data. Runs from the daily cron (11:30 UTC, index.js), whether or not email is set up:
 //   feedback            deleted 90 days after the daily digest sent it; never-sent messages after 180 days
 //   feedback.email      blanked 30 days after the digest sent it (the message stays until it's deleted)
 //   ip_hash             blanked after 30 days on alerts, feedback and builds (the daily limits only look back a day)
@@ -40,13 +40,14 @@ function rules(now) {
 export async function runRetention(env, now = Date.now(), live = RETENTION_LIVE) {
   const db = env.DB;
   const out = { live };
-  for (const { name, table, set, where, args } of rules(now)) {
-    if (!live) {
-      out[name] = (await db.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE ${where}`).bind(...args).first()).n;
-      continue;
-    }
-    const sql = set ? `UPDATE ${table} SET ${set} WHERE ${where}` : `DELETE FROM ${table} WHERE ${where}`;
-    out[name] = (await db.prepare(sql).bind(...args).run()).meta.changes;
+  const list = rules(now);
+  if (!live) {
+    for (const { name, table, where, args } of list) out[name] = (await db.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE ${where}`).bind(...args).first()).n;
+    return out;
   }
+  // One batch: the same statements in the same order, as one D1 query (the free plan allows an invocation 50) and
+  // one transaction, so if any of them fails none takes effect and the next run does them all.
+  const done = await db.batch(list.map(({ table, set, where, args }) => db.prepare(set ? `UPDATE ${table} SET ${set} WHERE ${where}` : `DELETE FROM ${table} WHERE ${where}`).bind(...args)));
+  list.forEach(({ name }, i) => { out[name] = done[i].meta.changes; });
   return out;
 }

@@ -7,7 +7,8 @@
 // signup. An address that unsubscribes from an email after confirming, or presses "Not you?" in a confirmation
 // email, isn't emailed again for 90 days, even if someone signs it up again (the signup is saved but no
 // confirmation email goes out). Needs:
-//   RESEND_API_KEY   Resend API key (free plan: 3,000 emails a month, 100 a day)
+//   RESEND_API_KEY   Resend API key (free plan: 3,000 emails a month, 100 a day; the worst case against both,
+//                    and against Cloudflare's limits, is worked out at MAX_ALERT_EMAILS_PER_RUN)
 //   MAILING_ADDRESS  postal address printed in every email, as US law (CAN-SPAM) requires
 //   ALERTS_FROM      optional sender, default "Drop-In Builds <alerts@dropinbuilds.com>"
 
@@ -23,11 +24,34 @@ const MAX_BUILDS = 50;
 const MAX_PARTS = 40;
 const MAX_SIGNUPS_PER_DAY = 5;
 /**
- * Resend's free plan sends 100 a day: up to 79 alert emails, 20 confirmations and the one feedback digest
- * (feedback.js). The overall signup cap keeps anyone signing up lots of addresses from different networks
- * from using up the alert emails.
+ * The limits the daily alert run (runAlerts) has to stay inside, and its worst case against each.
+ *
+ * Resend's free plan sends 100 emails a day and 3,000 a month. Worst case in a day: 40 alert emails, 20
+ * confirmations (the overall signup cap) and the one feedback digest (feedback.js) = 61. In a 31-day month:
+ * 61 x 31 = 1,891. A retry repeats its Idempotency-Key, so Resend sends nothing new for it; even if every retry
+ * counted, that is 67 a day and 2,077 a month. The overall signup cap keeps anyone signing up lots of addresses
+ * from different networks from using up the alert emails.
+ *
+ * Cloudflare's free plan allows one Worker invocation 50 subrequests (fetch calls) and 50 D1 queries, where a
+ * whole db.batch() counts as one query. The alert run has an invocation to itself (index.js). Worst case:
+ *   subrequests  1 price index + 40 sends + 6 retries = 47
+ *   D1 queries   3 at the start (the cleanup, the re-baseline mark, the read) + 4 claim batches + 4 revert
+ *                batches (one per chunk, only for a chunk with a refused send) + 1 quiet batch = 12
+ * The cap counts addresses tried, not emails that went, so a refused send can't push the run past either limit.
+ *
+ * Time: Cloudflare allows a cron run 15 minutes. The ceiling here is 46 requests that each hang for the full
+ * 10 seconds (SEND_TIMEOUT_MS) plus 45 pauses of 120 ms between them (SEND_GAP_MS): about 7 minutes 45 seconds.
+ * A normal full run adds about 5 seconds of pauses, which cost no CPU time.
  */
-const MAX_ALERT_EMAILS_PER_RUN = 79;
+const MAX_ALERT_EMAILS_PER_RUN = 40;
+/** Addresses claimed in one batch, then emailed, before the next batch is claimed. */
+const CLAIM_CHUNK = 10;
+/** Most second tries in one run, for sends whose outcome was unclear. */
+const MAX_SEND_RETRIES = 6;
+/** The wait between one alert email request and the next, so a full run can't trip a per-second limit at Resend. */
+const SEND_GAP_MS = 120;
+/** How long an alert email request may take before it is given up on. What happened to the email is then unclear. */
+const SEND_TIMEOUT_MS = 10_000;
 const MAX_SIGNUPS_PER_DAY_TOTAL = 20;
 /** Confirmation links work this long; unconfirmed signups are deleted after the same time (runAlerts). */
 const CONFIRM_FOR = 7 * DAY;
@@ -145,22 +169,62 @@ function seenStatements(db, rows, value = (given) => given) {
 
 /* ------------------------------------------------------------------ sending */
 
-async function send(env, { to, subject, html, text, token }) {
+/**
+ * Sends one email. `key`, when given, goes to Resend as the Idempotency-Key request header: a second request with
+ * the same key within 24 hours sends nothing new. Throws when the email wasn't accepted. The error carries
+ * `status` when Resend answered, and `unclear: true` when the request itself failed (network error, timeout), in
+ * which case the email may or may not have gone. Anything else thrown here happened before the request was made.
+ */
+async function send(env, { to, subject, html, text, token, key }) {
   const stop = `${API_BASE}/alerts/stop?t=${token}`;
   const message = {
     from: env.ALERTS_FROM || 'Drop-In Builds <alerts@dropinbuilds.com>',
     to: [to], subject, html, text,
     headers: { 'List-Unsubscribe': `<${stop}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
   };
-  if (env.sendEmail) return env.sendEmail(message); // tests
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
-    body: JSON.stringify(message),
-  });
+  const once = key ? { 'Idempotency-Key': key } : {};
+  if (env.sendEmail) return env.sendEmail(message, once); // tests
+  // Only a send with a key (an alert email) is given up on after SEND_TIMEOUT_MS; other emails are sent as before.
+  // A runtime without AbortSignal.timeout sends with no limit, as src/community.ts does.
+  const signal = key && typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function' ? AbortSignal.timeout(SEND_TIMEOUT_MS) : undefined;
+  const body = JSON.stringify(message);
+  let res;
+  try {
+    res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json', ...once },
+      body,
+      ...(signal ? { signal } : {}),
+    });
+  } catch {
+    // A network error or the timeout. No detail kept: the email may have gone, and the logs get only this.
+    throw Object.assign(new Error('Resend unreachable'), { unclear: true });
+  }
   // Only the status: Resend's error text can repeat the address, and errors end up in the logs.
-  if (!res.ok) throw new Error(`Resend ${res.status}`);
+  if (!res.ok) throw Object.assign(new Error(`Resend ${res.status}`), { status: res.status });
 }
+
+/**
+ * What a failed send means for the alert run. The email did not go: 'limited' (429), 'refused' (any other 4xx:
+ * Resend looked at this email and turned it down) and 'unsent' (an error with no status, from before the request
+ * was made). 'unclear' (the request failed or timed out, or Resend answered 5xx): it may have gone, and a retry
+ * with the same Idempotency-Key is safe. 'conflict' (409): taken to mean Resend has already had a request with this
+ * key today, one still running or with a different body, so the email may have gone and a retry can't help.
+ */
+function sendFailure(err) {
+  const status = err?.status;
+  if (status === 429) return 'limited';
+  if (status === 409) return 'conflict';
+  if (err?.unclear || status >= 500) return 'unclear';
+  return status >= 400 ? 'refused' : 'unsent';
+}
+
+/**
+ * The Idempotency-Key for an address's alert email on the UTC day of `now`: `alert-<hash>-<YYYY-MM-DD>`. The hash
+ * is the first 32 hex characters of the SHA-256 of one of the address's tokens. The token itself unsubscribes the
+ * address, so it stays out of a header that Resend may log or store apart from the message.
+ */
+export const alertKey = async (token, now) => `alert-${(await sha256(token)).slice(0, 32)}-${new Date(now).toISOString().slice(0, 10)}`;
 
 function layout(env, token, inner, why) {
   const stop = `${API_BASE}/alerts/stop?t=${token}`;
@@ -383,7 +447,10 @@ ${names ? `<p>Builds you'll get alerts for:</p><ul>${names}</ul>` : ''}
   }
   if (request.method === 'POST' && path === '/alerts/stop') {
     const token = url.searchParams.get('t') ?? '';
-    const form = new URLSearchParams(await request.text().catch(() => ''));
+    // Mail apps send the one-click body either urlencoded or as multipart/form-data. Anything else, or a body
+    // that doesn't parse as its type says, is read as text, as before.
+    const typed = /^\s*(multipart\/form-data|application\/x-www-form-urlencoded)\b/i.test(request.headers.get('content-type') ?? '');
+    const form = (typed ? await request.clone().formData().catch(() => null) : null) ?? new URLSearchParams(await request.text().catch(() => ''));
     const fromPage = form.get('from') === 'page';
     const fromEmail = fromPage || form.get('List-Unsubscribe') === 'One-Click';
     const row = TOKEN.test(token) ? await db.prepare('SELECT email, confirmed FROM alerts WHERE token = ?').bind(token).first() : null;
@@ -405,8 +472,20 @@ ${names ? `<p>Builds you'll get alerts for:</p><ul>${names}</ul>` : ''}
 
 /**
  * Runs from the Worker's cron after the nightly price refresh. Returns counts, for the logs and tests: emails
- * sent, addresses put off to tomorrow by the daily cap, and sends that failed (or, on a re-baseline run, how
- * many signups were re-baselined). Addresses are never logged.
+ * sent (Resend accepted them), addresses put off to tomorrow (by the daily cap, or because the run stopped
+ * early), and sends Resend refused (or, on a re-baseline run, how many signups were re-baselined). `unconfirmed`
+ * is there only when it isn't 0: sends whose outcome stayed unclear, which are not tried again. Addresses are
+ * never logged.
+ *
+ * Nobody is emailed twice about one change. Each address's rows are first claimed: `seen` and `last_sent_at`
+ * are written as if the email had gone. Only then is the email sent. An email that did not go has its `seen` put
+ * back, so the change is still waiting to be told. If it was never really tried (Resend's limit was reached, or
+ * the run stopped first) `last_sent_at` is put back too and the address keeps its place for tomorrow. If Resend
+ * turned that email down, `last_sent_at` stays, so the address goes to the back of the line and is tried again
+ * when its turn comes: an address Resend always refuses can't hold up everyone behind it. A send whose outcome is
+ * unclear is retried once with the same Idempotency-Key and, if still unclear, keeps its claim: that person gets
+ * the email at most once, possibly not at all. The budget for all of this is worked out at
+ * MAX_ALERT_EMAILS_PER_RUN. `env.pause(ms)` replaces the wait between sends in tests.
  */
 export async function runAlerts(env, now = Date.now()) {
   const db = env.DB;
@@ -431,14 +510,20 @@ export async function runAlerts(env, now = Date.now()) {
     return { sent: 0, rebaselined: all.length };
   }
 
-  const { results } = await db.prepare('SELECT * FROM alerts WHERE confirmed = 1 ORDER BY email').all();
+  // Longest-waiting first: a row's place is the time of its last email, or of its signup if it has had none. The
+  // Map keeps addresses in the order their first row turns up, so an address stands where its longest-waiting row
+  // does, with that row's token settling ties. An address put off today keeps its place and goes first tomorrow.
+  // Never by the address itself: that would serve the same early-sorting addresses every day.
+  const { results } = await db.prepare('SELECT * FROM alerts WHERE confirmed = 1 ORDER BY COALESCE(last_sent_at, created_at), token').all();
   const byEmail = new Map();
   for (const row of results) (byEmail.get(row.email) ?? byEmail.set(row.email, []).get(row.email)).push(row);
 
   let sent = 0;
   let deferred = 0;
   let failed = 0;
+  let unconfirmed = 0;
   const quiet = []; // [token, prices to add] for signups with nothing to tell
+  const due = []; // addresses to email in this run, in order
   for (const [email, rows] of byEmail) {
     const moved = [];
     const updates = [];
@@ -458,13 +543,72 @@ export async function runAlerts(env, now = Date.now()) {
     // No email means `seen` isn't rewritten, so a part that turned live gets its first price here. Addresses put
     // off or failed below stay out of this: they're rewritten whole once their email goes.
     if (!moved.length) { quiet.push(...missing); continue; }
-    if (sent >= MAX_ALERT_EMAILS_PER_RUN) { deferred++; continue; } // waits for tomorrow
+    if (due.length >= MAX_ALERT_EMAILS_PER_RUN) { deferred++; continue; } // waits for tomorrow
+    due.push({ email, rows, moved, updates });
+  }
+
+  let retries = 0;
+  let stopped = false; // nothing more is claimed or sent in this run
+  let requests = 0;
+  const pause = env.pause ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
+  // One email request, after a short wait if another went before it. `a` is an entry of `due`.
+  const attempt = async (a) => {
     try {
-      await send(env, { to: email, token: rows[0].token, ...digest(env, rows[0].token, moved) });
-      sent++;
-      for (const [token, seen] of updates) await db.prepare('UPDATE alerts SET seen = ?, last_sent_at = ? WHERE token = ?').bind(JSON.stringify(seen), now, token).run();
-    } catch {
-      failed++;
+      const token = a.rows[0].token;
+      // The key uses the smallest token, so it is the same whatever order the rows came in.
+      a.mail ??= { to: a.email, token, key: await alertKey(a.rows.map((row) => row.token).sort()[0], now), ...digest(env, token, a.moved) };
+      if (requests++) await pause(SEND_GAP_MS);
+      await send(env, a.mail);
+      return 'sent';
+    } catch (err) {
+      return sendFailure(err);
+    }
+  };
+  for (let i = 0; i < due.length; i += CLAIM_CHUNK) {
+    const chunk = due.slice(i, i + CLAIM_CHUNK);
+    if (stopped) { deferred += chunk.length; continue; }
+    // Claim: one statement per row (a `seen` can be large, so no CASE over many rows), the chunk as one batch,
+    // which is one transaction and one D1 query. If it fails nothing was claimed, so nothing is sent.
+    try {
+      await db.batch(chunk.flatMap((a) => a.updates.map(([token, seen]) => db.prepare('UPDATE alerts SET seen = ?, last_sent_at = ? WHERE token = ?').bind(JSON.stringify(seen), now, token))));
+    } catch (err) {
+      console.error(`Alert claim failed: ${errorText(err)}`);
+      deferred += chunk.length;
+      stopped = true;
+      continue;
+    }
+    const undo = []; // [row, the last_sent_at to leave it with] for rows whose email did not go
+    for (const a of chunk) {
+      // Claimed, but the run stopped before its turn: put back whole, to go tomorrow.
+      if (stopped) { deferred++; undo.push(...a.rows.map((row) => [row, row.last_sent_at])); continue; }
+      let outcome = await attempt(a);
+      if (outcome === 'unclear' && retries < MAX_SEND_RETRIES) {
+        retries++;
+        const again = await attempt(a);
+        // After an unclear first try only "accepted" settles it: a refusal now says nothing about the first.
+        if (again === 'limited') stopped = true;
+        outcome = again === 'sent' ? 'sent' : 'unclear';
+      }
+      if (outcome === 'sent') sent++;
+      else if (outcome === 'unclear' || outcome === 'conflict') unconfirmed++; // keeps its claim
+      else {
+        failed++;
+        // Turned down by Resend: it was tried, so it keeps this run's last_sent_at and goes to the back of the line.
+        undo.push(...a.rows.map((row) => [row, outcome === 'refused' ? now : row.last_sent_at]));
+        // Resend's limit is reached: every further send today would be refused the same way.
+        if (outcome === 'limited') stopped = true;
+      }
+    }
+    // Put back: one batch per chunk, so a run that dies later has already undone these. Only rows still holding
+    // this run's claim, so a row another run has claimed since is left alone.
+    if (undo.length) {
+      try {
+        await db.batch(undo.map(([row, lastSent]) => db.prepare('UPDATE alerts SET seen = ?, last_sent_at = ? WHERE token = ? AND last_sent_at = ?').bind(row.seen, lastSent, row.token, now)));
+      } catch (err) {
+        // These rows keep their claim: this change is never emailed to them, rather than risk emailing it twice.
+        console.error(`Alert undo failed: ${errorText(err)}`);
+        stopped = true;
+      }
     }
   }
 
@@ -477,5 +621,5 @@ export async function runAlerts(env, now = Date.now()) {
       console.error(`Quiet price write failed: ${errorText(err)}`);
     }
   }
-  return { sent, deferred, failed, watched: results.length };
+  return { sent, deferred, failed, ...(unconfirmed ? { unconfirmed } : {}), watched: results.length };
 }

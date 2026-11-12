@@ -9,9 +9,12 @@ workers_dev = false
 # No per-version preview addresses either: they would serve the API outside share.dropinbuilds.com.
 preview_urls = false
 
-# Price alert emails, daily at 11:00 UTC (7am Eastern), after the ~4am price refresh and site rebuild.
+# Daily, after the ~4am Eastern price refresh and site rebuild, as two runs so each has its own share of the
+# free plan's per-run limits (src/index.js decides which jobs each one runs):
+#   11:00 UTC  price alert emails
+#   11:30 UTC  the feedback digest, and clearing out old personal data
 [triggers]
-crons = ["0 11 * * *"]
+crons = ["0 11 * * *", "30 11 * * *"]
 
 [[d1_databases]]
 binding = "DB"
