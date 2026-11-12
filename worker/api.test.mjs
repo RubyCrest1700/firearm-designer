@@ -3110,11 +3110,11 @@ test('every way of unsubscribing that worked still works, with the token checked
   assert.equal(odd.seen.pulls, 0);
 });
 
-test('an unsubscribe request for an unknown or malformed token is answered without reading its body', async () => {
+test('an unsubscribe request for a malformed token is answered without reading its body', async () => {
   const e = alertEnv();
   const now = Date.now();
   const kept = await confirmedSignup(e, 'kept@example.com', '8.0.0.1', now);
-  for (const token of ['c'.repeat(32), 'not-a-token', '', `${kept}0`, kept.toUpperCase()]) {
+  for (const token of ['not-a-token', '', `${kept}0`, `${kept.slice(0, 31)}g`, 'C'.repeat(32), 'c'.repeat(31)]) {
     for (const headers of [{ 'content-type': URLENCODED }, { 'content-type': URLENCODED, 'content-length': '10' }, { 'content-type': 'multipart/form-data; boundary=x', 'content-length': '5000000' }]) {
       const body = watchedBody(new TextEncoder().encode('from=page&List-Unsubscribe=One-Click&'));
       const request = new Request(stopUrl(token), { method: 'POST', body: body.stream, duplex: 'half', headers });
@@ -3123,7 +3123,7 @@ test('an unsubscribe request for an unknown or malformed token is answered witho
       assert.equal(res.status, 204, token);
       assert.equal(body.seen.pulls, 0, token);
       assert.equal(request.bodyUsed, false, token);
-      assert.ok(e.DB.queries <= 1, 'at most the one lookup');
+      assert.equal(e.DB.queries, 0, 'not even a lookup');
     }
   }
   assert.equal(await statusOf(e, kept), 200);
@@ -3164,4 +3164,61 @@ test('an alert email request is given up on after 10 seconds', async () => {
   // One limit for each request, the retry included, and each of 10 seconds.
   assert.deepEqual(asked, [10_000, 10_000, 10_000]);
   assert.equal(net.sends.length, 3);
+});
+
+/* ------------------------- batch 3, W1 second fix: a well-formed token with no signup is answered as it always was */
+
+const UNSUBSCRIBED_PAGE = /<h1>You&#39;re Unsubscribed<\/h1><p>We won't send price alerts to this address unless it signs up again\. Your saved builds are still on the site\.<\/p>/;
+const tables = async (e) => ({
+  alerts: (await e.DB.prepare('SELECT token, email, confirmed FROM alerts ORDER BY token').all()).results,
+  suppressed: (await e.DB.prepare('SELECT email_hash, created_at FROM suppressed ORDER BY email_hash').all()).results,
+});
+
+test('a second press of the Unsubscribe page\'s button shows the same page, and changes nothing more', async () => {
+  const e = alertEnv();
+  const now = Date.now();
+  const token = await confirmedSignup(e, 'twice@example.com', '7.0.0.1', now);
+  const other = await confirmedSignup(e, 'other@example.com', '7.0.0.2', now);
+  const press = (at) => handle(form(`/alerts/stop?t=${token}`, 'from=page'), e, at);
+  const first = await press(now);
+  assert.equal(first.status, 200);
+  const page = await first.text();
+  assert.match(page, UNSUBSCRIBED_PAGE);
+  assert.equal(await statusOf(e, token), 404);
+  const after = await tables(e);
+  assert.equal(after.suppressed.length, 1);
+  // The row is gone now. The same press again, a minute later: the same page, and the stored rows untouched.
+  const second = await press(now + 60_000);
+  assert.equal(second.status, 200);
+  assert.equal(await second.text(), page);
+  assert.deepEqual([...second.headers], [...first.headers]);
+  assert.deepEqual(await tables(e), after, 'no new suppression, and the first one keeps its time');
+  assert.equal(await statusOf(e, other), 200);
+});
+
+test('a well-formed token with no signup: one-click and no body get a 204, the page button its page, and nothing is stored', async () => {
+  const e = alertEnv();
+  const now = Date.now();
+  const kept = await confirmedSignup(e, 'kept@example.com', '6.0.0.1', now);
+  const before = await tables(e);
+  const unknown = 'c'.repeat(32);
+  const oneClickRes = await oneClick(e, unknown, now);
+  assert.equal(oneClickRes.status, 204);
+  assert.equal(await oneClickRes.text(), '');
+  const pageRes = await handle(form(`/alerts/stop?t=${unknown}`, 'from=page'), e, now);
+  assert.equal(pageRes.status, 200);
+  assert.match(await pageRes.text(), UNSUBSCRIBED_PAGE);
+  const bare = await handle(new Request(stopUrl(unknown), { method: 'POST' }), e, now);
+  assert.equal(bare.status, 204);
+  assert.equal(await bare.text(), '');
+  // Multipart from the page button too, and a body over the limit is ignored: that one is a 204.
+  const body = new FormData();
+  body.set('from', 'page');
+  assert.equal((await handle(new Request(stopUrl(unknown), { method: 'POST', body }), e, now)).status, 200);
+  const big = watchedBody(new TextEncoder().encode(`from=page&p=${'x'.repeat(1011)}&`));
+  const oversized = new Request(stopUrl(unknown), { method: 'POST', body: big.stream, duplex: 'half', headers: { 'content-type': URLENCODED, 'content-length': '5000000' } });
+  assert.equal((await handle(oversized, e, now)).status, 204);
+  assert.equal(big.seen.pulls, 0);
+  assert.deepEqual(await tables(e), before);
+  assert.equal(await statusOf(e, kept), 200);
 });

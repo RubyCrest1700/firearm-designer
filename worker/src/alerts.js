@@ -521,11 +521,14 @@ ${names ? `<p>Builds you'll get alerts for:</p><ul>${names}</ul>` : ''}
   }
   if (request.method === 'POST' && path === '/alerts/stop') {
     const token = url.searchParams.get('t') ?? '';
-    // The token first: nothing is read from the request for a token that isn't one or has no signup.
-    const row = TOKEN.test(token) ? await db.prepare('SELECT email, confirmed FROM alerts WHERE token = ?').bind(token).first() : null;
-    const form = row ? await stopForm(request) : new URLSearchParams();
+    // The token's shape first: nothing is read from the request for a token that can't be one. For a well-formed
+    // token the body is read (at most MAX_STOP_BODY of it) whether or not it still has a signup, so a second press
+    // of the Unsubscribe page's button gets the same page as the first.
+    const shaped = TOKEN.test(token);
+    const form = shaped ? await stopForm(request) : new URLSearchParams();
     const fromPage = form.get('from') === 'page';
     const fromEmail = fromPage || form.get('List-Unsubscribe') === 'One-Click';
+    const row = shaped ? await db.prepare('SELECT email, confirmed FROM alerts WHERE token = ?').bind(token).first() : null;
     if (row && !row.confirmed) {
       await db.prepare('DELETE FROM alerts WHERE token = ?').bind(token).run();
     } else if (row) {
