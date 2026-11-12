@@ -9,6 +9,8 @@ import { awarenessFor } from '../src/awareness';
 import { PLATFORMS } from '../src/data/index';
 import { RETIRED_IDS, currentId, currentSelection } from '../src/data/index';
 import { loadCompare } from '../src/Compare';
+import { parseBuildLink } from '../src/Compare';
+import { readSharedLink, unlistedNote, unlistedParts } from '../src/store';
 import { NFA_SHORT_NOTICE, PAUSED, SBR_MESSAGE, VERTICAL_GRIP_MESSAGE, parts as buildParts, shortBarrelStockIssue } from '../src/data/helpers';
 import { biggestDrops, daysAgo, firstLiveDay, hasHistory, partSeries, priceOn, recentChange, seriesOf } from '../src/data/history';
 import { totalSeries } from '../src/data/history';
@@ -723,6 +725,99 @@ test('a share link, community build or tab-kept build with the retired spring id
   } finally {
     delete (globalThis as { sessionStorage?: unknown }).sessionStorage;
   }
+});
+
+/* ------------------------------------------------------------------ a link naming parts the site no longer lists */
+
+const ONE_UNLISTED = 'This link had 1 part we no longer list, so it was left out.';
+const THREE_UNLISTED = 'This link had 3 parts we no longer list, so they were left out.';
+
+test('a link is told how many parts it named that the site no longer lists: not marks, placements, retired ids or repeats', () => {
+  const good = ['g19-slide-g5', 'g19-bbl-oem5'];
+  // Nothing unknown: real parts, owned marks (kept or dropped), placements (good or bad), a retired id, an empty token.
+  assert.equal(unlistedParts([]), 0);
+  assert.equal(unlistedParts(['']), 0);
+  assert.equal(unlistedParts(good), 0);
+  assert.equal(unlistedParts([...good, 'own-slide', 'has-optic', 'own-nope', 'has-nope', 'at-light-r45', 'at-nope-r45', 'at-light-zz9']), 0);
+  assert.equal(unlistedParts(['gs-slide-43x', OLD_SLIM_SPRING, 'own-rsa']), 0, 'a retired id is its stand-in');
+  assert.ok(!PLATFORMS.some((p) => p.parts.some((x) => x.id === OLD_SLIM_SPRING)), 'the retired id itself is no part');
+  // A part listed for another platform is still listed (the link just can't place it here).
+  const rifleOnly = ar15.parts.find((x) => !glock.parts.some((g) => g.id === x.id))!.id;
+  assert.equal(selectionFromParts('glock9', [...good, rifleOnly])[part(ar15, rifleOnly).slot] === rifleOnly, false);
+  assert.equal(unlistedParts([...good, rifleOnly]), 0);
+  // Text that isn't shaped like a part id is not a part.
+  assert.equal(unlistedParts([...good, 'Not A Part', '<b>', 'UPPER-CASE', 'a--b', '-a', 'a_b']), 0);
+  // One, and three, unknown part ids; marks, placements and the retired id around them change nothing.
+  assert.equal(unlistedParts([...good, 'g19-slide-gone']), 1);
+  assert.equal(unlistedParts(['g19-slide-gone']), 1);
+  assert.equal(unlistedParts([...good, 'g19-slide-gone', 'own-optic', 'has-slide', 'at-nope-r45', OLD_SLIM_SPRING]), 1);
+  assert.equal(unlistedParts(['g19-slide-gone', ...good, 'made-up-part', 'own-slide', 'zz9', 'has-optic']), 3);
+  // The same unknown id twice is one part; an unknown id that looks like a mark with one word too many is a part id.
+  assert.equal(unlistedParts(['g19-slide-gone', 'g19-slide-gone', ...good, 'g19-slide-gone']), 1);
+  assert.equal(unlistedParts(['g19-slide-gone', 'made-up-part', 'g19-slide-gone', 'zz9', 'made-up-part']), 3);
+  assert.equal(unlistedParts(['own-slide-gone']), 1);
+  for (const id of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) assert.equal(unlistedParts([id]), /^[a-z]+$/.test(id) ? 1 : 0, id);
+  // Counting changes nothing about the build the link opens.
+  assert.deepEqual(selectionFromParts('glock9', ['g19-slide-g5', 'g19-slide-gone', 'g19-bbl-oem5', 'own-optic', 'has-slide', 'at-nope-r45']), { slide: 'g19-slide-g5', barrel: 'g19-bbl-oem5' });
+
+  // The words, exactly.
+  assert.equal(unlistedNote(0), '');
+  assert.equal(unlistedNote(-1), '');
+  assert.equal(unlistedNote(1), ONE_UNLISTED);
+  assert.equal(unlistedNote(3), THREE_UNLISTED);
+  assert.equal(unlistedNote(2), 'This link had 2 parts we no longer list, so they were left out.');
+  assert.equal(unlistedNote(12), 'This link had 12 parts we no longer list, so they were left out.');
+  assert.match(readFileSync('src/store.ts', 'utf8'), /\/\*\* Owner-approved wording \(2026-11-10\)\. \*\/\r?\nexport const unlistedNote = /);
+});
+
+test('an opened or pasted link carries its count of unlisted parts; the app says it once and nothing else about the link changes', () => {
+  const had = Object.getOwnPropertyDescriptor(globalThis, 'location');
+  const at = (b: string) => Object.defineProperty(globalThis, 'location', { value: { search: b && `?b=${encodeURIComponent(b)}`, origin: 'https://example.test', pathname: '/' }, configurable: true });
+  try {
+    const sel = { slide: 'g19-slide-g5', barrel: 'g19-bbl-oem5' };
+    for (const [link, n] of [
+      ['glock19~g19-slide-g5.g19-bbl-oem5', 0],
+      ['glock19~g19-slide-g5.made-up-part.g19-bbl-oem5', 1],
+      ['glock9~g19-slide-g5.made-up-part.g19-bbl-oem5.own-optic.has-slide.made-up-part', 1],
+      ['glock9~g19-slide-gone.g19-slide-g5.made-up-part.g19-bbl-oem5.zz9', 3],
+    ] as [string, number][]) {
+      at(link);
+      assert.deepEqual(readSharedLink(), { platform: 'glock9', selection: sel, unlisted: n }, link);
+      // What other callers get is what they always got.
+      assert.deepEqual(readSharedBuild(), { platform: 'glock9', selection: sel }, link);
+      // The same link pasted into Compare, as a site link and as a share-service link.
+      for (const url of [`https://dropinbuilds.com/?b=${encodeURIComponent(link)}`, `https://share.dropinbuilds.com/b/${encodeURIComponent(link)}`])
+        assert.deepEqual(parseBuildLink(url), { platform: 'glock9', selection: sel, unlisted: n }, url);
+    }
+    // A link whose every part is gone opens the plain factory build, and still says how many were left out.
+    at('glock9~g19-slide-gone.made-up-part');
+    assert.deepEqual(readSharedLink(), { platform: 'glock9', selection: baseSelection(glock), unlisted: 2 });
+    // The retired spring id is read as its stand-in and counts for nothing.
+    at(`glock43x~gs-slide-43x.gs-bbl-43x.${OLD_SLIM_SPRING}`);
+    assert.equal(readSharedLink()?.unlisted, 0);
+    // No link, or a link to a platform the site doesn't have: nothing opens, so nothing is said.
+    at('');
+    assert.equal(readSharedLink(), null);
+    at('unicorn~made-up-part');
+    assert.equal(readSharedLink(), null);
+    assert.equal(parseBuildLink('https://dropinbuilds.com/?b=unicorn~made-up-part'), null);
+  } finally {
+    if (had) Object.defineProperty(globalThis, 'location', had);
+    else delete (globalThis as { location?: unknown }).location;
+  }
+  // The app: the note is a plain toast set once as the page opens, and the price-drop toast waits for the next visit.
+  const app = readFileSync('src/App.tsx', 'utf8').replace(/\r\n/g, '\n');
+  assert.ok(app.includes(`  const shared = useMemo(readSharedLink, []);`));
+  assert.ok(app.includes(`  const linkNote = unlistedNote(shared?.unlisted ?? 0);`));
+  assert.ok(app.includes(`  useEffect(() => { if (linkNote) setToast(linkNote); }, []);`));
+  assert.ok(app.includes(`    if (linkNote) return;\n    const seen = dropped.map(`), 'checked before the drop is marked as told');
+  assert.equal(toastHideMs(ONE_UNLISTED), 2800);
+  // Compare: both kinds of pasted link report through the page's note, which the app shows as a toast.
+  const compare = readFileSync('src/Compare.tsx', 'utf8').replace(/\r\n/g, '\n');
+  assert.ok(compare.includes(`  const leftOut = (n: number) => { const note = unlistedNote(n); if (note) onNote?.(note); };`));
+  assert.ok(compare.includes(`selection: selectionFromParts(hit.platform, hit.parts) });\n      leftOut(unlistedParts(hit.parts));`));
+  assert.ok(compare.includes(`selection: got.selection });\n    leftOut(got.unlisted);`));
+  assert.ok(app.includes(`            onNote={setToast}\n`));
 });
 
 test('a saved build with the retired spring id loads with the current spring and keeps the price saved for it', (t) => {

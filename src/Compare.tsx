@@ -3,7 +3,7 @@ import { PLATFORMS, canonicalPlatform, currentSelection } from './data';
 import type { RegionState } from './Blueprint';
 import { Blueprint } from './drawings';
 import { ESTIMATE_LABEL, bestOffer, estimateNote, isEstimate, money, noPriceNote, ownedOf, partIds, totalNotes, type Selection } from './engine';
-import { FEATURED, buildOf, estimatedOf, selectionFromParts, totalOf, unpricedOf, type SavedBuild } from './store';
+import { FEATURED, buildOf, estimatedOf, selectionFromParts, totalOf, unlistedNote, unlistedParts, unpricedOf, type SavedBuild } from './store';
 import { getBuild, listBuilds, type CommunityBuild } from './community';
 import { buildStatus, statesFor } from './status';
 import { buildWeight, formatWeight } from './weight';
@@ -32,8 +32,11 @@ export function storeCompare(list: (CompareItem | null)[]) {
   try { sessionStorage.setItem(KEY, JSON.stringify(list)); } catch { /* this page only */ }
 }
 
-/** Reads a build link from this site or its share service: `?b=` and `/b/` links directly, `/c/` community links by id. */
-export function parseBuildLink(text: string): { platform: string; selection: Selection } | { communityId: string } | null {
+/**
+ * Reads a build link from this site or its share service: `?b=` and `/b/` links directly, `/c/` community links by id.
+ * `unlisted` is how many parts the link names that the site no longer lists.
+ */
+export function parseBuildLink(text: string): { platform: string; selection: Selection; unlisted: number } | { communityId: string } | null {
   let url: URL;
   try { url = new URL(text.trim()); } catch { return null; }
   const c = url.pathname.match(/\/c\/([a-z0-9]{10})\/?$/);
@@ -44,7 +47,7 @@ export function parseBuildLink(text: string): { platform: string; selection: Sel
   if (!raw) return null;
   const [old, ids = ''] = raw.split('~');
   const pid = canonicalPlatform(old);
-  return PLATFORMS.some((p) => p.id === pid) ? { platform: pid, selection: selectionFromParts(pid, ids.split('.')) } : null;
+  return PLATFORMS.some((p) => p.id === pid) ? { platform: pid, selection: selectionFromParts(pid, ids.split('.')), unlisted: unlistedParts(ids.split('.')) } : null;
 }
 
 /** Everything the comparison shows about one build. */
@@ -68,9 +71,11 @@ function factsOf(item: CompareItem) {
 }
 type Facts = ReturnType<typeof factsOf>;
 
-export function ComparePage({ items, onSet, saved, current, lastPlatform, onOpen }: {
+export function ComparePage({ items, onSet, saved, current, lastPlatform, onOpen, onNote }: {
   items: (CompareItem | null)[]; onSet: (i: number, item: CompareItem | null) => void; saved: SavedBuild[];
   current: { platform: string; selection: Selection; name?: string } | null; lastPlatform: string; onOpen: (item: CompareItem) => void;
+  /** Shows a short note (the app's toast): a pasted link that named parts the site no longer lists. */
+  onNote?: (text: string) => void;
 }) {
   const [a, b] = items;
   const fa = useMemo(() => (a ? factsOf(a) : null), [a]);
@@ -91,7 +96,7 @@ export function ComparePage({ items, onSet, saved, current, lastPlatform, onOpen
     </div>
   ) : (
     <Chooser key={i} label={'AB'[i]} saved={saved} current={current} other={i === 0 ? b : a} lastPlatform={lastPlatform}
-      skipCurrent={i === 1 || (i === 0 ? b : a)?.kind === 'Current Build'} onPick={(item) => onSet(i, item)} />
+      skipCurrent={i === 1 || (i === 0 ? b : a)?.kind === 'Current Build'} onPick={(item) => onSet(i, item)} onNote={onNote} />
   );
 
   return (
@@ -227,9 +232,9 @@ function PartCell({ f, slot }: { f: Facts; slot: Slot }) {
 type Source = 'saved' | 'current' | 'starter' | 'community' | 'link';
 
 /** `skipCurrent`: open on another source than the build in progress, so both sides don't start on the same build. */
-function Chooser({ label, saved, current, other, lastPlatform, skipCurrent, onPick }: {
+function Chooser({ label, saved, current, other, lastPlatform, skipCurrent, onPick, onNote }: {
   label: string; saved: SavedBuild[]; current: { platform: string; selection: Selection; name?: string } | null;
-  other: CompareItem | null; lastPlatform: string; skipCurrent: boolean; onPick: (item: CompareItem) => void;
+  other: CompareItem | null; lastPlatform: string; skipCurrent: boolean; onPick: (item: CompareItem) => void; onNote?: (text: string) => void;
 }) {
   const sources: [Source, string][] = [
     ...(saved.length ? [['saved', 'My Builds'] as [Source, string]] : []),
@@ -260,6 +265,8 @@ function Chooser({ label, saved, current, other, lastPlatform, skipCurrent, onPi
     return `${p.name} · ${money(totalOf(p, build, ownedOf(sel).owned))}${note ? ` (${note})` : ''}`;
   };
 
+  /** Says so when a pasted link named parts the site no longer lists. */
+  const leftOut = (n: number) => { const note = unlistedNote(n); if (note) onNote?.(note); };
   const pasteLink = async () => {
     setError(null);
     const got = parseBuildLink(link);
@@ -268,10 +275,12 @@ function Chooser({ label, saved, current, other, lastPlatform, skipCurrent, onPi
       const hit = community?.find((x) => x.id === got.communityId) ?? await getBuild(got.communityId);
       if (!hit || !PLATFORMS.some((p) => p.id === canonicalPlatform(hit.platform))) { setError("We couldn't find that community build. It may have been removed."); return; }
       onPick({ kind: 'Community', name: hit.name, platform: canonicalPlatform(hit.platform), selection: selectionFromParts(hit.platform, hit.parts) });
+      leftOut(unlistedParts(hit.parts));
       return;
     }
     const p = PLATFORMS.find((x) => x.id === got.platform)!;
     onPick({ kind: 'Shared Link', name: `Shared ${p.name} build`, platform: got.platform, selection: got.selection });
+    leftOut(got.unlisted);
   };
 
   return (

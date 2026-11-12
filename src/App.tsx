@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { PLATFORMS, PRICES_READ_AT, canonicalPlatform, currentSelection } from './data';
 import { ownsAny, partIds, baseSelection, selectionTokens, withoutOwned, type Selection } from './engine';
 import { ComparePage, loadCompare, storeCompare, type CompareItem } from './Compare';
-import { droppedBuilds, loadSavedBuilds, priceChanges, newId, readSharedBuild, savedPrices, selectionFromParts, shareUrl, checkShareLinks, storeSavedBuilds, SAVED_KEY, type SavedBuild } from './store';
+import { droppedBuilds, loadSavedBuilds, priceChanges, newId, readSharedLink, savedPrices, selectionFromParts, shareUrl, unlistedNote, checkShareLinks, storeSavedBuilds, SAVED_KEY, type SavedBuild } from './store';
 import { recordBuyClick, shareBuild, type CommunityBuild } from './community';
 import { ALERTS_KEY, alertsAvailable, checkAlertSignup, loadAlertSignup, signUpForAlerts, stopAlerts, storeAlertSignup, syncAlertBuilds, type AlertSignup } from './alerts';
 import type { Part } from './types';
@@ -59,7 +59,9 @@ export const signupAfter = (current: AlertSignup | null, token: string, next: Al
 
 export default function App() {
   const persisted = useMemo(loadPersisted, []);
-  const shared = useMemo(readSharedBuild, []);
+  const shared = useMemo(readSharedLink, []);
+  /** What to say about parts the opened link named that the site no longer lists; '' when there's nothing to say. */
+  const linkNote = unlistedNote(shared?.unlisted ?? 0);
   const [route, setRoute] = useState<Route>(() => (shared ? 'build' : routeFromHash()));
   const [platformId, setPlatformId] = useState(shared?.platform ?? (PLATFORMS.some((p) => p.id === persisted?.platform) ? persisted!.platform : PLATFORMS[0].id));
   const [selections, setSelections] = useState<Record<string, Selection>>(() => ({
@@ -133,6 +135,8 @@ export default function App() {
   }, [saved]);
   // Tell a returning visitor once when a saved build gets cheaper; a new drop tells them again.
   useEffect(() => {
+    // The note about the link just opened shows instead; the drop isn't marked as told, so the next visit tells it.
+    if (linkNote) return;
     const seen = dropped.map((s) => `${s.id}:${priceChanges(s).drop.toFixed(2)}`).sort().join(',');
     try {
       if (!seen || localStorage.getItem(DROPS_SEEN_KEY) === seen) return;
@@ -140,6 +144,7 @@ export default function App() {
     } catch { return; }
     setToast(dropped.length === 1 ? `Price drop: "${dropped[0].name}" costs less than when you saved it. See My Builds.` : `Price drop: ${dropped.length} of your saved builds cost less than when you saved them. See My Builds.`);
   }, []);
+  useEffect(() => { if (linkNote) setToast(linkNote); }, []);
   useEffect(() => {
     // A link the browser would not copy stays until it's closed or another toast takes its place.
     const ms = toast ? toastHideMs(toast) : null;
@@ -300,6 +305,7 @@ export default function App() {
             current={opened.has(platformId) && (partIds(selOf(platformId)).length || ownsAny(selOf(platformId))) ? { platform: platformId, selection: selOf(platformId), name: openSaved?.name } : null}
             lastPlatform={platformId}
             onOpen={(item) => openInBuilder(item.platform, item.selection)}
+            onNote={setToast}
           />
         )}
       </main>
