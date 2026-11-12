@@ -64,6 +64,29 @@ export class ErrorBoundary extends Component<{ children?: ReactNode }, { failed:
   }
 }
 
+/** What the toast shows: plain words, or a link the browser would not copy, held in a field until it's closed. */
+export type Toast = string | { link: string };
+/** How long a toast of plain words stays up. */
+export const TOAST_MS = 2800;
+/** How long a toast stays before it hides itself; null for one that stays until it's closed or replaced (the link). */
+export const toastHideMs = (toast: Toast): number | null => (typeof toast === 'string' ? TOAST_MS : null);
+/** The words before the link (they were the start of the old plain toast). */
+export const COPY_LINK_LEAD = 'Copy this link:';
+/** Owner-approved wording (2026-11-10). */
+export const TOAST_CLOSE = 'Close';
+
+/** The toast. A link is one line in a read-only field that selects itself when focused or clicked, with a Close button (Escape closes it too). */
+export function ToastView({ toast, onClose }: { toast: Toast; onClose: () => void }) {
+  if (typeof toast === 'string') return <div className="toast" role="status">{toast}</div>;
+  return (
+    <div className="toast toast-link" role="status" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
+      <label htmlFor="toast-link">{COPY_LINK_LEAD}</label>
+      <input id="toast-link" type="text" readOnly value={toast.link} onFocus={(e) => e.currentTarget.select()} onClick={(e) => e.currentTarget.select()} />
+      <button type="button" className="btn" onClick={onClose}>{TOAST_CLOSE}</button>
+    </div>
+  );
+}
+
 /** A date with no time ("2026-10-09"): a hand-checked day. */
 const DAY_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 /** "Oct 9". A date with no time is that day everywhere (read as UTC, which is how it parses); a full time shows in the visitor's own time zone. */

@@ -39,6 +39,7 @@ import { buyUrl, knownRetailer, offerUrl, retailerName, tagged } from '../src/da
 import { UNKNOWN_RETAILER_OFFERS } from '../src/data/helpers';
 import { priceHtml } from '../src/guides/render';
 import { ERROR_MESSAGE, ErrorBoundary } from '../src/ui';
+import { COPY_LINK_LEAD, TOAST_CLOSE, TOAST_MS, ToastView, toastHideMs } from '../src/ui';
 import type { ReactElement } from 'react';
 import PRICES_JSON from '../data/prices.json';
 import { priceIndex } from './og-index';
@@ -2860,6 +2861,74 @@ test('the error screen shows the approved message and a Reload button once a pag
   assert.match(readFileSync('src/main.tsx', 'utf8'), /<StrictMode>\r?\n {4}<ErrorBoundary>\r?\n {6}<App \/>\r?\n {4}<\/ErrorBoundary>\r?\n {2}<\/StrictMode>/);
   assert.ok(readFileSync('src/ui.tsx', 'utf8').includes('componentDidCatch(error: unknown) { console.error(error); }'));
   assert.equal((readFileSync('src/ui.tsx', 'utf8').match(/console\.\w+\(/g) ?? []).length, 1);
+});
+
+/* ------------------------------------------------------------------ the toast, and a link the browser would not copy */
+
+const COPY_LEAD_TEXT = 'Copy this link:';
+const CLOSE_TEXT = 'Close';
+const COPIED_TEXT = 'Link copied. Anyone who opens it sees this exact build.';
+
+// What this proves: what each kind of toast draws, what the field and the button do when used, which toast hides
+// itself, and that the app's one copy routine hands a refused link to that toast. What it can't: the browser's own
+// part (focus, the selection on screen, the timer), because there is no page here.
+test('a link the browser will not copy stays in a read-only field with a Close button; every other toast is as before', () => {
+  const url = 'https://share.dropinbuilds.com/b/ar15~ar-upper-a.ar-bbl-b.own-optic?a="1"&b=<2>';
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  let closed = 0;
+  const onClose = () => { closed++; };
+  // Plain words draw exactly what the app drew before.
+  assert.equal(renderToStaticMarkup(createElement(ToastView, { toast: COPIED_TEXT, onClose })), `<div class="toast" role="status">${COPIED_TEXT}</div>`);
+  // The link: the old lead words as the field's label, the whole link in a one-line read-only field, and Close.
+  assert.equal(COPY_LINK_LEAD, COPY_LEAD_TEXT);
+  assert.equal(TOAST_CLOSE, CLOSE_TEXT);
+  assert.equal(
+    renderToStaticMarkup(createElement(ToastView, { toast: { link: url }, onClose })),
+    `<div class="toast toast-link" role="status"><label for="toast-link">${COPY_LEAD_TEXT}</label><input id="toast-link" type="text" readonly="" value="${esc(url)}"/><button type="button" class="btn">${CLOSE_TEXT}</button></div>`,
+  );
+  // Focusing or clicking the field selects all of it; the button and Escape close the toast, other keys don't.
+  const drawn = ToastView({ toast: { link: url }, onClose }) as ReactElement;
+  const kids = [drawn.props.children].flat() as ReactElement[];
+  const field = kids.find((c) => c.type === 'input')!;
+  const button = kids.find((c) => c.type === 'button')!;
+  let selected = 0;
+  const event = { currentTarget: { select: () => { selected++; } } };
+  field.props.onFocus(event);
+  field.props.onClick(event);
+  assert.equal(selected, 2);
+  assert.equal(field.props.value, url);
+  assert.equal(field.props.readOnly, true);
+  assert.equal(field.props.onChange, undefined);
+  button.props.onClick();
+  assert.equal(closed, 1);
+  drawn.props.onKeyDown({ key: 'Enter' });
+  drawn.props.onKeyDown({ key: 'a' });
+  assert.equal(closed, 1);
+  drawn.props.onKeyDown({ key: 'Escape' });
+  assert.equal(closed, 2);
+  // Only the link stays up; plain words hide after the same 2.8 seconds as before.
+  assert.equal(TOAST_MS, 2800);
+  assert.equal(toastHideMs(COPIED_TEXT), 2800);
+  assert.equal(toastHideMs(`Saved "Mine" to My Builds`), 2800);
+  assert.equal(toastHideMs({ link: url }), null);
+  assert.equal(toastHideMs({ link: '' }), null);
+  // The app: one timer rule, one place that copies, and the refused copy goes to the link toast.
+  const app = readFileSync('src/App.tsx', 'utf8').replace(/\r\n/g, '\n');
+  assert.ok(app.includes(`    const ms = toast ? toastHideMs(toast) : null;\n    if (ms === null) return;\n    const t = setTimeout(() => setToast(null), ms);\n    return () => clearTimeout(t);\n  }, [toast]);`));
+  assert.equal((app.match(/setTimeout\(\(\) => setToast\(/g) ?? []).length, 1);
+  assert.ok(app.includes(`    try {\n      await navigator.clipboard.writeText(url);\n      setToast('${COPIED_TEXT}');\n    } catch {\n      setToast({ link: url });\n    }`));
+  assert.ok(app.includes('{toast && <ToastView toast={toast} onClose={() => setToast(null)} />}'));
+  assert.ok(!app.includes('Copy this link'));
+  // Every Copy Link button (the builder, My Builds, Community) calls that one routine; nothing else writes to the clipboard.
+  assert.equal((app.match(/onCopyLink=\{\((b|s)?\) => copyLink\(/g) ?? []).length, 3);
+  const sources = readdirSync('src', { recursive: true, encoding: 'utf8' }).filter((f) => /\.tsx?$/.test(f)).map((f) => readFileSync(`src/${f}`, 'utf8'));
+  assert.equal(sources.join('\n').match(/clipboard/g)?.length, 1);
+  assert.equal(sources.join('\n').match(/onCopyLink=\{/g)?.length, 4, 'the three pages, and the builder handing it to its summary');
+  // The wording comment, and the long link can shrink inside the toast instead of pushing past a phone's edge.
+  assert.match(readFileSync('src/ui.tsx', 'utf8'), /\/\*\* Owner-approved wording \(2026-11-10\)\. \*\/\r?\nexport const TOAST_CLOSE = 'Close';/);
+  const css = readFileSync('src/styles.css', 'utf8');
+  assert.match(css, /\.toast \{[^}]*max-width: calc\(100% - 32px\);/);
+  assert.match(css, /\.toast-link input \{[^}]*min-width: 0;/);
 });
 
 /* ------------------------------------------------------------------ same product, one price (Part.sameAs) */

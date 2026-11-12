@@ -10,7 +10,7 @@ import { BuilderPage } from './BuilderPage';
 import { CommunityPage } from './CommunityPage';
 import { HomePage } from './HomePage';
 import { AlertsPanel, SavedPage } from './SavedPage';
-import { priceStatus } from './ui';
+import { ToastView, priceStatus, toastHideMs, type Toast } from './ui';
 
 const STORE_KEY = 'firearm-designer:v2';
 /** The home page's title, the same as the <title> in index.html. */
@@ -73,7 +73,7 @@ export default function App() {
   const [openSavedId, setOpenSavedId] = useState<string | null>(null);
   /** The community build open in the builder, so retailer clicks count toward it. Cleared on any edit. */
   const [communityOpen, setCommunityOpen] = useState<CommunityBuild | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<Toast | null>(null);
   /** The part a home page price drop opens in the builder: its slot's picker starts open on it. Used once. */
   const [startPart, setStartPart] = useState<Part | null>(null);
   useEffect(() => { if (route === 'build') setStartPart(null); }, [route]);
@@ -141,8 +141,10 @@ export default function App() {
     setToast(dropped.length === 1 ? `Price drop: "${dropped[0].name}" costs less than when you saved it. See My Builds.` : `Price drop: ${dropped.length} of your saved builds cost less than when you saved them. See My Builds.`);
   }, []);
   useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(() => setToast(null), 2800);
+    // A link the browser would not copy stays until it's closed or another toast takes its place.
+    const ms = toast ? toastHideMs(toast) : null;
+    if (ms === null) return;
+    const t = setTimeout(() => setToast(null), ms);
     return () => clearTimeout(t);
   }, [toast]);
 
@@ -192,7 +194,7 @@ export default function App() {
       await navigator.clipboard.writeText(url);
       setToast('Link copied. Anyone who opens it sees this exact build.');
     } catch {
-      setToast(`Copy this link: ${url}`);
+      setToast({ link: url });
     }
   };
 
@@ -317,7 +319,7 @@ export default function App() {
         </div>
       </footer>
 
-      {toast && <div className="toast" role="status">{toast}</div>}
+      {toast && <ToastView toast={toast} onClose={() => setToast(null)} />}
     </div>
   );
 }
