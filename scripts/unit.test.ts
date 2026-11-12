@@ -18,6 +18,7 @@ import { PriceChart } from '../src/PriceChart';
 import { totalParts } from '../src/store';
 import { baseSelection, bestOffer, candidateIssues, issuesFor, listedParts, noPriceNote, ownedOf, placementOf, presetSelection, priceRange, selectionTokens, singleRetailerCarts, toBuild, toBuyIds, unpricedCount, worst, type Selection } from '../src/engine';
 import { estimateNote, estimatedCount, isEstimate, money, priceLabel, totalNotes } from '../src/engine';
+import { pricedRetailerCount } from '../src/engine';
 import { findParts } from '../src/find';
 import { isLink, LINK_MAX, QUERY_MAX } from '../src/find';
 import { Candidate } from '../src/Picker';
@@ -1599,14 +1600,39 @@ test('starter build cards and the platform page note parts with no price; totals
     }
 });
 
-test('the home page counts every part (once) but not paused retailers, and notes a starter build with no-price parts', () => {
+test('the home page counts every part (once) and only retailers that show a real price, and notes a starter build with no-price parts', () => {
   const html = renderToStaticMarkup(createElement(HomePage, { onPick: () => {}, onStart: () => {}, onBrowse: () => {} })).replace(/<!-- -->/g, '');
   // A copy (sameAs) is its main copy's product under a second id, so it adds an id and no part.
   const all = PLATFORMS.flatMap((p) => p.parts);
   const copies = new Set(all.filter((x) => x.sameAs !== undefined).map((x) => x.id)).size;
   const parts = new Set(all.map((x) => x.id)).size - copies;
   assert.equal(parts, new Set(all.map(productKey)).size);
-  const stores = Object.keys(RETAILERS).length - PAUSED.size;
+  // A retailer is compared when some part shows a price of its that the nightly job read (checkedAt) or that was
+  // checked by hand on a date (a List Price or Factory Part with asOf). Estimates alone don't count. Worked out here
+  // from the catalog, offer by offer, so it moves with the nightly prices as the page does.
+  const priced = new Set<string>();
+  for (const p of PLATFORMS)
+    for (const x of p.parts)
+      for (const o of x.offers) {
+        const live = typeof o.checkedAt === 'string' && o.checkedAt !== '';
+        const byHand = typeof o.asOf === 'string' && o.asOf !== '' && (o.basis === 'list' || o.basis === 'factory');
+        if (live || byHand) priced.add(o.retailer);
+      }
+  const stores = priced.size;
+  const listed = Object.keys(RETAILERS).length - PAUSED.size;
+  assert.ok(stores >= 1, 'some retailer shows a real price');
+  assert.ok(stores <= listed, 'never more than the retailers listed and not paused');
+  for (const id of priced) assert.ok(id in RETAILERS && !PAUSED.has(id), id);
+  assert.equal(pricedRetailerCount(all), stores);
+  assert.equal(html.match(/ parts · (\d+) retailers compared/)?.[1], String(stores));
+  // The rule on made-up parts: live and hand-checked prices count their store once, estimates and no offers count nothing.
+  const made = (offers: Offer[]): Part => ({ ...all[0], offers });
+  const o = (retailer: string, more: Partial<Offer> = {}): Offer => ({ retailer, price: 10, inStock: true, ...more });
+  assert.equal(pricedRetailerCount([]), 0);
+  assert.equal(pricedRetailerCount([made([])]), 0);
+  assert.equal(pricedRetailerCount([made([o('A'), o('B', { basis: 'from' }), o('C', { basis: 'factory' })])]), 0, 'estimates only');
+  assert.equal(pricedRetailerCount([made([o('A'), o('B', { checkedAt: '2026-01-02T03:04:05.000Z' })]), made([o('B', { checkedAt: '2026-01-03T03:04:05.000Z', inStock: false }), o('A')])]), 1);
+  assert.equal(pricedRetailerCount([made([o('A', { basis: 'list', asOf: '2026-01-02' })]), made([o('B', { basis: 'factory', asOf: '2026-01-02' })]), made([o('C', { checkedAt: '2026-01-02T03:04:05.000Z', basis: 'from' })]), made([o('D')])]), 3);
   assert.equal(html.match(/(\d+) parts · /)?.[1], String(parts));
   assert.ok(html.includes(`${PLATFORMS.length} platforms · ${parts} parts · ${stores} retailers compared`), 'hero facts');
   for (const p of PLATFORMS) {
