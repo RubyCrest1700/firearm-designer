@@ -10,7 +10,7 @@ import { PLATFORMS } from '../src/data/index';
 import { RETIRED_IDS, currentId, currentSelection } from '../src/data/index';
 import { loadCompare } from '../src/Compare';
 import { parseBuildLink } from '../src/Compare';
-import { readSharedLink, unlistedNote, unlistedParts } from '../src/store';
+import { MARK_PREFIX, readSharedLink, unlistedNote, unlistedParts } from '../src/store';
 import { NFA_SHORT_NOTICE, PAUSED, SBR_MESSAGE, VERTICAL_GRIP_MESSAGE, parts as buildParts, shortBarrelStockIssue } from '../src/data/helpers';
 import { biggestDrops, daysAgo, firstLiveDay, hasHistory, partSeries, priceOn, recentChange, seriesOf } from '../src/data/history';
 import { totalSeries } from '../src/data/history';
@@ -43,7 +43,7 @@ import { buyUrl, knownRetailer, offerUrl, retailerName, tagged } from '../src/da
 import { UNKNOWN_RETAILER_OFFERS } from '../src/data/helpers';
 import { priceHtml } from '../src/guides/render';
 import { ERROR_MESSAGE, ErrorBoundary } from '../src/ui';
-import { COPY_LINK_LEAD, TOAST_CLOSE, TOAST_MS, ToastView, toastHideMs } from '../src/ui';
+import { COPY_LINK_LEAD, DRAWER_OPEN, TOAST_CLOSE, TOAST_LINK_ID, TOAST_MS, ToastView, toastAfterChange, toastHideMs } from '../src/ui';
 import type { ReactElement } from 'react';
 import PRICES_JSON from '../data/prices.json';
 import { priceIndex } from './og-index';
@@ -754,10 +754,20 @@ test('a link is told how many parts it named that the site no longer lists: not 
   assert.equal(unlistedParts(['g19-slide-gone']), 1);
   assert.equal(unlistedParts([...good, 'g19-slide-gone', 'own-optic', 'has-slide', 'at-nope-r45', OLD_SLIM_SPRING]), 1);
   assert.equal(unlistedParts(['g19-slide-gone', ...good, 'made-up-part', 'own-slide', 'zz9', 'has-optic']), 3);
-  // The same unknown id twice is one part; an unknown id that looks like a mark with one word too many is a part id.
+  // The same unknown id twice is one part.
   assert.equal(unlistedParts(['g19-slide-gone', 'g19-slide-gone', ...good, 'g19-slide-gone']), 1);
   assert.equal(unlistedParts(['g19-slide-gone', 'made-up-part', 'g19-slide-gone', 'zz9', 'made-up-part']), 3);
-  assert.equal(unlistedParts(['own-slide-gone']), 1);
+  // Anything that starts like a mark or a placement is one, however badly formed: never a part the site stopped listing.
+  const badMarks = ['own-slot2', 'own-slide-gone', 'at-light', 'at-light-r45-x', 'has-slot2', 'has-optic-gone', 'own-', 'has-', 'at-'];
+  assert.equal(unlistedParts(badMarks), 0);
+  for (const id of badMarks) assert.equal(unlistedParts([id]), 0, id);
+  assert.equal(unlistedParts([...good, ...badMarks, 'g19-slide-gone']), 1);
+  // The prefix has to be the whole first word: these are unknown part ids, one each.
+  assert.equal(unlistedParts(['owner-part', 'hash-part', 'att-part', 'own', 'has', 'at']), 6);
+  // That rule is safe only while no part id (or retired id) on any platform starts that way. A new part that does fails here.
+  for (const p of PLATFORMS) for (const x of p.parts) assert.doesNotMatch(x.id, MARK_PREFIX, `${p.id}: part id ${x.id} starts like a mark or placement`);
+  for (const [old, now] of Object.entries(RETIRED_IDS)) { assert.doesNotMatch(old, MARK_PREFIX, old); assert.doesNotMatch(now, MARK_PREFIX, now); }
+  assert.equal(String(MARK_PREFIX), '/^(own|has|at)-/');
   for (const id of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) assert.equal(unlistedParts([id]), /^[a-z]+$/.test(id) ? 1 : 0, id);
   // Counting changes nothing about the build the link opens.
   assert.deepEqual(selectionFromParts('glock9', ['g19-slide-g5', 'g19-slide-gone', 'g19-bbl-oem5', 'own-optic', 'has-slide', 'at-nope-r45']), { slide: 'g19-slide-g5', barrel: 'g19-bbl-oem5' });
@@ -3021,8 +3031,9 @@ const CLOSE_TEXT = 'Close';
 const COPIED_TEXT = 'Link copied. Anyone who opens it sees this exact build.';
 
 // What this proves: what each kind of toast draws, what the field and the button do when used, which toast hides
-// itself, and that the app's one copy routine hands a refused link to that toast. What it can't: the browser's own
-// part (focus, the selection on screen, the timer), because there is no page here.
+// itself, which toast a drawer or a change clears, and that the app's one copy routine hands a refused link to that
+// toast. What it can't: the browser's own part (focus, the selection on screen, the timer, the drawer's event),
+// because there is no page here; the lines that do those are pinned as written.
 test('a link the browser will not copy stays in a read-only field with a Close button; every other toast is as before', () => {
   const url = 'https://share.dropinbuilds.com/b/ar15~ar-upper-a.ar-bbl-b.own-optic?a="1"&b=<2>';
   const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -3042,11 +3053,16 @@ test('a link the browser will not copy stays in a read-only field with a Close b
   const kids = [drawn.props.children].flat() as ReactElement[];
   const field = kids.find((c) => c.type === 'input')!;
   const button = kids.find((c) => c.type === 'button')!;
+  // Both ways of selecting, each time: select() and the whole range (some in-app phone browsers ignore the first).
   let selected = 0;
-  const event = { currentTarget: { select: () => { selected++; } } };
+  const ranges: number[][] = [];
+  const event = { currentTarget: { value: url, select: () => { selected++; }, setSelectionRange: (from: number, to: number) => { ranges.push([from, to]); } } };
   field.props.onFocus(event);
   field.props.onClick(event);
   assert.equal(selected, 2);
+  assert.deepEqual(ranges, [[0, url.length], [0, url.length]]);
+  assert.equal(field.props.id, TOAST_LINK_ID);
+  assert.equal(TOAST_LINK_ID, 'toast-link');
   assert.equal(field.props.value, url);
   assert.equal(field.props.readOnly, true);
   assert.equal(field.props.onChange, undefined);
@@ -3063,8 +3079,30 @@ test('a link the browser will not copy stays in a read-only field with a Close b
   assert.equal(toastHideMs(`Saved "Mine" to My Builds`), 2800);
   assert.equal(toastHideMs({ link: url }), null);
   assert.equal(toastHideMs({ link: '' }), null);
+  // A drawer opening, or the page, platform or build changing, clears a link and nothing else.
+  assert.equal(toastAfterChange({ link: url }), null);
+  assert.equal(toastAfterChange({ link: '' }), null);
+  assert.equal(toastAfterChange(COPIED_TEXT), COPIED_TEXT);
+  assert.equal(toastAfterChange(ONE_UNLISTED), ONE_UNLISTED);
+  assert.equal(toastAfterChange(''), '');
+  assert.equal(toastAfterChange(null), null);
   // The app: one timer rule, one place that copies, and the refused copy goes to the link toast.
   const app = readFileSync('src/App.tsx', 'utf8').replace(/\r\n/g, '\n');
+  const ui = readFileSync('src/ui.tsx', 'utf8').replace(/\r\n/g, '\n');
+  // Every drawer says so as it opens (the one hook they share, right as the page goes inert), and the app clears a link toast then.
+  assert.equal(DRAWER_OPEN, 'drawer-open');
+  assert.ok(ui.includes(`    page?.setAttribute('inert', '');\n    document.dispatchEvent(new Event(DRAWER_OPEN));\n`));
+  assert.equal(ui.match(/setAttribute\('inert'/g)?.length, 1, 'one place makes the page inert');
+  for (const f of ['src/Picker.tsx', 'src/OwnedFinder.tsx']) assert.match(readFileSync(f, 'utf8'), /^  useDrawer\(onClose, \w+\);\r?$/m, f);
+  assert.equal(readdirSync('src', { recursive: true, encoding: 'utf8' }).filter((f) => /\.tsx$/.test(f) && readFileSync(`src/${f}`, 'utf8').includes('createPortal(')).sort().join(), 'OwnedFinder.tsx,Picker.tsx', 'a new drawer or modal has to clear the link toast too');
+  assert.ok(app.includes(`    const onDrawer = () => setToast(toastAfterChange);\n    document.addEventListener(DRAWER_OPEN, onDrawer);\n    return () => document.removeEventListener(DRAWER_OPEN, onDrawer);\n  }, []);`));
+  // A change of page, platform or any build clears it too, but only a toast the draw before already showed, so pressing Copy Link can't dismiss its own toast.
+  assert.ok(app.includes(`  const drawnToast = useRef<Toast | null>(null);\n  useEffect(() => { if (drawnToast.current === toast) setToast(toastAfterChange); }, [route, platformId, selections]);\n  useEffect(() => { drawnToast.current = toast; });\n`));
+  // Focus: the link's field takes it as the toast appears (plain words never do), and it goes back afterwards only if nothing else has it.
+  assert.ok(app.includes(`  useLinkToastFocus(toast);\n`));
+  assert.ok(ui.includes(`    if (toast === null || typeof toast === 'string') return;\n    const before = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;\n    document.getElementById(TOAST_LINK_ID)?.focus();\n    return () => { if (document.activeElement === document.body && before?.isConnected) before.focus({ preventScroll: true }); };\n  }, [toast]);`));
+  assert.ok(ui.includes(`const selectAll = (field: HTMLInputElement) => { field.select(); field.setSelectionRange(0, field.value.length); };`));
+  assert.ok(ui.includes(`onFocus={(e) => selectAll(e.currentTarget)} onClick={(e) => selectAll(e.currentTarget)} />`));
   assert.ok(app.includes(`    const ms = toast ? toastHideMs(toast) : null;\n    if (ms === null) return;\n    const t = setTimeout(() => setToast(null), ms);\n    return () => clearTimeout(t);\n  }, [toast]);`));
   assert.equal((app.match(/setTimeout\(\(\) => setToast\(/g) ?? []).length, 1);
   assert.ok(app.includes(`    try {\n      await navigator.clipboard.writeText(url);\n      setToast('${COPIED_TEXT}');\n    } catch {\n      setToast({ link: url });\n    }`));

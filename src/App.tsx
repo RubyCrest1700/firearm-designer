@@ -10,7 +10,7 @@ import { BuilderPage } from './BuilderPage';
 import { CommunityPage } from './CommunityPage';
 import { HomePage } from './HomePage';
 import { AlertsPanel, SavedPage } from './SavedPage';
-import { ToastView, priceStatus, toastHideMs, type Toast } from './ui';
+import { DRAWER_OPEN, ToastView, priceStatus, toastAfterChange, toastHideMs, useLinkToastFocus, type Toast } from './ui';
 
 const STORE_KEY = 'firearm-designer:v2';
 /** The home page's title, the same as the <title> in index.html. */
@@ -146,12 +146,24 @@ export default function App() {
   }, []);
   useEffect(() => { if (linkNote) setToast(linkNote); }, []);
   useEffect(() => {
-    // A link the browser would not copy stays until it's closed or another toast takes its place.
+    // A link the browser would not copy stays until it's closed, another toast takes its place, or one of the changes below.
     const ms = toast ? toastHideMs(toast) : null;
     if (ms === null) return;
     const t = setTimeout(() => setToast(null), ms);
     return () => clearTimeout(t);
   }, [toast]);
+  // A link toast goes when a drawer opens: the page behind a drawer can't be used, and the toast is part of that page.
+  useEffect(() => {
+    const onDrawer = () => setToast(toastAfterChange);
+    document.addEventListener(DRAWER_OPEN, onDrawer);
+    return () => document.removeEventListener(DRAWER_OPEN, onDrawer);
+  }, []);
+  // It also goes when the page, the platform or a build changes, since its link may no longer be the build on screen.
+  // Only a toast the draw before already showed: one that arrives in the same draw as the change stays.
+  const drawnToast = useRef<Toast | null>(null);
+  useEffect(() => { if (drawnToast.current === toast) setToast(toastAfterChange); }, [route, platformId, selections]);
+  useEffect(() => { drawnToast.current = toast; });
+  useLinkToastFocus(toast);
 
   // Each page gets its own history entry, so Back returns to the page before (the hashchange listener follows it).
   const go = (r: Route) => {

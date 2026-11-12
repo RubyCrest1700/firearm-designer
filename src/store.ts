@@ -259,25 +259,28 @@ export function readSharedLink(): { platform: string; selection: Selection; unli
 /** A placement token (`at-<slot>-<code>`) and an owned mark (`own-<slot>`, `has-<slot>`): never part ids. */
 const AT_TOKEN = /^at-([a-z]+)-(\w+)$/;
 const OWN_TOKEN = /^(own|has)-([a-z]+)$/;
+/** How every placement and mark starts, well formed or not. No part id starts this way (a test checks the catalog). */
+export const MARK_PREFIX = /^(own|has|at)-/;
 /** The shape every part id has. */
 const PART_ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 /**
  * How many different parts a link names that the site no longer lists on any platform: tokens shaped like a part id
  * that are no part's id, even after a retired id is read as its stand-in (RETIRED_IDS). Placement tokens and owned
- * marks aren't parts, a part listed for another platform is still listed, and the same id twice is one part.
+ * marks aren't parts, even malformed ones (MARK_PREFIX); a part listed for another platform is still listed, and the
+ * same id twice is one part.
  */
 export function unlistedParts(ids: string[]): number {
   const unlisted = new Set<string>();
   for (const id of ids) {
-    if (AT_TOKEN.test(id) || OWN_TOKEN.test(id) || !PART_ID.test(id)) continue;
+    if (MARK_PREFIX.test(id) || !PART_ID.test(id)) continue;
     const now = currentId(id);
     if (!PLATFORMS.some((p) => p.parts.some((x) => x.id === now))) unlisted.add(id);
   }
   return unlisted.size;
 }
 
-/** The note shown when an opened link named parts the site no longer lists, or '' when it named none. */
+// The note shown when an opened link named parts the site no longer lists, or '' when it named none.
 /** Owner-approved wording (2026-11-10). */
 export const unlistedNote = (n: number) =>
   n <= 0 ? '' : n === 1 ? 'This link had 1 part we no longer list, so it was left out.' : `This link had ${n} parts we no longer list, so they were left out.`;

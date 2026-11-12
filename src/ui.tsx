@@ -75,13 +75,38 @@ export const COPY_LINK_LEAD = 'Copy this link:';
 /** Owner-approved wording (2026-11-10). */
 export const TOAST_CLOSE = 'Close';
 
+/**
+ * The toast once a drawer has opened, or the page, the platform or the build has changed. A link goes: the page under
+ * an open drawer can't be used, so its field and Close button would be dead, and after a change the link may no
+ * longer be the build on screen. Plain words stay and hide on their own timer.
+ */
+export const toastAfterChange = (toast: Toast | null): Toast | null => (toast !== null && typeof toast !== 'string' ? null : toast);
+/** The id of the link toast's field. */
+export const TOAST_LINK_ID = 'toast-link';
+/** Selects the whole link. Some in-app phone browsers ignore select() on a read-only field, so the range is set as well. */
+const selectAll = (field: HTMLInputElement) => { field.select(); field.setSelectionRange(0, field.value.length); };
+
+/**
+ * Moves focus to a link toast's field as it appears (which selects the link), so Escape closes it at once. When it
+ * goes, focus returns to what had it before (the Copy Link button), unless something else has taken focus since.
+ * Plain words never move focus.
+ */
+export function useLinkToastFocus(toast: Toast | null) {
+  useEffect(() => {
+    if (toast === null || typeof toast === 'string') return;
+    const before = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
+    document.getElementById(TOAST_LINK_ID)?.focus();
+    return () => { if (document.activeElement === document.body && before?.isConnected) before.focus({ preventScroll: true }); };
+  }, [toast]);
+}
+
 /** The toast. A link is one line in a read-only field that selects itself when focused or clicked, with a Close button (Escape closes it too). */
 export function ToastView({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   if (typeof toast === 'string') return <div className="toast" role="status">{toast}</div>;
   return (
     <div className="toast toast-link" role="status" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
-      <label htmlFor="toast-link">{COPY_LINK_LEAD}</label>
-      <input id="toast-link" type="text" readOnly value={toast.link} onFocus={(e) => e.currentTarget.select()} onClick={(e) => e.currentTarget.select()} />
+      <label htmlFor={TOAST_LINK_ID}>{COPY_LINK_LEAD}</label>
+      <input id={TOAST_LINK_ID} type="text" readOnly value={toast.link} onFocus={(e) => selectAll(e.currentTarget)} onClick={(e) => selectAll(e.currentTarget)} />
       <button type="button" className="btn" onClick={onClose}>{TOAST_CLOSE}</button>
     </div>
   );
@@ -211,6 +236,9 @@ export function ChangeChip({ part, long }: { part: Part; long?: boolean }) {
   );
 }
 
+/** The event every drawer sends on the document as it opens. The app listens, to clear a link toast (toastAfterChange). */
+export const DRAWER_OPEN = 'drawer-open';
+
 /**
  * Shared by the side drawers. Focus starts inside the drawer and the page behind it is inert, so Tab stays
  * in the drawer. Escape closes it, and focus goes back to the button that opened it. Drawers render into
@@ -223,6 +251,7 @@ export function useDrawer(onClose: () => void, focusRef: RefObject<HTMLElement>)
     const opener = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
     const page = document.getElementById('root');
     page?.setAttribute('inert', '');
+    document.dispatchEvent(new Event(DRAWER_OPEN));
     focusRef.current?.focus();
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeFn.current(); };
     document.addEventListener('keydown', onKey);
