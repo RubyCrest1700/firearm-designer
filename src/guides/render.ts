@@ -630,12 +630,12 @@ ${legalHtml(md)}
 export const privacyPage = () => legalPage(PRIVACY_MD, '/privacy/', 'This policy explains what information the site collects, why, who handles it for us, how long we keep it, and the choices you have.');
 export const termsPage = () => legalPage(TERMS_MD, '/terms/', 'These terms cover your use of dropinbuilds.com and share.dropinbuilds.com (the "site"), run by Drop-In Builds ("we", "us").');
 
-export function sitemap(builtAt: string) {
-  const day = builtAt.slice(0, 10);
+/** Every page's address, with no last-modified date: the pages don't all change each night, so the build day isn't claimed for them. */
+export function sitemap() {
   const urls = ['/', '/build/', ...PAGE_VIEWS.map((p) => `/build/${platformSlug(p)}/`), '/faq/', ...GUIDES.map((g) => `/faq/${g.slug}/`), '/privacy/', '/terms/'];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map((u) => `  <url><loc>${SITE}${u}</loc><lastmod>${day}</lastmod></url>`).join('\n')}
+${urls.map((u) => `  <url><loc>${SITE}${u}</loc></url>`).join('\n')}
 </urlset>
 `;
 }

@@ -33,6 +33,7 @@ import { ComparePage } from '../src/Compare';
 import { HomePage } from '../src/HomePage';
 import { BuildCard, ChangeChip, legalOnly } from '../src/ui';
 import { PAGE_VIEWS, feedbackPage, guidePage, indexPage, notFoundPage, platformPage, privacyPage, sitemap, termsPage } from '../src/guides/render';
+import { platformSlug, robots } from '../src/guides/render';
 import { PRIVACY_MD, TERMS_MD, legalHtml } from '../src/guides/legal';
 import { AlertsPanel } from '../src/SavedPage';
 import { SavedPage } from '../src/SavedPage';
@@ -2145,8 +2146,37 @@ test('the legal pages link our own pages relatively, keep share-link examples as
 });
 
 test('the sitemap lists the Privacy Policy and the Terms of Use', () => {
-  const xml = sitemap(BUILT);
+  const xml = sitemap();
   for (const p of ['/privacy/', '/terms/']) assert.ok(xml.includes(`<loc>https://dropinbuilds.com${p}</loc>`), p);
+});
+
+test('the sitemap lists every page once, in order, with an address and no date', () => {
+  const xml = sitemap();
+  const paths = ['/', '/build/', ...PAGE_VIEWS.map((v) => `/build/${platformSlug(v)}/`), '/faq/', ...GUIDES.map((g) => `/faq/${g.slug}/`), '/privacy/', '/terms/'];
+  // The whole file, exactly: the XML declaration, the sitemap namespace, one <url> with one <loc> per page.
+  assert.equal(xml, [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ...paths.map((p) => `  <url><loc>https://dropinbuilds.com${p}</loc></url>`),
+    '</urlset>',
+    '',
+  ].join('\n'));
+  // No date of any kind: not <lastmod>, not the build day, and the function takes no build time to stamp.
+  assert.doesNotMatch(xml, /lastmod|changefreq|priority/i);
+  assert.doesNotMatch(xml, /\d{4}-\d{2}-\d{2}/);
+  assert.equal(sitemap.length, 0);
+  assert.ok(!readFileSync('src/guides/render.ts', 'utf8').includes('<lastmod>'));
+  assert.ok(readFileSync('scripts/build-guides.ts', 'utf8').includes(`write('dist/sitemap.xml', sitemap());`));
+  // Well-formed: every address is a plain path with nothing XML would need escaped, and no page is listed twice.
+  const locs = [...xml.matchAll(/<loc>([^<]*)<\/loc>/g)].map((m) => m[1]);
+  assert.deepEqual(locs, paths.map((p) => `https://dropinbuilds.com${p}`));
+  assert.equal(new Set(locs).size, locs.length);
+  for (const loc of locs) assert.match(loc, /^https:\/\/dropinbuilds\.com\/([a-z0-9-]+\/)*$/, loc);
+  assert.equal(xml.match(/<url>/g)?.length, xml.match(/<\/url>/g)?.length);
+  assert.equal(xml.match(/<url>/g)?.length, paths.length);
+  assert.ok(paths.length >= 4 + GUIDES.length + PAGE_VIEWS.length);
+  // robots.txt still points at it, unchanged.
+  assert.equal(robots(), 'User-agent: *\nAllow: /\n\nSitemap: https://dropinbuilds.com/sitemap.xml\n');
 });
 
 test('the only commission wording anywhere is "we earn no commission"', () => {
