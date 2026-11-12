@@ -8,10 +8,25 @@ import { toBuyIds, type Selection } from './engine';
 
 export interface AlertSignup { token: string; email: string; confirmed: boolean }
 
-const KEY = 'firearm-designer:alerts:v1';
+export const ALERTS_KEY = 'firearm-designer:alerts:v1';
+const KEY = ALERTS_KEY;
 
+/** A signup's token as the alert service makes it and accepts it (TOKEN in worker/src/alerts.js): 32 lowercase hex characters. */
+const TOKEN = /^[a-f0-9]{32}$/;
+
+/**
+ * The stored signup, or null when what is stored isn't one: the three fields the service answers a signup with,
+ * each of its own type. Anything else stored there is left unused, so it can't reach the page or a request.
+ */
 export function loadAlertSignup(): AlertSignup | null {
-  try { const raw = localStorage.getItem(KEY); return raw ? (JSON.parse(raw) as AlertSignup) : null; } catch { return null; }
+  try {
+    const raw = localStorage.getItem(KEY);
+    const s: unknown = raw ? JSON.parse(raw) : null;
+    if (!s || typeof s !== 'object' || Array.isArray(s)) return null;
+    const { token, email, confirmed } = s as Record<string, unknown>;
+    if (typeof token !== 'string' || !TOKEN.test(token) || typeof email !== 'string' || typeof confirmed !== 'boolean') return null;
+    return { token, email, confirmed };
+  } catch { return null; }
 }
 export function storeAlertSignup(s: AlertSignup | null) {
   try { if (s) localStorage.setItem(KEY, JSON.stringify(s)); else localStorage.removeItem(KEY); } catch { /* this visit only */ }
@@ -38,19 +53,19 @@ export const signUpForAlerts = (email: string, builds: Watched[]) =>
 
 /** Current state of this browser's signup, or null once it's been unsubscribed. */
 export async function checkAlertSignup(s: AlertSignup): Promise<AlertSignup | null> {
-  try { return { ...s, ...(await call<{ email: string; confirmed: boolean }>(`/api/alerts/${s.token}`)) }; } catch (e) {
+  try { return { ...s, ...(await call<{ email: string; confirmed: boolean }>(`/api/alerts/${encodeURIComponent(s.token)}`)) }; } catch (e) {
     return (e as { status?: number }).status === 404 ? null : s;
   }
 }
 
 export async function syncAlertBuilds(s: AlertSignup, builds: Watched[]): Promise<boolean> {
-  try { await call(`/api/alerts/${s.token}`, { method: 'PUT', body: JSON.stringify({ builds: payload(builds) }) }); return true; } catch (e) {
+  try { await call(`/api/alerts/${encodeURIComponent(s.token)}`, { method: 'PUT', body: JSON.stringify({ builds: payload(builds) }) }); return true; } catch (e) {
     return (e as { status?: number }).status !== 404;
   }
 }
 
 /** Throws if the request didn't go through, so the page doesn't say alerts are off while they're still on. */
 export async function stopAlerts(s: AlertSignup) {
-  const res = await fetch(`${COMMUNITY_API.replace(/\/$/, '')}/alerts/stop?t=${s.token}`, { method: 'POST', signal: AbortSignal.timeout(10000) }).catch(() => null);
+  const res = await fetch(`${COMMUNITY_API.replace(/\/$/, '')}/alerts/stop?t=${encodeURIComponent(s.token)}`, { method: 'POST', signal: AbortSignal.timeout(10000) }).catch(() => null);
   if (!res?.ok) throw new Error("Couldn't turn off price alerts. Please try again.");
 }

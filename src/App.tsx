@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { PLATFORMS, PRICES_READ_AT, canonicalPlatform, currentSelection } from './data';
 import { ownsAny, partIds, baseSelection, selectionTokens, withoutOwned, type Selection } from './engine';
 import { ComparePage, loadCompare, storeCompare, type CompareItem } from './Compare';
-import { droppedBuilds, loadSavedBuilds, priceChanges, newId, readSharedBuild, savedPrices, selectionFromParts, shareUrl, checkShareLinks, storeSavedBuilds, type SavedBuild } from './store';
+import { droppedBuilds, loadSavedBuilds, priceChanges, newId, readSharedBuild, savedPrices, selectionFromParts, shareUrl, checkShareLinks, storeSavedBuilds, SAVED_KEY, type SavedBuild } from './store';
 import { recordBuyClick, shareBuild, type CommunityBuild } from './community';
-import { alertsAvailable, checkAlertSignup, loadAlertSignup, signUpForAlerts, stopAlerts, storeAlertSignup, syncAlertBuilds, type AlertSignup } from './alerts';
+import { ALERTS_KEY, alertsAvailable, checkAlertSignup, loadAlertSignup, signUpForAlerts, stopAlerts, storeAlertSignup, syncAlertBuilds, type AlertSignup } from './alerts';
 import type { Part } from './types';
 import { BuilderPage } from './BuilderPage';
 import { CommunityPage } from './CommunityPage';
@@ -47,6 +47,16 @@ const routeFromHash = (): Route => {
 
 const DROPS_SEEN_KEY = 'firearm-designer:drops-seen:v1';
 
+/** What a `storage` event (a change made in another tab) means here: which of My Builds and the alert signup to read again. A null key is all of storage cleared. */
+export const storageChange = (key: string | null) => ({ saved: key === null || key === SAVED_KEY, signup: key === null || key === ALERTS_KEY });
+
+/**
+ * The signup to keep once a check or sync made with `token` has answered `next` (null: the service no longer has it).
+ * The answer counts only while that signup is still the current one: if another tab has stopped alerts or signed up
+ * again since, the current signup stays as it is.
+ */
+export const signupAfter = (current: AlertSignup | null, token: string, next: AlertSignup | null) => (current?.token === token ? next : current);
+
 export default function App() {
   const persisted = useMemo(loadPersisted, []);
   const shared = useMemo(readSharedBuild, []);
@@ -84,7 +94,9 @@ export default function App() {
   useEffect(() => {
     try { sessionStorage.setItem(STORE_KEY, JSON.stringify({ platform: platformId, selections })); } catch { /* not persisted */ }
   }, [platformId, selections]);
-  useEffect(() => { storeSavedBuilds(saved); }, [saved]);
+  /** The list as another tab stored it, while it's still the list shown: it's already stored and that tab keeps the emailed list, so this tab does neither. */
+  const fromOtherTab = useRef<SavedBuild[] | null>(null);
+  useEffect(() => { if (saved !== fromOtherTab.current) storeSavedBuilds(saved); }, [saved]);
   const dropped = useMemo(() => droppedBuilds(saved), [saved]);
   const [alertsOn, setAlertsOn] = useState(false);
   const [signup, setSignup] = useState<AlertSignup | null>(loadAlertSignup);
@@ -92,14 +104,31 @@ export default function App() {
   useEffect(() => {
     void alertsAvailable().then(setAlertsOn);
     const s = loadAlertSignup();
-    if (s) void checkAlertSignup(s).then(setSignup);
+    if (s) void checkAlertSignup(s).then((next) => setSignup((cur) => signupAfter(cur, s.token, next)));
+  }, []);
+  // My Builds and the alert signup follow a change made in another tab, so this tab never stores an older list over it.
+  useEffect(() => {
+    const readAgain = (changed: { saved: boolean; signup: boolean }) => {
+      if (changed.saved) { const list = loadSavedBuilds(); fromOtherTab.current = list; setSaved(list); }
+      if (changed.signup) setSignup(loadAlertSignup());
+    };
+    const onStorage = (e: StorageEvent) => readAgain(storageChange(e.key));
+    // A page brought back by Back or Forward as it was left heard of no change made while it was away: it reads both again.
+    const onPageShow = (e: PageTransitionEvent) => { if (e.persisted) readAgain(storageChange(null)); };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('pageshow', onPageShow);
+    return () => { window.removeEventListener('storage', onStorage); window.removeEventListener('pageshow', onPageShow); };
   }, []);
   // Keep the emailed list in step with My builds; a signup that was unsubscribed by email is forgotten.
   const firstSync = useRef(true);
+  /** A change made in this tab that hasn't been sent yet. It's still sent if another tab's list arrives before it goes. */
+  const unsent = useRef(false);
   useEffect(() => {
     if (firstSync.current) { firstSync.current = false; return; }
-    if (!signup) return;
-    const t = setTimeout(() => { void syncAlertBuilds(signup, saved).then((ok) => { if (!ok) setSignup(null); }); }, 1000);
+    if (saved !== fromOtherTab.current) unsent.current = true;
+    if (!signup) { unsent.current = false; return; }
+    if (!unsent.current) return;
+    const t = setTimeout(() => { unsent.current = false; void syncAlertBuilds(signup, saved).then((ok) => { if (!ok) setSignup((cur) => signupAfter(cur, signup.token, null)); }); }, 1000);
     return () => clearTimeout(t);
   }, [saved]);
   // Tell a returning visitor once when a saved build gets cheaper; a new drop tells them again.
@@ -247,7 +276,7 @@ export default function App() {
             alerts={alertsOn ? (
               <AlertsPanel signup={signup} hasBuilds={saved.length > 0}
                 onSignUp={async (email) => { const s = await signUpForAlerts(email, saved); setSignup(s); }}
-                onRefresh={() => { if (signup) void checkAlertSignup(signup).then(setSignup); }}
+                onRefresh={() => { if (signup) void checkAlertSignup(signup).then((next) => setSignup((cur) => signupAfter(cur, signup.token, next))); }}
                 onStop={async () => { if (signup) await stopAlerts(signup); setSignup(null); setToast('Price alert emails are off.'); }} />
             ) : null}
             onOpen={(s) => openInBuilder(s.platform, s.selection, s.id)}

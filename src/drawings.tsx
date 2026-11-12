@@ -6,7 +6,27 @@ import { startTransition, useEffect, useState, type ComponentProps } from 'react
 
 type Drawings = typeof import('./Blueprint');
 let loaded: Drawings | null = null;
-const loading = import('./Blueprint').then((m) => (loaded = m));
+
+/**
+ * What `load` brings, asking once more after a short wait if the first try fails (a dropped connection while the
+ * file downloads). Null when both tries fail: it never throws and never asks a third time.
+ */
+export async function loadWithRetry<T>(load: () => Promise<T>, waitMs = 2000): Promise<T | null> {
+  try {
+    return await load();
+  } catch {
+    await new Promise((done) => setTimeout(done, waitMs));
+  }
+  try {
+    return await load();
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+}
+
+/** The drawing code, or null if it couldn't be downloaded: the placeholders then stay as they are. */
+const loading = loadWithRetry(() => import('./Blueprint')).then((m) => (loaded = m));
 
 export function Blueprint(props: ComponentProps<Drawings['Blueprint']>) {
   const drawings = useDrawings();
@@ -22,7 +42,7 @@ export function useDrawings(): Drawings | null {
   const [m, setM] = useState(loaded);
   useEffect(() => {
     // As a transition, so drawing a page full of them is done in small steps and the page stays responsive.
-    if (!m) loading.then((d) => startTransition(() => setM(d)));
+    if (!m) void loading.then((d) => { if (d) startTransition(() => setM(d)); });
   }, [m]);
   return m;
 }
