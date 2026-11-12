@@ -219,6 +219,12 @@ test('the short AR-15 barrels are listed in the picker and search, and open from
     assert.ok(findParts(part(ar15, id).name, ar15).here.some((f) => f.part.id === id), `${id} found by name`);
     const url = part(ar15, id).offers.find((o) => o.url)?.url;
     assert.ok(url, `${id} has a product link`);
+    // The link above is on the test's own read. What makes it possible on any night is in data/sources.json: a
+    // tracked link at a store that is neither paused nor links-only, so the nightly job can read a price there.
+    const links = RAW_LINKS[productKey(part(ar15, id))] ?? {};
+    const read = Object.keys(links).filter((r) => knownRetailer(r) && !PAUSED.has(r) && !LINKS_ONLY.has(r));
+    assert.ok(read.length >= 1, `${id} has a tracked link at a store the nightly job reads`);
+    for (const r of read) assert.match(links[r], /^https:\/\/[^\s/]+\/\S+$/, `${id} at ${r}`);
     assert.ok(findParts(url, ar15).here.some((f) => f.part.id === id), `${id} found by link`);
   }
   assert.ok(ar15.parts.every((p) => !('hidden' in p)));
@@ -376,6 +382,8 @@ test('a part sold only by a paused retailer has no price and renders without one
 // Links only stops the scripts' requests and nothing else: to the site these stores are ordinary retailers.
 const LINKS_ONLY_IDS = ['BRN', 'CTD', 'GRITR', 'PSA', 'SIG'];
 const RAW_LINKS = (sources as unknown as { parts: Record<string, Record<string, string>> }).parts;
+/** The links-only stores as data/sources.json lists them tonight (the test below pins the list). The nightly job reads no price at these. */
+const LINKS_ONLY = new Set(Object.keys((sources as unknown as { linksOnly: object }).linksOnly));
 
 test('the links-only retailers are not paused, and one of them alone gives a part no pausedThrough', (t) => {
   assert.deepEqual(Object.keys((sources as unknown as { linksOnly: object }).linksOnly).sort(), LINKS_ONLY_IDS);
@@ -1184,17 +1192,36 @@ test('a build saved before history began loses the comparison, and every part st
   // The rest of the build is priced by the test as well: on every other part a live price whose history starts after
   // the save. A copy (sameAs) gets its history under its own id too, as the file still holds for some, since the
   // line below looks there.
-  for (const id of Object.values(sel)) {
+  //
+  // Not every other part, though: the build stays a mix, as a real one is. A part with no tracked link at a store the
+  // nightly job reads (none at all, or only at links-only or paused stores) and no hand-checked price can never have
+  // a live one: nothing reads it. Today that is seven of the factory build's parts, each sold at Palmetto State
+  // Armory (links only) alone. They keep the catalog's own estimate, and must stay out of what is stored.
+  const neverRead = (x: Part) => !RAW_LIST.parts[productKey(x)] && Object.keys(RAW_LINKS[productKey(x)] ?? {}).every((r) => PAUSED.has(r) || LINKS_ONLY.has(r));
+  const estimates = Object.values(sel).filter((id) => id !== MOVER && neverRead(part(ar15, id)));
+  assert.ok(estimates.length >= 2, `${estimates.length} parts of the build can only be estimates`);
+  for (const id of estimates) {
+    const best = bestOffer(part(ar15, id));
+    assert.ok(best && isEstimate(best), `${id} is an estimate in the catalog as loaded`);
+  }
+  const lives = Object.values(sel).filter((id) => !estimates.includes(id));
+  assert.ok(lives.includes(MOVER) && lives.length >= 2);
+  for (const id of lives) {
     if (id === MOVER) continue;
     setPrice(t, liveOffer(40), [['2026-10-04', 40]], id);
     fileRow(t, RAW_HISTORY, id, [['2026-10-04', 40]]);
   }
   const today = priceSnapshot('ar15', sel);
-  assert.deepEqual(Object.keys(today).sort(), Object.values(sel).sort());
+  assert.deepEqual(Object.keys(today).sort(), [...lives].sort());
+  for (const id of lives) assert.equal(today[id], id === MOVER ? 150 : 40, `${id} is stored at its live price`);
+  for (const id of estimates) assert.ok(!(id in today), `${id} is an estimate, so today's snapshot leaves it out`);
   const build = moverBuild({ savedAt: '2026-09-20T12:00:00Z', prices: Object.fromEntries(Object.entries(today).map(([id, price]) => [id, price + 25])) });
   const loaded = loadAt('2026-10-31T12:00:00Z', build);
   // Parts with no history at all that aren't estimates (hand-checked, dated prices) can keep theirs; everything else resets.
   for (const [id, price] of Object.entries(today)) assert.equal(loaded.prices![id], RAW_HISTORY[id] ? price : price + 25, id);
+  // The estimates were never stored and the load doesn't start storing them; the live parts are all still there.
+  for (const id of estimates) assert.ok(!(id in loaded.prices!), `${id} is an estimate, so the loaded build stores no price for it`);
+  assert.deepEqual(Object.keys(loaded.prices!).sort(), [...lives].sort());
   assert.ok(loaded.pricesAt);
   assert.deepEqual(rows(loaded), []);
   assert.equal(droppedBuilds([loaded]).length, 0);
@@ -1668,6 +1695,22 @@ test('starter build cards and the platform page note parts with no price; totals
   const tonight = noPriceNote(unpricedCount(budget.map((id) => real.parts.find((x) => x.id === id))));
   assert.ok(platformPage(real).includes(card(real, tonight)), 'starter card, tonight');
   assert.ok(platformPage(real).includes(lede(real, tonight)), 'page lede, tonight');
+  // And the real page against words spelled out here, not taken from the code that writes them. The MI handguard is
+  // tracked and priced at Primary Arms alone, a paused store, so no night gives it a price: the real budget build
+  // always has a part with no price, and the real page has to say so.
+  const realMi = real.parts.find((x) => x.id === 'ar-hg-mi9')!;
+  assert.deepEqual(Object.keys(RAW_LINKS['ar-hg-mi9']), ['PA'], 'the MI handguard is tracked at Primary Arms only');
+  assert.deepEqual(INLINE_OFFERS['ar-hg-mi9'].map(([retailer]) => retailer), ['PA'], 'and priced there only');
+  assert.ok(PAUSED.has('PA'), 'Primary Arms is paused');
+  assert.equal(bestOffer(realMi), undefined, 'the real MI handguard has no price');
+  assert.deepEqual(realMi.offers, []);
+  const realNoPrice = budget.filter((id) => bestOffer(real.parts.find((x) => x.id === id)!) === undefined);
+  assert.ok(realNoPrice.includes('ar-hg-mi9'), 'the real budget build holds it');
+  assert.ok(realNoPrice.length >= 1);
+  // One on a night when the stores answered, which is the check this test has always made on the real page.
+  const realNote = realNoPrice.length === 1 ? '1 part has no price' : `${realNoPrice.length} parts have no price`;
+  assert.ok(platformPage(real).includes(card(real, realNote)), `starter card, the real page: ${realNote}`);
+  assert.ok(platformPage(real).includes(lede(real, realNote)), `page lede, the real page: ${realNote}`);
   // Every real page shows the note exactly when a starter build has a part with no price.
   for (const v of PAGE_VIEWS)
     for (const tier of ['budget', 'value', 'premium'] as const) {
@@ -1956,10 +1999,10 @@ test("the Worker's own copy of the short NFA notice is the site's, character for
   assert.ok(literal, `a plain single-quoted string: ${declared[0]}`);
   assert.equal(literal[1], NFA_SHORT_NOTICE);
   assert.equal(literal[1], SHORT_NOTICE_TEXT);
-  // No other name in the Worker's source carries the wording: every use goes through that one constant.
+  // No other name in the Worker's source carries the wording, in capitals or not: every use goes through that one constant.
   for (const file of readdirSync('worker/src').filter((f) => f.endsWith('.js'))) {
     const text = readFileSync(`worker/src/${file}`, 'utf8');
-    assert.equal(text.split('May be regulated').length - 1, file === 'share.js' ? 1 : 0, `worker/src/${file}`);
+    assert.equal(text.toLowerCase().split('may be regulated').length - 1, file === 'share.js' ? 1 : 0, `worker/src/${file}`);
   }
 });
 
@@ -4653,6 +4696,9 @@ test('with no live prices at all the catalog still builds and every page still r
   const all = everyPart();
   // rebuilt() is the catalog's own builder: on the files as they are tonight it gives every part exactly as loaded. So
   // no earlier test has left a price of its own behind either.
+  // A failure in this loop means an EARLIER test changed that part's offers (or its pause date) and did not put them
+  // back; this test is only where it shows. To find it: search this file for the part id in the message, and for
+  // tests that set `.offers` on a catalog part without setPrice, refile or keepOffers (those put back what they found).
   for (const x of all) {
     const now = rebuilt(x);
     assert.deepEqual(now.offers, x.offers, `${x.id} offers, as loaded`);
