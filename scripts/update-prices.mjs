@@ -8,12 +8,14 @@
 import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
 import { extractPrice, implausiblePrice } from './extract-price.mjs';
 import { firstReadHold, formatHolds, holdKey, holdsSummary, mergeHolds, readEstimates, readHolds, readJsonObject } from './first-read-guard.mjs';
+import { logSafe, movedSummary } from './log-safe.mjs';
 import { robotsGate } from './robots.mjs';
 import { readPage } from './robots.mjs';
 import { recordHistory, formatHistory } from './price-history.mjs';
 import { readFetchableSources } from './sources.mjs';
 import { readNoFetchHosts } from './sources.mjs';
 import { readPausedIds } from './sources.mjs';
+import { samePage } from './same-page.mjs';
 
 const USER_AGENT = 'FirearmDesignerPriceBot/0.1 (+https://github.com/RubyCrest1700/firearm-designer)';
 const HOST_DELAY_MS = 5000;
@@ -69,7 +71,9 @@ async function politeFetch(url, init = {}) {
 // 401, 403, 429, unreachable, timeout) blocks the host (scripts/robots.mjs).
 const { safeGet } = robotsGate({ get: politeFetch, agent: USER_AGENT });
 
-const report = { ok: 0, blocked: 0, offsite: 0, failed: 0, kept: 0, rejected: 0, held: 0 };
+const report = { ok: 0, blocked: 0, offsite: 0, failed: 0, kept: 0, rejected: 0, held: 0, moved: 0 };
+// Reads a store redirected to a different page of its own site. Logged and counted only: they are still priced.
+const moved = [];
 
 async function readOffer(partId, retailer, url) {
   let entry = null;
@@ -77,13 +81,21 @@ async function readOffer(partId, retailer, url) {
     const got = await safeGet(url);
     if (got.blocked) {
       report.blocked++;
-      console.log(`${got.why}: ${got.blocked}${got.blocked !== url ? ` (redirected from ${url})` : ''}`);
+      // `why` can name a host a redirect pointed at, so it is made safe to print too (scripts/log-safe.mjs).
+      console.log(`${logSafe(got.why)}: ${logSafe(got.blocked)}${got.blocked !== url ? ` (redirected from ${url})` : ''}`);
     } else if (got.offsite) {
       // Another site's page isn't this retailer's price: nothing is recorded from it.
       report.offsite++;
-      console.log(`${partId} @ ${retailer}: ${got.why} (${got.offsite}), not read`);
+      console.log(`${partId} @ ${retailer}: ${logSafe(got.why)} (${logSafe(got.offsite)}), not read`);
     } else {
       const { res } = got;
+      // Log only, for now: the page it ended on is read, checked and stored below exactly as a direct read is. The
+      // address came from the store's server, so it is made safe to print first (scripts/log-safe.mjs).
+      if (!samePage(url, got.url)) {
+        report.moved++;
+        moved.push({ partId, retailer, to: got.url });
+        console.log(`${partId} @ ${retailer}: redirected to a different page (${logSafe(got.url)})`);
+      }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const found = extractPrice(await readPage(res));
       if (!found) throw new Error('no price found on page');
@@ -107,7 +119,8 @@ async function readOffer(partId, retailer, url) {
     }
   } catch (err) {
     report.failed++;
-    console.log(`${partId} @ ${retailer}: ${err.message}`);
+    // A refused redirect's message names the host it pointed at.
+    console.log(`${partId} @ ${retailer}: ${logSafe(err.message)}`);
   }
   if (!entry) {
     // Keep a recent previous price rather than dropping back to sample data.
@@ -142,7 +155,7 @@ const out = { updatedAt: report.ok ? now.toISOString() : previous.updatedAt ?? n
 // Only links we may read count as tracked, so a hold whose link is gone, paused or links only drops out.
 const holds = mergeHolds(previousHolds, { held, passed, tracked: new Set(jobs.map((j) => holdKey(j.partId, j.retailer))), day: now.toISOString().slice(0, 10) });
 const summary = holdsSummary(holds, warnings);
-console.log(`\nDone: ${report.ok} updated, ${report.kept} kept from last run, ${report.held} held for review, ${report.failed} failed (${report.rejected} of them ignored as likely misreads), ${report.blocked} blocked by robots.txt, ${report.offsite} redirected off-site`);
+console.log(`\nDone: ${report.ok} updated, ${report.kept} kept from last run, ${report.held} held for review, ${report.failed} failed (${report.rejected} of them ignored as likely misreads), ${report.blocked} blocked by robots.txt, ${report.offsite} redirected off-site, ${report.moved} redirected to a different page`);
 if (summary) console.log(`\n${summary}`);
 if (!dryRun) {
   writeFileSync('data/prices.json', JSON.stringify(out, null, 2) + '\n');
@@ -159,6 +172,8 @@ if (!dryRun) {
     console.log(`::warning::data/price-holds.json not written: ${err.message}`);
     notice += `**Warning:** data/price-holds.json not written: ${err.message}\n\n`;
   }
+  // The reads that were redirected to a different page, in a fixed order (hosts are read side by side).
+  notice += movedSummary(moved.sort((a, b) => a.partId.localeCompare(b.partId) || a.retailer.localeCompare(b.retailer)));
   // The owner's nightly notice in the Actions run. Losing it is no reason to lose the night's prices.
   if (notice && process.env.GITHUB_STEP_SUMMARY) {
     try { appendFileSync(process.env.GITHUB_STEP_SUMMARY, notice); } catch (err) { console.log(`::warning::step summary not written: ${err.message}`); }

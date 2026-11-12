@@ -2,7 +2,10 @@
 // Fake store pages replace fetch, real sockets and DNS are refused, and a virtual clock (FAKE_NOW) makes the 5-second
 // host pace take no real time. Every fetch, socket attempt and file write goes to STUB_LOG for the test to read.
 // Fetches are logged with their virtual time, so the test can check the pace.
-// STUB_PAGES: a JSON file of { url: { price, inStock } }, or { url: null } for a read that fails.
+// STUB_PAGES: a JSON file of { url: { price, inStock } }, or { url: null } for a read that fails. An entry can also be
+// { redirect: '<Location>' } for a 301 (relative or absolute, and chains work: each hop is its own entry), { html } for
+// a page given as is, { status } for an empty answer with that HTTP status, or, under a host's /robots.txt address,
+// { robots: '<text>' } in place of the usual 404 (a robots.txt address can be a { redirect } too).
 // STUB_UNWRITABLE: a path whose write throws, on any OS or user.
 
 import fs, { readFileSync } from 'node:fs';
@@ -56,10 +59,23 @@ const html = ({ price, inStock }) => `<html><head><script type="application/ld+j
   offers: { '@type': 'Offer', price: price.toFixed(2), priceCurrency: 'USD', availability: `https://schema.org/${inStock ? 'InStock' : 'OutOfStock'}` },
 })}</script></head><body></body></html>`;
 
+/** A 301 whose Location is the fixture's text as given. Headers refuses some text (a line break inside it), so that goes out on a bare stand-in. */
+const redirect = (location) => {
+  try {
+    return new Response(null, { status: 301, headers: { location } });
+  } catch {
+    return { status: 301, ok: false, body: null, headers: { get: (name) => (name.toLowerCase() === 'location' ? location : null) } };
+  }
+};
+
 globalThis.fetch = async (url) => {
   const href = String(url);
   note(`FETCH ${Date.now()} ${href}`);
-  if (href.endsWith('/robots.txt')) return new Response('', { status: 404 });
-  if (!pages[href]) throw new Error(`stub has no page for ${href}`);
-  return new Response(html(pages[href]), { status: 200, headers: { 'content-type': 'text/html' } });
+  const page = pages[href];
+  if (href.endsWith('/robots.txt') && typeof page?.redirect === 'string') return redirect(page.redirect);
+  if (href.endsWith('/robots.txt')) return typeof page?.robots === 'string' ? new Response(page.robots, { status: 200 }) : new Response('', { status: 404 });
+  if (!page) throw new Error(`stub has no page for ${href}`);
+  if (typeof page.redirect === 'string') return redirect(page.redirect);
+  if (typeof page.status === 'number') return new Response('', { status: page.status });
+  return new Response(typeof page.html === 'string' ? page.html : html(page), { status: 200, headers: { 'content-type': 'text/html' } });
 };
