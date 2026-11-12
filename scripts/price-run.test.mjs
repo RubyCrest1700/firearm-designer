@@ -88,12 +88,16 @@ function fixture(t) {
   return dir;
 }
 
-/** One night of the real script. Checks what must hold on every night, then returns its output for the test's own checks. */
-function night(dir, { now, reads, updated, held, failed = 0, unwritable }) {
+/**
+ * One night of the real script. Checks what must hold on every night, then returns its output for the test's own checks.
+ * `reads` are the pages the night must fetch, each once. `unfetched` are stub entries that must not be fetched as pages
+ * (a robots.txt answer, or a page behind a refused redirect).
+ */
+function night(dir, { now, reads, updated, held, failed = 0, blocked = 0, offsite = 0, moved = 0, unfetched = {}, unwritable }) {
   const start = json(dir, 'prices.json');
   const log = join(dir, 'requests.log');
   const summaryFile = join(dir, 'summary.md');
-  writeFileSync(join(dir, 'pages.json'), JSON.stringify(reads));
+  writeFileSync(join(dir, 'pages.json'), JSON.stringify({ ...unfetched, ...reads }));
   writeFileSync(log, '');
   writeFileSync(summaryFile, '');
   const env = {
@@ -110,7 +114,7 @@ function night(dir, { now, reads, updated, held, failed = 0, unwritable }) {
   const out = `${run.stdout}${run.stderr}`;
   assert.equal(run.error, undefined, `${run.error}\n${out}`);
   assert.equal(run.status, 0, out);
-  assert.ok(out.includes(`Done: ${updated} updated, 0 kept from last run, ${held} held for review, ${failed} failed (0 of them ignored as likely misreads), 0 blocked by robots.txt, 0 redirected off-site`), out);
+  assert.ok(out.includes(`Done: ${updated} updated, 0 kept from last run, ${held} held for review, ${failed} failed (0 of them ignored as likely misreads), ${blocked} blocked by robots.txt, ${offsite} redirected off-site, ${moved} redirected to a different page\n`), out);
 
   const lines = readFileSync(log, 'utf8').trim().split('\n');
   const logged = (kind) => lines.filter((l) => l.startsWith(`${kind} `)).map((l) => l.slice(kind.length + 1));
@@ -128,6 +132,8 @@ function night(dir, { now, reads, updated, held, failed = 0, unwritable }) {
   assert.deepEqual([...fetched].sort(), [...Object.keys(reads), `${SHOP_A}/robots.txt`, `${SHOP_B}/robots.txt`].sort());
   // Relative paths under the cwd, so nothing lands in the repo; in this order, so holds can't cost the night its prices.
   assert.deepEqual(logged('WRITE'), ['data/prices.json', 'data/price-history.json', 'data/price-holds.json']);
+
+  assert.equal(out.split('\n').filter((l) => l.includes('redirected to a different page (')).length, moved, out);
 
   const after = json(dir, 'prices.json');
   for (const [part, stores] of Object.entries(start.offers))
@@ -231,4 +237,143 @@ test('a holds file that cannot be written warns, stays as it was, and costs the 
   assert.notEqual(text(control, 'price-holds.json'), before);
   assert.equal(text(dir, 'prices.json'), text(control, 'prices.json'));
   assert.equal(text(dir, 'price-history.json'), text(control, 'price-history.json'));
+});
+
+// Redirects. A store sending a tracked link to a different page of its own site is logged and counted, nothing more:
+// the read is priced, checked and stored exactly as a direct read is.
+
+const WRITTEN = ['prices.json', 'price-history.json', 'price-holds.json'];
+const MOVED_LINE = 'redirected to a different page (';
+const movedLines = (out) => out.split('\n').filter((l) => l.includes(MOVED_LINE));
+/** Hosts are read side by side, so a night's log lines can come in another order when one host takes more requests. */
+const sortedLines = (out) => out.split('\n').sort();
+
+/** The normal night with nothing redirected: what a redirected night's files and log are compared with. */
+function directNight(t) {
+  const dir = fixture(t);
+  const { out } = night(dir, { now: NIGHT_1, reads: READS, updated: 5, held: 0 });
+  return { dir, out };
+}
+const sameFiles = (dir, control) => {
+  for (const file of WRITTEN) assert.equal(text(dir, file), text(control, file), file);
+};
+
+test('a redirect to the same page reads as usual: no log line, nothing counted, the same files', (t) => {
+  const control = directNight(t);
+  const dir = fixture(t);
+  const wwwB = 'https://www.shop-b.example';
+  const reads = {
+    ...READS,
+    // A trailing slash, absolute.
+    [UP_A]: { redirect: `${UP_A}/` },
+    [`${UP_A}/`]: READS[UP_A],
+    // Two hops, the first relative: a trailing slash, then www, other letter case and a tracking parameter.
+    [DOWN_B]: { redirect: '/p/down/' },
+    [`${DOWN_B}/`]: { redirect: `${wwwB}/P/Down/?utm_source=feed&gclid=abc` },
+    [`${wwwB}/P/Down/?utm_source=feed&gclid=abc`]: READS[DOWN_B],
+    [`${wwwB}/robots.txt`]: null,
+  };
+  const { out, summary } = night(dir, { now: NIGHT_1, reads, updated: 5, held: 0, moved: 0 });
+  assert.deepEqual(movedLines(out), []);
+  assert.deepEqual(sortedLines(out), sortedLines(control.out));
+  assert.equal(summary, '');
+  sameFiles(dir, control.dir);
+  assert.deepEqual(json(dir, 'prices.json').offers['part-up'], { SHA: offer(UP_A, 120, NIGHT_1) });
+  assert.deepEqual(json(dir, 'prices.json').offers['part-down'], { SHB: offer(DOWN_B, 180, NIGHT_1) });
+});
+
+test('a redirect to a different product page is logged and counted, and still priced and stored as a direct read is', (t) => {
+  const control = directNight(t);
+  const dir = fixture(t);
+  const replacement = `${SHOP_A}/p/up-mk2`;
+  // Two hops, the first relative.
+  const reads = { ...READS, [UP_A]: { redirect: '/p/moved' }, [`${SHOP_A}/p/moved`]: { redirect: replacement }, [replacement]: READS[UP_A] };
+  const { out, summary } = night(dir, { now: NIGHT_1, reads, updated: 5, held: 0, moved: 1 });
+  assert.deepEqual(movedLines(out), [`part-up @ SHA: redirected to a different page (${replacement})`]);
+  // The read's own line follows it, as on any night (another host's lines may come between).
+  assert.deepEqual(out.split('\n').filter((l) => l.startsWith('part-up @ SHA: ')), [`part-up @ SHA: redirected to a different page (${replacement})`, 'part-up @ SHA: $120']);
+  sameFiles(dir, control.dir);
+  // Stored under the tracked link, not the page it ended on.
+  assert.deepEqual(json(dir, 'prices.json').offers['part-up'], { SHA: offer(UP_A, 120, NIGHT_1) });
+  assert.equal(summary, [
+    '## Redirected to a different page',
+    '',
+    '1 tracked link was redirected to a different page on the same site. Each was still read and priced as usual.',
+    '',
+    '| Part | Store | Redirected to |',
+    '|---|---|---|',
+    `| part-up | SHA | \`${replacement}\` |`,
+    '',
+    '',
+  ].join('\n'));
+});
+
+test('a redirect to a category page with no price is logged as moved, then fails as "no price found"', (t) => {
+  const dir = fixture(t);
+  const category = `${SHOP_A}/c/uppers`;
+  const reads = { ...READS, [UP_A]: { redirect: category }, [category]: { html: '<html><head><title>Uppers</title></head><body><h1>Uppers</h1></body></html>' } };
+  const { out, summary } = night(dir, { now: NIGHT_1, reads, updated: 4, held: 0, failed: 1, moved: 1 });
+  assert.deepEqual(out.split('\n').filter((l) => l.startsWith('part-up @ SHA: ')), [`part-up @ SHA: redirected to a different page (${category})`, 'part-up @ SHA: no price found on page']);
+  assert.equal(json(dir, 'prices.json').offers['part-up'], undefined);
+  assert.deepEqual(json(dir, 'price-history.json').parts['part-up'], [['2026-10-30', 100]]);
+  assert.ok(summary.includes(`| part-up | SHA | \`${category}\` |`), summary);
+});
+
+test('a hostile Location gives one safe log line and one safe summary row, and the read is still stored as usual', (t) => {
+  const control = directNight(t);
+  const dir = fixture(t);
+  // A line break, a workflow command, an encoded line break, a log marker, a table bar and a code tick, then 2,000 more characters.
+  const location = `/p/up-mk2\n::error::x%0A##[error]y|\`z${'a'.repeat(2000)}`;
+  const final = new URL(location, UP_A).href;
+  assert.ok(final.includes('::error::') && final.includes('##[error]') && final.length > 2000, 'the address still carries the attack once parsed');
+  const reads = { ...READS, [UP_A]: { redirect: location }, [final]: READS[UP_A] };
+  const { out, summary } = night(dir, { now: NIGHT_1, reads, updated: 5, held: 0, moved: 1 });
+
+  const [line, ...others] = movedLines(out);
+  assert.deepEqual(others, []);
+  assert.ok(line.startsWith('part-up @ SHA: redirected to a different page (https://shop-a.example/p/up-mk2%3A:error%3A:x%0A%23#[error]y'), line);
+  assert.ok(line.endsWith('...)'), line);
+  assert.ok(line.length < 400, `${line.length} characters`);
+  // The whole log is the direct night's log plus that one line (and the count in the last line).
+  assert.equal(out.split('\n').length, control.out.split('\n').length + 1);
+  assert.deepEqual(sortedLines(out).filter((l) => l !== line && !l.startsWith('Done: ')), sortedLines(control.out).filter((l) => !l.startsWith('Done: ')));
+  for (const l of out.split('\n')) {
+    assert.doesNotMatch(l, /^\s*(::|##\[)/, l);
+    assert.doesNotMatch(l, /[\u0000-\u0008\u000b-\u001f\u007f]/, l);
+  }
+  assert.ok(!line.includes('::') && !line.includes('##'), line);
+
+  const rows = summary.split('\n').filter((l) => l.startsWith('| part-up |'));
+  assert.equal(rows.length, 1, summary);
+  assert.match(rows[0], /^\| part-up \| SHA \| `[^`|]*` \|$/);
+  assert.ok(!rows[0].includes('::') && !rows[0].includes('##') && rows[0].length < 400, rows[0]);
+  assert.equal(summary.split('\n').length, 9, summary);
+
+  sameFiles(dir, control.dir);
+  assert.deepEqual(json(dir, 'prices.json').offers['part-up'], { SHA: offer(UP_A, 120, NIGHT_1) });
+});
+
+test('an off-site redirect and a robots-blocked redirect hop are handled as before, with no "different page" line', (t) => {
+  const elsewhere = 'https://elsewhere.example/p/up';
+  const offsite = fixture(t);
+  const first = night(offsite, {
+    now: NIGHT_1, reads: { ...READS, [UP_A]: { redirect: elsewhere } }, unfetched: { [elsewhere]: { price: 1, inStock: true } }, updated: 4, held: 0, offsite: 1, moved: 0,
+  });
+  assert.ok(first.out.includes(`part-up @ SHA: redirected off-site to elsewhere.example (${elsewhere}), not read\n`), first.out);
+  assert.deepEqual(movedLines(first.out), []);
+  assert.equal(first.summary, '');
+  assert.equal(json(offsite, 'prices.json').offers['part-up'], undefined);
+
+  const refused = `${SHOP_A}/private/up`;
+  const blocked = fixture(t);
+  const second = night(blocked, {
+    now: NIGHT_1,
+    reads: { ...READS, [UP_A]: { redirect: refused } },
+    unfetched: { [`${SHOP_A}/robots.txt`]: { robots: 'User-agent: *\nDisallow: /private/\n' }, [refused]: { price: 1, inStock: true } },
+    updated: 4, held: 0, blocked: 1, moved: 0,
+  });
+  assert.ok(second.out.includes(`robots.txt disallows it: ${refused} (redirected from ${UP_A})\n`), second.out);
+  assert.deepEqual(movedLines(second.out), []);
+  assert.equal(second.summary, '');
+  assert.equal(json(blocked, 'prices.json').offers['part-up'], undefined);
 });
