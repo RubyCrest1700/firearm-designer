@@ -24,6 +24,6 @@ write('dist/404.html', notFoundPage());
 write('dist/feedback/index.html', feedbackPage());
 write('dist/privacy/index.html', privacyPage());
 write('dist/terms/index.html', termsPage());
-write('dist/sitemap.xml', sitemap(builtAt));
+write('dist/sitemap.xml', sitemap());
 write('dist/robots.txt', robots());
 console.log(`Wrote ${GUIDES.length} guide pages, ${PAGE_VIEWS.length} platform pages, 404.html, the feedback, privacy and terms pages, sitemap.xml and robots.txt`);

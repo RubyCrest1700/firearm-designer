@@ -9,6 +9,8 @@ import { awarenessFor } from '../src/awareness';
 import { PLATFORMS } from '../src/data/index';
 import { RETIRED_IDS, currentId, currentSelection } from '../src/data/index';
 import { loadCompare } from '../src/Compare';
+import { parseBuildLink } from '../src/Compare';
+import { MARK_PREFIX, readSharedLink, unlistedNote, unlistedParts } from '../src/store';
 import { NFA_SHORT_NOTICE, PAUSED, SBR_MESSAGE, VERTICAL_GRIP_MESSAGE, parts as buildParts, shortBarrelStockIssue } from '../src/data/helpers';
 import { biggestDrops, daysAgo, firstLiveDay, hasHistory, partSeries, priceOn, recentChange, seriesOf } from '../src/data/history';
 import { totalSeries } from '../src/data/history';
@@ -16,6 +18,7 @@ import { PriceChart } from '../src/PriceChart';
 import { totalParts } from '../src/store';
 import { baseSelection, bestOffer, candidateIssues, issuesFor, listedParts, noPriceNote, ownedOf, placementOf, presetSelection, priceRange, selectionTokens, singleRetailerCarts, toBuild, toBuyIds, unpricedCount, worst, type Selection } from '../src/engine';
 import { estimateNote, estimatedCount, isEstimate, money, priceLabel, totalNotes } from '../src/engine';
+import { pricedRetailerCount } from '../src/engine';
 import { findParts } from '../src/find';
 import { isLink, LINK_MAX, QUERY_MAX } from '../src/find';
 import { Candidate } from '../src/Picker';
@@ -30,6 +33,7 @@ import { ComparePage } from '../src/Compare';
 import { HomePage } from '../src/HomePage';
 import { BuildCard, ChangeChip, legalOnly } from '../src/ui';
 import { PAGE_VIEWS, feedbackPage, guidePage, indexPage, notFoundPage, platformPage, privacyPage, sitemap, termsPage } from '../src/guides/render';
+import { platformSlug, robots } from '../src/guides/render';
 import { PRIVACY_MD, TERMS_MD, legalHtml } from '../src/guides/legal';
 import { AlertsPanel } from '../src/SavedPage';
 import { SavedPage } from '../src/SavedPage';
@@ -39,6 +43,7 @@ import { buyUrl, knownRetailer, offerUrl, retailerName, tagged } from '../src/da
 import { UNKNOWN_RETAILER_OFFERS } from '../src/data/helpers';
 import { priceHtml } from '../src/guides/render';
 import { ERROR_MESSAGE, ErrorBoundary } from '../src/ui';
+import { COPY_LINK_LEAD, DRAWER_OPEN, TOAST_CLOSE, TOAST_LINK_ID, TOAST_MS, ToastView, toastAfterChange, toastHideMs } from '../src/ui';
 import type { ReactElement } from 'react';
 import PRICES_JSON from '../data/prices.json';
 import { priceIndex } from './og-index';
@@ -722,6 +727,109 @@ test('a share link, community build or tab-kept build with the retired spring id
   } finally {
     delete (globalThis as { sessionStorage?: unknown }).sessionStorage;
   }
+});
+
+/* ------------------------------------------------------------------ a link naming parts the site no longer lists */
+
+const ONE_UNLISTED = 'This link had 1 part we no longer list, so it was left out.';
+const THREE_UNLISTED = 'This link had 3 parts we no longer list, so they were left out.';
+
+test('a link is told how many parts it named that the site no longer lists: not marks, placements, retired ids or repeats', () => {
+  const good = ['g19-slide-g5', 'g19-bbl-oem5'];
+  // Nothing unknown: real parts, owned marks (kept or dropped), placements (good or bad), a retired id, an empty token.
+  assert.equal(unlistedParts([]), 0);
+  assert.equal(unlistedParts(['']), 0);
+  assert.equal(unlistedParts(good), 0);
+  assert.equal(unlistedParts([...good, 'own-slide', 'has-optic', 'own-nope', 'has-nope', 'at-light-r45', 'at-nope-r45', 'at-light-zz9']), 0);
+  assert.equal(unlistedParts(['gs-slide-43x', OLD_SLIM_SPRING, 'own-rsa']), 0, 'a retired id is its stand-in');
+  assert.ok(!PLATFORMS.some((p) => p.parts.some((x) => x.id === OLD_SLIM_SPRING)), 'the retired id itself is no part');
+  // A part listed for another platform is still listed (the link just can't place it here).
+  const rifleOnly = ar15.parts.find((x) => !glock.parts.some((g) => g.id === x.id))!.id;
+  assert.equal(selectionFromParts('glock9', [...good, rifleOnly])[part(ar15, rifleOnly).slot] === rifleOnly, false);
+  assert.equal(unlistedParts([...good, rifleOnly]), 0);
+  // Text that isn't shaped like a part id is not a part.
+  assert.equal(unlistedParts([...good, 'Not A Part', '<b>', 'UPPER-CASE', 'a--b', '-a', 'a_b']), 0);
+  // One, and three, unknown part ids; marks, placements and the retired id around them change nothing.
+  assert.equal(unlistedParts([...good, 'g19-slide-gone']), 1);
+  assert.equal(unlistedParts(['g19-slide-gone']), 1);
+  assert.equal(unlistedParts([...good, 'g19-slide-gone', 'own-optic', 'has-slide', 'at-nope-r45', OLD_SLIM_SPRING]), 1);
+  assert.equal(unlistedParts(['g19-slide-gone', ...good, 'made-up-part', 'own-slide', 'zz9', 'has-optic']), 3);
+  // The same unknown id twice is one part.
+  assert.equal(unlistedParts(['g19-slide-gone', 'g19-slide-gone', ...good, 'g19-slide-gone']), 1);
+  assert.equal(unlistedParts(['g19-slide-gone', 'made-up-part', 'g19-slide-gone', 'zz9', 'made-up-part']), 3);
+  // Anything that starts like a mark or a placement is one, however badly formed: never a part the site stopped listing.
+  const badMarks = ['own-slot2', 'own-slide-gone', 'at-light', 'at-light-r45-x', 'has-slot2', 'has-optic-gone', 'own-', 'has-', 'at-'];
+  assert.equal(unlistedParts(badMarks), 0);
+  for (const id of badMarks) assert.equal(unlistedParts([id]), 0, id);
+  assert.equal(unlistedParts([...good, ...badMarks, 'g19-slide-gone']), 1);
+  // The prefix has to be the whole first word: these are unknown part ids, one each.
+  assert.equal(unlistedParts(['owner-part', 'hash-part', 'att-part', 'own', 'has', 'at']), 6);
+  // That rule is safe only while no part id (or retired id) on any platform starts that way. A new part that does fails here.
+  for (const p of PLATFORMS) for (const x of p.parts) assert.doesNotMatch(x.id, MARK_PREFIX, `${p.id}: part id ${x.id} starts like a mark or placement`);
+  for (const [old, now] of Object.entries(RETIRED_IDS)) { assert.doesNotMatch(old, MARK_PREFIX, old); assert.doesNotMatch(now, MARK_PREFIX, now); }
+  assert.equal(String(MARK_PREFIX), '/^(own|has|at)-/');
+  for (const id of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) assert.equal(unlistedParts([id]), /^[a-z]+$/.test(id) ? 1 : 0, id);
+  // Counting changes nothing about the build the link opens.
+  assert.deepEqual(selectionFromParts('glock9', ['g19-slide-g5', 'g19-slide-gone', 'g19-bbl-oem5', 'own-optic', 'has-slide', 'at-nope-r45']), { slide: 'g19-slide-g5', barrel: 'g19-bbl-oem5' });
+
+  // The words, exactly.
+  assert.equal(unlistedNote(0), '');
+  assert.equal(unlistedNote(-1), '');
+  assert.equal(unlistedNote(1), ONE_UNLISTED);
+  assert.equal(unlistedNote(3), THREE_UNLISTED);
+  assert.equal(unlistedNote(2), 'This link had 2 parts we no longer list, so they were left out.');
+  assert.equal(unlistedNote(12), 'This link had 12 parts we no longer list, so they were left out.');
+  assert.match(readFileSync('src/store.ts', 'utf8'), /\/\*\* Owner-approved wording \(2026-11-10\)\. \*\/\r?\nexport const unlistedNote = /);
+});
+
+test('an opened or pasted link carries its count of unlisted parts; the app says it once and nothing else about the link changes', () => {
+  const had = Object.getOwnPropertyDescriptor(globalThis, 'location');
+  const at = (b: string) => Object.defineProperty(globalThis, 'location', { value: { search: b && `?b=${encodeURIComponent(b)}`, origin: 'https://example.test', pathname: '/' }, configurable: true });
+  try {
+    const sel = { slide: 'g19-slide-g5', barrel: 'g19-bbl-oem5' };
+    for (const [link, n] of [
+      ['glock19~g19-slide-g5.g19-bbl-oem5', 0],
+      ['glock19~g19-slide-g5.made-up-part.g19-bbl-oem5', 1],
+      ['glock9~g19-slide-g5.made-up-part.g19-bbl-oem5.own-optic.has-slide.made-up-part', 1],
+      ['glock9~g19-slide-gone.g19-slide-g5.made-up-part.g19-bbl-oem5.zz9', 3],
+    ] as [string, number][]) {
+      at(link);
+      assert.deepEqual(readSharedLink(), { platform: 'glock9', selection: sel, unlisted: n }, link);
+      // What other callers get is what they always got.
+      assert.deepEqual(readSharedBuild(), { platform: 'glock9', selection: sel }, link);
+      // The same link pasted into Compare, as a site link and as a share-service link.
+      for (const url of [`https://dropinbuilds.com/?b=${encodeURIComponent(link)}`, `https://share.dropinbuilds.com/b/${encodeURIComponent(link)}`])
+        assert.deepEqual(parseBuildLink(url), { platform: 'glock9', selection: sel, unlisted: n }, url);
+    }
+    // A link whose every part is gone opens the plain factory build, and still says how many were left out.
+    at('glock9~g19-slide-gone.made-up-part');
+    assert.deepEqual(readSharedLink(), { platform: 'glock9', selection: baseSelection(glock), unlisted: 2 });
+    // The retired spring id is read as its stand-in and counts for nothing.
+    at(`glock43x~gs-slide-43x.gs-bbl-43x.${OLD_SLIM_SPRING}`);
+    assert.equal(readSharedLink()?.unlisted, 0);
+    // No link, or a link to a platform the site doesn't have: nothing opens, so nothing is said.
+    at('');
+    assert.equal(readSharedLink(), null);
+    at('unicorn~made-up-part');
+    assert.equal(readSharedLink(), null);
+    assert.equal(parseBuildLink('https://dropinbuilds.com/?b=unicorn~made-up-part'), null);
+  } finally {
+    if (had) Object.defineProperty(globalThis, 'location', had);
+    else delete (globalThis as { location?: unknown }).location;
+  }
+  // The app: the note is a plain toast set once as the page opens, and the price-drop toast waits for the next visit.
+  const app = readFileSync('src/App.tsx', 'utf8').replace(/\r\n/g, '\n');
+  assert.ok(app.includes(`  const shared = useMemo(readSharedLink, []);`));
+  assert.ok(app.includes(`  const linkNote = unlistedNote(shared?.unlisted ?? 0);`));
+  assert.ok(app.includes(`  useEffect(() => { if (linkNote) setToast(linkNote); }, []);`));
+  assert.ok(app.includes(`    if (linkNote) return;\n    const seen = dropped.map(`), 'checked before the drop is marked as told');
+  assert.equal(toastHideMs(ONE_UNLISTED), 2800);
+  // Compare: both kinds of pasted link report through the page's note, which the app shows as a toast.
+  const compare = readFileSync('src/Compare.tsx', 'utf8').replace(/\r\n/g, '\n');
+  assert.ok(compare.includes(`  const leftOut = (n: number) => { const note = unlistedNote(n); if (note) onNote?.(note); };`));
+  assert.ok(compare.includes(`selection: selectionFromParts(hit.platform, hit.parts) });\n      leftOut(unlistedParts(hit.parts));`));
+  assert.ok(compare.includes(`selection: got.selection });\n    leftOut(got.unlisted);`));
+  assert.ok(app.includes(`            onNote={setToast}\n`));
 });
 
 test('a saved build with the retired spring id loads with the current spring and keeps the price saved for it', (t) => {
@@ -1503,14 +1611,39 @@ test('starter build cards and the platform page note parts with no price; totals
     }
 });
 
-test('the home page counts every part (once) but not paused retailers, and notes a starter build with no-price parts', () => {
+test('the home page counts every part (once) and only retailers that show a real price, and notes a starter build with no-price parts', () => {
   const html = renderToStaticMarkup(createElement(HomePage, { onPick: () => {}, onStart: () => {}, onBrowse: () => {} })).replace(/<!-- -->/g, '');
   // A copy (sameAs) is its main copy's product under a second id, so it adds an id and no part.
   const all = PLATFORMS.flatMap((p) => p.parts);
   const copies = new Set(all.filter((x) => x.sameAs !== undefined).map((x) => x.id)).size;
   const parts = new Set(all.map((x) => x.id)).size - copies;
   assert.equal(parts, new Set(all.map(productKey)).size);
-  const stores = Object.keys(RETAILERS).length - PAUSED.size;
+  // A retailer is compared when some part shows a price of its that the nightly job read (checkedAt) or that was
+  // checked by hand on a date (a List Price or Factory Part with asOf). Estimates alone don't count. Worked out here
+  // from the catalog, offer by offer, so it moves with the nightly prices as the page does.
+  const priced = new Set<string>();
+  for (const p of PLATFORMS)
+    for (const x of p.parts)
+      for (const o of x.offers) {
+        const live = typeof o.checkedAt === 'string' && o.checkedAt !== '';
+        const byHand = typeof o.asOf === 'string' && o.asOf !== '' && (o.basis === 'list' || o.basis === 'factory');
+        if (live || byHand) priced.add(o.retailer);
+      }
+  const stores = priced.size;
+  const listed = Object.keys(RETAILERS).length - PAUSED.size;
+  assert.ok(stores >= 1, 'some retailer shows a real price');
+  assert.ok(stores <= listed, 'never more than the retailers listed and not paused');
+  for (const id of priced) assert.ok(id in RETAILERS && !PAUSED.has(id), id);
+  assert.equal(pricedRetailerCount(all), stores);
+  assert.equal(html.match(/ parts · (\d+) retailers compared/)?.[1], String(stores));
+  // The rule on made-up parts: live and hand-checked prices count their store once, estimates and no offers count nothing.
+  const made = (offers: Offer[]): Part => ({ ...all[0], offers });
+  const o = (retailer: string, more: Partial<Offer> = {}): Offer => ({ retailer, price: 10, inStock: true, ...more });
+  assert.equal(pricedRetailerCount([]), 0);
+  assert.equal(pricedRetailerCount([made([])]), 0);
+  assert.equal(pricedRetailerCount([made([o('A'), o('B', { basis: 'from' }), o('C', { basis: 'factory' })])]), 0, 'estimates only');
+  assert.equal(pricedRetailerCount([made([o('A'), o('B', { checkedAt: '2026-01-02T03:04:05.000Z' })]), made([o('B', { checkedAt: '2026-01-03T03:04:05.000Z', inStock: false }), o('A')])]), 1);
+  assert.equal(pricedRetailerCount([made([o('A', { basis: 'list', asOf: '2026-01-02' })]), made([o('B', { basis: 'factory', asOf: '2026-01-02' })]), made([o('C', { checkedAt: '2026-01-02T03:04:05.000Z', basis: 'from' })]), made([o('D')])]), 3);
   assert.equal(html.match(/(\d+) parts · /)?.[1], String(parts));
   assert.ok(html.includes(`${PLATFORMS.length} platforms · ${parts} parts · ${stores} retailers compared`), 'hero facts');
   for (const p of PLATFORMS) {
@@ -2023,8 +2156,37 @@ test('the legal pages link our own pages relatively, keep share-link examples as
 });
 
 test('the sitemap lists the Privacy Policy and the Terms of Use', () => {
-  const xml = sitemap(BUILT);
+  const xml = sitemap();
   for (const p of ['/privacy/', '/terms/']) assert.ok(xml.includes(`<loc>https://dropinbuilds.com${p}</loc>`), p);
+});
+
+test('the sitemap lists every page once, in order, with an address and no date', () => {
+  const xml = sitemap();
+  const paths = ['/', '/build/', ...PAGE_VIEWS.map((v) => `/build/${platformSlug(v)}/`), '/faq/', ...GUIDES.map((g) => `/faq/${g.slug}/`), '/privacy/', '/terms/'];
+  // The whole file, exactly: the XML declaration, the sitemap namespace, one <url> with one <loc> per page.
+  assert.equal(xml, [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ...paths.map((p) => `  <url><loc>https://dropinbuilds.com${p}</loc></url>`),
+    '</urlset>',
+    '',
+  ].join('\n'));
+  // No date of any kind: not <lastmod>, not the build day, and the function takes no build time to stamp.
+  assert.doesNotMatch(xml, /lastmod|changefreq|priority/i);
+  assert.doesNotMatch(xml, /\d{4}-\d{2}-\d{2}/);
+  assert.equal(sitemap.length, 0);
+  assert.ok(!readFileSync('src/guides/render.ts', 'utf8').includes('<lastmod>'));
+  assert.ok(readFileSync('scripts/build-guides.ts', 'utf8').includes(`write('dist/sitemap.xml', sitemap());`));
+  // Well-formed: every address is a plain path with nothing XML would need escaped, and no page is listed twice.
+  const locs = [...xml.matchAll(/<loc>([^<]*)<\/loc>/g)].map((m) => m[1]);
+  assert.deepEqual(locs, paths.map((p) => `https://dropinbuilds.com${p}`));
+  assert.equal(new Set(locs).size, locs.length);
+  for (const loc of locs) assert.match(loc, /^https:\/\/dropinbuilds\.com\/([a-z0-9-]+\/)*$/, loc);
+  assert.equal(xml.match(/<url>/g)?.length, xml.match(/<\/url>/g)?.length);
+  assert.equal(xml.match(/<url>/g)?.length, paths.length);
+  assert.ok(paths.length >= 4 + GUIDES.length + PAGE_VIEWS.length);
+  // robots.txt still points at it, unchanged.
+  assert.equal(robots(), 'User-agent: *\nAllow: /\n\nSitemap: https://dropinbuilds.com/sitemap.xml\n');
 });
 
 test('the only commission wording anywhere is "we earn no commission"', () => {
@@ -2860,6 +3022,102 @@ test('the error screen shows the approved message and a Reload button once a pag
   assert.match(readFileSync('src/main.tsx', 'utf8'), /<StrictMode>\r?\n {4}<ErrorBoundary>\r?\n {6}<App \/>\r?\n {4}<\/ErrorBoundary>\r?\n {2}<\/StrictMode>/);
   assert.ok(readFileSync('src/ui.tsx', 'utf8').includes('componentDidCatch(error: unknown) { console.error(error); }'));
   assert.equal((readFileSync('src/ui.tsx', 'utf8').match(/console\.\w+\(/g) ?? []).length, 1);
+});
+
+/* ------------------------------------------------------------------ the toast, and a link the browser would not copy */
+
+const COPY_LEAD_TEXT = 'Copy this link:';
+const CLOSE_TEXT = 'Close';
+const COPIED_TEXT = 'Link copied. Anyone who opens it sees this exact build.';
+
+// What this proves: what each kind of toast draws, what the field and the button do when used, which toast hides
+// itself, which toast a drawer or a change clears, and that the app's one copy routine hands a refused link to that
+// toast. What it can't: the browser's own part (focus, the selection on screen, the timer, the drawer's event),
+// because there is no page here; the lines that do those are pinned as written.
+test('a link the browser will not copy stays in a read-only field with a Close button; every other toast is as before', () => {
+  const url = 'https://share.dropinbuilds.com/b/ar15~ar-upper-a.ar-bbl-b.own-optic?a="1"&b=<2>';
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  let closed = 0;
+  const onClose = () => { closed++; };
+  // Plain words draw exactly what the app drew before.
+  assert.equal(renderToStaticMarkup(createElement(ToastView, { toast: COPIED_TEXT, onClose })), `<div class="toast" role="status">${COPIED_TEXT}</div>`);
+  // The link: the old lead words as the field's label, the whole link in a one-line read-only field, and Close.
+  assert.equal(COPY_LINK_LEAD, COPY_LEAD_TEXT);
+  assert.equal(TOAST_CLOSE, CLOSE_TEXT);
+  assert.equal(
+    renderToStaticMarkup(createElement(ToastView, { toast: { link: url }, onClose })),
+    `<div class="toast toast-link" role="status"><label for="toast-link">${COPY_LEAD_TEXT}</label><input id="toast-link" type="text" readonly="" value="${esc(url)}"/><button type="button" class="btn">${CLOSE_TEXT}</button></div>`,
+  );
+  // Focusing or clicking the field selects all of it; the button and Escape close the toast, other keys don't.
+  const drawn = ToastView({ toast: { link: url }, onClose }) as ReactElement;
+  const kids = [drawn.props.children].flat() as ReactElement[];
+  const field = kids.find((c) => c.type === 'input')!;
+  const button = kids.find((c) => c.type === 'button')!;
+  // Both ways of selecting, each time: select() and the whole range (some in-app phone browsers ignore the first).
+  let selected = 0;
+  const ranges: number[][] = [];
+  const event = { currentTarget: { value: url, select: () => { selected++; }, setSelectionRange: (from: number, to: number) => { ranges.push([from, to]); } } };
+  field.props.onFocus(event);
+  field.props.onClick(event);
+  assert.equal(selected, 2);
+  assert.deepEqual(ranges, [[0, url.length], [0, url.length]]);
+  assert.equal(field.props.id, TOAST_LINK_ID);
+  assert.equal(TOAST_LINK_ID, 'toast-link');
+  assert.equal(field.props.value, url);
+  assert.equal(field.props.readOnly, true);
+  assert.equal(field.props.onChange, undefined);
+  button.props.onClick();
+  assert.equal(closed, 1);
+  drawn.props.onKeyDown({ key: 'Enter' });
+  drawn.props.onKeyDown({ key: 'a' });
+  assert.equal(closed, 1);
+  drawn.props.onKeyDown({ key: 'Escape' });
+  assert.equal(closed, 2);
+  // Only the link stays up; plain words hide after the same 2.8 seconds as before.
+  assert.equal(TOAST_MS, 2800);
+  assert.equal(toastHideMs(COPIED_TEXT), 2800);
+  assert.equal(toastHideMs(`Saved "Mine" to My Builds`), 2800);
+  assert.equal(toastHideMs({ link: url }), null);
+  assert.equal(toastHideMs({ link: '' }), null);
+  // A drawer opening, or the page, platform or build changing, clears a link and nothing else.
+  assert.equal(toastAfterChange({ link: url }), null);
+  assert.equal(toastAfterChange({ link: '' }), null);
+  assert.equal(toastAfterChange(COPIED_TEXT), COPIED_TEXT);
+  assert.equal(toastAfterChange(ONE_UNLISTED), ONE_UNLISTED);
+  assert.equal(toastAfterChange(''), '');
+  assert.equal(toastAfterChange(null), null);
+  // The app: one timer rule, one place that copies, and the refused copy goes to the link toast.
+  const app = readFileSync('src/App.tsx', 'utf8').replace(/\r\n/g, '\n');
+  const ui = readFileSync('src/ui.tsx', 'utf8').replace(/\r\n/g, '\n');
+  // Every drawer says so as it opens (the one hook they share, right as the page goes inert), and the app clears a link toast then.
+  assert.equal(DRAWER_OPEN, 'drawer-open');
+  assert.ok(ui.includes(`    page?.setAttribute('inert', '');\n    document.dispatchEvent(new Event(DRAWER_OPEN));\n`));
+  assert.equal(ui.match(/setAttribute\('inert'/g)?.length, 1, 'one place makes the page inert');
+  for (const f of ['src/Picker.tsx', 'src/OwnedFinder.tsx']) assert.match(readFileSync(f, 'utf8'), /^  useDrawer\(onClose, \w+\);\r?$/m, f);
+  assert.equal(readdirSync('src', { recursive: true, encoding: 'utf8' }).filter((f) => /\.tsx$/.test(f) && readFileSync(`src/${f}`, 'utf8').includes('createPortal(')).sort().join(), 'OwnedFinder.tsx,Picker.tsx', 'a new drawer or modal has to clear the link toast too');
+  assert.ok(app.includes(`    const onDrawer = () => setToast(toastAfterChange);\n    document.addEventListener(DRAWER_OPEN, onDrawer);\n    return () => document.removeEventListener(DRAWER_OPEN, onDrawer);\n  }, []);`));
+  // A change of page, platform or any build clears it too, but only a toast the draw before already showed, so pressing Copy Link can't dismiss its own toast.
+  assert.ok(app.includes(`  const drawnToast = useRef<Toast | null>(null);\n  useEffect(() => { if (drawnToast.current === toast) setToast(toastAfterChange); }, [route, platformId, selections]);\n  useEffect(() => { drawnToast.current = toast; });\n`));
+  // Focus: the link's field takes it as the toast appears (plain words never do), and it goes back afterwards only if nothing else has it.
+  assert.ok(app.includes(`  useLinkToastFocus(toast);\n`));
+  assert.ok(ui.includes(`    if (toast === null || typeof toast === 'string') return;\n    const before = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;\n    document.getElementById(TOAST_LINK_ID)?.focus();\n    return () => { if (document.activeElement === document.body && before?.isConnected) before.focus({ preventScroll: true }); };\n  }, [toast]);`));
+  assert.ok(ui.includes(`const selectAll = (field: HTMLInputElement) => { field.select(); field.setSelectionRange(0, field.value.length); };`));
+  assert.ok(ui.includes(`onFocus={(e) => selectAll(e.currentTarget)} onClick={(e) => selectAll(e.currentTarget)} />`));
+  assert.ok(app.includes(`    const ms = toast ? toastHideMs(toast) : null;\n    if (ms === null) return;\n    const t = setTimeout(() => setToast(null), ms);\n    return () => clearTimeout(t);\n  }, [toast]);`));
+  assert.equal((app.match(/setTimeout\(\(\) => setToast\(/g) ?? []).length, 1);
+  assert.ok(app.includes(`    try {\n      await navigator.clipboard.writeText(url);\n      setToast('${COPIED_TEXT}');\n    } catch {\n      setToast({ link: url });\n    }`));
+  assert.ok(app.includes('{toast && <ToastView toast={toast} onClose={() => setToast(null)} />}'));
+  assert.ok(!app.includes('Copy this link'));
+  // Every Copy Link button (the builder, My Builds, Community) calls that one routine; nothing else writes to the clipboard.
+  assert.equal((app.match(/onCopyLink=\{\((b|s)?\) => copyLink\(/g) ?? []).length, 3);
+  const sources = readdirSync('src', { recursive: true, encoding: 'utf8' }).filter((f) => /\.tsx?$/.test(f)).map((f) => readFileSync(`src/${f}`, 'utf8'));
+  assert.equal(sources.join('\n').match(/clipboard/g)?.length, 1);
+  assert.equal(sources.join('\n').match(/onCopyLink=\{/g)?.length, 4, 'the three pages, and the builder handing it to its summary');
+  // The wording comment, and the long link can shrink inside the toast instead of pushing past a phone's edge.
+  assert.match(readFileSync('src/ui.tsx', 'utf8'), /\/\*\* Owner-approved wording \(2026-11-10\)\. \*\/\r?\nexport const TOAST_CLOSE = 'Close';/);
+  const css = readFileSync('src/styles.css', 'utf8');
+  assert.match(css, /\.toast \{[^}]*max-width: calc\(100% - 32px\);/);
+  assert.match(css, /\.toast-link input \{[^}]*min-width: 0;/);
 });
 
 /* ------------------------------------------------------------------ same product, one price (Part.sameAs) */

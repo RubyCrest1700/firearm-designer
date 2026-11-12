@@ -104,6 +104,9 @@ export const ESTIMATE_LABEL = 'Estimate';
 /** A rough figure of ours, neither read by the nightly job nor checked by hand: samples and undated Factory Parts. Display only. */
 export const isEstimate = (o: Offer) => !o.checkedAt && !o.asOf;
 
+/** How many different stores show a real price on at least one of these parts: one the nightly job read or one checked by hand, not an estimate. */
+export const pricedRetailerCount = (parts: Part[]) => new Set(parts.flatMap((p) => p.offers.filter((o) => !isEstimate(o)).map((o) => o.retailer))).size;
+
 /** The small label beside a price that isn't a live store price: Estimate, List Price or Factory Part. */
 export function priceLabel(o: Offer): string {
   if (o.basis === 'list') return 'List Price';

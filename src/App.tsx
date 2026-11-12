@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { PLATFORMS, PRICES_READ_AT, canonicalPlatform, currentSelection } from './data';
 import { ownsAny, partIds, baseSelection, selectionTokens, withoutOwned, type Selection } from './engine';
 import { ComparePage, loadCompare, storeCompare, type CompareItem } from './Compare';
-import { droppedBuilds, loadSavedBuilds, priceChanges, newId, readSharedBuild, savedPrices, selectionFromParts, shareUrl, checkShareLinks, storeSavedBuilds, SAVED_KEY, type SavedBuild } from './store';
+import { droppedBuilds, loadSavedBuilds, priceChanges, newId, readSharedLink, savedPrices, selectionFromParts, shareUrl, unlistedNote, checkShareLinks, storeSavedBuilds, SAVED_KEY, type SavedBuild } from './store';
 import { recordBuyClick, shareBuild, type CommunityBuild } from './community';
 import { ALERTS_KEY, alertsAvailable, checkAlertSignup, loadAlertSignup, signUpForAlerts, stopAlerts, storeAlertSignup, syncAlertBuilds, type AlertSignup } from './alerts';
 import type { Part } from './types';
@@ -10,7 +10,7 @@ import { BuilderPage } from './BuilderPage';
 import { CommunityPage } from './CommunityPage';
 import { HomePage } from './HomePage';
 import { AlertsPanel, SavedPage } from './SavedPage';
-import { priceStatus } from './ui';
+import { DRAWER_OPEN, ToastView, priceStatus, toastAfterChange, toastHideMs, useLinkToastFocus, type Toast } from './ui';
 
 const STORE_KEY = 'firearm-designer:v2';
 /** The home page's title, the same as the <title> in index.html. */
@@ -59,7 +59,9 @@ export const signupAfter = (current: AlertSignup | null, token: string, next: Al
 
 export default function App() {
   const persisted = useMemo(loadPersisted, []);
-  const shared = useMemo(readSharedBuild, []);
+  const shared = useMemo(readSharedLink, []);
+  /** What to say about parts the opened link named that the site no longer lists; '' when there's nothing to say. */
+  const linkNote = unlistedNote(shared?.unlisted ?? 0);
   const [route, setRoute] = useState<Route>(() => (shared ? 'build' : routeFromHash()));
   const [platformId, setPlatformId] = useState(shared?.platform ?? (PLATFORMS.some((p) => p.id === persisted?.platform) ? persisted!.platform : PLATFORMS[0].id));
   const [selections, setSelections] = useState<Record<string, Selection>>(() => ({
@@ -73,7 +75,7 @@ export default function App() {
   const [openSavedId, setOpenSavedId] = useState<string | null>(null);
   /** The community build open in the builder, so retailer clicks count toward it. Cleared on any edit. */
   const [communityOpen, setCommunityOpen] = useState<CommunityBuild | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<Toast | null>(null);
   /** The part a home page price drop opens in the builder: its slot's picker starts open on it. Used once. */
   const [startPart, setStartPart] = useState<Part | null>(null);
   useEffect(() => { if (route === 'build') setStartPart(null); }, [route]);
@@ -133,6 +135,8 @@ export default function App() {
   }, [saved]);
   // Tell a returning visitor once when a saved build gets cheaper; a new drop tells them again.
   useEffect(() => {
+    // The note about the link just opened shows instead; the drop isn't marked as told, so the next visit tells it.
+    if (linkNote) return;
     const seen = dropped.map((s) => `${s.id}:${priceChanges(s).drop.toFixed(2)}`).sort().join(',');
     try {
       if (!seen || localStorage.getItem(DROPS_SEEN_KEY) === seen) return;
@@ -140,11 +144,26 @@ export default function App() {
     } catch { return; }
     setToast(dropped.length === 1 ? `Price drop: "${dropped[0].name}" costs less than when you saved it. See My Builds.` : `Price drop: ${dropped.length} of your saved builds cost less than when you saved them. See My Builds.`);
   }, []);
+  useEffect(() => { if (linkNote) setToast(linkNote); }, []);
   useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(() => setToast(null), 2800);
+    // A link the browser would not copy stays until it's closed, another toast takes its place, or one of the changes below.
+    const ms = toast ? toastHideMs(toast) : null;
+    if (ms === null) return;
+    const t = setTimeout(() => setToast(null), ms);
     return () => clearTimeout(t);
   }, [toast]);
+  // A link toast goes when a drawer opens: the page behind a drawer can't be used, and the toast is part of that page.
+  useEffect(() => {
+    const onDrawer = () => setToast(toastAfterChange);
+    document.addEventListener(DRAWER_OPEN, onDrawer);
+    return () => document.removeEventListener(DRAWER_OPEN, onDrawer);
+  }, []);
+  // It also goes when the page, the platform or a build changes, since its link may no longer be the build on screen.
+  // Only a toast the draw before already showed: one that arrives in the same draw as the change stays.
+  const drawnToast = useRef<Toast | null>(null);
+  useEffect(() => { if (drawnToast.current === toast) setToast(toastAfterChange); }, [route, platformId, selections]);
+  useEffect(() => { drawnToast.current = toast; });
+  useLinkToastFocus(toast);
 
   // Each page gets its own history entry, so Back returns to the page before (the hashchange listener follows it).
   const go = (r: Route) => {
@@ -192,7 +211,7 @@ export default function App() {
       await navigator.clipboard.writeText(url);
       setToast('Link copied. Anyone who opens it sees this exact build.');
     } catch {
-      setToast(`Copy this link: ${url}`);
+      setToast({ link: url });
     }
   };
 
@@ -298,6 +317,7 @@ export default function App() {
             current={opened.has(platformId) && (partIds(selOf(platformId)).length || ownsAny(selOf(platformId))) ? { platform: platformId, selection: selOf(platformId), name: openSaved?.name } : null}
             lastPlatform={platformId}
             onOpen={(item) => openInBuilder(item.platform, item.selection)}
+            onNote={setToast}
           />
         )}
       </main>
@@ -317,7 +337,7 @@ export default function App() {
         </div>
       </footer>
 
-      {toast && <div className="toast" role="status">{toast}</div>}
+      {toast && <ToastView toast={toast} onClose={() => setToast(null)} />}
     </div>
   );
 }

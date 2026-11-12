@@ -233,6 +233,12 @@ export function shareUrl(platformId: string, sel: Selection, communityId?: strin
 }
 
 export function readSharedBuild(): { platform: string; selection: Selection } | null {
+  const shared = readSharedLink();
+  return shared && { platform: shared.platform, selection: shared.selection };
+}
+
+/** readSharedBuild, plus how many parts the link names that the site no longer lists (unlistedParts). */
+export function readSharedLink(): { platform: string; selection: Selection; unlisted: number } | null {
   try {
     const raw = new URLSearchParams(location.search).get('b');
     if (!raw) return null;
@@ -240,26 +246,56 @@ export function readSharedBuild(): { platform: string; selection: Selection } | 
     const pid = canonicalPlatform(old);
     const platform = PLATFORMS.find((p) => p.id === pid);
     if (!platform) return null;
-    const selection = selectionFromParts(pid, ids.split('.'));
+    const tokens = ids.split('.');
+    const selection = selectionFromParts(pid, tokens);
     // A link with no parts opens the plain factory build, of the model it names (`glock26~`) if it names one.
     const model = platform.models?.find((m) => m.id === old);
-    return { platform: pid, selection: Object.keys(selection).length ? selection : baseSelection(model ? { ...platform, presets: model.presets, base: model.base } : platform) };
+    return { platform: pid, selection: Object.keys(selection).length ? selection : baseSelection(model ? { ...platform, presets: model.presets, base: model.base } : platform), unlisted: unlistedParts(tokens) };
   } catch {
     return null;
   }
 }
+
+/** A placement token (`at-<slot>-<code>`) and an owned mark (`own-<slot>`, `has-<slot>`): never part ids. */
+const AT_TOKEN = /^at-([a-z]+)-(\w+)$/;
+const OWN_TOKEN = /^(own|has)-([a-z]+)$/;
+/** How every placement and mark starts, well formed or not. No part id starts this way (a test checks the catalog). */
+export const MARK_PREFIX = /^(own|has|at)-/;
+/** The shape every part id has. */
+const PART_ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+
+/**
+ * How many different parts a link names that the site no longer lists on any platform: tokens shaped like a part id
+ * that are no part's id, even after a retired id is read as its stand-in (RETIRED_IDS). Placement tokens and owned
+ * marks aren't parts, even malformed ones (MARK_PREFIX); a part listed for another platform is still listed, and the
+ * same id twice is one part.
+ */
+export function unlistedParts(ids: string[]): number {
+  const unlisted = new Set<string>();
+  for (const id of ids) {
+    if (MARK_PREFIX.test(id) || !PART_ID.test(id)) continue;
+    const now = currentId(id);
+    if (!PLATFORMS.some((p) => p.parts.some((x) => x.id === now))) unlisted.add(id);
+  }
+  return unlisted.size;
+}
+
+// The note shown when an opened link named parts the site no longer lists, or '' when it named none.
+/** Owner-approved wording (2026-11-10). */
+export const unlistedNote = (n: number) =>
+  n <= 0 ? '' : n === 1 ? 'This link had 1 part we no longer list, so it was left out.' : `This link had ${n} parts we no longer list, so they were left out.`;
 
 /** Turns part ids and placement tokens back into a selection, skipping ids the catalog no longer has. */
 export function selectionFromParts(platformId: string, ids: string[]): Selection {
   const platform = PLATFORMS.find((p) => p.id === canonicalPlatform(platformId));
   const selection: Selection = {};
   for (const id of ids) {
-    const at = id.match(/^at-([a-z]+)-(\w+)$/);
+    const at = id.match(AT_TOKEN);
     if (at) {
       if (MOUNT_CODE.test(at[2]) && platform?.slots.some((s) => s.id === at[1])) selection['@' + at[1]] = at[2];
       continue;
     }
-    const own = id.match(/^(own|has)-([a-z]+)$/);
+    const own = id.match(OWN_TOKEN);
     if (own) {
       if (platform?.slots.some((s) => s.id === own[2])) selection['+' + own[2]] = own[1] === 'has' ? 'other' : 'own';
       continue;
