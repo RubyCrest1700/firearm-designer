@@ -550,8 +550,11 @@ ${names ? `<p>Builds you'll get alerts for:</p><ul>${names}</ul>` : ''}
 
 /* ------------------------------------------------------------------ daily run */
 
-/** A chunk's claim needs at least this many rows before "none of them was claimed" is taken as a bad answer (claimProblem). */
-const MIN_ROWS_TO_JUDGE = 3;
+/**
+ * A chunk needs at least this many addresses (not rows: one address can have several) before "none of them was
+ * claimed" stops the run (see runAlerts). Under it, that can't be told apart from one or two unsubscribes.
+ */
+const MIN_ADDRESSES_TO_JUDGE = 3;
 
 /**
  * What is wrong with the database's answer to a claim batch, in words (never a token or an address), or '' when
@@ -565,11 +568,9 @@ const MIN_ROWS_TO_JUDGE = 3;
  * statement, each with a `results` array that is empty (not claimed) or holds exactly one row carrying the token
  * that statement was bound to (claimed). Anything else is a bad answer.
  *
- * One more check, on the chunk as a whole: every row in it was read from the database moments before, so if none
- * of them comes back claimed, that is far more likely a misread answer than that many people unsubscribing at
- * once. The one real way it happens is two runs claiming the same chunk at the same moment, and stopping the second
- * run is right then too. Under MIN_ROWS_TO_JUDGE rows that can't be told apart from two or so unsubscribes, so a
- * small chunk is not judged this way.
+ * A well-formed answer in which nothing was claimed is not a bad answer: the database has said this run took none
+ * of those rows, so none of them may be put back (that could only undo another run's claims). It is judged in
+ * runAlerts instead (MIN_ADDRESSES_TO_JUDGE).
  */
 function claimProblem(done, claims) {
   if (!Array.isArray(done)) return 'the batch answer is not a list';
@@ -579,7 +580,6 @@ function claimProblem(done, claims) {
     if (!Array.isArray(rows)) return 'a statement came back without its rows';
     if (rows.length > 1 || (rows.length === 1 && rows[0]?.token !== claims[j].token)) return 'a statement returned a row it was not bound to';
   }
-  if (claims.length >= MIN_ROWS_TO_JUDGE && done.every((result) => result.results.length === 0)) return `none of ${claims.length} rows came back claimed`;
   return '';
 }
 
@@ -596,7 +596,9 @@ function claimProblem(done, claims) {
  * was read: if any of an address's rows has gone (the person unsubscribed) or been claimed by another run in the
  * meantime, the address is left alone and whatever was claimed for it is put back. If the database's answer to a
  * claim can't be read (see claimProblem), nobody in that chunk is emailed, its claims are put back and the run
- * stops, with one line in the log. An email that did not go has its
+ * stops, with one line in the log. If the answer can be read but says nothing was claimed for a chunk of
+ * MIN_ADDRESSES_TO_JUDGE or more addresses, nobody there is emailed, nothing is put back (this run holds none of
+ * those rows), and the run stops, with one line in the log. An email that did not go has its
  * `seen` put back, so the change is still waiting to be told. If it was never really tried (Resend's limit was
  * reached, or the run stopped first) `last_sent_at` is put back too and the address keeps its place for tomorrow.
  * If Resend turned that email down, `last_sent_at` stays, so the address goes to the back of the line and is tried
@@ -719,6 +721,16 @@ export async function runAlerts(env, now = Date.now()) {
       stopped = true;
       for (const a of chunk) putBack('deferred', a.rows.map((row) => [row, row.last_sent_at]));
     } else claims.forEach((c, j) => { c.took = done[j].results.length === 1; });
+    // A well-formed answer with nothing claimed across MIN_ADDRESSES_TO_JUDGE or more addresses: every row was read
+    // moments before, so this is another run claiming the same rows, a mass unsubscribe, or the database misreading
+    // the claim. Nothing is put back (the database says this run holds none of these rows, and a put-back could
+    // only undo another run's claims), nobody here is emailed, and the run stops.
+    if (!problem && chunk.length >= MIN_ADDRESSES_TO_JUDGE && !claims.some((c) => c.took)) {
+      console.error(`Alert claim took none of ${chunk.length} addresses: ${errorText(new Error('another run, a mass unsubscribe, or a database reading problem'))}`);
+      counts.claimMissed += chunk.length;
+      stopped = true;
+      continue;
+    }
     for (const a of problem ? [] : chunk) {
       const mine = claims.filter((c) => c.a === a);
       // Not every row was claimed: the person unsubscribed, or another run has the address. No email; the rows
