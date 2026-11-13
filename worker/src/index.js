@@ -19,15 +19,27 @@ export async function withSecurityHeaders(res) {
 
 export default {
   fetch: async (request, env, ctx) => withSecurityHeaders(await handle(request, env, Date.now(), ctx)),
-  // Daily, after the nightly price refresh has rebuilt the site: email price alerts and the feedback digest,
-  // and clear out old personal data. Each logs only counts, or its error's name and message.
-  scheduled: (event, env, ctx) => ctx.waitUntil(runDaily(env)),
+  // Daily, after the nightly price refresh has rebuilt the site, as two cron runs (wrangler.toml), so the price
+  // alert emails can't use up the D1 queries and subrequests that clearing out old personal data needs:
+  //   11:00 UTC  price alert emails
+  //   11:30 UTC  the feedback digest, and clearing out old personal data
+  // A run with any other cron value, or none, does all three. Each logs only counts, or its error's name and message.
+  // The run's promise is returned, because the runtime waits for what a scheduled handler returns (a cron run may
+  // take up to 15 minutes) and waitUntil alone is only documented to keep a run going for up to 30 seconds.
+  scheduled: (event, env, ctx) => {
+    const run = runDaily(env, Date.now(), CRON_JOBS[event?.cron]);
+    ctx.waitUntil(run);
+    return run;
+  },
 };
 
-export async function runDaily(env, now = Date.now()) {
-  const jobs = { 'Price alerts': runAlerts, Feedback: runFeedback, Retention: runRetention };
-  const names = Object.keys(jobs);
-  const results = await Promise.allSettled(names.map((name) => Promise.resolve().then(() => jobs[name](env, now))));
+const JOBS = { 'Price alerts': runAlerts, Feedback: runFeedback, Retention: runRetention };
+/** Which jobs each cron in wrangler.toml runs. */
+export const CRON_JOBS = { '0 11 * * *': ['Price alerts'], '30 11 * * *': ['Feedback', 'Retention'] };
+
+/** Runs the named jobs, or all of them. */
+export async function runDaily(env, now = Date.now(), names = Object.keys(JOBS)) {
+  const results = await Promise.allSettled(names.map((name) => Promise.resolve().then(() => JOBS[name](env, now))));
   results.forEach((r, i) => {
     if (r.status === 'fulfilled') console.log(names[i], JSON.stringify(r.value));
     else console.error(`${names[i]} failed:`, errorText(r.reason));

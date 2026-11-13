@@ -65,9 +65,10 @@ function cors(origin) {
 
 /**
  * An error as one short line for the logs: its name and message, with anything shaped like an email address
- * blanked out in case one ever slips into a message. Never the stack, request or response bodies.
+ * or a signup token (32 hex characters) blanked out in case one ever slips into a message. Never the stack,
+ * request or response bodies.
  */
-export const errorText = (err) => `${err?.name ?? 'Error'}: ${String(err?.message ?? err).replace(/[^\s@]*@[^\s@]*/g, '<address>').slice(0, 200)}`;
+export const errorText = (err) => `${err?.name ?? 'Error'}: ${String(err?.message ?? err).replace(/[^\s@]*@[^\s@]*/g, '<address>').replace(/\b[a-f0-9]{32}\b/g, '<token>').slice(0, 200)}`;
 
 /** Plain text only: no control characters, collapsed whitespace, length-capped. */
 export function cleanText(s, max) {
