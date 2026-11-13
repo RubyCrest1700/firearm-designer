@@ -50,7 +50,11 @@ function fakeD1() {
     try {
       const out = list.map((s, i) => {
         const q = db.prepare(s.sql);
-        const result = /^\s*select/i.test(s.sql) ? { results: q.all(...s.args) } : { results: [], meta: { changes: Number(q.run(...s.args).changes) } };
+        // A statement with RETURNING gives its returned rows as `results`, as D1 does; other writes give none.
+        const returning = /\breturning\b/i.test(s.sql) && q.all(...s.args);
+        const result = /^\s*select/i.test(s.sql) ? { results: q.all(...s.args) }
+          : returning ? { results: returning, meta: { changes: returning.length } }
+          : { results: [], meta: { changes: Number(q.run(...s.args).changes) } };
         if (i === failAt) throw new Error('D1_ERROR: batch failed');
         return result;
       });
@@ -2876,7 +2880,7 @@ test('someone who unsubscribes after the run has read its rows gets no email, an
   });
   const net = invocation(e, LISTED(120));
   const { result, lines } = await captureLogs(() => withFetch(net.fetch, () => runAlerts(e, T0)));
-  assert.deepEqual(result, { sent: 2, deferred: 0, failed: 0, skipped: 1, watched: 3 });
+  assert.deepEqual(result, { sent: 2, deferred: 0, failed: 0, claimMissed: 1, watched: 3 });
   assert.deepEqual(net.sends.map((s) => s.to), ['d0@example.com', 'd2@example.com']);
   assert.deepEqual(lines, []);
   // The run's own queries are what they were: 3 at the start and one claim batch. The other 2 are the unsubscribe's.
@@ -2904,7 +2908,7 @@ test('a row another run claimed after this run read it gets no second email and 
   beforeFirstBatch(e, () => e.DB.exec(`UPDATE alerts SET seen = '${JSON.stringify(CLAIMED)}', last_sent_at = ${other} WHERE token IN ('${tokenFor('n1')}', '${tokenFor('p1')}')`));
   const net = invocation(e, LISTED(120));
   const { result, lines } = await captureLogs(() => withFetch(net.fetch, () => runAlerts(e, T0)));
-  assert.deepEqual(result, { sent: 2, deferred: 0, failed: 0, skipped: 2, watched: 4 });
+  assert.deepEqual(result, { sent: 2, deferred: 0, failed: 0, claimMissed: 2, watched: 4 });
   // A row never emailed (NULL) and one emailed before are both claimed when they are still as they were read.
   assert.deepEqual(net.sends.map((s) => s.to).sort(), ['n0@example.com', 'p0@example.com']);
   assert.equal(lines.length, 0);
@@ -2922,7 +2926,7 @@ test('an address with two rows, one of them gone by the claim, gets no email and
   beforeFirstBatch(e, () => e.DB.exec(`DELETE FROM alerts WHERE token = '${tokenFor('t1')}'`));
   const net = invocation(e, LISTED(120));
   const { result, lines } = await captureLogs(() => withFetch(net.fetch, () => runAlerts(e, T0)));
-  assert.deepEqual(result, { sent: 1, deferred: 0, failed: 0, skipped: 1, watched: 3 });
+  assert.deepEqual(result, { sent: 1, deferred: 0, failed: 0, claimMissed: 1, watched: 3 });
   assert.deepEqual(net.sends.map((s) => s.to), ['t0@example.com']);
   assert.equal(lines.length, 0);
   assert.equal(e.DB.queries, 3 + 1 + 1, 'one claim batch, and one revert batch for the row that was claimed');
@@ -2938,6 +2942,17 @@ test('two runs that overlap email each address once, even when the mail provider
   const e = liveEnv();
   for (let i = 0; i < 12; i++) await addRow(e, `o${i}`, `o${pad(i)}@example.com`, { created: T0 - 5 * DAY + i, sent: i % 4 === 0 ? T0 - 3 * DAY + i : null });
   await addRow(e, 'o5b', 'o005@example.com', { created: T0 - 4 * DAY, seen: { [APEX]: 150 }, builds: [RANGE] });
+  // A signup confirmed between the two runs' reads: only the second run sees it, at the head of its first chunk.
+  // So that chunk holds a row the first run did not claim, and the second run doesn't take "none of my chunk came
+  // back claimed" for a misread answer.
+  const prepare = e.DB.prepare;
+  let late;
+  e.DB.prepare = (sql) => {
+    const s = prepare(sql);
+    if (late || !sql.startsWith('SELECT * FROM alerts WHERE confirmed = 1')) return s;
+    // The first run's read has run by the time `all` returns; the insert lands before the second run's read.
+    return { ...s, all: () => { const read = s.all(); late = addRow(e, 'late', 'late@example.com', { created: T0 - 10 * DAY }); return read; } };
+  };
   // Both runs read, then both claim their first chunk, and only then does either send.
   const batch = e.DB.batch;
   let arrived = 0;
@@ -2954,19 +2969,24 @@ test('two runs that overlap email each address once, even when the mail provider
   };
   // No limits here (two invocations share this network), and every request is accepted whatever its key.
   const net = network(LISTED(120), { resend: async () => { await claims; return 200; } });
-  const [a, b] = await withFetch(net.fetch, () => Promise.all([runAlerts(e, T0), runAlerts(e, T0 + 7)]));
-  const everyone = Array.from({ length: 12 }, (_, i) => `o${pad(i)}@example.com`);
+  const { result: [a, b], lines } = await captureLogs(() => withFetch(net.fetch, () => Promise.all([runAlerts(e, T0), runAlerts(e, T0 + 7)])));
+  await late;
+  assert.deepEqual(lines, []);
+  assert.equal(a.watched, 13, 'the first run read before the late signup');
+  assert.equal(b.watched, 14);
+  const everyone = [...Array.from({ length: 12 }, (_, i) => `o${pad(i)}@example.com`), 'late@example.com'].sort();
   assert.deepEqual(net.sends.map((s) => s.to).sort(), everyone, 'one request per address across both runs');
-  assert.equal(net.accepted.length, 12);
-  assert.equal(a.sent + b.sent, 12);
-  assert.equal((a.skipped ?? 0) + (b.skipped ?? 0), 12, 'each run skips what the other claimed');
+  assert.equal(net.accepted.length, 13);
+  assert.equal(a.sent + b.sent, 13);
+  assert.equal((a.claimMissed ?? 0) + (b.claimMissed ?? 0), 12, 'each run leaves alone what the other claimed');
   assert.equal(a.failed + b.failed + a.deferred + b.deferred + (a.unconfirmed ?? 0) + (b.unconfirmed ?? 0), 0);
   // The address with two rows got one email covering both.
   assert.equal(net.accepted.find((s) => s.to === 'o005@example.com').message.subject, 'Price drop on 2 of your builds');
   // A third run finds nothing left to tell.
   e.DB.batch = batch;
+  e.DB.prepare = prepare;
   const later = network(LISTED(120));
-  assert.deepEqual(await withFetch(later.fetch, () => runAlerts(e, T0 + DAY)), { sent: 0, deferred: 0, failed: 0, watched: 13 });
+  assert.deepEqual(await withFetch(later.fetch, () => runAlerts(e, T0 + DAY)), { sent: 0, deferred: 0, failed: 0, watched: 14 });
   assert.equal(later.sends.length, 0);
 });
 
@@ -3221,4 +3241,200 @@ test('a well-formed token with no signup: one-click and no body get a 204, the p
   assert.equal(big.seen.pulls, 0);
   assert.deepEqual(await tables(e), before);
   assert.equal(await statusOf(e, kept), 200);
+});
+
+/* ------------------------- batch 3, W1 third fix: a claim decided by its own returned row, and a loud stop on a bad answer */
+
+const CLAIM_SQL = 'UPDATE alerts SET seen = ?, last_sent_at = ? WHERE token = ? AND last_sent_at IS ? RETURNING token';
+/**
+ * Changes the database's answer to the run's claim batches: `change(answer, list)` gives what the run gets
+ * instead. The batch itself still runs, and counts, as it would. Returns a function that puts the real batch back.
+ */
+const claimAnswer = (e, change) => {
+  const batch = e.DB.batch;
+  e.DB.batch = async (list) => {
+    const answer = await batch(list);
+    return list[0]?.sql === CLAIM_SQL ? change(answer, list) : answer;
+  };
+  return () => { e.DB.batch = batch; };
+};
+/** 15 addresses, one row each, with a move waiting: a chunk of 10 and a chunk of 5. */
+const seedFifteen = async (e) => {
+  for (let i = 0; i < 15; i++) await addRow(e, `q${i}`, `q${pad(i)}@example.com`, { created: T0 - 5 * DAY + i });
+};
+const fifteen = Array.from({ length: 15 }, (_, i) => `q${i}`);
+
+test('each claim statement returns its own token when it takes the row and nothing when the row has gone; that address gets no email', async () => {
+  const e = liveEnv();
+  for (let i = 0; i < 4; i++) await addRow(e, `r${i}`, `r${i}@example.com`, { created: T0 - 5 * DAY + i });
+  beforeFirstBatch(e, () => e.DB.exec(`DELETE FROM alerts WHERE token = '${tokenFor('r2')}'`));
+  const answers = [];
+  claimAnswer(e, (answer, list) => { answers.push({ answer, bound: list.map((s) => s.args[2]) }); return answer; });
+  const net = invocation(e, LISTED(120));
+  const { result, lines } = await captureLogs(() => withFetch(net.fetch, () => runAlerts(e, T0)));
+  assert.deepEqual(result, { sent: 3, deferred: 0, failed: 0, claimMissed: 1, watched: 4 });
+  assert.deepEqual(net.sends.map((s) => s.to), ['r0@example.com', 'r1@example.com', 'r3@example.com']);
+  assert.deepEqual(lines, []);
+  assert.equal(e.DB.queries, 3 + 1, 'RETURNING adds no query');
+  assert.equal(net.pool.used, 3 + 1 + 1 + 3);
+  afterRun(e);
+  assert.equal(answers.length, 1);
+  const { answer, bound } = answers[0];
+  assert.deepEqual(bound, ['r0', 'r1', 'r2', 'r3'].map(tokenFor));
+  assert.deepEqual(answer.map((r) => r.results.map((row) => ({ ...row }))), [[{ token: tokenFor('r0') }], [{ token: tokenFor('r1') }], [], [{ token: tokenFor('r3') }]]);
+});
+
+test('a claim answer that can\'t be read emails nobody in that chunk, logs one line without addresses or tokens, puts the chunk back and stops the run', async () => {
+  const other = 'f'.repeat(32);
+  const cases = [
+    ['every result without its rows', (answer) => answer.map((r) => ({ meta: r.meta })), 'a statement came back without its rows'],
+    ['one result\'s rows undefined', (answer) => answer.map((r, j) => (j === 4 ? { ...r, results: undefined } : r)), 'a statement came back without its rows'],
+    ['every result\'s rows empty, in a chunk of 10', (answer) => answer.map((r) => ({ ...r, results: [] })), 'none of 10 rows came back claimed'],
+    ['one result fewer than statements', (answer) => answer.slice(0, -1), '9 results for 10 statements'],
+    ['one result more than statements', (answer) => [...answer, answer[0]], '11 results for 10 statements'],
+    ['no answer at all', () => undefined, 'the batch answer is not a list'],
+    ['null', () => null, 'the batch answer is not a list'],
+    ['an object, not a list', (answer) => ({ results: answer }), 'the batch answer is not a list'],
+    ['a row for a token the statement was not bound to', (answer) => answer.map((r, j) => (j === 2 ? { ...r, results: [{ token: other }] } : r)), 'a statement returned a row it was not bound to'],
+    ['two rows from one statement', (answer) => answer.map((r, j) => (j === 2 ? { ...r, results: [...r.results, ...r.results] } : r)), 'a statement returned a row it was not bound to'],
+  ];
+  for (const [label, change, words] of cases) {
+    const e = liveEnv();
+    await seedFifteen(e);
+    const before = [];
+    for (const l of fifteen) before.push(await rawRow(e, l));
+    const restore = claimAnswer(e, change);
+    const net = invocation(e, LISTED(120));
+    const { result, lines } = await captureLogs(() => withFetch(net.fetch, () => runAlerts(e, T0)));
+    // The first chunk's 10 are put back and put off; the run stops, so the second chunk's 5 wait too.
+    assert.deepEqual(result, { sent: 0, deferred: 15, failed: 0, watched: 15 }, label);
+    assert.equal(net.sends.length, 0, label);
+    assert.deepEqual(lines, [`Alert claim result unreadable: Error: ${words}`], label);
+    noSecrets(lines);
+    assert.equal(e.DB.queries, 3 + 1 + 1, `${label}: one claim batch, its put-back, and no second chunk`);
+    afterRun(e);
+    const after = [];
+    for (const l of fifteen) after.push(await rawRow(e, l));
+    assert.deepEqual(after, before, `${label}: every row as it was, byte for byte`);
+    // The next day's answer reads normally, and everyone is emailed once.
+    restore();
+    const next = invocation(e, LISTED(120));
+    const day2 = await captureLogs(() => withFetch(next.fetch, () => runAlerts(e, T0 + DAY)));
+    assert.deepEqual(day2.result, { sent: 15, deferred: 0, failed: 0, watched: 15 }, label);
+    assert.deepEqual(day2.lines, [], label);
+    assert.deepEqual(next.accepted.map((s) => s.to).sort(), fifteen.map((l) => `q${pad(Number(l.slice(1)))}@example.com`).sort(), label);
+  }
+});
+
+test('a bad claim answer whose put-back fails too keeps the claims and counts them unconfirmed, with both failures logged', async () => {
+  const e = liveEnv();
+  await seedFifteen(e);
+  claimAnswer(e, (answer) => answer.map((r) => ({ ...r, results: [] })));
+  // The claim batch goes through; the put-back after it fails.
+  e.DB.failBatchAt = 0;
+  e.DB.failBatchSkip = 1;
+  const net = invocation(e, LISTED(120));
+  const { result, lines } = await captureLogs(() => withFetch(net.fetch, () => runAlerts(e, T0)));
+  assert.deepEqual(result, { sent: 0, deferred: 5, failed: 0, unconfirmed: 10, watched: 15 });
+  assert.equal(net.sends.length, 0);
+  assert.deepEqual(lines, ['Alert claim result unreadable: Error: none of 10 rows came back claimed', 'Alert undo failed: Error: D1_ERROR: batch failed']);
+  noSecrets(lines);
+  afterRun(e);
+  for (let i = 0; i < 10; i++) assert.deepEqual(await rowOf(e, `q${i}`), { seen: CLAIMED, sent: T0 }, 'the claim stays: counted, not hidden');
+  for (let i = 10; i < 15; i++) assert.deepEqual(await rowOf(e, `q${i}`), { seen: ALL_SEEN, sent: null });
+});
+
+test('a chunk none of whose rows is claimed: under 3 rows it is left alone quietly, from 3 rows it stops the run as a bad answer', async () => {
+  for (const [size, want, logged] of [
+    [1, { sent: 0, deferred: 0, failed: 0, claimMissed: 1, watched: 1 }, []],
+    [2, { sent: 0, deferred: 0, failed: 0, claimMissed: 2, watched: 2 }, []],
+    [3, { sent: 0, deferred: 3, failed: 0, watched: 3 }, ['Alert claim result unreadable: Error: none of 3 rows came back claimed']],
+  ]) {
+    const e = liveEnv();
+    for (let i = 0; i < size; i++) await addRow(e, `u${i}`, `u${i}@example.com`, { created: T0 - 5 * DAY + i });
+    // Every one of them unsubscribes after the read and before the claim.
+    beforeFirstBatch(e, () => e.DB.exec('DELETE FROM alerts'));
+    const net = invocation(e, LISTED(120));
+    const { result, lines } = await captureLogs(() => withFetch(net.fetch, () => runAlerts(e, T0)));
+    assert.deepEqual(result, want, `${size} rows`);
+    assert.deepEqual(lines, logged, `${size} rows`);
+    assert.equal(net.sends.length, 0);
+    afterRun(e);
+    assert.equal(await count(e, 'alerts'), 0, 'nothing is brought back');
+  }
+  // One address with 3 rows counts as 3 rows.
+  const e = liveEnv();
+  await addRow(e, 'v0', 'v@example.com', { created: T0 - 5 * DAY });
+  await addRow(e, 'v1', 'v@example.com', { created: T0 - 5 * DAY + 1, seen: { [APEX]: 150 }, builds: [RANGE] });
+  await addRow(e, 'v2', 'v@example.com', { created: T0 - 5 * DAY + 2, seen: { [APEX]: 150 }, builds: [RANGE] });
+  const restore = claimAnswer(e, (answer) => answer.map((r) => ({ ...r, results: [] })));
+  const net = invocation(e, LISTED(120));
+  const { result, lines } = await captureLogs(() => withFetch(net.fetch, () => runAlerts(e, T0)));
+  assert.deepEqual(result, { sent: 0, deferred: 1, failed: 0, watched: 3 });
+  assert.deepEqual(lines, ['Alert claim result unreadable: Error: none of 3 rows came back claimed']);
+  afterRun(e);
+  restore();
+  const next = invocation(e, LISTED(120));
+  assert.deepEqual(await withFetch(next.fetch, () => runAlerts(e, T0 + DAY)), { sent: 1, deferred: 0, failed: 0, watched: 3 });
+});
+
+test('whatever meta.changes says, the claim is read from the returned rows: missing, a string, cumulative, zero, or 1 for a row that has gone', async () => {
+  const modes = {
+    missing: (r) => ({ results: r.results }),
+    string: (r) => ({ ...r, meta: { changes: '1' } }),
+    cumulative: (r, j) => ({ ...r, meta: { changes: j + 1 } }),
+    zero: (r) => ({ ...r, meta: { changes: 0 } }),
+    'always 1': (r) => ({ ...r, meta: { changes: 1 } }),
+    bigint: (r) => ({ ...r, meta: { changes: BigInt(r.results.length) } }),
+  };
+  for (const [mode, change] of Object.entries(modes)) {
+    const e = liveEnv();
+    for (let i = 0; i < 12; i++) await addRow(e, `c${i}`, `c${pad(i)}@example.com`, { created: T0 - 5 * DAY + i });
+    // One address unsubscribes between the read and the claim: its statement returns no row.
+    beforeFirstBatch(e, () => e.DB.exec(`DELETE FROM alerts WHERE token = '${tokenFor('c3')}'`));
+    claimAnswer(e, (answer) => answer.map(change));
+    const net = invocation(e, LISTED(120));
+    const { result, lines } = await captureLogs(() => withFetch(net.fetch, () => runAlerts(e, T0)));
+    assert.deepEqual(result, { sent: 11, deferred: 0, failed: 0, claimMissed: 1, watched: 12 }, mode);
+    assert.deepEqual(lines, [], mode);
+    assert.deepEqual(net.accepted.map((s) => s.to), Array.from({ length: 12 }, (_, i) => `c${pad(i)}@example.com`).filter((to) => to !== 'c003@example.com'), mode);
+    assert.equal(e.DB.queries, 3 + 2, `${mode}: two claim batches, nothing to put back`);
+  }
+});
+
+test('a 429 body is read only up to 4,096 bytes: a 5 MB one is not read through and counts as the rate limit, whatever it names', async () => {
+  const quota = '{"name":"daily_quota_exceeded","p":"';
+  // A 5 MB body naming the daily quota, given 1,024 bytes at a time; read whole, it would stop the run.
+  const huge = () => {
+    const seen = { pulls: 0, cancelled: false };
+    const total = 5 * 1024;
+    const chunk = (n) => new TextEncoder().encode(n === 0 ? quota.padEnd(1024, 'x') : n === total - 1 ? '"}'.padStart(1024, 'x') : 'x'.repeat(1024));
+    const stream = new ReadableStream({ pull(controller) { const n = seen.pulls++; controller.enqueue(chunk(n)); if (n === total - 1) controller.close(); }, cancel() { seen.cancelled = true; } }, { highWaterMark: 0 });
+    return { seen, stream };
+  };
+  const e = liveEnv();
+  await addRow(e, 'x', 'x@example.com', { created: T0 - DAY });
+  await addRow(e, 'y', 'y@example.com', { created: T0 - DAY + 1 });
+  const waits = recordWaits(e);
+  const body = huge();
+  const net = invocation(e, LISTED(120), { resend: (_send, n) => (n === 0 ? { status: 429, body: body.stream } : 200) });
+  const { result, lines } = await captureLogs(() => withFetch(net.fetch, () => runAlerts(e, T0)));
+  assert.deepEqual(result, { sent: 2, deferred: 0, failed: 0, watched: 2 }, 'a rate limit: retried, and the run goes on');
+  assert.deepEqual(net.sends.map((s) => s.to), ['x@example.com', 'x@example.com', 'y@example.com']);
+  assert.deepEqual(waits, [1000, 120]);
+  assert.ok(body.seen.pulls <= 5, `read ${body.seen.pulls} chunks of 1,024 bytes`);
+  assert.equal(body.seen.cancelled, true);
+  assert.equal(lines.length, 0);
+
+  // At the edge: a quota body of exactly 4,096 bytes is read and stops the run; one byte more is a rate limit.
+  const sized = (size) => `${quota}${'x'.repeat(size - quota.length - 2)}"}`;
+  assert.equal(sized(4096).length, 4096);
+  for (const [size, want, sends] of [[4096, { sent: 0, deferred: 1, failed: 1, watched: 2 }, 1], [4097, { sent: 2, deferred: 0, failed: 0, watched: 2 }, 3]]) {
+    const f = liveEnv();
+    await addRow(f, 'x', 'x@example.com', { created: T0 - DAY });
+    await addRow(f, 'y', 'y@example.com', { created: T0 - DAY + 1 });
+    const edge = invocation(f, LISTED(120), { resend: (_send, n) => (n === 0 ? { status: 429, body: sized(size) } : 200) });
+    assert.deepEqual(await withFetch(edge.fetch, () => runAlerts(f, T0)), want, `${size} bytes`);
+    assert.equal(edge.sends.length, sends, `${size} bytes`);
+  }
 });
