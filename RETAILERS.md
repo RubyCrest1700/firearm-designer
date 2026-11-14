@@ -6,55 +6,55 @@ In the Status column, "active" only means the retailer is neither paused nor lin
 
 | Retailer | Domain | Status | Since | Reason | Links | Last price check |
 |---|---|---|---|---|---|---|
-| Abide Armory | abidearmory.com | active | - | - | 1 | 2026-11-13 |
-| Aero Precision | aeroprecisionusa.com | active | - | - | 23 | 2026-11-13 |
-| Aerospace Arms | aerospacearms.com | active | - | - | 13 | 2026-11-13 |
+| Abide Armory | abidearmory.com | active | - | - | 1 | 2026-11-14 |
+| Aero Precision | aeroprecisionusa.com | active | - | - | 23 | 2026-11-14 |
+| Aerospace Arms | aerospacearms.com | active | - | - | 13 | 2026-11-14 |
 | AmeriGlo | ameriglo.com | active | - | - | 0 | none recorded |
 | AR15Discounts | ar15discounts.com | paused | 2026-10-24 | paused pending review of the retailer's terms on automated price collection | 68 | 2026-10-23 |
 | AT3 Tactical | at3tactical.com | paused | 2026-10-26 | robots.txt refuses the price bot | 39 | 2026-10-26 |
-| Black Phoenix Customs | blackphoenixcustoms.com | active | - | - | 12 | 2026-11-13 |
-| Black Rifle Depot | blackrifledepot.com | active | - | - | 35 | 2026-11-13 |
-| Bravo Company | bravocompanyusa.com | active | - | - | 4 | 2026-11-13 |
+| Black Phoenix Customs | blackphoenixcustoms.com | active | - | - | 12 | 2026-11-14 |
+| Black Rifle Depot | blackrifledepot.com | active | - | - | 35 | 2026-11-14 |
+| Bravo Company | bravocompanyusa.com | active | - | - | 4 | 2026-11-14 |
 | Brownells | brownells.com | links only | 2026-10-31 | its product pages answer the price bot with a 403 | 48 | none recorded |
-| Bud's Gun Shop | budsgunshop.com | active | - | - | 64 | 2026-11-13 |
+| Bud's Gun Shop | budsgunshop.com | active | - | - | 64 | 2026-11-14 |
 | Cheaper Than Dirt | cheaperthandirt.com | links only | 2026-10-31 | its robots.txt answers the price bot with a 403 | 48 | 2026-10-16 |
-| Classic Firearms | classicfirearms.com | active | - | - | 8 | 2026-11-13 |
-| CMC Triggers | cmctriggers.com | active | - | - | 1 | 2026-11-13 |
-| CopsPlus | copsplus.com | active | - | - | 12 | 2026-11-13 |
-| DK Firearms | dkfirearms.com | active | - | - | 3 | 2026-11-13 |
-| Ed Brown | edbrown.com | active | - | - | 1 | 2026-11-13 |
+| Classic Firearms | classicfirearms.com | active | - | - | 8 | 2026-11-14 |
+| CMC Triggers | cmctriggers.com | active | - | - | 1 | 2026-11-14 |
+| CopsPlus | copsplus.com | active | - | - | 12 | 2026-11-14 |
+| DK Firearms | dkfirearms.com | active | - | - | 3 | 2026-11-14 |
+| Ed Brown | edbrown.com | active | - | - | 1 | 2026-11-14 |
 | EuroOptic | eurooptic.com | active | - | - | 0 | none recorded |
-| Faxon Firearms | faxonfirearms.com | active | - | - | 8 | 2026-11-13 |
-| Forged Armory | forged-armory.odoo.com | active | - | - | 5 | 2026-11-13 |
-| GlockStore | glockstore.com | active | - | - | 12 | 2026-11-13 |
-| Grey Ghost Precision | greyghostprecision.com | active | - | - | 2 | 2026-11-13 |
+| Faxon Firearms | faxonfirearms.com | active | - | - | 8 | 2026-11-14 |
+| Forged Armory | forged-armory.odoo.com | active | - | - | 5 | 2026-11-14 |
+| GlockStore | glockstore.com | active | - | - | 12 | 2026-11-14 |
+| Grey Ghost Precision | greyghostprecision.com | active | - | - | 2 | 2026-11-14 |
 | Gritr Sports | gritrsports.com | links only | 2026-11-06 | its product pages often answer the price bot with a 403 | 46 | 2026-11-05 |
-| Impact Guns | impactguns.com | active | - | - | 18 | 2026-11-13 |
-| KAK Industry | kakindustry.com | active | - | - | 1 | 2026-11-13 |
-| KYGunCo | kygunco.com | active | - | - | 78 | 2026-11-13 |
-| Lone Wolf Arms | lonewolfdist.com | active | - | - | 5 | 2026-11-13 |
-| Magpul | magpul.com | active | - | - | 22 | 2026-11-13 |
+| Impact Guns | impactguns.com | active | - | - | 18 | 2026-11-14 |
+| KAK Industry | kakindustry.com | active | - | - | 1 | 2026-11-14 |
+| KYGunCo | kygunco.com | active | - | - | 78 | 2026-11-14 |
+| Lone Wolf Arms | lonewolfdist.com | active | - | - | 5 | 2026-11-14 |
+| Magpul | magpul.com | active | - | - | 22 | 2026-11-14 |
 | MidwayUSA | midwayusa.com | paused | 2026-10-26 | robots.txt refuses the price bot | 6 | none recorded |
-| Midwest Industries | midwestindustriesinc.com | active | - | - | 2 | 2026-11-13 |
-| New Frontier Armory | newfrontierarmory.com | active | - | - | 1 | 2026-11-13 |
-| Night Fision | nightfision.com | active | - | - | 2 | 2026-11-13 |
-| OpticsPlanet | opticsplanet.com | active | - | - | 10 | 2026-11-13 |
-| Overwatch Precision | overwatchprecision.com | active | - | - | 1 | 2026-11-13 |
+| Midwest Industries | midwestindustriesinc.com | active | - | - | 2 | 2026-11-14 |
+| New Frontier Armory | newfrontierarmory.com | active | - | - | 1 | 2026-11-14 |
+| Night Fision | nightfision.com | active | - | - | 2 | 2026-11-14 |
+| OpticsPlanet | opticsplanet.com | active | - | - | 10 | 2026-11-14 |
+| Overwatch Precision | overwatchprecision.com | active | - | - | 1 | 2026-11-14 |
 | Palmetto State Armory | palmettostatearmory.com | links only | 2026-10-31 | its product pages answer the price bot with a 403 | 4 | none recorded |
 | Primary Arms | primaryarms.com | paused | 2026-10-24 | paused pending review of the retailer's terms on automated price collection | 64 | 2026-10-23 |
 | Rainier Arms | rainierarms.com | paused | 2026-10-26 | robots.txt refuses the price bot | 50 | 2026-10-26 |
-| Rifle Supply | riflesupply.com | active | - | - | 4 | 2026-11-13 |
-| Right To Bear | righttobear.com | active | - | - | 21 | 2026-11-13 |
-| Rock Your Glock | rockyourglock.com | active | - | - | 4 | 2026-11-13 |
-| Savior Equipment | saviorequipment.com | active | - | - | 1 | 2026-11-13 |
+| Rifle Supply | riflesupply.com | active | - | - | 4 | 2026-11-14 |
+| Right To Bear | righttobear.com | active | - | - | 21 | 2026-11-14 |
+| Rock Your Glock | rockyourglock.com | active | - | - | 4 | 2026-11-14 |
+| Savior Equipment | saviorequipment.com | active | - | - | 1 | 2026-11-14 |
 | Sig Sauer | sigsauer.com | links only | 2026-10-31 | its product pages answer the price bot with a 403 | 26 | none recorded |
-| Smith & Wesson | shop.smith-wesson.com | active | - | - | 2 | 2026-11-13 |
-| Sportsman's Warehouse | sportsmans.com | active | - | - | 23 | 2026-11-13 |
-| Springfield Armory | store.springfield-armory.com | active | - | - | 2 | 2026-11-13 |
+| Smith & Wesson | shop.smith-wesson.com | active | - | - | 2 | 2026-11-14 |
+| Sportsman's Warehouse | sportsmans.com | active | - | - | 23 | 2026-11-14 |
+| Springfield Armory | store.springfield-armory.com | active | - | - | 2 | 2026-11-14 |
 | Strike Industries | strikeindustries.com | active | - | - | 1 | 2026-11-13 |
-| Timney Triggers | timneytriggers.com | active | - | - | 1 | 2026-11-13 |
-| Top Gun Supply | topgunsupply.com | active | - | - | 24 | 2026-11-12 |
+| Timney Triggers | timneytriggers.com | active | - | - | 1 | 2026-11-14 |
+| Top Gun Supply | topgunsupply.com | active | - | - | 24 | 2026-11-14 |
 | Vedder Holsters | vedderholsters.com | paused | 2026-10-24 | paused pending review of the retailer's terms on automated price collection | 45 | 2026-10-23 |
-| Wilson Combat | wilsoncombat.com | active | - | - | 8 | 2026-11-13 |
-| Wing Tactical | wingtactical.com | active | - | - | 23 | 2026-11-13 |
-| Young Manufacturing | youngmanufacturing.net | active | - | - | 1 | 2026-11-13 |
+| Wilson Combat | wilsoncombat.com | active | - | - | 8 | 2026-11-14 |
+| Wing Tactical | wingtactical.com | active | - | - | 23 | 2026-11-14 |
+| Young Manufacturing | youngmanufacturing.net | active | - | - | 1 | 2026-11-14 |
