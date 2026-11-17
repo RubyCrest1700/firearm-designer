@@ -50,6 +50,14 @@ export async function feedbackRoute(request, env, { path, json, who, now }) {
 
 const when = (ms) => new Date(ms).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 const pageLink = (p) => (p.startsWith('/') ? `${SITE}${p}` : '');
+/**
+ * A reply link to a visitor's address. The part before the @ is percent-encoded, so an address the form accepts
+ * with `?`, `&`, `=`, `#` or `%` in it can't add a Cc, a Bcc or a body to the link.
+ */
+const mailtoLink = (email) => {
+  const at = email.lastIndexOf('@');
+  return `mailto:${encodeURIComponent(email.slice(0, at))}@${email.slice(at + 1)}?subject=${encodeURIComponent('Your Drop-In Builds feedback')}`;
+};
 
 export function feedbackDigest(rows) {
   const subject = `${rows.length} new feedback message${rows.length === 1 ? '' : 's'} on Drop-In Builds`;
@@ -61,7 +69,7 @@ export function feedbackDigest(rows) {
 <div style="border-top:1px solid #eee;padding:12px 0">
 <p style="margin:0 0 6px;color:#6b7684;font-size:12px">${esc(when(r.created_at))} Eastern${r.page ? ` · from ${pageLink(r.page) ? `<a href="${esc(pageLink(r.page))}" style="color:#6b7684">${esc(r.page)}</a>` : esc(r.page)}` : ''}</p>
 <p style="margin:0;font-size:15px;line-height:1.5;white-space:pre-wrap">${esc(r.message)}</p>
-${r.email ? `<p style="margin:8px 0 0;font-size:13px"><a href="mailto:${esc(r.email)}?subject=${encodeURIComponent('Your Drop-In Builds feedback')}" style="color:#d4691e;font-weight:bold">Reply to ${esc(r.email)}</a></p>` : '<p style="margin:8px 0 0;font-size:13px;color:#8a939e">No email left.</p>'}
+${r.email ? `<p style="margin:8px 0 0;font-size:13px"><a href="${esc(mailtoLink(r.email))}" style="color:#d4691e;font-weight:bold">Reply to ${esc(r.email)}</a></p>` : '<p style="margin:8px 0 0;font-size:13px;color:#8a939e">No email left.</p>'}
 </div>`).join('')}</td></tr>
 <tr><td style="padding:16px 24px;background:#f7f6f3;color:#6b7684;font-size:12px;line-height:1.6">Sent once a day when visitors leave feedback on dropinbuilds.com/feedback/. Every message is also kept in the Cloudflare D1 database, table feedback.</td></tr>
 </table></td></tr></table></body></html>`;
