@@ -16,7 +16,7 @@ export const PLATFORM_IDS = ['ar15', 'ar10', 'ar9', 'glock9', 'glock43x', 'glock
  * one builder. Builds and links made before the merge, and model links, carry them.
  */
 export const PLATFORM_ALIASES = Object.fromEntries(['glock17', 'glock19', 'glock19x', 'glock26', 'glock34', 'glock45', 'glock47'].map((m) => [m, 'glock9']));
-export const canonical = (platform) => PLATFORM_ALIASES[platform] ?? platform;
+export const canonical = (platform) => (Object.hasOwn(PLATFORM_ALIASES, platform) ? PLATFORM_ALIASES[platform] : platform);
 export const isPlatform = (platform) => PLATFORM_IDS.includes(canonical(platform));
 /** A platform's id and the old ids that now open in it, for database queries. */
 const idsFor = (platform) => [platform, ...Object.keys(PLATFORM_ALIASES).filter((k) => PLATFORM_ALIASES[k] === platform)];
@@ -193,8 +193,10 @@ export async function handle(request, env, now = Date.now(), ctx = null) {
     // GET /api/builds?platform=glock9&sort=top|new|bought&limit=24 (platform may list several, comma-separated)
     if (request.method === 'GET' && path === '/api/builds') {
       const platform = url.searchParams.get('platform');
-      const sort = SORTS[url.searchParams.get('sort') ?? 'top'] ?? SORTS.top;
-      const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 24, 1), 60);
+      // Own keys only: `constructor` or `__proto__` would find Object's built-ins. A whole number of builds.
+      const asked = url.searchParams.get('sort') ?? 'top';
+      const sort = Object.hasOwn(SORTS, asked) ? SORTS[asked] : SORTS.top;
+      const limit = Math.min(Math.max(Math.trunc(Number(url.searchParams.get('limit')) || 24), 1), 60);
       const wanted = platform ? [...new Set(platform.split(',').filter(isPlatform).map(canonical))] : [];
       if (platform && !wanted.length) return json({ builds: [] }, 200, origin);
       const ids = wanted.length ? wanted.flatMap(idsFor) : null;
