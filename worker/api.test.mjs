@@ -3905,6 +3905,22 @@ test('W2: a share link with a repeated part counts it once', async () => {
   assert.doesNotMatch(r.text.match(/<script>([^<]*)<\/script>/)[1], /g19-frame-g5\.g19-frame-g5/);
 });
 
+test('W2 L5: an address with a lone surrogate in it still gets a reply link, and the digest still goes', async () => {
+  const { feedbackDigest, runFeedback } = await import('./src/feedback.js');
+  const email = 'x\ud800y@example.com';
+  const { html } = feedbackDigest([{ created_at: 0, message: 'Hello there', email, page: '' }]);
+  const href = html.match(/href="(mailto:[^"]*)"/)[1];
+  assert.equal(href, 'mailto:x%EF%BF%BDy@example.com?subject=Your%20Drop-In%20Builds%20feedback');
+  // End to end, from a post to the cron's send.
+  const e = env();
+  const sent = [];
+  Object.assign(e, { RESEND_API_KEY: 'k', FEEDBACK_EMAIL: 'owner@example.com', sendEmail: async (m) => sent.push(m) });
+  assert.equal((await call(e, 'POST', '/api/feedback', { message: 'Reply to me please', email })).status, 201);
+  assert.equal((await runFeedback(e)).sent, 1);
+  assert.equal(sent.length, 1);
+  assert.match(sent[0].html, /href="mailto:x%EF%BF%BDy@example\.com\?subject=/);
+});
+
 test('W2 L5: an address with a query in it cannot add to the reply link', async () => {
   const { runFeedback } = await import('./src/feedback.js');
   const e = env();

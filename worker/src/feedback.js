@@ -54,7 +54,9 @@ const pageLink = (p) => (p.startsWith('/') ? `${SITE}${p}` : '');
  * A reply link to a visitor's address. The part before the @ is percent-encoded, so an address the form accepts
  * with `?`, `&`, `=`, `#` or `%` in it can't add a Cc, a Bcc or a body to the link.
  */
-const mailtoLink = (email) => {
+const mailtoLink = (address) => {
+  // A lone surrogate would make encodeURIComponent throw and stop the whole digest, so it becomes U+FFFD first.
+  const email = address.toWellFormed();
   const at = email.lastIndexOf('@');
   return `mailto:${encodeURIComponent(email.slice(0, at))}@${email.slice(at + 1)}?subject=${encodeURIComponent('Your Drop-In Builds feedback')}`;
 };
