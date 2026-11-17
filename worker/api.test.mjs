@@ -3661,6 +3661,23 @@ test('W2: the four body writes take JSON only', async () => {
   }
 });
 
+test('W2: only the four bodyless actions skip the JSON check, not any path shaped like them', async () => {
+  const paths = [`/api/builds/${SEED_ID}/edit`, `/api/builds/${SEED_ID}/votes`, `/api/builds/${SEED_ID}/vote/x`, `/api/builds/${SEED_ID}/revote`, `/api/builds/${SEED_ID}/clicks`, `/api/builds/${SEED_ID}/x/report`];
+  for (const path of paths) {
+    for (const type of [undefined, 'text/plain']) {
+      const label = `POST ${path} as ${type ?? 'no type'}`;
+      const e = writeEnv();
+      const before = await everyTable(e);
+      e.DB.queries = 0;
+      const res = await handle(raw('POST', path, { origin: SITE_ORIGIN, type, body: { name: 'x' } }), e);
+      assert.equal(res.status, 415, label);
+      assert.deepEqual(await res.json(), { error: NOT_JSON }, label);
+      assert.equal(e.DB.queries, 0, label);
+      assert.deepEqual(await everyTable(e), before, label);
+    }
+  }
+});
+
 test('W2: the site\'s votes, clicks and reports (no body, no type) still land', async () => {
   const e = writeEnv();
   for (const action of ['vote', 'click', 'report', 'unvote']) {
