@@ -97,10 +97,13 @@ function cors(origin) {
  */
 export const errorText = (err) => `${err?.name ?? 'Error'}: ${String(err?.message ?? err).replace(/[^\s@]*@[^\s@]*/g, '<address>').replace(/\b[a-f0-9]{32}\b/g, '<token>').slice(0, 200)}`;
 
-/** Plain text only: no control characters, collapsed whitespace, length-capped. */
+/**
+ * Plain text only: no invisible format characters (right-to-left overrides, zero-width spaces, byte-order marks,
+ * soft hyphens), no control characters, collapsed whitespace, length-capped.
+ */
 export function cleanText(s, max) {
   if (typeof s !== 'string') return '';
-  return s.replace(/[\u0000-\u001f\u007f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
+  return s.replace(/\p{Cf}/gu, '').replace(/[\u0000-\u001f\u007f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
 }
 
 async function visitorHash(request, salt) {

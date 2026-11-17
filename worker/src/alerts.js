@@ -12,7 +12,7 @@
 //   MAILING_ADDRESS  postal address printed in every email, as US law (CAN-SPAM) requires
 //   ALERTS_FROM      optional sender, default "Drop-In Builds <alerts@dropinbuilds.com>"
 
-import { canonical, errorText, isPlatform } from './api.js';
+import { canonical, cleanText, errorText, isPlatform } from './api.js';
 import { SITE, estimateIds, includingEstimates, indexPart, nfaNoticeFor } from './share.js';
 
 export const API_BASE = 'https://share.dropinbuilds.com';
@@ -99,7 +99,6 @@ export const worthTelling = (was, now) => Math.abs(was - now) >= Math.max(EMAIL_
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const money = (n) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-const clean = (s, max) => (typeof s === 'string' ? s.replace(/[\u0000-\u001f\u007f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max) : '');
 const hex = (bytes) => [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, '0')).join('');
 const randomHex = () => hex(crypto.getRandomValues(new Uint8Array(16)));
 const sha256 = async (s) => hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)));
@@ -113,7 +112,7 @@ export function cleanBuilds(list) {
   for (const b of list) {
     const parts = Array.isArray(b?.parts) ? [...new Set(b.parts)] : null;
     if (!isPlatform(b?.platform) || !parts || parts.length > MAX_PARTS || !parts.every((p) => typeof p === 'string' && PART_ID.test(p))) return null;
-    out.push({ name: clean(b.name, 60) || 'Saved build', platform: canonical(b.platform), parts });
+    out.push({ name: cleanText(b.name, 60) || 'Saved build', platform: canonical(b.platform), parts });
   }
   return out;
 }
