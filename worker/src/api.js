@@ -2,6 +2,8 @@
 // Everything is anonymous: visitors are identified only by a salted hash of their IP address (IPv6: its /64),
 // which limits each person to one vote, one report and one counted buy click per build.
 // Share links with picture cards (/c/<id> and /b/<code>) are answered by share.js.
+// Writes on /api/* are taken only from the site's own pages (an allowed Origin) and, except for the bodyless
+// vote, unvote, click and report, only as JSON; anything else is refused before the database is touched.
 
 import { sharePage } from './share.js';
 import { alertsRoute } from './alerts.js';
@@ -14,7 +16,7 @@ export const PLATFORM_IDS = ['ar15', 'ar10', 'ar9', 'glock9', 'glock43x', 'glock
  * one builder. Builds and links made before the merge, and model links, carry them.
  */
 export const PLATFORM_ALIASES = Object.fromEntries(['glock17', 'glock19', 'glock19x', 'glock26', 'glock34', 'glock45', 'glock47'].map((m) => [m, 'glock9']));
-export const canonical = (platform) => PLATFORM_ALIASES[platform] ?? platform;
+export const canonical = (platform) => (Object.hasOwn(PLATFORM_ALIASES, platform) ? PLATFORM_ALIASES[platform] : platform);
 export const isPlatform = (platform) => PLATFORM_IDS.includes(canonical(platform));
 /** A platform's id and the old ids that now open in it, for database queries. */
 const idsFor = (platform) => [platform, ...Object.keys(PLATFORM_ALIASES).filter((k) => PLATFORM_ALIASES[k] === platform)];
@@ -30,6 +32,8 @@ const DEV_ORIGINS = ['http://localhost:5173', 'http://localhost:4173'];
 const DAY = 86_400_000;
 const WEEK = 7 * DAY;
 const MAX_SHARES_PER_DAY = 10;
+/** The same build posted again by the same visitor within this long is answered with the first one. */
+const REPEAT_WINDOW = 10 * 60_000;
 /**
  * A build is hidden once people on at least this many different networks report it, and at least as many
  * as voted for it. Reports from one network (a home, an office, a phone carrier's block) count once, so one
@@ -51,8 +55,34 @@ const json = (data, status, origin) =>
     },
   });
 
+/** Whether this exact Origin header is one of the site's (local dev servers only when DEV is set). */
+const isAllowedOrigin = (origin, env) => ALLOWED_ORIGINS.includes(origin) || !!(env.DEV && DEV_ORIGINS.includes(origin));
 /** The caller's origin when it's allowed, otherwise the site's. */
-const allowedOrigin = (origin, env) => (ALLOWED_ORIGINS.includes(origin) || (env.DEV && DEV_ORIGINS.includes(origin)) ? origin : ALLOWED_ORIGINS[0]);
+const allowedOrigin = (origin, env) => (isAllowedOrigin(origin, env) ? origin : ALLOWED_ORIGINS[0]);
+
+/** Owner-approved wording (2026-11-16). */
+const NOT_ALLOWED = 'This request isn\'t allowed.';
+/** Owner-approved wording (2026-11-16). */
+const NOT_JSON = 'This request isn\'t in a format we accept.';
+/** Everything else is a write, whatever its case: fetch upper-cases only the standard methods, so 'patch' or PROPFIND arrive as sent. */
+const READ_METHODS = ['GET', 'HEAD', 'OPTIONS'];
+/** The only writes on /api/* that carry no body, so need no content type. */
+const BODYLESS = /^\/api\/builds\/[^/]+\/(vote|unvote|click|report)$/;
+
+/**
+ * Why a write on /api/* is refused, as its answer, or null to go on. A write needs the Origin header of one of
+ * the site's pages, compared as an exact string, so a missing or "null" Origin is refused. Every write but the
+ * four bodyless ones must say it is JSON as well, which a plain form or a no-cors fetch from another site can't
+ * do without a preflight. Pages outside /api/ (the alert pages, which mail apps and the Worker's own forms post
+ * to) and reads aren't checked. No query and no log line.
+ */
+function writeRefusal(request, path, env, origin) {
+  if (READ_METHODS.includes(request.method) ||!(path === '/api' || path.startsWith('/api/'))) return null;
+  if (!isAllowedOrigin(request.headers.get('origin') ?? '', env)) return json({ error: NOT_ALLOWED }, 403, origin);
+  if (BODYLESS.test(path)) return null;
+  const type = (request.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
+  return type === 'application/json' ? null : json({ error: NOT_JSON }, 415, origin);
+}
 
 function cors(origin) {
   return {
@@ -70,10 +100,13 @@ function cors(origin) {
  */
 export const errorText = (err) => `${err?.name ?? 'Error'}: ${String(err?.message ?? err).replace(/[^\s@]*@[^\s@]*/g, '<address>').replace(/\b[a-f0-9]{32}\b/g, '<token>').slice(0, 200)}`;
 
-/** Plain text only: no control characters, collapsed whitespace, length-capped. */
+/**
+ * Plain text only: no invisible format characters (right-to-left overrides, zero-width spaces, byte-order marks,
+ * soft hyphens), no control characters, collapsed whitespace, length-capped.
+ */
 export function cleanText(s, max) {
   if (typeof s !== 'string') return '';
-  return s.replace(/[\u0000-\u001f\u007f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
+  return s.replace(/\p{Cf}/gu, '').replace(/[\u0000-\u001f\u007f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
 }
 
 async function visitorHash(request, salt) {
@@ -142,9 +175,12 @@ const SORTS = {
 /** `ctx` is the Worker's execution context; without one (tests), work it would hand to waitUntil is awaited instead. */
 export async function handle(request, env, now = Date.now(), ctx = null) {
   const origin = allowedOrigin(request.headers.get('origin') ?? '', env);
-  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(origin) });
+  // Browsers may reuse a preflight for up to two hours (Chrome's cap), so repeat writes skip it.
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: { ...cors(origin), 'access-control-max-age': '7200' } });
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '');
+  const refused = writeRefusal(request, path, env, origin);
+  if (refused) return refused;
   const db = env.DB;
   // The private salt for hashing visitor IPs and addresses. Without it the hashes could be reversed, so
   // nothing is written until it's set.
@@ -163,8 +199,10 @@ export async function handle(request, env, now = Date.now(), ctx = null) {
     // GET /api/builds?platform=glock9&sort=top|new|bought&limit=24 (platform may list several, comma-separated)
     if (request.method === 'GET' && path === '/api/builds') {
       const platform = url.searchParams.get('platform');
-      const sort = SORTS[url.searchParams.get('sort') ?? 'top'] ?? SORTS.top;
-      const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 24, 1), 60);
+      // Own keys only: `constructor` or `__proto__` would find Object's built-ins. A whole number of builds.
+      const asked = url.searchParams.get('sort') ?? 'top';
+      const sort = Object.hasOwn(SORTS, asked) ? SORTS[asked] : SORTS.top;
+      const limit = Math.min(Math.max(Math.trunc(Number(url.searchParams.get('limit')) || 24), 1), 60);
       const wanted = platform ? [...new Set(platform.split(',').filter(isPlatform).map(canonical))] : [];
       if (platform && !wanted.length) return json({ builds: [] }, 200, origin);
       const ids = wanted.length ? wanted.flatMap(idsFor) : null;
@@ -205,11 +243,23 @@ export async function handle(request, env, now = Date.now(), ctx = null) {
       if (parts.length < 3 || parts.length > MAX_PARTS || !parts.every((p) => typeof p === 'string' && PART_ID.test(p)))
         return json({ error: 'That parts list is not valid.' }, 400, origin);
       const who = await visitorHash(request, salt);
-      const recent = await db.prepare('SELECT COUNT(*) AS n FROM builds WHERE ip_hash = ? AND created_at > ?').bind(who, now - DAY).first();
+      const stored = JSON.stringify([...new Set(parts)]);
+      // One query for both: today's count, and the same visitor's visible build with this platform, name, note and
+      // parts from the last 10 minutes. A repeat (a double tap, a retry) gets that build back, even at the daily limit.
+      const recent = await db.prepare(
+        `SELECT COUNT(*) AS n,
+           (SELECT id FROM builds WHERE ip_hash = ?1 AND created_at > ?3 AND hidden = 0 AND platform = ?4 AND parts = ?5 AND name = ?6 AND note = ?7
+            ORDER BY created_at DESC LIMIT 1) AS same
+         FROM builds WHERE ip_hash = ?1 AND created_at > ?2`,
+      ).bind(who, now - DAY, now - REPEAT_WINDOW, platform, stored, name, note).first();
+      if (recent.same) {
+        const row = await db.prepare('SELECT * FROM builds WHERE id = ?').bind(recent.same).first();
+        if (row) return json({ build: toBuild(row) }, 200, origin);
+      }
       if (recent.n >= MAX_SHARES_PER_DAY) return json({ error: 'You have shared a lot of builds today. Try again tomorrow.' }, 429, origin);
       const id = newBuildId();
       await db.prepare('INSERT INTO builds (id, platform, name, note, parts, created_at, ip_hash) VALUES (?, ?, ?, ?, ?, ?, ?)')
-        .bind(id, platform, name, note, JSON.stringify([...new Set(parts)]), now, who).run();
+        .bind(id, platform, name, note, stored, now, who).run();
       const row = await db.prepare('SELECT * FROM builds WHERE id = ?').bind(id).first();
       return json({ build: toBuild(row) }, 201, origin);
     }
