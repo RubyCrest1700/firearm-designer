@@ -1474,9 +1474,9 @@ test('a share page counts only estimates in the build that have a price', async 
   // Only estimates of parts this build doesn't have, or that have no price: the old text.
   const none = await page(env(), '/b/glock19~g19-frame-g5.g-unpriced', index);
   assert.doesNotMatch(none.text, /estimate/);
-  // A repeated part is in the total twice, so it is counted twice.
+  // A repeated part is counted once, in the total and the estimates (owner decision, 2026-11-16).
   const twice = await page(env(), '/b/glock19~g-fcg-apex5.g-fcg-apex5', index);
-  assert.match(meta(twice.text, 'og:description'), /· 2 parts · \$301 at the best prices we found, including 2 estimates\. Prices/);
+  assert.match(meta(twice.text, 'og:description'), /· 1 parts · \$150 at the best prices we found, including 1 estimate\. Prices/);
 });
 
 test('a share page with no estimates, or an index with no list, reads exactly as before', async () => {
@@ -3865,9 +3865,9 @@ test('W2: a retry of the tenth build of the day gets it back; an eleventh new on
   assert.equal(await buildCount(e), 10);
 });
 
-// Marked todo, so its failure doesn't fail the suite: it contradicts the existing test 'a share page counts only
-// estimates in the build that have a price', which pins a repeated part as counted twice. Waits on the owner.
-test('W2: a share link with a repeated part counts it once', { todo: 'W2 step 8 held: conflicts with an existing assertion, owner to decide' }, async () => {
+// Owner decision, 2026-11-16: a repeated part counts once (see also 'a share page counts only estimates in the
+// build that have a price').
+test('W2: a share link with a repeated part counts it once', async () => {
   const r = await page(env(), '/b/glock19~g19-frame-g5.g19-frame-g5.g-fcg-apex5');
   assert.equal(r.status, 200);
   assert.equal(meta(r.text, 'og:title'), 'Glock 17 / 19 / 19X / 26 / 34 / 45 / 47 build · $350');

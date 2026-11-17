@@ -55,7 +55,8 @@ export function parseCode(code) {
   const [platform, ids = ''] = code.split('~');
   const parts = ids.split('.').filter(Boolean);
   if (!isPlatform(platform) || parts.length > MAX_PARTS || !parts.every((p) => PART_ID.test(p))) return null;
-  return { platform: canonical(platform), parts };
+  // A repeated part counts once (owner decision, 2026-11-16); the length limit is on the link as written.
+  return { platform: canonical(platform), parts: [...new Set(parts)] };
 }
 
 /** Title and description for a build, from the price index when it's reachable. */
