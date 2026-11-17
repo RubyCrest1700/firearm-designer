@@ -3544,3 +3544,351 @@ test('a 429 body is read only up to 4,096 bytes: a 5 MB one is not read through 
     assert.equal(edge.sends.length, sends, `${size} bytes`);
   }
 });
+
+/* ------------------------- W2: Worker writes on /api/* come only from the site's pages, and five small fixes */
+
+import { canonical } from './src/api.js';
+
+const SITE_ORIGIN = 'https://dropinbuilds.com';
+const FALLBACK_ORIGIN = 'https://rubycrest1700.github.io';
+const NOT_ALLOWED = 'This request isn\'t allowed.';
+const NOT_JSON = 'This request isn\'t in a format we accept.';
+const WRITE_TABLES = ['builds', 'votes', 'clicks', 'reports', 'alerts', 'signups', 'feedback'];
+const SEED_ID = 'aaaaaaaaaa';
+const UNKNOWN_TOKEN = '0'.repeat(32);
+/** A request with exactly the headers given: a missing origin or type is left out, and the body is bytes so nothing adds a type. */
+const raw = (method, path, { origin, type, body, ip = '1.1.1.1' } = {}) => {
+  const headers = { 'cf-connecting-ip': ip };
+  if (origin !== undefined) headers.origin = origin;
+  if (type !== undefined) headers['content-type'] = type;
+  return new Request(`https://api.example${path}`, { method, headers, body: body === undefined ? undefined : new TextEncoder().encode(JSON.stringify(body)) });
+};
+/** Every row of every table the API writes, to show a refused request changed nothing. */
+const everyTable = async (e) => Object.fromEntries(await Promise.all(WRITE_TABLES.map(async (t) => [t, (await e.DB.prepare(`SELECT * FROM ${t}`).all()).results])));
+/** An env with email set up and one visible build to vote on, seeded without counting queries. */
+const writeEnv = (extra = {}) => {
+  const e = { ...alertEnv(), FEEDBACK_EMAIL: 'owner@example.com', ...extra };
+  e.DB.exec(`INSERT INTO builds (id, platform, name, note, parts, created_at, ip_hash) VALUES ('${SEED_ID}', 'glock9', 'Seed build', '', '["g19-frame-g5","g-fcg-apex5","g19-slide-mos"]', 0, 'seed')`);
+  return e;
+};
+/** The eight writes on /api/*, each with a body that would be accepted from the site. */
+const WRITES = [
+  ['POST', '/api/builds', { platform: 'glock19', name: 'Carry G19', note: 'Daily carry', parts: ['g19-frame-g5', 'g-fcg-apex5', 'g19-slide-mos'] }],
+  ['POST', '/api/alerts', { email: 'me@example.com', builds: [G19] }],
+  ['PUT', `/api/alerts/${UNKNOWN_TOKEN}`, { builds: [G19] }],
+  ['POST', '/api/feedback', { message: 'Please add the CZ P-10' }],
+  ['POST', `/api/builds/${SEED_ID}/vote`],
+  ['POST', `/api/builds/${SEED_ID}/unvote`],
+  ['POST', `/api/builds/${SEED_ID}/click`],
+  ['POST', `/api/builds/${SEED_ID}/report`],
+];
+const BODY_WRITES = WRITES.filter(([, , body]) => body);
+const BAD_ORIGINS = [undefined, 'null', 'https://evil.example', 'https://dropinbuilds.com.evil.example', 'http://dropinbuilds.com', 'http://localhost:5173'];
+/** Sends a request with the price index faked, so a signup that got through would never reach the network. */
+const send = (e, request, now) => withIndex(ALERT_INDEX(), () => handle(request, e, now));
+
+test('W2: a write on /api/* from anywhere but the site is refused before anything is read or written', async () => {
+  for (const [method, path, body] of WRITES) {
+    for (const origin of BAD_ORIGINS) {
+      const label = `${method} ${path} from ${origin ?? 'no origin'}`;
+      const e = writeEnv();
+      const before = await everyTable(e);
+      e.DB.queries = 0;
+      const res = await send(e, raw(method, path, { origin, type: body ? 'application/json' : undefined, body }));
+      assert.equal(res.status, 403, label);
+      assert.deepEqual(await res.json(), { error: NOT_ALLOWED }, label);
+      assert.equal(res.headers.get('access-control-allow-origin'), FALLBACK_ORIGIN, label);
+      assert.equal(e.DB.queries, 0, label);
+      assert.deepEqual(await everyTable(e), before, label);
+      assert.equal(e.outbox.length, 0, label);
+    }
+  }
+});
+
+test('W2: a refused write to a real signup leaves its builds as they were', async () => {
+  const e = writeEnv();
+  const { token } = (await signup(e, 'me@example.com')).body;
+  const before = await everyTable(e);
+  const res = await send(e, raw('PUT', `/api/alerts/${token}`, { origin: 'https://evil.example', type: 'application/json', body: { builds: [] } }));
+  assert.equal(res.status, 403);
+  assert.deepEqual(await everyTable(e), before);
+});
+
+test('W2: writes from each of the site\'s origins still work, and a local dev server only with DEV', async () => {
+  const origins = [[SITE_ORIGIN, {}], ['https://www.dropinbuilds.com', {}], [FALLBACK_ORIGIN, {}], ['http://localhost:5173', { DEV: '1' }], ['http://localhost:4173', { DEV: '1' }]];
+  for (const [origin, extra] of origins) {
+    const e = writeEnv(extra);
+    const ok = async (method, path, body, want) => {
+      const res = await send(e, raw(method, path, { origin, type: body ? 'application/json' : undefined, body }));
+      assert.equal(res.status, want, `${method} ${path} from ${origin}`);
+      assert.equal(res.headers.get('access-control-allow-origin'), origin, `${method} ${path} from ${origin}`);
+      return res.json();
+    };
+    const shared = await ok('POST', '/api/builds', WRITES[0][2], 201);
+    const { token } = await ok('POST', '/api/alerts', WRITES[1][2], 201);
+    await ok('PUT', `/api/alerts/${token}`, { builds: [G19] }, 200);
+    await ok('POST', '/api/feedback', WRITES[3][2], 201);
+    assert.equal((await ok('POST', `/api/builds/${shared.build.id}/vote`, undefined, 200)).build.votes, 1);
+    assert.equal((await ok('POST', `/api/builds/${shared.build.id}/unvote`, undefined, 200)).build.votes, 0);
+    assert.equal((await ok('POST', `/api/builds/${shared.build.id}/click`, undefined, 200)).build.clicks, 1);
+    await ok('POST', `/api/builds/${shared.build.id}/report`, undefined, 200);
+  }
+});
+
+test('W2: the four body writes take JSON only', async () => {
+  const refused = [undefined, 'text/plain', 'text/plain;charset=UTF-8', 'application/x-www-form-urlencoded', 'multipart/form-data; boundary=x', 'application/jsonx', 'application/json-seq'];
+  for (const [method, path, body] of BODY_WRITES) {
+    for (const type of refused) {
+      const label = `${method} ${path} as ${type ?? 'no type'}`;
+      const e = writeEnv();
+      const before = await everyTable(e);
+      e.DB.queries = 0;
+      const res = await send(e, raw(method, path, { origin: SITE_ORIGIN, type, body }));
+      assert.equal(res.status, 415, label);
+      assert.deepEqual(await res.json(), { error: NOT_JSON }, label);
+      assert.equal(res.headers.get('access-control-allow-origin'), SITE_ORIGIN, label);
+      assert.equal(e.DB.queries, 0, label);
+      assert.deepEqual(await everyTable(e), before, label);
+      assert.equal(e.outbox.length, 0, label);
+    }
+  }
+  for (const type of ['application/json', 'application/json; charset=utf-8', 'Application/JSON', ' application/json ; charset=UTF-8']) {
+    const e = writeEnv();
+    assert.equal((await send(e, raw('POST', '/api/builds', { origin: SITE_ORIGIN, type, body: WRITES[0][2] }))).status, 201, type);
+    assert.equal((await send(e, raw('POST', '/api/feedback', { origin: SITE_ORIGIN, type, body: WRITES[3][2] }))).status, 201, type);
+    const { token } = await (await send(e, raw('POST', '/api/alerts', { origin: SITE_ORIGIN, type, body: WRITES[1][2] }))).json();
+    assert.equal((await send(e, raw('PUT', `/api/alerts/${token}`, { origin: SITE_ORIGIN, type, body: { builds: [G19] } }))).status, 200, type);
+  }
+});
+
+test('W2: the site\'s votes, clicks and reports (no body, no type) still land', async () => {
+  const e = writeEnv();
+  for (const action of ['vote', 'click', 'report', 'unvote']) {
+    const res = await handle(raw('POST', `/api/builds/${SEED_ID}/${action}`, { origin: SITE_ORIGIN }), e);
+    assert.equal(res.status, 200, action);
+  }
+  const row = await e.DB.prepare('SELECT votes, clicks, reports FROM builds WHERE id = ?').bind(SEED_ID).first();
+  assert.deepEqual({ ...row }, { votes: 0, clicks: 1, reports: 1 });
+});
+
+test('W2: any other write method on /api/* is refused from a foreign origin', async () => {
+  for (const method of ['PATCH', 'DELETE']) {
+    for (const path of ['/api/builds', `/api/builds/${SEED_ID}`, '/api', '/api/']) {
+      const e = writeEnv();
+      e.DB.queries = 0;
+      const res = await handle(raw(method, path, { origin: 'https://evil.example' }), e);
+      assert.equal(res.status, 403, `${method} ${path}`);
+      assert.equal(e.DB.queries, 0, `${method} ${path}`);
+    }
+  }
+});
+
+test('W2: the origin check comes before the missing-salt answer', async () => {
+  const e = writeEnv();
+  delete e.SALT;
+  const bad = await send(e, raw('POST', '/api/builds', { origin: 'https://evil.example', type: 'application/json', body: WRITES[0][2] }));
+  assert.equal(bad.status, 403);
+  const good = await send(e, raw('POST', '/api/builds', { origin: SITE_ORIGIN, type: 'application/json', body: WRITES[0][2] }));
+  assert.equal(good.status, 503);
+});
+
+test('W2: pages outside /api/ and every read are not checked', async () => {
+  const e = writeEnv();
+  const now = Date.now();
+  // Unsubscribe from a mail app (no Origin) and from anywhere else still works.
+  for (const origin of [undefined, 'https://evil.example']) {
+    const token = await confirmedSignup(e, `stop${origin ? 1 : 0}@example.com`, origin ? '7.0.0.1' : '7.0.0.2', now);
+    const headers = { 'content-type': URLENCODED, ...(origin ? { origin } : {}) };
+    const res = await handle(new Request(stopUrl(token), { method: 'POST', body: 'List-Unsubscribe=One-Click', headers }), e, now);
+    assert.equal(res.status, 204, String(origin));
+    assert.equal(await statusOf(e, token), 404, String(origin));
+  }
+  // The confirmation page's own form posts from the Worker's origin.
+  const { body } = await signupAt(e, now, 'confirm@example.com', '7.0.0.3');
+  const code = codeIn(e.outbox.at(-1));
+  const confirmed = await handle(new Request('https://share.example/alerts/confirm', { method: 'POST', body: `c=${code}`, headers: { 'content-type': URLENCODED, origin: 'https://share.dropinbuilds.com' } }), e, now);
+  assert.match(await confirmed.text(), /Price Alerts Are On/);
+  assert.equal(await confirmedOf(e, body.token), 1);
+  // Reads answer anyone.
+  for (const path of ['/api/builds', '/api/alerts/status', '/health', '/api/featured', `/api/builds/${SEED_ID}`]) {
+    const res = await handle(raw('GET', path, { origin: 'https://evil.example' }), e);
+    assert.equal(res.status, 200, path);
+    assert.equal(res.headers.get('access-control-allow-origin'), FALLBACK_ORIGIN, path);
+  }
+});
+
+test('W2: preflights are cached for two hours, and only preflights say so', async () => {
+  const e = writeEnv();
+  const pre = await handle(raw('OPTIONS', '/api/builds', { origin: SITE_ORIGIN }), e);
+  assert.equal(pre.status, 204);
+  assert.equal(pre.headers.get('access-control-max-age'), '7200');
+  assert.equal(pre.headers.get('access-control-allow-origin'), SITE_ORIGIN);
+  const foreign = await handle(raw('OPTIONS', '/api/builds', { origin: 'https://evil.example' }), e);
+  assert.equal(foreign.headers.get('access-control-allow-origin'), FALLBACK_ORIGIN);
+  assert.equal(foreign.headers.get('access-control-max-age'), '7200');
+  const get = await handle(raw('GET', '/api/builds', { origin: SITE_ORIGIN }), e);
+  assert.equal(get.headers.get('access-control-max-age'), null);
+  const post = await handle(raw('POST', `/api/builds/${SEED_ID}/vote`, { origin: SITE_ORIGIN }), e);
+  assert.equal(post.headers.get('access-control-max-age'), null);
+});
+
+test('W2 L7: an unknown sort is top order, and the limit is a whole number', async () => {
+  const e = env();
+  const ids = [];
+  for (let i = 0; i < 3; i++) ids.push((await share(e, { name: `Build ${i}` })).body.build.id);
+  for (const ip of ['9.0.0.1', '9.0.0.2']) await call(e, 'POST', `/api/builds/${ids[1]}/vote`, null, ip);
+  await call(e, 'POST', `/api/builds/${ids[2]}/vote`, null, '9.0.0.3');
+  const order = async (q) => {
+    const r = await call(e, 'GET', `/api/builds?${q}`);
+    assert.equal(r.status, 200, q);
+    return r.body.builds.map((b) => b.id);
+  };
+  const top = await order('sort=top');
+  assert.deepEqual(top.slice(0, 2), [ids[1], ids[2]]);
+  for (const sort of ['constructor', '__proto__', 'toString', 'hasOwnProperty', 'valueOf']) assert.deepEqual(await order(`sort=${sort}`), top, sort);
+  for (let i = 3; i < 70; i++) e.DB.exec(`INSERT INTO builds (id, platform, name, note, parts, created_at, ip_hash) VALUES ('seed${String(i).padStart(6, '0')}', 'glock9', 'Seed ${i}', '', '["a","b","c"]', ${i}, 'seed')`);
+  for (const [limit, want] of [['1.5', 1], ['0.5', 1], ['2.9', 2], ['abc', 24], ['1e3', 60], ['', 24], ['0', 24], ['-3', 1], ['60.9', 60]]) {
+    assert.equal((await order(`limit=${limit}`)).length, want, `limit=${limit}`);
+  }
+  assert.equal((await order('')).length, 24);
+});
+
+test('W2 L7: platform aliases are own keys only', () => {
+  for (const p of ['constructor', '__proto__', 'toString', 'hasOwnProperty']) assert.equal(canonical(p), p, p);
+  assert.equal(canonical('glock19'), 'glock9');
+  assert.equal(canonical('ar15'), 'ar15');
+});
+
+test('W2 L6: invisible format characters are removed from names, notes, signup builds and feedback', async () => {
+  const INVISIBLE = ['‮', '​', '⁦', '⁧', '⁨', '⁩', '﻿', '­', '‎', '‏'];
+  for (const c of INVISIBLE) assert.equal(cleanText(`Ca${c}rry G19${c}`, 60), 'Carry G19', `U+${c.codePointAt(0).toString(16)}`);
+  assert.equal(cleanText('Range day 🎯 build', 60), 'Range day 🎯 build');
+  assert.equal(cleanText('Ordinary text, kept: as-is!', 60), 'Ordinary text, kept: as-is!');
+  // Removing them can't be used to slip past the length cap: they don't count.
+  assert.equal(cleanText(`${'​'.repeat(10)}abcdef`, 3), 'abc');
+
+  const e = alertEnv();
+  const s = await share(e, { name: 'Carry‮ G19​', note: 'Daily⁦ carry⁩' });
+  assert.equal(s.status, 201);
+  const row = await e.DB.prepare('SELECT name, note FROM builds WHERE id = ?').bind(s.body.build.id).first();
+  assert.deepEqual({ ...row }, { name: 'Carry G19', note: 'Daily carry' });
+  // Two letters and invisibles are not a three-letter name.
+  assert.equal((await share(e, { name: 'ab​﻿­' }, '2.2.2.2')).status, 400);
+
+  const { token } = (await signup(e, 'me@example.com', [{ ...G19, name: 'Saved​ G19‮' }], '3.3.3.3')).body;
+  const saved = JSON.parse((await e.DB.prepare('SELECT builds FROM alerts WHERE token = ?').bind(token).first()).builds);
+  assert.equal(saved[0].name, 'Saved G19');
+
+  assert.equal((await call(e, 'POST', '/api/feedback', { message: 'Hello​ there‮\nSecond﻿ line' }, '4.4.4.4')).status, 201);
+  assert.equal((await e.DB.prepare('SELECT message FROM feedback').first()).message, 'Hello there\nSecond line');
+});
+
+/** Shares a build at a set time. */
+const shareAt = async (e, now, extra = {}, ip = '1.1.1.1') => {
+  const r = await handle(req('POST', '/api/builds', { platform: 'glock19', name: 'Carry G19', note: 'Daily carry', parts: ['g19-frame-g5', 'g-fcg-apex5', 'g19-slide-mos'], ...extra }, ip), e, now);
+  return { status: r.status, body: await r.json() };
+};
+const buildCount = async (e) => (await e.DB.prepare('SELECT COUNT(*) AS n FROM builds').first()).n;
+const MINUTE = 60_000;
+
+test('W2: posting the same build twice in ten minutes gives back the first one', async () => {
+  const e = env();
+  const t = Date.UTC(2026, 10, 16, 15);
+  e.DB.queries = 0;
+  const first = await shareAt(e, t);
+  assert.equal(first.status, 201);
+  assert.equal(e.DB.queries, 3, 'a new build: one count, one insert, one read');
+  e.DB.queries = 0;
+  const again = await shareAt(e, t + 9 * MINUTE);
+  assert.equal(again.status, 200);
+  assert.deepEqual(again.body, first.body);
+  assert.equal(e.DB.queries, 2, 'a repeat: one count, one read');
+  assert.equal(await buildCount(e), 1);
+  // A part listed twice is stored once, so the list matches the stored one.
+  const reordered = await shareAt(e, t + MINUTE, { parts: ['g19-frame-g5', 'g-fcg-apex5', 'g19-slide-mos', 'g-fcg-apex5'] });
+  assert.equal(reordered.body.build.id, first.body.build.id);
+  // An old id for the same platform is the same platform.
+  assert.equal((await shareAt(e, t + MINUTE, { platform: 'glock9' })).body.build.id, first.body.build.id);
+  // Exactly ten minutes later it's a new build.
+  const later = await shareAt(e, t + 10 * MINUTE);
+  assert.equal(later.status, 201);
+  assert.notEqual(later.body.build.id, first.body.build.id);
+  assert.equal(await buildCount(e), 2);
+});
+
+test('W2: a repeat needs the same visitor, platform, parts, name and note', async () => {
+  const e = env();
+  const t = Date.UTC(2026, 10, 16, 15);
+  const first = (await shareAt(e, t)).body.build.id;
+  const changes = [
+    [{}, '2.2.2.2'],
+    [{ name: 'Carry G19 v2' }],
+    [{ note: 'Range day' }],
+    [{ note: '' }],
+    [{ parts: ['g19-frame-g5', 'g-fcg-apex5', 'g-sight-oem'] }],
+    [{ parts: ['g19-slide-mos', 'g-fcg-apex5', 'g19-frame-g5'] }],
+    [{ platform: 'glock43x' }],
+  ];
+  const ids = new Set([first]);
+  for (const [extra, ip] of changes) {
+    const r = await shareAt(e, t + MINUTE, extra, ip);
+    assert.equal(r.status, 201, JSON.stringify(extra));
+    ids.add(r.body.build.id);
+  }
+  assert.equal(ids.size, changes.length + 1);
+  assert.equal(await buildCount(e), changes.length + 1);
+});
+
+test('W2: a hidden build is never handed back as a repeat', async () => {
+  const e = env();
+  const t = Date.UTC(2026, 10, 16, 15);
+  const first = (await shareAt(e, t)).body.build.id;
+  e.DB.exec(`UPDATE builds SET hidden = 1 WHERE id = '${first}'`);
+  const again = await shareAt(e, t + MINUTE);
+  assert.equal(again.status, 201);
+  assert.notEqual(again.body.build.id, first);
+});
+
+test('W2: a retry of the tenth build of the day gets it back; an eleventh new one is still refused', async () => {
+  const e = env();
+  const t = Date.UTC(2026, 10, 16, 15);
+  let tenth;
+  for (let i = 0; i < 10; i++) {
+    const r = await shareAt(e, t + i, { name: `Build ${i}` });
+    assert.equal(r.status, 201);
+    tenth = r.body;
+  }
+  const retry = await shareAt(e, t + 20, { name: 'Build 9' });
+  assert.equal(retry.status, 200);
+  assert.deepEqual(retry.body, tenth);
+  assert.equal((await shareAt(e, t + 30, { name: 'Build 10' })).status, 429);
+  assert.equal(await buildCount(e), 10);
+});
+
+test('W2: a share link with a repeated part counts it once', async () => {
+  const r = await page(env(), '/b/glock19~g19-frame-g5.g19-frame-g5.g-fcg-apex5');
+  assert.equal(r.status, 200);
+  assert.equal(meta(r.text, 'og:title'), 'Glock 17 / 19 / 19X / 26 / 34 / 45 / 47 build · $350');
+  assert.match(meta(r.text, 'og:description'), /· 2 parts · \$350 at the best prices/);
+  assert.match(r.text, /url=https:\/\/dropinbuilds\.com\/\?b=glock9~g19-frame-g5\.g-fcg-apex5"/);
+  assert.doesNotMatch(r.text, /g19-frame-g5\.g19-frame-g5/);
+});
+
+test('W2 L5: an address with a query in it cannot add to the reply link', async () => {
+  const { runFeedback } = await import('./src/feedback.js');
+  const e = env();
+  const sent = [];
+  Object.assign(e, { RESEND_API_KEY: 'k', FEEDBACK_EMAIL: 'owner@example.com', sendEmail: async (m) => sent.push(m) });
+  assert.equal((await call(e, 'POST', '/api/feedback', { message: 'Reply to me please', email: 'x?cc=attacker@evil.example' })).status, 201);
+  assert.equal((await call(e, 'POST', '/api/feedback', { message: 'And to me as well', email: 'y&bcc=b#c@evil.example' }, '2.2.2.2')).status, 201);
+  await runFeedback(e);
+  const unescape = (s) => s.replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
+  const hrefs = [...sent[0].html.matchAll(/href="(mailto:[^"]*)"/g)].map((m) => new URL(unescape(m[1])));
+  assert.equal(hrefs.length, 2);
+  for (const href of hrefs) {
+    assert.deepEqual([...href.searchParams.keys()], ['subject'], href.href);
+    assert.equal(href.searchParams.get('subject'), 'Your Drop-In Builds feedback');
+    assert.equal(href.hash, '');
+  }
+  assert.deepEqual(hrefs.map((h) => decodeURIComponent(h.pathname)).sort(), ['x?cc=attacker@evil.example', 'y&bcc=b#c@evil.example']);
+});
