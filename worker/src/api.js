@@ -32,6 +32,8 @@ const DEV_ORIGINS = ['http://localhost:5173', 'http://localhost:4173'];
 const DAY = 86_400_000;
 const WEEK = 7 * DAY;
 const MAX_SHARES_PER_DAY = 10;
+/** The same build posted again by the same visitor within this long is answered with the first one. */
+const REPEAT_WINDOW = 10 * 60_000;
 /**
  * A build is hidden once people on at least this many different networks report it, and at least as many
  * as voted for it. Reports from one network (a home, an office, a phone carrier's block) count once, so one
@@ -240,11 +242,23 @@ export async function handle(request, env, now = Date.now(), ctx = null) {
       if (parts.length < 3 || parts.length > MAX_PARTS || !parts.every((p) => typeof p === 'string' && PART_ID.test(p)))
         return json({ error: 'That parts list is not valid.' }, 400, origin);
       const who = await visitorHash(request, salt);
-      const recent = await db.prepare('SELECT COUNT(*) AS n FROM builds WHERE ip_hash = ? AND created_at > ?').bind(who, now - DAY).first();
+      const stored = JSON.stringify([...new Set(parts)]);
+      // One query for both: today's count, and the same visitor's visible build with this platform, name, note and
+      // parts from the last 10 minutes. A repeat (a double tap, a retry) gets that build back, even at the daily limit.
+      const recent = await db.prepare(
+        `SELECT COUNT(*) AS n,
+           (SELECT id FROM builds WHERE ip_hash = ?1 AND created_at > ?3 AND hidden = 0 AND platform = ?4 AND parts = ?5 AND name = ?6 AND note = ?7
+            ORDER BY created_at DESC LIMIT 1) AS same
+         FROM builds WHERE ip_hash = ?1 AND created_at > ?2`,
+      ).bind(who, now - DAY, now - REPEAT_WINDOW, platform, stored, name, note).first();
+      if (recent.same) {
+        const row = await db.prepare('SELECT * FROM builds WHERE id = ?').bind(recent.same).first();
+        if (row) return json({ build: toBuild(row) }, 200, origin);
+      }
       if (recent.n >= MAX_SHARES_PER_DAY) return json({ error: 'You have shared a lot of builds today. Try again tomorrow.' }, 429, origin);
       const id = newBuildId();
       await db.prepare('INSERT INTO builds (id, platform, name, note, parts, created_at, ip_hash) VALUES (?, ?, ?, ?, ?, ?, ?)')
-        .bind(id, platform, name, note, JSON.stringify([...new Set(parts)]), now, who).run();
+        .bind(id, platform, name, note, stored, now, who).run();
       const row = await db.prepare('SELECT * FROM builds WHERE id = ?').bind(id).first();
       return json({ build: toBuild(row) }, 201, origin);
     }
