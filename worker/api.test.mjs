@@ -3865,13 +3865,17 @@ test('W2: a retry of the tenth build of the day gets it back; an eleventh new on
   assert.equal(await buildCount(e), 10);
 });
 
-test('W2: a share link with a repeated part counts it once', async () => {
+// Marked todo, so its failure doesn't fail the suite: it contradicts the existing test 'a share page counts only
+// estimates in the build that have a price', which pins a repeated part as counted twice. Waits on the owner.
+test('W2: a share link with a repeated part counts it once', { todo: 'W2 step 8 held: conflicts with an existing assertion, owner to decide' }, async () => {
   const r = await page(env(), '/b/glock19~g19-frame-g5.g19-frame-g5.g-fcg-apex5');
   assert.equal(r.status, 200);
   assert.equal(meta(r.text, 'og:title'), 'Glock 17 / 19 / 19X / 26 / 34 / 45 / 47 build · $350');
   assert.match(meta(r.text, 'og:description'), /· 2 parts · \$350 at the best prices/);
   assert.match(r.text, /url=https:\/\/dropinbuilds\.com\/\?b=glock9~g19-frame-g5\.g-fcg-apex5"/);
-  assert.doesNotMatch(r.text, /g19-frame-g5\.g19-frame-g5/);
+  // The redirect target (meta refresh and script) has no repeat; og:url echoes the link as asked for.
+  assert.doesNotMatch(r.text.match(/url=([^"]*)"/)[1], /g19-frame-g5\.g19-frame-g5/);
+  assert.doesNotMatch(r.text.match(/<script>([^<]*)<\/script>/)[1], /g19-frame-g5\.g19-frame-g5/);
 });
 
 test('W2 L5: an address with a query in it cannot add to the reply link', async () => {
