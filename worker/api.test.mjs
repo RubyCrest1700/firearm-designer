@@ -3683,6 +3683,33 @@ test('W2: any other write method on /api/* is refused from a foreign origin', as
   }
 });
 
+test('W2: every method but GET, HEAD and OPTIONS counts as a write on /api/*, whatever its case', async () => {
+  // fetch upper-cases only the standard six methods, so 'patch' and 'Patch' arrive as written.
+  const methods = ['patch', 'Patch', 'PROPFIND', 'MKCOL', 'LOCK', 'SEARCH', 'FOO'];
+  const paths = ['/api', '/api/', '/api/builds', `/api/builds/${SEED_ID}`, `/api/builds/${SEED_ID}/vote`, '/api/alerts', '/api/feedback'];
+  for (const method of methods) {
+    for (const path of paths) {
+      const label = `${method} ${path}`;
+      const e = writeEnv();
+      const before = await everyTable(e);
+      e.DB.queries = 0;
+      const res = await handle(raw(method, path, { origin: 'https://evil.example' }), e);
+      assert.equal(res.status, 403, label);
+      assert.deepEqual(await res.json(), { error: NOT_ALLOWED }, label);
+      assert.equal(e.DB.queries, 0, label);
+      assert.deepEqual(await everyTable(e), before, label);
+      // From the site they go on as before: no route answers them.
+      const site = await handle(raw(method, path, { origin: SITE_ORIGIN, type: 'application/json', body: {} }), writeEnv());
+      assert.equal(site.status, 404, `${label} from the site`);
+    }
+  }
+  // Reads and preflights from anywhere are not writes.
+  for (const method of ['GET', 'HEAD', 'OPTIONS', 'get', 'head', 'options']) {
+    const res = await handle(raw(method, '/api/builds', { origin: 'https://evil.example' }), writeEnv());
+    assert.notEqual(res.status, 403, method);
+  }
+});
+
 test('W2: the origin check comes before the missing-salt answer', async () => {
   const e = writeEnv();
   delete e.SALT;

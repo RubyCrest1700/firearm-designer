@@ -64,7 +64,8 @@ const allowedOrigin = (origin, env) => (isAllowedOrigin(origin, env) ? origin : 
 const NOT_ALLOWED = 'This request isn\'t allowed.';
 /** Owner-approved wording (2026-11-16). */
 const NOT_JSON = 'This request isn\'t in a format we accept.';
-const WRITE_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
+/** Everything else is a write, whatever its case: fetch upper-cases only the standard methods, so 'patch' or PROPFIND arrive as sent. */
+const READ_METHODS = ['GET', 'HEAD', 'OPTIONS'];
 /** The only writes on /api/* that carry no body, so need no content type. */
 const BODYLESS = /^\/api\/builds\/[^/]+\/(vote|unvote|click|report)$/;
 
@@ -76,7 +77,7 @@ const BODYLESS = /^\/api\/builds\/[^/]+\/(vote|unvote|click|report)$/;
  * to) and reads aren't checked. No query and no log line.
  */
 function writeRefusal(request, path, env, origin) {
-  if (!WRITE_METHODS.includes(request.method) || !(path === '/api' || path.startsWith('/api/'))) return null;
+  if (READ_METHODS.includes(request.method) ||!(path === '/api' || path.startsWith('/api/'))) return null;
   if (!isAllowedOrigin(request.headers.get('origin') ?? '', env)) return json({ error: NOT_ALLOWED }, 403, origin);
   if (BODYLESS.test(path)) return null;
   const type = (request.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
