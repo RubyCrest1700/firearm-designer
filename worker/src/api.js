@@ -2,6 +2,8 @@
 // Everything is anonymous: visitors are identified only by a salted hash of their IP address (IPv6: its /64),
 // which limits each person to one vote, one report and one counted buy click per build.
 // Share links with picture cards (/c/<id> and /b/<code>) are answered by share.js.
+// Writes on /api/* are taken only from the site's own pages (an allowed Origin) and, except for the bodyless
+// vote, unvote, click and report, only as JSON; anything else is refused before the database is touched.
 
 import { sharePage } from './share.js';
 import { alertsRoute } from './alerts.js';
@@ -51,8 +53,33 @@ const json = (data, status, origin) =>
     },
   });
 
+/** Whether this exact Origin header is one of the site's (local dev servers only when DEV is set). */
+const isAllowedOrigin = (origin, env) => ALLOWED_ORIGINS.includes(origin) || !!(env.DEV && DEV_ORIGINS.includes(origin));
 /** The caller's origin when it's allowed, otherwise the site's. */
-const allowedOrigin = (origin, env) => (ALLOWED_ORIGINS.includes(origin) || (env.DEV && DEV_ORIGINS.includes(origin)) ? origin : ALLOWED_ORIGINS[0]);
+const allowedOrigin = (origin, env) => (isAllowedOrigin(origin, env) ? origin : ALLOWED_ORIGINS[0]);
+
+/** Owner-approved wording (2026-11-16). */
+const NOT_ALLOWED = 'This request isn\'t allowed.';
+/** Owner-approved wording (2026-11-16). */
+const NOT_JSON = 'This request isn\'t in a format we accept.';
+const WRITE_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
+/** The only writes on /api/* that carry no body, so need no content type. */
+const BODYLESS = /^\/api\/builds\/[^/]+\/(vote|unvote|click|report)$/;
+
+/**
+ * Why a write on /api/* is refused, as its answer, or null to go on. A write needs the Origin header of one of
+ * the site's pages, compared as an exact string, so a missing or "null" Origin is refused. Every write but the
+ * four bodyless ones must say it is JSON as well, which a plain form or a no-cors fetch from another site can't
+ * do without a preflight. Pages outside /api/ (the alert pages, which mail apps and the Worker's own forms post
+ * to) and reads aren't checked. No query and no log line.
+ */
+function writeRefusal(request, path, env, origin) {
+  if (!WRITE_METHODS.includes(request.method) || !(path === '/api' || path.startsWith('/api/'))) return null;
+  if (!isAllowedOrigin(request.headers.get('origin') ?? '', env)) return json({ error: NOT_ALLOWED }, 403, origin);
+  if (BODYLESS.test(path)) return null;
+  const type = (request.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
+  return type === 'application/json' ? null : json({ error: NOT_JSON }, 415, origin);
+}
 
 function cors(origin) {
   return {
@@ -142,9 +169,12 @@ const SORTS = {
 /** `ctx` is the Worker's execution context; without one (tests), work it would hand to waitUntil is awaited instead. */
 export async function handle(request, env, now = Date.now(), ctx = null) {
   const origin = allowedOrigin(request.headers.get('origin') ?? '', env);
-  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(origin) });
+  // Browsers may reuse a preflight for up to two hours (Chrome's cap), so repeat writes skip it.
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: { ...cors(origin), 'access-control-max-age': '7200' } });
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '');
+  const refused = writeRefusal(request, path, env, origin);
+  if (refused) return refused;
   const db = env.DB;
   // The private salt for hashing visitor IPs and addresses. Without it the hashes could be reversed, so
   // nothing is written until it's set.
