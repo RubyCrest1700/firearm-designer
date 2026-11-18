@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { PLATFORMS } from './data';
-import { bestOffer, partIds, type Selection } from './engine';
+import { bestOffer, partIds, partsLabel, type Selection } from './engine';
 import { type CompareItem } from './Compare';
 import { FEATURED, TIER_LABEL, buildOf, selectionFromParts, type FeaturedBuild } from './store';
 import { communityLive, featuredBuilds, listBuilds, myVotes, reportBuild, setVote, type CommunityBuild, type CommunitySort } from './community';
@@ -74,7 +74,7 @@ export function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onCom
         selection={sel}
         badge={rank !== undefined ? <span className="tier-badge value">#{rank + 1} This Week</span> : undefined}
         title={b.name}
-        meta={<>{platform.name} · {partIds(sel).length} parts · Shared {shortDate(b.createdAt, true)}</>}
+        meta={<>{platform.name} · {partsLabel(partIds(sel).length)} · Shared {shortDate(b.createdAt, true)}</>}
         body={<>
           {b.note && <p className="summary-text">{b.note}</p>}
           <ul className="highlights">{topParts(build).map((p) => <li key={p.id}><span className="brand-dim">{p.brand}</span> {p.name}</li>)}</ul>
@@ -166,7 +166,7 @@ export function CommunityPage({ onOpen, onOpenStarter, onSave, onCopyLink, onCom
                 selection={fb.selection}
                 badge={<span className={'tier-badge ' + fb.tier}>{TIER_LABEL[fb.tier]}</span>}
                 title={fb.name}
-                meta={<>{fb.platform.family} · {partIds(fb.selection).length} parts</>}
+                meta={<>{fb.platform.family} · {partsLabel(partIds(fb.selection).length)}</>}
                 body={<>
                   <p className="summary-text">{fb.summary}</p>
                   <ul className="highlights">{topParts(build).map((p) => <li key={p.id}><span className="brand-dim">{p.brand}</span> {p.name}</li>)}</ul>

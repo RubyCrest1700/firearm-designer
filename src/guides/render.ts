@@ -5,7 +5,7 @@
  */
 import { PLATFORMS, PRICES_READ_AT } from '../data';
 import { buyUrl, retailerName } from '../data/retailers';
-import { baseSelection, bestOffer, estimateNote, estimatedCount, isEstimate, money, noPriceNote, presetSelection, priceLabel, priceText, unpricedCount, worst } from '../engine';
+import { baseSelection, bestOffer, estimateNote, estimatedCount, isEstimate, money, noPriceNote, partsLabel, presetSelection, priceLabel, priceText, unpricedCount, worst } from '../engine';
 import type { Part, Platform, Severity, Tier } from '../types';
 import { GUIDES, type AcrossChart, type FitChart, type Guide, type PairChart } from './content';
 import { titleCase } from '../text';
@@ -218,7 +218,7 @@ function startersHtml(platform: Platform) {
     const ids = Object.values(presetSelection(platform, tier));
     const { total, note, estimates } = presetTotal(platform, tier);
     const name = tier === 'value' ? 'Best Value' : tier[0].toUpperCase() + tier.slice(1);
-    return `<a class="starter" href="${builderUrl(platform.id, ids)}"><b>${name} ${esc(platform.name)}</b><span>${ids.length} parts, ${money(total)} at the lowest prices we list${note ? ` · ${esc(note)}` : ''}</span>${estimates ? `<span>${esc(estimates)}</span>` : ''}</a>`;
+    return `<a class="starter" href="${builderUrl(platform.id, ids)}"><b>${name} ${esc(platform.name)}</b><span>${partsLabel(ids.length)}, ${money(total)} at the lowest prices we list${note ? ` · ${esc(note)}` : ''}</span>${estimates ? `<span>${esc(estimates)}</span>` : ''}</a>`;
   }).join('');
 }
 

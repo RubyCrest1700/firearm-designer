@@ -121,6 +121,9 @@ export const unpricedCount = (parts: (Part | undefined)[]) => parts.filter((p) =
 /** The note shown next to a total that leaves out parts with no price, or '' when there are none. Owner-approved wording. */
 export const noPriceNote = (n: number) => (n <= 0 ? '' : n === 1 ? '1 part has no price' : `${n} parts have no price`);
 
+/** A count of parts as shown on build cards: "1 part", otherwise "N parts". */
+export const partsLabel = (n: number) => (n === 1 ? '1 part' : `${n} parts`);
+
 /** How many of these parts are priced at an estimate. */
 export const estimatedCount = (parts: (Part | undefined)[]) => parts.filter((p) => { const o = p && bestOffer(p); return !!o && isEstimate(o); }).length;
 
