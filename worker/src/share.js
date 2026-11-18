@@ -69,7 +69,7 @@ export function describe(index, platform, parts, name, note) {
   const estimates = estimateIds(p);
   const estimated = includingEstimates(parts.filter((id) => indexPart(p, id) && estimates.has(id)).length);
   const title = name || `${platformName} build${total ? ` · ${money(total)}${estimated}` : ''}`;
-  const facts = known.length ? `${platformName} · ${known.length} parts · ${money(total)} at the best prices we found${estimated}. ${CONFIRM_PRICE}` : `A ${platformName} build.`;
+  const facts = known.length ? `${platformName} · ${known.length === 1 ? '1 part' : `${known.length} parts`} · ${money(total)} at the best prices we found${estimated}. ${CONFIRM_PRICE}` : `A ${platformName} build.`;
   const names = known.map(([label]) => label);
   const highlights = names.length ? ` Includes ${names.slice(0, 3).join(', ')}${names.length > 3 ? ` and ${names.length - 3} more` : ''}.` : '';
   const notice = nfaNoticeFor(platform);

@@ -1476,7 +1476,15 @@ test('a share page counts only estimates in the build that have a price', async 
   assert.doesNotMatch(none.text, /estimate/);
   // A repeated part is counted once, in the total and the estimates (owner decision, 2026-11-16).
   const twice = await page(env(), '/b/glock19~g-fcg-apex5.g-fcg-apex5', index);
-  assert.match(meta(twice.text, 'og:description'), /· 1 parts · \$150 at the best prices we found, including 1 estimate\. Prices/);
+  assert.match(meta(twice.text, 'og:description'), /· 1 part · \$150 at the best prices we found, including 1 estimate\. Prices/);
+});
+
+test('a share page says "1 part" for one part and "2 parts" for two (owner-approved grammar fix, 2026-11-18)', async () => {
+  const one = await page(env(), '/b/glock19~g19-frame-g5');
+  assert.match(meta(one.text, 'og:description'), /· 1 part · \$200 at the best prices we found\. /);
+  assert.doesNotMatch(one.text, /1 parts/);
+  const two = await page(env(), '/b/glock19~g19-frame-g5.g-fcg-apex5');
+  assert.match(meta(two.text, 'og:description'), /· 2 parts · \$350 at the best prices we found\. /);
 });
 
 test('a share page with no estimates, or an index with no list, reads exactly as before', async () => {
@@ -1626,7 +1634,7 @@ test('a share link counts only the known part alongside a part id Object already
   const r = await page(env(), '/b/glock19~g19-frame-g5.constructor');
   assert.equal(r.status, 200);
   assert.equal(meta(r.text, 'og:title'), `${GLOCK_NAME} build · $200`);
-  assert.match(meta(r.text, 'og:description'), /· 1 parts · \$200 at the best prices we found\. /);
+  assert.match(meta(r.text, 'og:description'), /· 1 part · \$200 at the best prices we found\. /);
   assert.match(meta(r.text, 'og:description'), /Includes Glock Gen 5 frame\. /);
   assert.doesNotMatch(r.text, /NaN/);
   // Nor is it counted as an estimate, even when the list names it.
