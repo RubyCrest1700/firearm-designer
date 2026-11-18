@@ -38,7 +38,7 @@ In the Status column, "active" only means the retailer is neither paused nor lin
 | Midwest Industries | midwestindustriesinc.com | active | - | - | 2 | 2026-11-17 |
 | New Frontier Armory | newfrontierarmory.com | active | - | - | 1 | 2026-11-17 |
 | Night Fision | nightfision.com | active | - | - | 2 | 2026-11-17 |
-| OpticsPlanet | opticsplanet.com | active | - | - | 10 | 2026-11-17 |
+| OpticsPlanet | opticsplanet.com | links only | 2026-11-18 | its product pages often redirect the price bot to a block page | 10 | 2026-11-17 |
 | Overwatch Precision | overwatchprecision.com | active | - | - | 1 | 2026-11-17 |
 | Palmetto State Armory | palmettostatearmory.com | links only | 2026-10-31 | its product pages answer the price bot with a 403 | 4 | none recorded |
 | Primary Arms | primaryarms.com | paused | 2026-10-24 | paused pending review of the retailer's terms on automated price collection | 64 | 2026-10-23 |

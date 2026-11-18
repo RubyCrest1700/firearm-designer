@@ -97,8 +97,8 @@ A store's estimated price and link show only on parts with no live or list price
 live prices drops them on the next nightly run, so measure the effect on shown prices first and use
 Plan A, the merge order that keeps price-alert emails quiet. To undo, delete the entry, then edit every
 place the tests list the links-only stores. In `scripts/sources.test.mjs`: `LINKS_ONLY` (and its date
-constant, `LINKS_ONLY_DAY` or `LINKS_ONLY_DAY_2`, once no store uses it), the store list and title of the
-first links-only test, the host list in "listing the links-only retailers leaves the paused results as
+constant, `LINKS_ONLY_DAY`, `LINKS_ONLY_DAY_2` or `LINKS_ONLY_DAY_3`, once no store uses it), the store
+list and title of the first links-only test, the host list in "listing the links-only retailers leaves the paused results as
 they are", the URLs in "a no-fetch host's robots.txt counts as unreadable", the redirect target in "a
 robots.txt that redirects onto a no-fetch host", and both host lists in "the no-fetch hosts cover the
 links-only retailers' whole sites" (take that store's hosts out). In `scripts/unit.test.ts`:
