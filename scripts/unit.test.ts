@@ -380,7 +380,7 @@ test('a part sold only by a paused retailer has no price and renders without one
 /* ------------------------------------------------------------------ links-only retailers */
 
 // Links only stops the scripts' requests and nothing else: to the site these stores are ordinary retailers.
-const LINKS_ONLY_IDS = ['BRN', 'CTD', 'GRITR', 'PSA', 'SIG'];
+const LINKS_ONLY_IDS = ['BRN', 'CTD', 'GRITR', 'OP', 'PSA', 'SIG'];
 const RAW_LINKS = (sources as unknown as { parts: Record<string, Record<string, string>> }).parts;
 /** The links-only stores as data/sources.json lists them tonight (the test below pins the list). The nightly job reads no price at these. */
 const LINKS_ONLY = new Set(Object.keys((sources as unknown as { linksOnly: object }).linksOnly));
