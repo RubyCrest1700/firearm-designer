@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { PLATFORMS } from './data';
-import { money, ownedOf, ownsAny, partIds } from './engine';
+import { money, ownedOf, ownsAny, partIds, partsLabel } from './engine';
 import { buildOf, estimatedOf, priceChanges, totalParts, type SavedBuild } from './store';
 import { totalSeries } from './data/history';
 import { PriceChart } from './PriceChart';
@@ -124,7 +124,7 @@ export function SavedPage({ saved, alerts, onOpen, onRename, onDuplicate, onDele
                     <button className="btn primary" type="submit">Save</button>
                   </form>
                 ) : s.name}
-                meta={<>{platform.name} · {partIds(s.selection).length} parts{ownsAny(s.selection) ? ` (${ownedOf(s.selection).owned.size + ownedOf(s.selection).other.size} owned)` : ''} · Saved {shortDate(s.savedAt, true)}</>}
+                meta={<>{platform.name} · {partsLabel(partIds(s.selection).length)}{ownsAny(s.selection) ? ` (${ownedOf(s.selection).owned.size + ownedOf(s.selection).other.size} owned)` : ''} · Saved {shortDate(s.savedAt, true)}</>}
                 body={<PriceSinceSaved s={s} />}
                 actions={confirmDelete === s.id ? (
                   <>

@@ -16,7 +16,7 @@ import { biggestDrops, daysAgo, firstLiveDay, hasHistory, partSeries, priceOn, r
 import { totalSeries } from '../src/data/history';
 import { PriceChart } from '../src/PriceChart';
 import { totalParts } from '../src/store';
-import { baseSelection, bestOffer, candidateIssues, issuesFor, listedParts, noPriceNote, ownedOf, placementOf, presetSelection, priceRange, selectionTokens, singleRetailerCarts, toBuild, toBuyIds, unpricedCount, worst, type Selection } from '../src/engine';
+import { baseSelection, bestOffer, candidateIssues, issuesFor, listedParts, noPriceNote, ownedOf, partsLabel, placementOf, presetSelection, priceRange, selectionTokens, singleRetailerCarts, toBuild, toBuyIds, unpricedCount, worst, type Selection } from '../src/engine';
 import { estimateNote, estimatedCount, isEstimate, money, priceLabel, totalNotes } from '../src/engine';
 import { pricedRetailerCount } from '../src/engine';
 import { findParts } from '../src/find';
@@ -1631,6 +1631,23 @@ test('the note beside a total says how many parts have no price', () => {
   assert.equal(noPriceNote(2), '2 parts have no price');
   assert.equal(noPriceNote(7), '7 parts have no price');
   assert.equal(unpricedCount([part(ar15, 'ar-hg-mi9'), undefined, part(ar15, 'ar-mz-vg6')]), 1);
+});
+
+test('a count of parts reads "1 part" for one and "N parts" otherwise', () => {
+  assert.equal(partsLabel(0), '0 parts');
+  assert.equal(partsLabel(1), '1 part');
+  assert.equal(partsLabel(2), '2 parts');
+  assert.equal(partsLabel(12), '12 parts');
+});
+
+test('a saved build card says "1 part" for a one-part build and "2 parts" for two', () => {
+  const [first] = ar15.parts;
+  const second = ar15.parts.find((x) => x.slot !== first.slot)!;
+  const meta = (selection: Selection) => savedPage({ id: 's', name: 'N', platform: 'ar15', selection, prices: {}, savedAt: '2026-10-20T12:00:00Z' }).replace(/<!-- -->/g, '');
+  const one = meta({ [first.slot]: first.id });
+  assert.ok(one.includes(`${ar15.name} · 1 part · Saved`), one);
+  assert.ok(!one.includes('1 parts'));
+  assert.ok(meta({ [first.slot]: first.id, [second.slot]: second.id }).includes(`${ar15.name} · 2 parts · Saved`));
 });
 
 const summaryHtml = (p: Platform, sel: Selection) => {
