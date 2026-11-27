@@ -5,7 +5,7 @@
  */
 import { PLATFORMS, PRICES_READ_AT } from '../data';
 import { buyUrl, retailerName } from '../data/retailers';
-import { baseSelection, bestOffer, estimateNote, estimatedCount, isEstimate, money, noPriceNote, partsLabel, presetSelection, priceLabel, priceText, unpricedCount, worst } from '../engine';
+import { bestOffer, estimateNote, estimatedCount, isEstimate, money, noPriceNote, partsLabel, presetSelection, priceLabel, priceText, unpricedCount, worst } from '../engine';
 import type { Part, Platform, Severity, Tier } from '../types';
 import { GUIDES, type AcrossChart, type FitChart, type Guide, type PairChart } from './content';
 import { titleCase } from '../text';
@@ -27,8 +27,11 @@ const platformOf = (id: string): PageView => {
 };
 /** Opens the builder on a platform with these parts chosen. */
 const builderUrl = (platform: string, ids: string[]) => `/?b=${encodeURIComponent(`${platform}~${ids.join('.')}`)}`;
-/** Opens the builder on a page's plain factory build, so a model's page opens that model. */
-const baseUrl = (platform: Platform) => builderUrl(platform.id, Object.values(baseSelection(platform)));
+/**
+ * Opens the builder for a page's platform, naming no parts (a model's page names its model): the app keeps a build
+ * already in progress there, and otherwise opens the plain factory build.
+ */
+const baseUrl = (platform: PageView) => builderUrl(platform.pageId, []);
 
 /* ------------------------------------------------------------------ legal notice */
 

@@ -35,3 +35,18 @@ test('every platform page and guide opens the builder on its own factory build',
   for (const v of PAGE_VIEWS) check(v, platformPage(v), v.pageId);
   for (const g of GUIDES) check(PAGE_VIEWS.find((p) => p.pageId === g.platform), guidePage(g, '2026-10-10T00:00:00Z'), g.slug);
 });
+
+test('the builder buttons name no parts, so the app can keep a build in progress; starter links still name theirs', () => {
+  const links = (html, cls) => [...html.matchAll(new RegExp(`<a class="${cls}" href="/\\?b=([^"]*)"`, 'g'))].map((m) => decodeURIComponent(m[1]));
+  for (const v of PAGE_VIEWS) {
+    const html = platformPage(v);
+    // "Open the … Builder": the page's own model and nothing after it.
+    assert.deepEqual(links(html, 'cta'), [`${v.pageId}~`], v.pageId);
+    // The three starter builds each still carry their parts.
+    const starters = links(html, 'starter');
+    assert.equal(starters.length, 3, v.pageId);
+    for (const b of starters) assert.ok(b.split('~')[1].split('.').filter(Boolean).length > 1, `${v.pageId}: ${b}`);
+  }
+  // "Check Your Own … Build" on every guide.
+  for (const g of GUIDES) assert.deepEqual(links(guidePage(g, '2026-10-10T00:00:00Z'), 'cta'), [`${g.platform}~`], g.slug);
+});

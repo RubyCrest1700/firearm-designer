@@ -64,11 +64,23 @@ export class ErrorBoundary extends Component<{ children?: ReactNode }, { failed:
   }
 }
 
-/** What the toast shows: plain words, or a link the browser would not copy, held in a field until it's closed. */
-export type Toast = string | { link: string };
+/**
+ * What the toast shows: plain words, a link the browser would not copy, held in a field until it's closed, or words
+ * with an Undo button for a whole build that was just replaced.
+ */
+export type Toast = string | { link: string } | UndoToast;
+/** Words and what Undo does. */
+export interface UndoToast { text: string; undo: () => void }
 /** How long a toast of plain words stays up. */
 export const TOAST_MS = 2800;
-/** How long a toast stays before it hides itself; null for one that stays until it's closed or replaced (the link). */
+/** How long an Undo toast stays up, counted again from the start each time the pointer or the focus leaves it. */
+export const UNDO_TOAST_MS = 10000;
+/** Owner-approved wording (2026-11-27). */
+export const UNDO_LABEL = 'Undo';
+/**
+ * How long the app waits before it hides a toast; null for one it leaves alone: the link stays until it's closed or
+ * replaced, and the Undo toast times itself (UndoToastView), because it must not go while it's pointed at or focused.
+ */
 export const toastHideMs = (toast: Toast): number | null => (typeof toast === 'string' ? TOAST_MS : null);
 /** The words before the link (they were the start of the old plain toast). */
 export const COPY_LINK_LEAD = 'Copy this link:';
@@ -78,7 +90,8 @@ export const TOAST_CLOSE = 'Close';
 /**
  * The toast once a drawer has opened, or the page, the platform or the build has changed. A link goes: the page under
  * an open drawer can't be used, so its field and Close button would be dead, and after a change the link may no
- * longer be the build on screen. Plain words stay and hide on their own timer.
+ * longer be the build on screen. An Undo toast goes for the same reasons: its button would be dead under a drawer, and
+ * after a newer change Undo would throw that change away. Plain words stay and hide on their own timer.
  */
 export const toastAfterChange = (toast: Toast | null): Toast | null => (toast !== null && typeof toast !== 'string' ? null : toast);
 /** The id of the link toast's field. */
@@ -103,6 +116,7 @@ export function useLinkToastFocus(toast: Toast | null) {
 /** The toast. A link is one line in a read-only field that selects itself when focused or clicked, with a Close button (Escape closes it too). */
 export function ToastView({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   if (typeof toast === 'string') return <div className="toast" role="status">{toast}</div>;
+  if ('undo' in toast) return <UndoToastView toast={toast} onClose={onClose} />;
   return (
     <div className="toast toast-link" role="status" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
       <label htmlFor={TOAST_LINK_ID}>{COPY_LINK_LEAD}</label>
@@ -110,6 +124,56 @@ export function ToastView({ toast, onClose }: { toast: Toast; onClose: () => voi
       <button type="button" className="btn" onClick={onClose}>{TOAST_CLOSE}</button>
     </div>
   );
+}
+
+/**
+ * The element a keyboard user was on as the Undo toast appeared, or null for a mouse or touch user (the browser shows
+ * a focus ring only after keyboard use). Read while the toast is first drawn, before the pressed button can leave the page.
+ */
+function keyboardFocus(): HTMLElement | null {
+  try {
+    const el = document.activeElement;
+    return el instanceof HTMLElement && el !== document.body && el.matches(':focus-visible') ? el : null;
+  } catch {
+    return null; // no page (the pre-built home page), or a browser from before :focus-visible
+  }
+}
+
+/** What an Undo toast draws: its words and a real Undo button. Escape closes it. `onHold` says when the pointer or the focus enters and leaves. */
+export function UndoToastBody({ toast, onClose, onHold, buttonRef }: {
+  toast: UndoToast; onClose: () => void; onHold: (how: 'pointer' | 'focus', on: boolean) => void; buttonRef?: RefObject<HTMLButtonElement>;
+}) {
+  return (
+    <div className="toast toast-undo" role="status" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+      onMouseEnter={() => onHold('pointer', true)} onMouseLeave={() => onHold('pointer', false)} onFocus={() => onHold('focus', true)} onBlur={() => onHold('focus', false)}>
+      <span>{toast.text}</span>
+      <button type="button" className="btn" ref={buttonRef} onClick={toast.undo}>{UNDO_LABEL}</button>
+    </div>
+  );
+}
+
+/**
+ * The Undo toast. It hides itself after UNDO_TOAST_MS, but never while the pointer is on it or the focus is in it.
+ * For a keyboard user the focus moves to the Undo button as the toast appears, so Enter undoes and Escape closes at
+ * once; when the toast goes, focus returns to where it was if that is still on the page.
+ */
+function UndoToastView({ toast, onClose }: { toast: UndoToast; onClose: () => void }) {
+  const [held, setHeld] = useState({ pointer: false, focus: false });
+  const close = useRef(onClose);
+  close.current = onClose;
+  const button = useRef<HTMLButtonElement>(null);
+  const [from] = useState(keyboardFocus);
+  useEffect(() => {
+    if (held.pointer || held.focus) return;
+    const t = setTimeout(() => close.current(), UNDO_TOAST_MS);
+    return () => clearTimeout(t);
+  }, [toast, held.pointer, held.focus]);
+  useEffect(() => {
+    if (!from) return;
+    button.current?.focus({ preventScroll: true });
+    return () => { if (document.activeElement === document.body && from.isConnected) from.focus({ preventScroll: true }); };
+  }, []);
+  return <UndoToastBody toast={toast} onClose={onClose} onHold={(how, on) => setHeld((h) => ({ ...h, [how]: on }))} buttonRef={button} />;
 }
 
 /** A date with no time ("2026-10-09"): a hand-checked day. */

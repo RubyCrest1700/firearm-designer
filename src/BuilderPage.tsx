@@ -11,6 +11,7 @@ import { awarenessFor, type Aware } from './awareness';
 import { buildWeight, formatWeight } from './weight';
 import { MOVABLE, SIDE_LABEL, mountsFor, railLength, type Resolved } from './data/addons';
 import { withArticle } from './text';
+import { CLEARED_TEXT, startedOverText, switchedText } from './draft';
 import type { Build, Issue, Part, Platform, Side, Slot, Tier } from './types';
 import { OwnedFinder } from './OwnedFinder';
 import { Picker } from './Picker';
@@ -18,8 +19,11 @@ import { ChangeChip, FitTag, LegalNotice, PlatformMenu, SUMMARY_LEGAL_ID, issueC
 
 export function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelection, startOver, openSaved, communityOpen, onSave, onShare, onCopyLink, onBuyClick, onBrowseFeatured, onCompare }: {
   platformId: string; startPart: Part | null; setPlatformId: (id: string) => void; selection: Selection; setSelection: (s: Selection) => void;
-  /** Replaces the whole build, leaving the saved or community build it came from: the next save is a new build. */
-  startOver: (s: Selection) => void;
+  /**
+   * Replaces the whole build, leaving the saved or community build it came from: the next save is a new build.
+   * `said` is the Undo toast's words, shown when the replace lost a build.
+   */
+  startOver: (s: Selection, said: string) => void;
   openSaved: SavedBuild | null; communityOpen: CommunityBuild | null; onSave: (name: string, asNew: boolean) => void;
   onShare: (name: string, note: string) => Promise<void>; onCopyLink: () => void; onBuyClick: () => void; onBrowseFeatured: () => void;
   onCompare: () => void;
@@ -97,7 +101,7 @@ export function BuilderPage({ platformId, startPart, setPlatformId, selection, s
               <span className="tb-label">Model</span>
               {platform.models.map((m) => (
                 <button key={m.id} className={'chip' + (made?.id === m.id ? ' on' : '')} aria-pressed={made?.id === m.id} title={`${m.name}: ${m.blurb}`}
-                  onClick={() => { setModelPick({ ...modelPick, [platform.id]: m.id }); startOver(baseSelection({ ...platform, presets: m.presets, base: m.base })); setOpenSlot(null); }}>
+                  onClick={() => { setModelPick({ ...modelPick, [platform.id]: m.id }); startOver(baseSelection({ ...platform, presets: m.presets, base: m.base }), switchedText(m.short)); setOpenSlot(null); }}>
                   {m.short}
                 </button>
               ))}
@@ -110,14 +114,14 @@ export function BuilderPage({ platformId, startPart, setPlatformId, selection, s
           <div className="wb-center">
             <div className="bp-toolbar" role="toolbar" aria-label="Build actions">
               <span className="tb-label">{chosen === 0 ? 'Start From' : 'Start Over From'}</span>
-              <button className="chip" title={baseNote} onClick={() => { startOver(baseSelection(starter)); setOpenSlot(null); }}>
+              <button className="chip" title={baseNote} onClick={() => { startOver(baseSelection(starter), startedOverText('Base')); setOpenSlot(null); }}>
                 Base{model ? ` ${model.short}` : ''} <ChipTotal platform={platform} sel={baseSelection(starter)} />
               </button>
               {(['budget', 'value', 'premium'] as Tier[]).map((t) => {
                 const sel = presetSelection(starter, t);
                 const optic = opticTag(platform.parts.find((p) => p.id === sel.optic));
                 return (
-                  <button key={t} className="chip" onClick={() => { startOver(sel); setOpenSlot(null); }}>
+                  <button key={t} className="chip" onClick={() => { startOver(sel, startedOverText(TIER_LABEL[t])); setOpenSlot(null); }}>
                     {TIER_LABEL[t]}{model ? ` ${model.short}` : ''} <ChipTotal platform={platform} sel={sel} />
                     {optic && <> <span className="chip-tag">{optic}</span></>}
                   </button>
@@ -125,7 +129,7 @@ export function BuilderPage({ platformId, startPart, setPlatformId, selection, s
               })}
               <button className="chip" onClick={onBrowseFeatured}>Community Builds</button>
               <button className="chip chip-own" onClick={() => setFinding(true)}>Parts I Own</button>
-              {chosen > 0 && <button className="chip chip-clear" onClick={() => { startOver({}); setOpenSlot(null); }}>Clear Build</button>}
+              {chosen > 0 && <button className="chip chip-clear" onClick={() => { startOver({}, CLEARED_TEXT); setOpenSlot(null); }}>Clear Build</button>}
               <p className="tb-note">{baseNote} Budget, Best Value and Premium are builds from our parts list.</p>
             </div>
             <figure className="blueprint">
@@ -317,6 +321,9 @@ function MountControl({ slot, m, onMount }: { slot: Slot; m: Resolved; onMount: 
   );
 }
 
+/** The id of the line under a disabled Share to Community button that says why it can't be used. */
+const SHARE_REASON_ID = 'share-reason';
+
 export function Summary({ platform, build, issues, aware, states, status, total, owned, openSaved, onSave, onShare, onCopyLink, onOpen, onCompare, onFindOwned }: {
   platform: Platform; build: Build; issues: Issue[]; aware: Aware[]; states: Record<string, RegionState>; status: { cls: string; text: string; complete: boolean }; total: number;
   owned: Owned; openSaved: SavedBuild | null; onSave: (name: string, asNew: boolean) => void; onShare: (name: string, note: string) => Promise<void>;
@@ -330,6 +337,8 @@ export function Summary({ platform, build, issues, aware, states, status, total,
   const [busy, setBusy] = useState(false);
   // A part that isn't in our catalog can't go on the Community page, where every part has to be checkable.
   const canShare = status.complete && owned.other.size === 0;
+  /** Why not, shown under the disabled Share button and as its tooltip. */
+  const shareReason = owned.other.size ? 'Choose a listed part for every slot to share it' : 'Finish the build and fix any conflicts to share it';
   const all = platform.slots.map((s) => build[s.id]).filter((p): p is Part => !!p);
   const chosen = all.filter((p) => !owned.owned.has(p.slot));
   const ownedParts = all.filter((p) => owned.owned.has(p.slot));
@@ -410,10 +419,11 @@ export function Summary({ platform, build, issues, aware, states, status, total,
           <div className="total-actions">
             <button className="btn primary" onClick={startSave}>{openSaved ? 'Save Changes' : 'Save Build'}</button>
             <button className="btn" onClick={onCopyLink}>Copy Link</button>
-            <button className="btn wide-row" onClick={startShare} disabled={!canShare}
-              title={canShare ? 'Post this build to the Community page' : owned.other.size ? 'Choose a listed part for every slot to share it' : 'Finish the build and fix any conflicts to share it'}>
+            <button className="btn wide-row" onClick={startShare} disabled={!canShare} title={canShare ? 'Post this build to the Community page' : shareReason} aria-describedby={canShare ? undefined : SHARE_REASON_ID}>
               Share to Community
             </button>
+            {/* The reason as words on the page: a tooltip on a disabled button can't be read on a phone or by keyboard. */}
+            {!canShare && <p className="form-note share-reason" id={SHARE_REASON_ID}>{shareReason}</p>}
             <button className="btn ghost" onClick={onCompare} disabled={all.length === 0 && owned.other.size === 0}>Compare</button>
             <button className="btn ghost" onClick={onFindOwned}>Parts I Own</button>
           </div>
