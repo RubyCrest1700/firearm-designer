@@ -129,6 +129,9 @@ export default function App() {
   const [behindFor, setBehindFor] = useState(loadAlertsUnsent);
   /** Counts the sends, so an older send that answers late can't speak for a newer one. */
   const sends = useRef(0);
+  /** The signup as it is now, for a send's answer to check that its own signup is still the current one. */
+  const signupNow = useRef(signup);
+  signupNow.current = signup;
   useEffect(() => {
     // The first draw sends nothing, unless a send failed on an earlier visit: that one is tried again now.
     if (firstSync.current) { firstSync.current = false; if (!signup || behindFor !== signup.token) return; }
@@ -143,7 +146,9 @@ export default function App() {
         // Only the latest send says whether the emailed list is behind.
         if (send !== sends.current) return;
         if (result === 'failed') unsent.current = true;
-        setBehindFor(alertsBehindAfter(signup.token, result));
+        // A signup turned off or replaced while the send was out has nothing recorded for it.
+        const behind = alertsBehindAfter(signup.token, result, signupNow.current);
+        if (behind !== undefined) setBehindFor(behind);
       });
     }, 1000);
     return () => clearTimeout(t);

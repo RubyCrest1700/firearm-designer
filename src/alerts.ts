@@ -94,17 +94,29 @@ export async function checkAlertSignup(s: AlertSignup): Promise<AlertSignup | nu
   }
 }
 
-/** What sending the watched builds came to: sent; gone, the service no longer has the signup (unsubscribed by email); or failed, not sent this time. */
-export type AlertSync = 'sent' | 'gone' | 'failed';
+/**
+ * What sending the watched builds came to: sent; gone, the service no longer has the signup (unsubscribed by email);
+ * refused, the service answered that it won't take this list (a 4xx other than 404 and 429), so sending it again
+ * would get the same answer; or failed, not sent this time (not reached, timed out, 429 or a 5xx) and worth trying again.
+ */
+export type AlertSync = 'sent' | 'gone' | 'refused' | 'failed';
 
 export async function syncAlertBuilds(s: AlertSignup, builds: Watched[]): Promise<AlertSync> {
   try { await call(`/api/alerts/${encodeURIComponent(s.token)}`, { method: 'PUT', body: JSON.stringify({ builds: payload(builds) }) }); return 'sent'; } catch (e) {
-    return (e as { status?: number }).status === 404 ? 'gone' : 'failed';
+    const status = (e as { status?: number }).status;
+    if (status === 404) return 'gone';
+    return status !== undefined && status >= 400 && status < 500 && status !== 429 ? 'refused' : 'failed';
   }
 }
 
-/** Records a send's result for the next visit, and gives the token of the signup whose emailed list is now behind My Builds (null: none is). */
-export function alertsBehindAfter(token: string, result: AlertSync): string | null {
+/**
+ * Records a send's result for the next visit, and gives the token of the signup whose emailed list is now behind My Builds
+ * (null: none is). Only a failed send is kept to try again; any other result clears what was kept.
+ * `current` is the signup as it is when the answer arrives. If the send's signup has been turned off or replaced since,
+ * nothing is recorded (undefined), so its token is never written back.
+ */
+export function alertsBehindAfter(token: string, result: AlertSync, current: AlertSignup | null): string | null | undefined {
+  if (current?.token !== token) return undefined;
   const behind = result === 'failed' ? token : null;
   storeAlertsUnsent(behind);
   return behind;

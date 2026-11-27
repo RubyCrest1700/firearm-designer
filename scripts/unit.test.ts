@@ -4333,9 +4333,15 @@ test('sending the watched builds says whether they were sent, the signup is gone
       assert.equal(await syncAlertBuilds(signupX, []), 'failed', what);
     });
   }
-  for (const status of [400, 403, 429, 500, 503]) {
+  for (const status of [429, 500, 503]) {
     await withFakeFetch(t, async () => ({ ok: false, status, json: async () => ({ error: 'No' }) }), async () => {
       assert.equal(await syncAlertBuilds(signupX, []), 'failed', String(status));
+    });
+  }
+  // An answer that would be the same next time is its own result, and still not reported as sent.
+  for (const status of [400, 403]) {
+    await withFakeFetch(t, async () => ({ ok: false, status, json: async () => ({ error: 'No' }) }), async () => {
+      assert.equal(await syncAlertBuilds(signupX, []), 'refused', String(status));
     });
   }
 });
@@ -4350,15 +4356,15 @@ test('a failed send is remembered in this browser for the signup it was for, unt
   storage.delete(ALERTS_UNSENT);
   assert.equal(loadAlertsUnsent(), null);
   // A failed send: kept under the signup's token, and still there on the next visit.
-  assert.equal(alertsBehindAfter(TOKEN_X, 'failed'), TOKEN_X);
+  assert.equal(alertsBehindAfter(TOKEN_X, 'failed', signupX), TOKEN_X);
   assert.equal(storage.get(ALERTS_UNSENT), TOKEN_X);
   assert.equal(loadAlertsUnsent(), TOKEN_X);
   // A send that goes through, or a signup the service no longer has: nothing is left waiting.
-  assert.equal(alertsBehindAfter(TOKEN_X, 'sent'), null);
+  assert.equal(alertsBehindAfter(TOKEN_X, 'sent', signupX), null);
   assert.equal(storage.has(ALERTS_UNSENT), false);
   assert.equal(loadAlertsUnsent(), null);
   storeAlertsUnsent(TOKEN_X);
-  assert.equal(alertsBehindAfter(TOKEN_X, 'gone'), null);
+  assert.equal(alertsBehindAfter(TOKEN_X, 'gone', signupX), null);
   assert.equal(storage.has(ALERTS_UNSENT), false);
   // Anything stored there that isn't a token is left unused.
   for (const junk of ['1', 'true', '{"token":"x"}', TOKEN_X.toUpperCase(), TOKEN_X + '0', '<b>']) {
@@ -4375,8 +4381,74 @@ test('a failed send is remembered in this browser for the signup it was for, unt
   const off = () => { throw new Error('storage is off'); };
   Object.defineProperty(globalThis, 'localStorage', { value: { getItem: off, setItem: off, removeItem: off }, configurable: true });
   assert.equal(loadAlertsUnsent(), null);
-  assert.equal(alertsBehindAfter(TOKEN_X, 'failed'), TOKEN_X);
+  assert.equal(alertsBehindAfter(TOKEN_X, 'failed', signupX), TOKEN_X);
   storeAlertsUnsent(null);
+});
+
+test('a list the service refuses is not remembered or tried again; only a send that could go through later is', async (t) => {
+  // An answer that would be the same next time (the list is too long, or the request isn't allowed): refused.
+  for (const status of [400, 401, 403, 405, 413, 415, 422]) {
+    await withFakeFetch(t, async () => ({ ok: false, status, json: async () => ({ error: 'No' }) }), async () => {
+      assert.equal(await syncAlertBuilds(signupX, []), 'refused', String(status));
+    });
+  }
+  // Too many requests for now, or the service's own trouble: failed, so it's tried again.
+  for (const status of [429, 500, 502, 503, 504]) {
+    await withFakeFetch(t, async () => ({ ok: false, status, json: async () => ({ error: 'No' }) }), async () => {
+      assert.equal(await syncAlertBuilds(signupX, []), 'failed', String(status));
+    });
+  }
+  const local = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')!;
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: { getItem: (k: string) => storage.get(k) ?? null, setItem: (k: string, v: string) => void storage.set(k, v), removeItem: (k: string) => void storage.delete(k) },
+    configurable: true,
+  });
+  t.after(() => { Object.defineProperty(globalThis, 'localStorage', local); storage.delete(ALERTS_UNSENT); });
+  // A refusal leaves nothing waiting, so the next visit sends nothing and the note doesn't show.
+  storage.delete(ALERTS_UNSENT);
+  assert.equal(alertsBehindAfter(TOKEN_X, 'refused', signupX), null);
+  assert.equal(storage.has(ALERTS_UNSENT), false);
+  assert.equal(loadAlertsUnsent(), null);
+  // One kept from an earlier failed send is cleared by it.
+  storeAlertsUnsent(TOKEN_X);
+  assert.equal(alertsBehindAfter(TOKEN_X, 'refused', signupX), null);
+  assert.equal(storage.has(ALERTS_UNSENT), false);
+  // The app sends again only after a failed send, and the note follows what was recorded.
+  const app = readFileSync('src/App.tsx', 'utf8').replace(/\r\n/g, '\n');
+  assert.equal(app.match(/unsent\.current = true;/g)?.length, 2);
+  assert.ok(app.includes("        if (result === 'failed') unsent.current = true;"));
+});
+
+test('a send that answers after its signup was turned off or replaced records nothing', (t) => {
+  const local = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')!;
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: { getItem: (k: string) => storage.get(k) ?? null, setItem: (k: string, v: string) => void storage.set(k, v), removeItem: (k: string) => void storage.delete(k) },
+    configurable: true,
+  });
+  t.after(() => { Object.defineProperty(globalThis, 'localStorage', local); storage.delete(ALERTS_UNSENT); });
+  const signupY: AlertSignup = { token: TOKEN_Y, email: 'builder@example.com', confirmed: false };
+  // Turned off while the send was out, and the send then fails: the old token is not written back.
+  storage.delete(ALERTS_UNSENT);
+  assert.equal(alertsBehindAfter(TOKEN_X, 'failed', null), undefined);
+  assert.equal(storage.has(ALERTS_UNSENT), false);
+  // Replaced by a newer signup: the old token is not stored, and whatever is kept for the newer one stays as it is.
+  assert.equal(alertsBehindAfter(TOKEN_X, 'failed', signupY), undefined);
+  assert.equal(storage.has(ALERTS_UNSENT), false);
+  storeAlertsUnsent(TOKEN_Y);
+  for (const result of ['sent', 'gone', 'refused', 'failed'] as const) {
+    assert.equal(alertsBehindAfter(TOKEN_X, result, signupY), undefined, result);
+    assert.equal(storage.get(ALERTS_UNSENT), TOKEN_Y, result);
+  }
+  // Still the current signup: recorded as before.
+  assert.equal(alertsBehindAfter(TOKEN_Y, 'failed', signupY), TOKEN_Y);
+  assert.equal(alertsBehindAfter(TOKEN_Y, 'sent', signupY), null);
+  assert.equal(storage.has(ALERTS_UNSENT), false);
+  // The app hands over the signup as it is when the answer arrives, not the one the send was made for.
+  const app = readFileSync('src/App.tsx', 'utf8').replace(/\r\n/g, '\n');
+  assert.ok(app.includes('  const signupNow = useRef(signup);\n  signupNow.current = signup;'));
+  assert.ok(app.includes('        const behind = alertsBehindAfter(signup.token, result, signupNow.current);\n        if (behind !== undefined) setBehindFor(behind);'));
+  assert.equal(app.match(/alertsBehindAfter\(/g)?.length, 1);
+  assert.equal(app.match(/setBehindFor\(/g)?.length, 1);
 });
 
 test('My Builds says when the latest changes have not reached price alerts, and the app tries the send again on the next visit', () => {
@@ -4400,7 +4472,9 @@ test('My Builds says when the latest changes have not reached price alerts, and 
     '        // Only the latest send says whether the emailed list is behind.',
     '        if (send !== sends.current) return;',
     "        if (result === 'failed') unsent.current = true;",
-    '        setBehindFor(alertsBehindAfter(signup.token, result));',
+    '        // A signup turned off or replaced while the send was out has nothing recorded for it.',
+    '        const behind = alertsBehindAfter(signup.token, result, signupNow.current);',
+    '        if (behind !== undefined) setBehindFor(behind);',
     '      });',
   ].join('\n')));
   // The note shows only for the signup the failed send was for.
