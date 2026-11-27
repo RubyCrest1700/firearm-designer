@@ -2990,44 +2990,6 @@ test('the one-store table says its cart has estimates, and its note is the appro
   assert.doesNotMatch(html(allPriced([LIVE])), /In-stock parts only/);
 });
 
-test('each one-store cart opens to the parts that store carries, with links, and names the slots it leaves out', () => {
-  const { platform, sel, build, owned, at } = whereToBuyFixture();
-  const chosen = BuyList.buyRows(platform, build, owned).map((r: { part: Part }) => r.part);
-  const carts = singleRetailerCarts(chosen);
-  const brn = carts.find((c) => c.retailer === 'BRN')!;
-  // Brownells: the trigger and the barrel. The grip is out of stock there and the handguard has no price anywhere.
-  assert.deepEqual(brn.items.map((i) => [i.part.slot, i.offer.retailer, i.offer.price]), [['trigger', 'BRN', 130], ['barrel', 'BRN', 90]]);
-  assert.deepEqual(brn.missing.map((x) => x.slot), ['grip', 'handguard']);
-  assert.deepEqual([brn.carried, brn.total, brn.estimates], [2, 220, 2]);
-  for (const c of carts) assert.equal(c.items.length + c.missing.length, chosen.length, c.retailer);
-  assert.equal(BuyList.notListedLine(platform, brn.missing), 'Not listed here: pistol grip, handguard');
-  assert.equal(BuyList.notListedLine(platform, []), '');
-  assert.equal(BuyList.NOT_LISTED_PREFIX, 'Not listed here:');
-
-  const detail = strip(renderToStaticMarkup(createElement(Builder.CartParts, { platform, cart: brn, onBuyClick: noop })));
-  const link = (slot: string) => `<a href="${amp(buyUrl({ retailer: 'BRN' }, `Acme Test ${slot}`)!)}" target="_blank" rel="sponsored noopener">Acme Test ${slot} ↗</a>`;
-  assert.deepEqual([...detail.matchAll(/<li>(.*?)<\/li>/g)].map((m) => m[1]), [
-    `<span class="buy-slot">Trigger group:</span> ${link('trigger')} <span class="amt">$130.00</span>\u00a0· Estimate`,
-    `<span class="buy-slot">Barrel:</span> ${link('barrel')} <span class="amt">$90.00</span>\u00a0· Estimate`,
-  ]);
-  assert.ok(detail.endsWith('<p class="cart-missing">Not listed here: pistol grip, handguard</p>'), detail);
-  // A store's own product page is the link when we have one; a cart with every part has no "Not listed" line.
-  const fax = strip(renderToStaticMarkup(createElement(Builder.CartParts, { platform, cart: carts.find((c) => c.retailer === 'FAX')!, onBuyClick: noop })));
-  assert.ok(fax.includes(`<a href="${amp(buyUrl(bestOffer(at('trigger'))!, 'Acme Test trigger')!)}"`));
-  assert.ok(fax.includes('Not listed here: pistol grip, barrel, handguard'));
-  const full = singleRetailerCarts([at('barrel')])[0];
-  assert.doesNotMatch(renderToStaticMarkup(createElement(Builder.CartParts, { platform, cart: full, onBuyClick: noop })), /Not listed/);
-
-  // In the summary each row is a button that opens its parts (closed to start), and the approved note is word for word.
-  const html = strip(summaryHtml(platform, sel));
-  assert.match(html, /<button class="cart-toggle" aria-expanded="false"[^>]*>Brownells<small class="to-buy"> Includes estimates<\/small><span class="chev" aria-hidden="true">\+<\/span><\/button>/);
-  assert.doesNotMatch(html, /Not listed here/);
-  assert.ok(html.includes('<p class="card-note">Fewer shipments can beat a lower parts total. Leaves out parts the store doesn&#x27;t list or that are marked out of stock. Estimates are included and marked.</p>'));
-  const src = readFileSync('src/BuilderPage.tsx', 'utf8');
-  assert.ok(src.includes("<p className=\"card-note\">Fewer shipments can beat a lower parts total. Leaves out parts the store doesn't list or that are marked out of stock. Estimates are included and marked.</p>"));
-  assert.match(src, /\{open && <tr className="cart-detail"><td colSpan=\{3\}><CartParts platform=\{platform\} cart=\{c\} onBuyClick=\{onBuyClick\} \/><\/td><\/tr>\}/);
-});
-
 test('every platform page marks estimates exactly where it has them, and keeps the no-price wording in place', () => {
   const tierParts = (v: (typeof PAGE_VIEWS)[number], tier: 'budget' | 'value' | 'premium') => Object.values(presetSelection(v, tier)).map((id) => v.parts.find((x) => x.id === id));
   let some = 0;
@@ -3347,6 +3309,44 @@ test('each parts-list row links its store name the same way, and an owned or unk
   assert.equal([...src.matchAll(/rel="([^"]*)"/g)].filter((m) => m[1].includes('sponsored')).length, 1);
   assert.match(src, /<PartsList [^>]*\n?[^>]*\bonBuyClick=\{onBuyClick\}/);
   assert.match(src, /<Summary\b[\s\S]*?\bonBuyClick=\{onBuyClick\}[\s\S]*?\/>/);
+});
+
+test('each one-store cart opens to the parts that store carries, with links, and names the slots it leaves out', () => {
+  const { platform, sel, build, owned, at } = whereToBuyFixture();
+  const chosen = BuyList.buyRows(platform, build, owned).map((r: { part: Part }) => r.part);
+  const carts = singleRetailerCarts(chosen);
+  const brn = carts.find((c) => c.retailer === 'BRN')!;
+  // Brownells: the trigger and the barrel. The grip is out of stock there and the handguard has no price anywhere.
+  assert.deepEqual(brn.items.map((i) => [i.part.slot, i.offer.retailer, i.offer.price]), [['trigger', 'BRN', 130], ['barrel', 'BRN', 90]]);
+  assert.deepEqual(brn.missing.map((x) => x.slot), ['grip', 'handguard']);
+  assert.deepEqual([brn.carried, brn.total, brn.estimates], [2, 220, 2]);
+  for (const c of carts) assert.equal(c.items.length + c.missing.length, chosen.length, c.retailer);
+  assert.equal(BuyList.notListedLine(platform, brn.missing), 'Not listed here: pistol grip, handguard');
+  assert.equal(BuyList.notListedLine(platform, []), '');
+  assert.equal(BuyList.NOT_LISTED_PREFIX, 'Not listed here:');
+
+  const detail = strip(renderToStaticMarkup(createElement(Builder.CartParts, { platform, cart: brn, onBuyClick: noop })));
+  const link = (slot: string) => `<a href="${amp(buyUrl({ retailer: 'BRN' }, `Acme Test ${slot}`)!)}" target="_blank" rel="sponsored noopener">Acme Test ${slot} ↗</a>`;
+  assert.deepEqual([...detail.matchAll(/<li>(.*?)<\/li>/g)].map((m) => m[1]), [
+    `<span class="buy-slot">Trigger group:</span> ${link('trigger')} <span class="amt">$130.00</span>\u00a0· Estimate`,
+    `<span class="buy-slot">Barrel:</span> ${link('barrel')} <span class="amt">$90.00</span>\u00a0· Estimate`,
+  ]);
+  assert.ok(detail.endsWith('<p class="cart-missing">Not listed here: pistol grip, handguard</p>'), detail);
+  // A store's own product page is the link when we have one; a cart with every part has no "Not listed" line.
+  const fax = strip(renderToStaticMarkup(createElement(Builder.CartParts, { platform, cart: carts.find((c) => c.retailer === 'FAX')!, onBuyClick: noop })));
+  assert.ok(fax.includes(`<a href="${amp(buyUrl(bestOffer(at('trigger'))!, 'Acme Test trigger')!)}"`));
+  assert.ok(fax.includes('Not listed here: pistol grip, barrel, handguard'));
+  const full = singleRetailerCarts([at('barrel')])[0];
+  assert.doesNotMatch(renderToStaticMarkup(createElement(Builder.CartParts, { platform, cart: full, onBuyClick: noop })), /Not listed/);
+
+  // In the summary each row is a button that opens its parts (closed to start), and the approved note is word for word.
+  const html = strip(summaryHtml(platform, sel));
+  assert.match(html, /<button class="cart-toggle" aria-expanded="false"[^>]*>Brownells<small class="to-buy"> Includes estimates<\/small><span class="chev" aria-hidden="true">\+<\/span><\/button>/);
+  assert.doesNotMatch(html, /Not listed here/);
+  assert.ok(html.includes('<p class="card-note">Fewer shipments can beat a lower parts total. Leaves out parts the store doesn&#x27;t list or that are marked out of stock. Estimates are included and marked.</p>'));
+  const src = readFileSync('src/BuilderPage.tsx', 'utf8');
+  assert.ok(src.includes("<p className=\"card-note\">Fewer shipments can beat a lower parts total. Leaves out parts the store doesn't list or that are marked out of stock. Estimates are included and marked.</p>"));
+  assert.match(src, /\{open && <tr className="cart-detail"><td colSpan=\{3\}><CartParts platform=\{platform\} cart=\{c\} onBuyClick=\{onBuyClick\} \/><\/td><\/tr>\}/);
 });
 
 /* ------------------------------------------------------------------ the error screen */
