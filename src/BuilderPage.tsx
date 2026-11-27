@@ -393,12 +393,10 @@ export function Summary({ platform, build, issues, aware, states, status, total,
   const estimates = estimateNote(estimatedCount(chosen));
   const carts = singleRetailerCarts(chosen).slice(0, 4);
   const [openCart, setOpenCart] = useState<string | null>(null);
-  /** The parts list as text, held while it's shown for copying by hand. */
-  const [partsText, setPartsText] = useState<string | null>(null);
-  const copyParts = async () => {
-    const text = partsListText(platform, build, owned, issues);
-    setPartsText((await onCopyParts?.(text)) ? null : text);
-  };
+  /** Whether the parts list is shown as text for copying by hand. It follows the build while it's up. */
+  const [partsShown, setPartsShown] = useState(false);
+  const partsText = () => partsListText(platform, build, owned, issues);
+  const copyParts = async () => setPartsShown(!(await onCopyParts?.(partsText())));
   const [dollars, cents] = money(total).split('.');
 
   // Name new builds after the model when the builder covers several ("My Glock 19 build").
@@ -477,7 +475,7 @@ export function Summary({ platform, build, issues, aware, states, status, total,
             <button className="btn ghost" onClick={onFindOwned}>Parts I Own</button>
           </div>
         )}
-        {partsText !== null && <PartsTextBox text={partsText} onClose={() => setPartsText(null)} />}
+        {partsShown && chosen.length > 0 && <PartsTextBox text={partsText()} onClose={() => setPartsShown(false)} />}
       </section>
 
       {issues.length > 0 && (
