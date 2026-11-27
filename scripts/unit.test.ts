@@ -49,6 +49,10 @@ import PRICES_JSON from '../data/prices.json';
 import { priceIndex } from './og-index';
 import { publishedIndex } from './og-index';
 import { loadPersisted } from '../src/App';
+import { CLEARED_TEXT, draftEntry, keptOpen, openDraft, openedFactoryText, openedLinkText, openedText, replaceDraft, startedOverText, switchedText, type Draft } from '../src/draft';
+import { loadKeptOpen } from '../src/App';
+import { TIER_LABEL as STARTER_NAMES, linkNamesNoParts } from '../src/store';
+import { UNDO_LABEL, UNDO_TOAST_MS, UndoToastBody } from '../src/ui';
 import { recordHistory } from './price-history.mjs';
 import { cardTotalWords } from './og-index';
 import { retailersFrom } from './sources.mjs';
@@ -73,10 +77,6 @@ import { featuredBuilds, getBuild, listBuilds, recordBuyClick, reportBuild, setV
 import { liveCheckedAts } from '../src/data/helpers';
 import { STALE_AFTER_MS, STALE_OFFER_LABEL, STALE_PRICES_LABEL, isStale, offerAgeLabel, offerAgeText, priceStatus, shortDate } from '../src/ui';
 import App from '../src/App';
-import { CLEARED_TEXT, draftEntry, keptOpen, openDraft, openedFactoryText, openedLinkText, openedText, replaceDraft, startedOverText, switchedText, type Draft } from '../src/draft';
-import { loadKeptOpen } from '../src/App';
-import { TIER_LABEL, linkNamesNoParts } from '../src/store';
-import { UNDO_LABEL, UNDO_TOAST_MS, UndoToastBody } from '../src/ui';
 
 /** The catalog's offers from stores missing from RETAILERS, as noted while it was built: taken before any test adds its own. */
 const CATALOG_UNKNOWN_AT_LOAD = [...UNKNOWN_RETAILER_OFFERS];
@@ -3504,7 +3504,7 @@ test('the Undo toast wording is the approved wording', () => {
     assert.match(src, new RegExp(`/\\*\\* Owner-approved wording \\(2026-11-27\\)[^\\n]*\\*/\\r?\\nexport const ${name} = `), name);
   assert.match(readFileSync('src/ui.tsx', 'utf8'), /\/\*\* Owner-approved wording \(2026-11-27\)\. \*\/\r?\nexport const UNDO_LABEL = 'Undo';/);
   // The starter chips say their own names, which are the approved four.
-  assert.deepEqual(TIER_LABEL, { budget: 'Budget', value: 'Best Value', premium: 'Premium' });
+  assert.deepEqual(STARTER_NAMES, { budget: 'Budget', value: 'Best Value', premium: 'Premium' });
 });
 
 test('every whole-build replace can be undone: starter chips, Clear Build, the model chips and Open in Builder', () => {
