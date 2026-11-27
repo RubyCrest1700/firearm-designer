@@ -16,7 +16,8 @@
     "SIG": { "since": "2026-10-31", "reason": "its product pages answer the price bot with a 403" },
     "PSA": { "since": "2026-10-31", "reason": "its product pages answer the price bot with a 403" },
     "GRITR": { "since": "2026-11-06", "reason": "its product pages often answer the price bot with a 403" },
-    "OP": { "since": "2026-11-18", "reason": "its product pages often redirect the price bot to a block page" }
+    "OP": { "since": "2026-11-18", "reason": "its product pages often redirect the price bot to a block page" },
+    "BRD": { "since": "2026-11-28", "reason": "its product pages answer the price bot with a 403" }
   },
   "parts": {
     "a10-bcg-jp": {
@@ -1328,19 +1329,14 @@
       "KYG": "https://www.kygunco.com/product/zaffiri-precision-zps.2-or-stripped-slide-trijicon-rmr-footprint-g20"
     },
     "a9-bbl-faxon85": {
-      "BUDS": "https://www.budsgunshop.com/products/gun-parts-barrels/faxon-9mm-ar-15-8-5-light-taper-1-10-black-713086631",
       "AT3": "https://www.at3tactical.com/products/faxon-firearms-9mm-8-5-inch-ar15-barrel-light-tapered-4150-qpq",
       "ARD": "https://ar15discounts.com/products/faxon-firearms-8-5-light-tapered-9mm-saami-no-gas-port-4150-nitride-melonite-barrel/",
       "BRD": "https://blackrifledepot.com/faxon-8-5-9mm-light-tapered-sammi-barrel/"
     },
     "a9-bbl-faxon105": {
-      "BUDS": "https://www.budsgunshop.com/products/gun-parts-barrels/faxon-9mm-pcc-ar-15-10-5-in-barrel-1-2x28-1-10-713099327",
       "AT3": "https://www.at3tactical.com/products/faxon-firearms-10-5-inch-light-tapered-ar15-barrel-9mm-4150-qpq",
       "ARD": "https://ar15discounts.com/products/faxon-firearms-10-5-light-tapered-9mm-saami-no-gas-port-4150-nitride-melonite-barrel/",
       "AA": "https://aerospacearms.com/faxon-firearms-10-5-light-tapered-ar15-barrel-9mm-nitrided/"
-    },
-    "a9-bbl-faxon16": {
-      "BUDS": "https://www.budsgunshop.com/products/gun-parts-barrels/faxon-ar-15-9mm-16in-light-taper-black-nitride-713086630"
     },
     "a9-bbl-aero16": {
       "AERO": "https://www.aeroprecisionusa.com/16in-9mm-cmv-barrel",

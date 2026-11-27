@@ -85,6 +85,8 @@ function modelParts(M: Model): Part[] {
   const d = M === 'G17' ? 5 : M === 'G26' ? -5 : 0; // small per-model price spread
   /** A Gritr Sports estimate for the one model it has a link for, so the other models' offers stay as they are. */
   const gritr = (model: Model, price: number): [string, number][] => (M === model ? [['GRITR', price]] : []);
+  /** A Black Rifle Depot estimate, out of stock as last read, for the one model it has a link for. */
+  const brd = (model: Model, price: number): [string, number, boolean][] => (M === model ? [['BRD', price, false]] : []);
   const list: Part[] = [
     ...parts('frame', [
       { id: `g${n}-frame-g3`, brand: 'Glock', name: t('{M} Gen3 Frame (OEM, stripped)'), specs: ['Gen3', 'Rails', 'Finger grooves'], attrs: { gen: 'gen3', model: M }, serialized: true,
@@ -112,11 +114,11 @@ function modelParts(M: Model): Part[] {
     ]),
     ...parts('barrel', [
       { id: `g${n}-bbl-oem34`, brand: 'Glock', name: t('{M} Barrel, Gen3/4 (OEM)'), specs: ['Gen3/4', 'Polygonal rifling'], attrs: { len: M, bbl: M, family: 'Gen3/4', threaded: false },
-        offers: [['GS', 119.99]], pick: pick('budget', 'Factory barrel. Fits a Gen3/4 slide with no fitting.') },
+        offers: [['GS', 119.99], ...brd('G17', 199.95), ...brd('G19', 189.95)], pick: pick('budget', 'Factory barrel. Fits a Gen3/4 slide with no fitting.') },
       { id: `g${n}-bbl-lw`, brand: 'Lone Wolf', name: t('AlphaWolf {M} Barrel, Threaded 1/2x28'), specs: ['Gen3/4', 'Threaded 1/2x28', 'Conventional rifling'], attrs: { len: M, bbl: M, family: 'Gen3/4', threaded: true, thread: '1/2x28' },
-        offers: [['BRN', 124.99 + d], ['MID', 129.99 + d]] },
+        offers: [['BRN', 124.99 + d], ['MID', 129.99 + d], ['BRD', 134.95, false]] },
       { id: `g${n}-bbl-lwm`, brand: 'Lone Wolf', name: t('AlphaWolf {M} Barrel, Threaded M13.5x1 LH'), specs: ['Gen3/4', 'Threaded M13.5x1 LH', 'Metric, left-hand'], attrs: { len: M, bbl: M, family: 'Gen3/4', threaded: true, thread: 'M13.5x1 LH' },
-        offers: [['BRN', 129.99 + d]] },
+        offers: [['BRN', 129.99 + d], ...brd('G17', 134.95)] },
       ...(M !== 'G26' ? [
         { id: `g${n}-bbl-faxon`, brand: 'Faxon', name: t('{M} Duty Series Barrel'), specs: ['Gen3/4', 'Match grade', 'Nitride'], attrs: { len: M, bbl: M, family: 'Gen3/4', threaded: false },
           offers: [['BRN', 169.99 + d], ['OP', 164.99 + d], ...gritr('G17', 92)] as [string, number][], pick: pick('value', 'Match-grade accuracy for less than most aftermarket barrels.') },
@@ -219,9 +221,9 @@ const shared: Part[] = [
     { id: 'g-sight-oem', brand: 'Glock', name: 'OEM Polymer Sights', specs: ['Standard height', 'U-notch rear'], attrs: { height: 'standard' },
       offers: [['GS', 9.99]], pick: pick('budget', 'Factory sights. Fine to start, easy to replace.') },
     { id: 'g-sight-ameriglo', brand: 'AmeriGlo', name: 'Suppressor Height Tritium Sights', specs: ['Suppressor height', 'Tritium'], attrs: { height: 'suppressor' },
-      offers: [['BRN', 99.99], ['OP', 94.99]], pick: pick('value', 'Co-witnesses with most dots and glows at night.') },
+      offers: [['BRN', 99.99], ['OP', 94.99], ['BRD', 66.95, false]], pick: pick('value', 'Co-witnesses with most dots and glows at night.') },
     { id: 'g-sight-trijicon', brand: 'Trijicon', name: 'HD XR Night Sights', specs: ['Standard height', 'Tritium', 'Bright front'], attrs: { height: 'standard' },
-      offers: [['BRN', 139.99], ['OP', 134.99], ['MID', 144.99]] },
+      offers: [['BRN', 139.99], ['OP', 134.99], ['MID', 144.99], ['BRD', 149.95, false]] },
     { id: 'g-sight-nf', brand: 'Night Fision', name: 'Perfect Dot Suppressor Height Night Sights', specs: ['Suppressor height', 'Tritium'], attrs: { height: 'suppressor' },
       offers: [['BRN', 129.99], ['OP', 124.99]] },
     { id: 'g-sight-truglo', brand: 'TruGlo', name: 'TFX Pro Day/Night Sights', specs: ['Standard height', 'Tritium + fiber'], attrs: { height: 'standard' },
@@ -233,7 +235,7 @@ const shared: Part[] = [
     { id: 'g-opt-rmr', brand: 'Trijicon', name: 'RMR Type 2, 3.25 MOA', specs: ['RMR footprint', 'Duty-grade'], attrs: { footprint: 'rmr' },
       offers: [['BRN', 449.99], ['OP', 439.99], ['MID', 459.99]], pick: pick('premium', 'The standard for duty pistol optics.') },
     { id: 'g-opt-507k', brand: 'Holosun', name: 'HS507K X2', specs: ['Holosun K footprint', 'Compact'], attrs: { footprint: 'k' },
-      offers: [['PA', 269.99], ['OP', 274.99]] },
+      offers: [['PA', 269.99], ['OP', 274.99], ['BRD', 295.99]] },
     { id: 'g-opt-acro', brand: 'Aimpoint', name: 'Acro P-2', specs: ['Acro footprint', 'Enclosed emitter'], attrs: { footprint: 'acro' },
       offers: [['BRN', 519.0], ['OP', 509.99], ['GRITR', 599]] },
     { id: 'g-opt-407c', brand: 'Holosun', name: 'HS407C X2', specs: ['RMR footprint', '2 MOA dot', 'Solar'], attrs: { footprint: 'rmr' },

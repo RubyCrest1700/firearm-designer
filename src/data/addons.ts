@@ -44,7 +44,7 @@ export const rifleAddonParts: Part[] = [
     { id: 'r-fg-mvg', brand: 'Magpul', name: 'MVG M-LOK Vertical Grip', specs: ['Vertical', 'M-LOK'], attrs: { mount: 'mlok', kind: 'vertical', len: 1.7, h: 3.6 },
       offers: [['MAGPUL', 21.95], ['PA', 21.95]] },
     { id: 'r-fg-bcmvg', brand: 'Bravo Company', name: 'Gunfighter Vertical Grip Mod 3, M-LOK', specs: ['Short vertical', 'M-LOK'], attrs: { mount: 'mlok', kind: 'vertical', len: 1.6, h: 2.2 },
-      offers: [['BRN', 29.95]] },
+      offers: [['BRN', 29.95], ['BRD', 20.15, false]] },
     { id: 'r-fg-kag', brand: 'Bravo Company', name: 'Gunfighter Kinesthetic Angled Grip, M-LOK', specs: ['Angled', 'M-LOK'], attrs: { mount: 'mlok', kind: 'angled', len: 3.5, h: 1.8 },
       offers: [['BRN', 29.95]] },
     { id: 'r-fg-afg2', brand: 'Magpul', name: 'AFG-2 Angled Fore Grip', specs: ['Angled', 'Picatinny'], attrs: { mount: 'pic', kind: 'angled', len: 4.7, h: 1.8 },

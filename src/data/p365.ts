@@ -82,7 +82,7 @@ const allParts = [
     { id: 'p365-opt-rmsc', sameAs: 'gs-opt-rmsc', brand: 'Shield', name: 'RMSc 4 MOA', specs: ['RMSc footprint', 'Very low profile'], attrs: { footprint: 'rmsc' },
       offers: [['BRN', 299.99], ['OP', 289.99]] },
     { id: 'p365-opt-rmrcc', brand: 'Trijicon', name: 'RMRcc 3.25 MOA', specs: ['RMRcc footprint'], attrs: { footprint: 'rmrcc' },
-      offers: [['BRN', 399.99], ['OP', 389.99]] },
+      offers: [['BRN', 399.99], ['OP', 389.99], ['BRD', 599]] },
   ]),
   ...parts('mag', [
     { id: 'p365-mag-10', brand: 'Sig Sauer', name: 'P365 10-Round Magazine', specs: ['10 rd', 'Standard grip flush'], attrs: { len: 'std' },

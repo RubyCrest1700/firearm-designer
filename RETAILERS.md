@@ -13,10 +13,10 @@ In the Status column, "active" only means the retailer is neither paused nor lin
 | AR15Discounts | ar15discounts.com | paused | 2026-10-24 | paused pending review of the retailer's terms on automated price collection | 68 | 2026-10-23 |
 | AT3 Tactical | at3tactical.com | paused | 2026-10-26 | robots.txt refuses the price bot | 39 | 2026-10-26 |
 | Black Phoenix Customs | blackphoenixcustoms.com | active | - | - | 12 | 2026-11-26 |
-| Black Rifle Depot | blackrifledepot.com | active | - | - | 35 | 2026-11-22 |
+| Black Rifle Depot | blackrifledepot.com | links only | 2026-11-28 | its product pages answer the price bot with a 403 | 35 | 2026-11-22 |
 | Bravo Company | bravocompanyusa.com | active | - | - | 4 | 2026-11-26 |
 | Brownells | brownells.com | links only | 2026-10-31 | its product pages answer the price bot with a 403 | 48 | none recorded |
-| Bud's Gun Shop | budsgunshop.com | active | - | - | 64 | 2026-11-26 |
+| Bud's Gun Shop | budsgunshop.com | active | - | - | 61 | 2026-11-26 |
 | Cheaper Than Dirt | cheaperthandirt.com | links only | 2026-10-31 | its robots.txt answers the price bot with a 403 | 48 | 2026-10-16 |
 | Classic Firearms | classicfirearms.com | active | - | - | 8 | 2026-11-26 |
 | CMC Triggers | cmctriggers.com | active | - | - | 1 | 2026-11-26 |
