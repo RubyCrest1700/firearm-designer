@@ -94,7 +94,8 @@ const current = (b: CommunityBuild): CommunityBuild => ({ ...b, platform: canoni
 /** `platform` is one platform id or several joined with commas (a family filter). */
 export async function listBuilds(platform: string | null, sort: CommunitySort): Promise<CommunityBuild[]> {
   if (communityLive) {
-    const q = new URLSearchParams({ sort, ...(platform ? { platform } : {}) });
+    // 60 is the most the service gives in one answer; without a limit it gives 24.
+    const q = new URLSearchParams({ sort, ...(platform ? { platform } : {}), limit: '60' });
     return (await api<{ builds: CommunityBuild[] }>(`/api/builds?${q}`)).builds.map(current);
   }
   return previewRows().map(strip).map(current).filter((r) => !platform || platform.split(',').includes(r.platform)).sort(ORDER[sort]);

@@ -4,6 +4,7 @@ import { MOUNT_CODE, baseSelection, bestOffer, estimatedCount, isEstimate, owned
 import { firstLiveDay, worthShowing } from './data/history';
 import ESTIMATE_ERA_PARTS from '../data/estimate-era-parts.json';
 import type { Build, Part, Platform, Tier } from './types';
+import { nameWithArticle } from './text';
 
 /* ---------------------------------------------------------------- saved builds */
 
@@ -326,10 +327,11 @@ export interface FeaturedBuild {
 /** Our own starter builds: three tiers for every platform. */
 export const TIER_LABEL: Record<Tier, string> = { budget: 'Budget', value: 'Best Value', premium: 'Premium' };
 
+/** Owner-approved wording (2026-11-27). The name takes "a" or "an" by how it's said: "an AR-15", "a Glock 19". */
 const TIER_SUMMARY: Record<Tier, (p: Platform) => string> = {
-  budget: (p) => `The lowest total for a ${p.name} that still runs reliably. Proven parts, no extras.`,
-  value: (p) => `Spends where it counts on a ${p.name}: barrel, trigger and sighting. The build most people should start from.`,
-  premium: (p) => `Top-tier parts throughout. A ${p.name} set up for duty use or competition.`,
+  budget: (p) => `The lowest total for ${nameWithArticle(p.name)} that still runs reliably. Proven parts, no extras.`,
+  value: (p) => `Spends where it counts on ${nameWithArticle(p.name)}: barrel, trigger and sighting. The build most people should start from.`,
+  premium: (p) => `Top-tier parts throughout. ${nameWithArticle(p.name, true)} set up for duty use or competition.`,
 };
 
 /** A builder with models (the double-stack 9mm Glocks) gets starter builds for each model, under the model's name and old ids. */

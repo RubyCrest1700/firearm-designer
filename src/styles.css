@@ -121,6 +121,7 @@ a.nav-link { text-decoration: none; }
 .alerts-panel > div { flex: 1 1 320px; }
 .alerts-panel h2 { font-size: 17px; margin: 0 0 4px; }
 .alerts-panel p { margin: 0; color: var(--muted); font-size: 14px; }
+.alerts-panel .alerts-behind { margin-top: 6px; }
 .alerts-panel.on { border-left: 4px solid var(--ok); }
 .alerts-panel form { display: flex; gap: 8px; flex: 1 1 320px; flex-wrap: wrap; }
 .alerts-panel input { flex: 1 1 200px; padding: 10px 12px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; }
