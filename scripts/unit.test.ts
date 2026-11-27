@@ -380,7 +380,7 @@ test('a part sold only by a paused retailer has no price and renders without one
 /* ------------------------------------------------------------------ links-only retailers */
 
 // Links only stops the scripts' requests and nothing else: to the site these stores are ordinary retailers.
-const LINKS_ONLY_IDS = ['BRN', 'CTD', 'GRITR', 'OP', 'PSA', 'SIG'];
+const LINKS_ONLY_IDS = ['BRD', 'BRN', 'CTD', 'GRITR', 'OP', 'PSA', 'SIG'];
 const RAW_LINKS = (sources as unknown as { parts: Record<string, Record<string, string>> }).parts;
 /** The links-only stores as data/sources.json lists them tonight (the test below pins the list). The nightly job reads no price at these. */
 const LINKS_ONLY = new Set(Object.keys((sources as unknown as { linksOnly: object }).linksOnly));
@@ -407,6 +407,37 @@ test('the links-only retailers\' sample offers are still shown, each with its tr
   assert.equal(built.pausedThrough, undefined);
   const shown = PLATFORMS.flatMap((p) => p.parts).flatMap((x) => x.offers.filter((o) => LINKS_ONLY_IDS.includes(o.retailer) && o.url === RAW_LINKS[x.id]?.[o.retailer]));
   assert.ok(shown.length > 0);
+});
+
+// Black Rifle Depot had no estimates in src/data when it went links only, and a links-only store with none shows
+// nowhere once its live prices drop. So every part with a tracked BRD link carries a BRD estimate (BRD's last live
+// price). The test takes BRD's rows out of data/prices.json itself, so it reads the same before and after that night.
+test('every part with a Black Rifle Depot link has a BRD estimate, and once BRD\'s live prices are gone it still has a price', (t) => {
+  const linked = PLATFORMS.flatMap((p) => p.parts).filter((x) => RAW_LINKS[productKey(x)]?.BRD);
+  assert.deepEqual([...new Set(linked.map(productKey))].sort(), Object.keys(RAW_LINKS).filter((id) => RAW_LINKS[id].BRD).sort(), 'every BRD link is on a catalog part');
+  assert.ok(linked.length >= 30, `${linked.length} parts`);
+  let shown = 0;
+  for (const x of linked) {
+    const key = productKey(x);
+    const inline = (INLINE_OFFERS[x.id] ?? []).filter(([retailer]) => retailer === 'BRD');
+    assert.equal(inline.length, 1, `${x.id} has one BRD estimate in src/data`);
+    const [, price, inStock] = inline[0];
+    assert.ok(Number.isFinite(price) && price > 0, x.id);
+    const row = RAW_LIVE[key];
+    if (row?.BRD) {
+      const { BRD: _brd, ...rest } = row;
+      fileRow(t, RAW_LIVE, key, Object.keys(rest).length ? rest : undefined);
+    }
+    const after = rebuilt(x);
+    assert.ok((bestOffer(after)?.price ?? 0) > 0, `${x.id} still has a price`);
+    const brd = after.offers.find((o) => o.retailer === 'BRD');
+    // A live or list price from another store hides every estimate, BRD's included.
+    if (after.offers.some((o) => !isEstimate(o))) { assert.equal(brd, undefined, x.id); continue; }
+    assert.deepEqual(brd, { retailer: 'BRD', price, inStock: inStock ?? true, url: RAW_LINKS[key].BRD }, x.id);
+    assert.equal(priceLabel(brd!), 'Estimate', x.id);
+    shown++;
+  }
+  assert.ok(shown >= 15, `${shown} parts show the BRD estimate`);
 });
 
 /* ------------------------------------------------------------------ saved builds */
