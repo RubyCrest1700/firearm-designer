@@ -118,7 +118,7 @@ function modelParts(M: Model): Part[] {
       { id: `g${n}-bbl-lw`, brand: 'Lone Wolf', name: t('AlphaWolf {M} Barrel, Threaded 1/2x28'), specs: ['Gen3/4', 'Threaded 1/2x28', 'Conventional rifling'], attrs: { len: M, bbl: M, family: 'Gen3/4', threaded: true, thread: '1/2x28' },
         offers: [['BRN', 124.99 + d], ['MID', 129.99 + d], ['BRD', 134.95, false]] },
       { id: `g${n}-bbl-lwm`, brand: 'Lone Wolf', name: t('AlphaWolf {M} Barrel, Threaded M13.5x1 LH'), specs: ['Gen3/4', 'Threaded M13.5x1 LH', 'Metric, left-hand'], attrs: { len: M, bbl: M, family: 'Gen3/4', threaded: true, thread: 'M13.5x1 LH' },
-        offers: [['BRN', 129.99 + d], ...brd('G17', 134.95)] },
+        offers: [['BRN', 129.99 + d]] },
       ...(M !== 'G26' ? [
         { id: `g${n}-bbl-faxon`, brand: 'Faxon', name: t('{M} Duty Series Barrel'), specs: ['Gen3/4', 'Match grade', 'Nitride'], attrs: { len: M, bbl: M, family: 'Gen3/4', threaded: false },
           offers: [['BRN', 169.99 + d], ['OP', 164.99 + d], ...gritr('G17', 92)] as [string, number][], pick: pick('value', 'Match-grade accuracy for less than most aftermarket barrels.') },

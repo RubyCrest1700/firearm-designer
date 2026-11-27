@@ -30,7 +30,6 @@
     { "ids": ["g-opt-epsc", "gs-opt-epsc", "p365-opt-eps", "hc-opt-eps"], "status": "unchecked", "reason": "g-opt-epsc and hc-opt-eps share one Rainier Arms page; gs-opt-epsc and p365-opt-eps link to different pages at Primary Arms" },
     { "ids": ["ar-mz-a2", "a10-mz-a2-556", "a9-mz-a2"], "status": "unchecked", "reason": "same product link, different names" },
     { "ids": ["ar-mz-a2-30", "a10-mz-a2"], "status": "unchecked", "reason": "same product link, different names" },
-    { "ids": ["g17-bbl-lw", "g17-bbl-lwm"], "status": "unchecked", "reason": "one store page is tracked for parts with different names" },
     { "ids": ["g26-bbl-lw", "g26-bbl-lwm"], "status": "unchecked", "reason": "one store page is tracked for parts with different names" },
     { "ids": ["g19-bbl-oem5", "g34-bbl-oem5"], "status": "unchecked", "reason": "one store page is tracked for parts with different names" },
     { "ids": ["g17-hol-g17", "g17-hol-g17-tlr7a", "g17-hol-g17-x300"], "status": "unchecked", "reason": "one store page is tracked for parts with different names" },

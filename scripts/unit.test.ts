@@ -440,6 +440,14 @@ test('every part with a Black Rifle Depot link has a BRD estimate, and once BRD\
   assert.ok(shown >= 15, `${shown} parts show the BRD estimate`);
 });
 
+// The metric Lone Wolf barrel's only Black Rifle Depot link was the same page as the 1/2x28 barrel, so it may be
+// the wrong product. It carries no BRD link and no BRD estimate.
+test('the M13.5x1 LH Lone Wolf G17 barrel has no Black Rifle Depot link or estimate', () => {
+  assert.ok(RAW_LINKS['g17-bbl-lw']?.BRD);
+  assert.equal(RAW_LINKS['g17-bbl-lwm']?.BRD, undefined);
+  assert.deepEqual((INLINE_OFFERS['g17-bbl-lwm'] ?? []).filter(([retailer]) => retailer === 'BRD'), []);
+});
+
 /* ------------------------------------------------------------------ saved builds */
 
 const storage = new Map<string, string>();
