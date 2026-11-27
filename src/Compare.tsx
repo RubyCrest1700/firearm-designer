@@ -231,6 +231,27 @@ function PartCell({ f, slot }: { f: Facts; slot: Slot }) {
 
 type Source = 'saved' | 'current' | 'starter' | 'community' | 'link';
 
+/** Owner-approved wording (2026-11-27). */
+export const COMMUNITY_LOAD_FAILED = "Community builds couldn't load right now. Please try again later.";
+
+/**
+ * The chooser's community builds: loading, the list (the first 40), none yet, or that they couldn't be loaded.
+ * A failed load is never shown as "none yet". The error block is the Community page's (src/CommunityPage.tsx).
+ */
+export function CommunityChoices({ community, failed, onRetry, row }: {
+  community: CommunityBuild[] | null; failed: boolean; onRetry: () => void; row: (c: CommunityBuild) => ReactNode;
+}) {
+  if (failed) return (
+    <div className="load-error">
+      <p className="form-error" role="alert">{COMMUNITY_LOAD_FAILED}</p>
+      <button className="btn" onClick={onRetry}>Try Again</button>
+    </div>
+  );
+  if (community === null) return <p className="dim">Loading community builds…</p>;
+  if (community.length === 0) return <p className="dim">No community builds to show yet.</p>;
+  return <ul className="cmp-options scroll">{community.slice(0, 40).map(row)}</ul>;
+}
+
 /** `skipCurrent`: open on another source than the build in progress, so both sides don't start on the same build. */
 function Chooser({ label, saved, current, other, lastPlatform, skipCurrent, onPick, onNote }: {
   label: string; saved: SavedBuild[]; current: { platform: string; selection: Selection; name?: string } | null;
@@ -244,12 +265,14 @@ function Chooser({ label, saved, current, other, lastPlatform, skipCurrent, onPi
   const [src, setSrc] = useState<Source>((sources.find(([k]) => !skipCurrent || k !== 'current') ?? sources[0])[0]);
   const [platform, setPlatform] = useState(other?.platform ?? current?.platform ?? lastPlatform);
   const [community, setCommunity] = useState<CommunityBuild[] | null>(null);
+  /** The community builds couldn't be loaded. Try Again clears it, which asks for them again. */
+  const [failed, setFailed] = useState(false);
   const [link, setLink] = useState('');
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
-    if (src !== 'community' || community) return;
-    listBuilds(null, 'top').then(setCommunity).catch(() => setCommunity([]));
-  }, [src, community]);
+    if (src !== 'community' || community || failed) return;
+    listBuilds(null, 'top').then(setCommunity).catch(() => setFailed(true));
+  }, [src, community, failed]);
 
   const option = (key: string, name: string, meta: string, item: CompareItem) => (
     <li key={key}>
@@ -316,14 +339,10 @@ function Chooser({ label, saved, current, other, lastPlatform, skipCurrent, onPi
         </>
       )}
       {src === 'community' && (
-        community === null ? <p className="dim">Loading community builds…</p>
-          : community.length === 0 ? <p className="dim">No community builds to show yet.</p>
-          : <ul className="cmp-options scroll">
-            {community.slice(0, 40).map((c) => {
-              const sel = selectionFromParts(c.platform, c.parts);
-              return option(c.id, c.name, `${totalText(c.platform, sel)} · ${c.votes} vote${c.votes === 1 ? '' : 's'}`, { kind: 'Community', name: c.name, platform: c.platform, selection: sel });
-            })}
-          </ul>
+        <CommunityChoices community={community} failed={failed} onRetry={() => setFailed(false)} row={(c) => {
+          const sel = selectionFromParts(c.platform, c.parts);
+          return option(c.id, c.name, `${totalText(c.platform, sel)} · ${c.votes} vote${c.votes === 1 ? '' : 's'}`, { kind: 'Community', name: c.name, platform: c.platform, selection: sel });
+        }} />
       )}
       {src === 'link' && (
         <form className="cmp-link" onSubmit={(e) => { e.preventDefault(); void pasteLink(); }}>

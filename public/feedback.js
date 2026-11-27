@@ -15,11 +15,19 @@
       if (r.origin === location.origin && r.pathname !== '/feedback/') from = r.pathname;
     } catch {}
   }
-  if (!from.startsWith('/') || from.startsWith('//') || from.startsWith('/\\')) from = '';
-  form.elements.page.value = from;
-  if (from) {
+  // Only a page on this site is taken. The path is read the way a browser will read it (tabs and line breaks dropped,
+  // \ as /), so one that would lead to another site is refused, and the link gets the full address that was checked.
+  let to = null;
+  if (from.startsWith('/')) {
+    try {
+      const u = new URL(from, location.origin);
+      if (u.origin === location.origin) to = u;
+    } catch {}
+  }
+  form.elements.page.value = to ? to.pathname + to.search + to.hash : '';
+  if (to) {
     const back = sent.querySelector('.back-link');
-    back.setAttribute('href', from);
+    back.setAttribute('href', to.href);
     back.textContent = 'Back to Where You Were';
   }
 

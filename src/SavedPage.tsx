@@ -4,12 +4,14 @@ import { money, ownedOf, ownsAny, partIds, partsLabel } from './engine';
 import { buildOf, estimatedOf, priceChanges, totalParts, type SavedBuild } from './store';
 import { totalSeries } from './data/history';
 import { PriceChart } from './PriceChart';
-import { type AlertSignup } from './alerts';
+import { ALERTS_BEHIND, type AlertSignup } from './alerts';
 import { BuildCard, shortDate } from './ui';
 
 /** Email alerts for every saved build in this browser: sign up, waiting to confirm, or on. */
-export function AlertsPanel({ signup, hasBuilds, onSignUp, onRefresh, onStop }: {
+export function AlertsPanel({ signup, hasBuilds, behind, onSignUp, onRefresh, onStop }: {
   signup: AlertSignup | null; hasBuilds: boolean; onSignUp: (email: string) => Promise<void>; onRefresh: () => void; onStop: () => Promise<void>;
+  /** The last send of the saved builds to the alert service failed, so the emailed list is behind this page. */
+  behind?: boolean;
 }) {
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
@@ -28,6 +30,7 @@ export function AlertsPanel({ signup, hasBuilds, onSignUp, onRefresh, onStop }: 
         <p>{signup.confirmed
           ? <>We'll email <b>{signup.email}</b> when parts in your saved builds go up or down in price, at most once a day. Builds you save here are added automatically.</>
           : <>We sent a link to <b>{signup.email}</b>. Press it to turn on price alerts.</>}</p>
+        {behind && <p className="alerts-behind" role="status">{ALERTS_BEHIND}</p>}
       </div>
       <button className="btn ghost" disabled={busy} onClick={async () => {
         setBusy(true); setError(null);

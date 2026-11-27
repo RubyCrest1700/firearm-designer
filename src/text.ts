@@ -16,3 +16,14 @@ export const withArticle = (s: string) => {
   const n = s.toLowerCase();
   return isPlural(n) ? n : `${/^[aeiou]/.test(n) ? 'an' : 'a'} ${n}`;
 };
+
+/**
+ * A platform or model name with its article, the name's own capitals kept: "an AR-15", "an S&W M&P 2.0", "a Glock 19".
+ * A name that opens with letters read one by one ("AR", "S&W") goes by how its first letter is said; any other by its first letter.
+ * `sentenceStart` capitalises the article: "An AR-15".
+ */
+export const nameWithArticle = (name: string, sentenceStart = false) => {
+  const spelledOut = /^[A-Z](?![a-z])/.test(name);
+  const an = spelledOut ? /^[AEFHILMNORSX]/.test(name) : /^[aeiou]/i.test(name);
+  return `${sentenceStart ? 'A' : 'a'}${an ? 'n' : ''} ${name}`;
+};

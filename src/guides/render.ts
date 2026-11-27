@@ -8,7 +8,7 @@ import { buyUrl, retailerName } from '../data/retailers';
 import { baseSelection, bestOffer, estimateNote, estimatedCount, isEstimate, money, noPriceNote, partsLabel, presetSelection, priceLabel, priceText, unpricedCount, worst } from '../engine';
 import type { Part, Platform, Severity, Tier } from '../types';
 import { GUIDES, type AcrossChart, type FitChart, type Guide, type PairChart } from './content';
-import { titleCase } from '../text';
+import { nameWithArticle, titleCase } from '../text';
 import { COMMUNITY_API, CONTENT_SECURITY_POLICY } from '../config';
 import { fontTags } from '../fonts';
 import { SBR_MESSAGE } from '../data/helpers';
@@ -518,7 +518,8 @@ export function platformPage(platform: PageView) {
   </article>`;
   return layout({
     title: pageTitle(`${platform.name} Build Planner: Parts, Fit and Prices`, `${platform.name} Build Planner`),
-    description: `Plan a ${platform.name} build part by part. ${platform.parts.length} parts checked for fit, prices compared across retailers, and starter builds from ${money(budget)}.${budgetEstimates ? ' Some prices are estimates.' : ''}`,
+    /** Owner-approved wording (2026-11-27). The name takes "a" or "an" by how it's said: "Plan an AR-15 build", "Plan a Glock 19 build". */
+    description: `Plan ${nameWithArticle(platform.name)} build part by part. ${platform.parts.length} parts checked for fit, prices compared across retailers, and starter builds from ${money(budget)}.${budgetEstimates ? ' Some prices are estimates.' : ''}`,
     path,
     body,
     image: `/og/${platform.id}.png`,

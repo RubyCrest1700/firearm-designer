@@ -4,7 +4,7 @@ import { ownsAny, partIds, baseSelection, selectionTokens, withoutOwned, type Se
 import { ComparePage, loadCompare, storeCompare, type CompareItem } from './Compare';
 import { droppedBuilds, loadSavedBuilds, priceChanges, newId, readSharedLink, savedPrices, selectionFromParts, shareUrl, unlistedNote, checkShareLinks, storeSavedBuilds, SAVED_KEY, type SavedBuild } from './store';
 import { recordBuyClick, shareBuild, type CommunityBuild } from './community';
-import { ALERTS_KEY, alertsAvailable, checkAlertSignup, loadAlertSignup, signUpForAlerts, stopAlerts, storeAlertSignup, syncAlertBuilds, type AlertSignup } from './alerts';
+import { ALERTS_KEY, alertsAvailable, alertsBehindAfter, checkAlertSignup, loadAlertSignup, loadAlertsUnsent, signUpForAlerts, stopAlerts, storeAlertSignup, syncAlertBuilds, type AlertSignup } from './alerts';
 import type { Part } from './types';
 import { BuilderPage } from './BuilderPage';
 import { CommunityPage } from './CommunityPage';
@@ -125,12 +125,32 @@ export default function App() {
   const firstSync = useRef(true);
   /** A change made in this tab that hasn't been sent yet. It's still sent if another tab's list arrives before it goes. */
   const unsent = useRef(false);
+  /** The signup (by its token) whose emailed list is behind My Builds because a send failed. Kept in this browser, so the next visit tries again. */
+  const [behindFor, setBehindFor] = useState(loadAlertsUnsent);
+  /** Counts the sends, so an older send that answers late can't speak for a newer one. */
+  const sends = useRef(0);
+  /** The signup as it is now, for a send's answer to check that its own signup is still the current one. */
+  const signupNow = useRef(signup);
+  signupNow.current = signup;
   useEffect(() => {
-    if (firstSync.current) { firstSync.current = false; return; }
+    // The first draw sends nothing, unless a send failed on an earlier visit: that one is tried again now.
+    if (firstSync.current) { firstSync.current = false; if (!signup || behindFor !== signup.token) return; }
     if (saved !== fromOtherTab.current) unsent.current = true;
     if (!signup) { unsent.current = false; return; }
     if (!unsent.current) return;
-    const t = setTimeout(() => { unsent.current = false; void syncAlertBuilds(signup, saved).then((ok) => { if (!ok) setSignup((cur) => signupAfter(cur, signup.token, null)); }); }, 1000);
+    const t = setTimeout(() => {
+      unsent.current = false;
+      const send = ++sends.current;
+      void syncAlertBuilds(signup, saved).then((result) => {
+        if (result === 'gone') setSignup((cur) => signupAfter(cur, signup.token, null));
+        // Only the latest send says whether the emailed list is behind.
+        if (send !== sends.current) return;
+        if (result === 'failed') unsent.current = true;
+        // A signup turned off or replaced while the send was out has nothing recorded for it.
+        const behind = alertsBehindAfter(signup.token, result, signupNow.current);
+        if (behind !== undefined) setBehindFor(behind);
+      });
+    }, 1000);
     return () => clearTimeout(t);
   }, [saved]);
   // Tell a returning visitor once when a saved build gets cheaper; a new drop tells them again.
@@ -293,7 +313,7 @@ export default function App() {
           <SavedPage
             saved={saved}
             alerts={alertsOn ? (
-              <AlertsPanel signup={signup} hasBuilds={saved.length > 0}
+              <AlertsPanel signup={signup} hasBuilds={saved.length > 0} behind={!!signup && behindFor === signup.token}
                 onSignUp={async (email) => { const s = await signUpForAlerts(email, saved); setSignup(s); }}
                 onRefresh={() => { if (signup) void checkAlertSignup(signup).then((next) => setSignup((cur) => signupAfter(cur, signup.token, next))); }}
                 onStop={async () => { if (signup) await stopAlerts(signup); setSignup(null); setToast('Price alert emails are off.'); }} />

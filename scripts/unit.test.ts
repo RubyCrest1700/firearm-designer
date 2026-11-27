@@ -73,6 +73,12 @@ import { featuredBuilds, getBuild, listBuilds, recordBuyClick, reportBuild, setV
 import { liveCheckedAts } from '../src/data/helpers';
 import { STALE_AFTER_MS, STALE_OFFER_LABEL, STALE_PRICES_LABEL, isStale, offerAgeLabel, offerAgeText, priceStatus, shortDate } from '../src/ui';
 import App from '../src/App';
+import { runInNewContext } from 'node:vm';
+import type { CommunityBuild } from '../src/community';
+import { nameWithArticle } from '../src/text';
+import { TIER_LABEL } from '../src/store';
+import { ALERTS_BEHIND, ALERTS_UNREACHABLE, alertsAvailable, alertsBehindAfter, loadAlertsUnsent, signUpForAlerts, storeAlertsUnsent } from '../src/alerts';
+import { COMMUNITY_LOAD_FAILED, CommunityChoices } from '../src/Compare';
 
 /** The catalog's offers from stores missing from RETAILERS, as noted while it was built: taken before any test adds its own. */
 const CATALOG_UNKNOWN_AT_LOAD = [...UNKNOWN_RETAILER_OFFERS];
@@ -615,7 +621,11 @@ test('the app reads My Builds and the alert signup again when another tab change
     '    if (saved !== fromOtherTab.current) unsent.current = true;',
     '    if (!signup) { unsent.current = false; return; }',
     '    if (!unsent.current) return;',
-    '    const t = setTimeout(() => { unsent.current = false; void syncAlertBuilds(signup, saved).then((ok) => { if (!ok) setSignup((cur) => signupAfter(cur, signup.token, null)); }); }, 1000);',
+    '    const t = setTimeout(() => {',
+    '      unsent.current = false;',
+    '      const send = ++sends.current;',
+    '      void syncAlertBuilds(signup, saved).then((result) => {',
+    "        if (result === 'gone') setSignup((cur) => signupAfter(cur, signup.token, null));",
   ].join('\n')));
   // Nothing else in the app stores the list or sets the marker.
   assert.equal(app.match(/storeSavedBuilds\(/g)?.length, 1);
@@ -644,7 +654,7 @@ test('an answer about a signup that has since been replaced or stopped changes n
   // Every place the app takes such an answer goes through it, and only Turn Off forgets the signup outright.
   const app = readFileSync('src/App.tsx', 'utf8').replace(/\r\n/g, '\n');
   assert.ok(app.includes('    if (s) void checkAlertSignup(s).then((next) => setSignup((cur) => signupAfter(cur, s.token, next)));'));
-  assert.ok(app.includes('void syncAlertBuilds(signup, saved).then((ok) => { if (!ok) setSignup((cur) => signupAfter(cur, signup.token, null)); });'));
+  assert.ok(app.includes("void syncAlertBuilds(signup, saved).then((result) => {\n        if (result === 'gone') setSignup((cur) => signupAfter(cur, signup.token, null));"));
   assert.ok(app.includes('onRefresh={() => { if (signup) void checkAlertSignup(signup).then((next) => setSignup((cur) => signupAfter(cur, signup.token, next))); }}'));
   assert.doesNotMatch(app, /then\(setSignup\)/);
   assert.equal(app.match(/checkAlertSignup\(/g)?.length, 2);
@@ -2365,6 +2375,44 @@ test('the alerts signup panel, the feedback form and the FAQ email answer link t
   const qa = ld.find((j) => j['@type'] === 'FAQPage').mainEntity.find((e: { name: string }) => e.name === 'What do you do with my email address?');
   assert.equal(qa.acceptedAnswer.text, answer);
 });
+
+test('the feedback page\'s Back link only ever leads to a page on this site', () => {
+  const code = readFileSync('public/feedback.js', 'utf8');
+  const ORIGIN = 'https://site.example';
+  /** Runs the page's script against a made-up page, and reads where its Back link then leads as a browser would. */
+  const run = (search: string, referrer = '') => {
+    const back = { href: '/', textContent: 'Back to the Site', setAttribute(k: string, v: string) { if (k === 'href') back.href = v; } };
+    const page = { value: '' };
+    const form = { elements: { page }, dataset: {}, querySelector: () => ({}), addEventListener: () => {} };
+    const sent = { querySelector: () => back };
+    const document = { referrer, getElementById: (id: string) => (id === 'feedback' ? form : sent) };
+    runInNewContext(code, { document, location: { search, origin: ORIGIN }, URL, URLSearchParams });
+    return { href: back.href, text: back.textContent, page: page.value, leadsTo: new URL(back.href, `${ORIGIN}/feedback/`) };
+  };
+  const from = (value: string) => run(`?from=${encodeURIComponent(value)}`);
+  // The pages that link here: the builder and other app pages by ?from=, the guides by the referrer.
+  for (const path of ['/#build', '/', '/#saved', '/faq/', '/build/ar-15/?x=1#top']) {
+    const got = from(path);
+    assert.equal(got.leadsTo.href, ORIGIN + path, path);
+    assert.equal(got.text, 'Back to Where You Were', path);
+    assert.equal(got.page, path, path);
+  }
+  const guide = run('', `${ORIGIN}/faq/some-guide/`);
+  assert.deepEqual([guide.leadsTo.href, guide.text, guide.page], [`${ORIGIN}/faq/some-guide/`, 'Back to Where You Were', '/faq/some-guide/']);
+  // Nothing to go back to: the link stays the plain one to the home page.
+  for (const got of [run(''), run('', 'https://elsewhere.example/page'), run('', `${ORIGIN}/feedback/`)])
+    assert.deepEqual([got.href, got.text, got.page], ['/', 'Back to the Site', '']);
+  // A browser drops tabs and line breaks from an address and reads \ as /, so each of these would lead to another site.
+  for (const value of ['/\t/evil.example', '/\n/evil.example', '/\r/evil.example', '/\t\\evil.example', '/\\evil.example', '//evil.example', '\t//evil.example', '/\t/evil.example/#build',
+    'https://evil.example/', 'evil.example', 'javascript:alert(1)', '/\tjavascript:alert(1)']) {
+    const got = from(value);
+    assert.equal(got.leadsTo.origin, ORIGIN, JSON.stringify(value));
+    assert.equal(got.leadsTo.protocol, 'https:', JSON.stringify(value));
+    assert.doesNotMatch(got.page, /evil\.example|^[^/]|^\/[/\\]/, JSON.stringify(value));
+  }
+  // The address as the form's ?from= carries it in a link (L4).
+  assert.equal(run('?from=/%09/evil.example').leadsTo.origin, ORIGIN);
+});
 /** Owner-approved wording (2026-10-26), byte for byte. */
 const MONEY_ANSWER = 'No. There are no affiliate links, and we earn no commission from retailers. Retailer links carry a tag so the store can see the visit came from Drop-In Builds.';
 
@@ -2905,6 +2953,51 @@ test('the one-store table says its cart has estimates, and its note is the appro
   assert.doesNotMatch(html(allPriced([LIVE])), /Leaves out parts that are out of stock or not checked/);
   assert.doesNotMatch(html(allPriced([LIVE])), /Leaves out parts shown as out of stock/);
   assert.doesNotMatch(html(allPriced([LIVE])), /In-stock parts only/);
+});
+
+test('a platform name takes "a" or "an" by how it is said, in the starter blurbs and the platform pages', () => {
+  const SAID: [string, string, string][] = [
+    ['AR-15', 'an AR-15', 'An AR-15'], ['AR-9', 'an AR-9', 'An AR-9'], ['AR-10', 'an AR-10', 'An AR-10'],
+    ['S&W M&P 2.0', 'an S&W M&P 2.0', 'An S&W M&P 2.0'],
+    ['Sig P320', 'a Sig P320', 'A Sig P320'], ['Sig P365', 'a Sig P365', 'A Sig P365'], ['Springfield Hellcat', 'a Springfield Hellcat', 'A Springfield Hellcat'],
+    ['Glock 19', 'a Glock 19', 'A Glock 19'], ['Glock 17 / 19 / 19X / 26 / 34 / 45 / 47', 'a Glock 17 / 19 / 19X / 26 / 34 / 45 / 47', 'A Glock 17 / 19 / 19X / 26 / 34 / 45 / 47'],
+    ['Glock 43X / 48', 'a Glock 43X / 48', 'A Glock 43X / 48'], ['Glock 20 / 21', 'a Glock 20 / 21', 'A Glock 20 / 21'],
+  ];
+  for (const [name, mid, start] of SAID) {
+    assert.equal(nameWithArticle(name), mid);
+    assert.equal(nameWithArticle(name, true), start);
+  }
+  // Every name the site says this way is one of these kinds: the AR names and S&W are read letter by letter, the rest as words.
+  const an = (name: string) => /^(AR-\d+$|S&W )/.test(name);
+  const names = new Set([...PAGE_VIEWS.map((v) => v.name), ...FEATURED.map((fb) => fb.name.slice(TIER_LABEL[fb.tier].length + 1))]);
+  for (const name of names) {
+    assert.match(name, /^(AR-\d+$|S&W |Glock |Sig |Springfield )/, name);
+    assert.equal(nameWithArticle(name), `${an(name) ? 'an' : 'a'} ${name}`, name);
+  }
+  for (const p of PLATFORMS) assert.ok(names.has(p.name), p.id);
+  // The three starter blurbs, for every platform and model.
+  for (const fb of FEATURED) {
+    const name = fb.name.slice(TIER_LABEL[fb.tier].length + 1);
+    const [mid, start] = an(name) ? ['an', 'An'] : ['a', 'A'];
+    assert.equal(fb.summary, {
+      budget: `The lowest total for ${mid} ${name} that still runs reliably. Proven parts, no extras.`,
+      value: `Spends where it counts on ${mid} ${name}: barrel, trigger and sighting. The build most people should start from.`,
+      premium: `Top-tier parts throughout. ${start} ${name} set up for duty use or competition.`,
+    }[fb.tier], fb.id);
+    assert.doesNotMatch(fb.summary, /\b[Aa] (AR-|S&W)|\b[Aa]n (Glock|Sig|Springfield)/, fb.id);
+  }
+  const blurb = (id: string) => FEATURED.find((fb) => fb.id === id)!.summary;
+  assert.equal(blurb('ar15-budget'), 'The lowest total for an AR-15 that still runs reliably. Proven parts, no extras.');
+  assert.equal(blurb('ar15-premium'), 'Top-tier parts throughout. An AR-15 set up for duty use or competition.');
+  assert.equal(blurb('mp2-value'), 'Spends where it counts on an S&W M&P 2.0: barrel, trigger and sighting. The build most people should start from.');
+  assert.equal(blurb('p320-premium'), 'Top-tier parts throughout. A Sig P320 set up for duty use or competition.');
+  // The platform pages' description, as search results show it.
+  for (const v of PAGE_VIEWS) {
+    const html = platformPage(v);
+    assert.ok(html.includes(`<meta name="description" content="Plan ${an(v.name) ? 'an' : 'a'} ${htmlEsc(v.name)} build part by part. `), v.pageId);
+    assert.doesNotMatch(html, /Plan a (AR-|S&amp;W)|Plan an (Glock|Sig|Springfield)/, v.pageId);
+  }
+  assert.ok(platformPage(PAGE_VIEWS.find((v) => v.pageId === 'ar15')!).includes('<meta name="description" content="Plan an AR-15 build part by part. '));
 });
 
 test('every platform page marks estimates exactly where it has them, and keeps the no-price wording in place', () => {
@@ -4082,7 +4175,7 @@ test('every community call carries a 10 second time limit', async (t) => {
     await setVote('b1', true);
     await setVote('b1', false);
     assert.deepEqual(seen.calls.map((c) => c.url.replace('https://share.dropinbuilds.com', '')), [
-      '/api/builds?sort=top', '/api/featured', '/api/builds/b1', '/api/builds', '/api/builds/b1/click', '/api/builds/b1/report', '/api/builds/b1/vote', '/api/builds/b1/unvote',
+      '/api/builds?sort=top&limit=60', '/api/featured', '/api/builds/b1', '/api/builds', '/api/builds/b1/click', '/api/builds/b1/report', '/api/builds/b1/vote', '/api/builds/b1/unvote',
     ]);
     assert.deepEqual(seen.waits, Array(8).fill(10000));
     for (const c of seen.calls) {
@@ -4159,7 +4252,7 @@ test('the alert calls put a valid token in the address unchanged', async (t) => 
   const answer = { ok: true, status: 200, json: async () => ({ email: 'builder@example.com', confirmed: true }) };
   await withFakeFetch(t, async () => answer, async (seen) => {
     assert.deepEqual(await checkAlertSignup(signupX), { ...signupX, confirmed: true });
-    assert.equal(await syncAlertBuilds(signupX, []), true);
+    assert.equal(await syncAlertBuilds(signupX, []), 'sent');
     await stopAlerts(signupX);
     assert.deepEqual(seen.calls.map((c) => [c.init.method, c.url]), [
       [undefined, `https://share.dropinbuilds.com/api/alerts/${TOKEN_X}`],
@@ -4176,6 +4269,265 @@ test('the alert calls put a valid token in the address unchanged', async (t) => 
   });
   assert.equal(readFileSync('src/alerts.ts', 'utf8').match(/\$\{s\.token\}/g), null);
   assert.equal(readFileSync('src/alerts.ts', 'utf8').match(/\$\{encodeURIComponent\(s\.token\)\}/g)?.length, 3);
+});
+
+/* ------------------------------------------------------------------ alert calls that fail say so, and a failed send is tried again */
+
+const ALERTS_UNREACHABLE_TEXT = "Couldn't reach the price alert service. Check your connection and try again.";
+const ALERTS_BEHIND_TEXT = "Your latest changes haven't reached your price alerts yet. We'll try again next time you visit.";
+const ALERTS_UNSENT = 'firearm-designer:alerts-unsent:v1';
+/** The ways a request can fail to reach the service: the browser's own error (Chrome's and Safari's words), no answer in time, and an answer that stalls. */
+const UNREACHED: [string, (url: string, init: RequestInit, stop: AbortController) => Promise<unknown>][] = [
+  ['Failed to fetch', async () => { throw new TypeError('Failed to fetch'); }],
+  ['Load failed', async () => { throw new TypeError('Load failed'); }],
+  ['no answer in time', (_url, init, stop) => new Promise((_, reject) => { stop.abort(timedOut()); reject(init.signal!.reason); })],
+  ['an answer that stalls', async (_url, _init, stop) => ({ ok: true, status: 200, json: async () => { stop.abort(timedOut()); throw stop.signal.reason; } })],
+];
+
+test('an alert sign-up or Turn Off that cannot reach the service says so in our own words, never the browser\'s', async (t) => {
+  assert.equal(ALERTS_UNREACHABLE, ALERTS_UNREACHABLE_TEXT);
+  for (const [what, failing] of UNREACHED) {
+    await withFakeFetch(t, failing, async () => {
+      await assert.rejects(signUpForAlerts('builder@example.com', []), (e: Error) => { assert.equal(e.message, ALERTS_UNREACHABLE_TEXT, what); return true; });
+    });
+    // Turn Off reads no answer, so one that stalls after a good status is a good answer.
+    if (what === 'an answer that stalls') continue;
+    await withFakeFetch(t, failing, async () => {
+      await assert.rejects(stopAlerts(signupX), (e: Error) => { assert.equal(e.message, ALERTS_UNREACHABLE_TEXT, what); return true; });
+    });
+  }
+  // An answer from the service keeps the service's words (and its status), and Turn Off keeps its own.
+  await withFakeFetch(t, async () => ({ ok: false, status: 429, json: async () => ({ error: 'Too many sign-ups today. Please try again tomorrow.' }) }), async () => {
+    await assert.rejects(signUpForAlerts('builder@example.com', []), { message: 'Too many sign-ups today. Please try again tomorrow.', status: 429 });
+    await assert.rejects(stopAlerts(signupX), { message: "Couldn't turn off price alerts. Please try again." });
+  });
+  await withFakeFetch(t, async () => ({ ok: false, status: 500, json: async () => { throw new SyntaxError('not json'); } }), async () => {
+    await assert.rejects(signUpForAlerts('builder@example.com', []), { message: 'Something went wrong. Please try again.', status: 500 });
+  });
+  // A check that can't reach the service still keeps the signup, and alerts read as unavailable.
+  for (const [what, failing] of UNREACHED) {
+    await withFakeFetch(t, failing, async () => {
+      assert.deepEqual(await checkAlertSignup(signupX), signupX, what);
+    });
+    await withFakeFetch(t, failing, async () => {
+      assert.equal(await alertsAvailable(), false, what);
+    });
+  }
+  // The panel shows the message it's handed, so neither path can show the browser's text.
+  const source = readFileSync('src/alerts.ts', 'utf8').replace(/\r\n/g, '\n');
+  assert.equal(source.split(ALERTS_UNREACHABLE_TEXT).length - 1, 1);
+  assert.ok(source.includes(`/** Owner-approved wording (2026-11-27). */\nexport const ALERTS_UNREACHABLE = "${ALERTS_UNREACHABLE_TEXT}";`));
+});
+
+test('sending the watched builds says whether they were sent, the signup is gone, or the send failed', async (t) => {
+  await withFakeFetch(t, async () => ({ ok: true, status: 200, json: async () => ({ ok: true }) }), async () => {
+    assert.equal(await syncAlertBuilds(signupX, []), 'sent');
+  });
+  // Unsubscribed by email: the service no longer has the signup.
+  await withFakeFetch(t, async () => ({ ok: false, status: 404, json: async () => ({ error: 'Not found' }) }), async () => {
+    assert.equal(await syncAlertBuilds(signupX, []), 'gone');
+  });
+  // Not reached, or refused: the list was not sent, and that is not reported as sent.
+  for (const [what, failing] of UNREACHED) {
+    await withFakeFetch(t, failing, async () => {
+      assert.equal(await syncAlertBuilds(signupX, []), 'failed', what);
+    });
+  }
+  for (const status of [429, 500, 503]) {
+    await withFakeFetch(t, async () => ({ ok: false, status, json: async () => ({ error: 'No' }) }), async () => {
+      assert.equal(await syncAlertBuilds(signupX, []), 'failed', String(status));
+    });
+  }
+  // An answer that would be the same next time is its own result, and still not reported as sent.
+  for (const status of [400, 403]) {
+    await withFakeFetch(t, async () => ({ ok: false, status, json: async () => ({ error: 'No' }) }), async () => {
+      assert.equal(await syncAlertBuilds(signupX, []), 'refused', String(status));
+    });
+  }
+});
+
+test('a failed send is remembered in this browser for the signup it was for, until a send goes through', (t) => {
+  const local = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')!;
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: { getItem: (k: string) => storage.get(k) ?? null, setItem: (k: string, v: string) => void storage.set(k, v), removeItem: (k: string) => void storage.delete(k) },
+    configurable: true,
+  });
+  t.after(() => { Object.defineProperty(globalThis, 'localStorage', local); storage.delete(ALERTS_UNSENT); storage.delete(ALERTS); });
+  storage.delete(ALERTS_UNSENT);
+  assert.equal(loadAlertsUnsent(), null);
+  // A failed send: kept under the signup's token, and still there on the next visit.
+  assert.equal(alertsBehindAfter(TOKEN_X, 'failed', signupX), TOKEN_X);
+  assert.equal(storage.get(ALERTS_UNSENT), TOKEN_X);
+  assert.equal(loadAlertsUnsent(), TOKEN_X);
+  // A send that goes through, or a signup the service no longer has: nothing is left waiting.
+  assert.equal(alertsBehindAfter(TOKEN_X, 'sent', signupX), null);
+  assert.equal(storage.has(ALERTS_UNSENT), false);
+  assert.equal(loadAlertsUnsent(), null);
+  storeAlertsUnsent(TOKEN_X);
+  assert.equal(alertsBehindAfter(TOKEN_X, 'gone', signupX), null);
+  assert.equal(storage.has(ALERTS_UNSENT), false);
+  // Anything stored there that isn't a token is left unused.
+  for (const junk of ['1', 'true', '{"token":"x"}', TOKEN_X.toUpperCase(), TOKEN_X + '0', '<b>']) {
+    storage.set(ALERTS_UNSENT, junk);
+    assert.equal(loadAlertsUnsent(), null, junk);
+  }
+  // Turning alerts off forgets it along with the signup.
+  storeAlertSignup(signupX);
+  storeAlertsUnsent(TOKEN_X);
+  storeAlertSignup(null);
+  assert.equal(storage.has(ALERTS), false);
+  assert.equal(storage.has(ALERTS_UNSENT), false);
+  // With storage switched off, nothing throws and nothing is waiting.
+  const off = () => { throw new Error('storage is off'); };
+  Object.defineProperty(globalThis, 'localStorage', { value: { getItem: off, setItem: off, removeItem: off }, configurable: true });
+  assert.equal(loadAlertsUnsent(), null);
+  assert.equal(alertsBehindAfter(TOKEN_X, 'failed', signupX), TOKEN_X);
+  storeAlertsUnsent(null);
+});
+
+test('a list the service refuses is not remembered or tried again; only a send that could go through later is', async (t) => {
+  // An answer that would be the same next time (the list is too long, or the request isn't allowed): refused.
+  for (const status of [400, 401, 403, 405, 413, 415, 422]) {
+    await withFakeFetch(t, async () => ({ ok: false, status, json: async () => ({ error: 'No' }) }), async () => {
+      assert.equal(await syncAlertBuilds(signupX, []), 'refused', String(status));
+    });
+  }
+  // Too many requests for now, or the service's own trouble: failed, so it's tried again.
+  for (const status of [429, 500, 502, 503, 504]) {
+    await withFakeFetch(t, async () => ({ ok: false, status, json: async () => ({ error: 'No' }) }), async () => {
+      assert.equal(await syncAlertBuilds(signupX, []), 'failed', String(status));
+    });
+  }
+  const local = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')!;
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: { getItem: (k: string) => storage.get(k) ?? null, setItem: (k: string, v: string) => void storage.set(k, v), removeItem: (k: string) => void storage.delete(k) },
+    configurable: true,
+  });
+  t.after(() => { Object.defineProperty(globalThis, 'localStorage', local); storage.delete(ALERTS_UNSENT); });
+  // A refusal leaves nothing waiting, so the next visit sends nothing and the note doesn't show.
+  storage.delete(ALERTS_UNSENT);
+  assert.equal(alertsBehindAfter(TOKEN_X, 'refused', signupX), null);
+  assert.equal(storage.has(ALERTS_UNSENT), false);
+  assert.equal(loadAlertsUnsent(), null);
+  // One kept from an earlier failed send is cleared by it.
+  storeAlertsUnsent(TOKEN_X);
+  assert.equal(alertsBehindAfter(TOKEN_X, 'refused', signupX), null);
+  assert.equal(storage.has(ALERTS_UNSENT), false);
+  // The app sends again only after a failed send, and the note follows what was recorded.
+  const app = readFileSync('src/App.tsx', 'utf8').replace(/\r\n/g, '\n');
+  assert.equal(app.match(/unsent\.current = true;/g)?.length, 2);
+  assert.ok(app.includes("        if (result === 'failed') unsent.current = true;"));
+});
+
+test('a send that answers after its signup was turned off or replaced records nothing', (t) => {
+  const local = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')!;
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: { getItem: (k: string) => storage.get(k) ?? null, setItem: (k: string, v: string) => void storage.set(k, v), removeItem: (k: string) => void storage.delete(k) },
+    configurable: true,
+  });
+  t.after(() => { Object.defineProperty(globalThis, 'localStorage', local); storage.delete(ALERTS_UNSENT); });
+  const signupY: AlertSignup = { token: TOKEN_Y, email: 'builder@example.com', confirmed: false };
+  // Turned off while the send was out, and the send then fails: the old token is not written back.
+  storage.delete(ALERTS_UNSENT);
+  assert.equal(alertsBehindAfter(TOKEN_X, 'failed', null), undefined);
+  assert.equal(storage.has(ALERTS_UNSENT), false);
+  // Replaced by a newer signup: the old token is not stored, and whatever is kept for the newer one stays as it is.
+  assert.equal(alertsBehindAfter(TOKEN_X, 'failed', signupY), undefined);
+  assert.equal(storage.has(ALERTS_UNSENT), false);
+  storeAlertsUnsent(TOKEN_Y);
+  for (const result of ['sent', 'gone', 'refused', 'failed'] as const) {
+    assert.equal(alertsBehindAfter(TOKEN_X, result, signupY), undefined, result);
+    assert.equal(storage.get(ALERTS_UNSENT), TOKEN_Y, result);
+  }
+  // Still the current signup: recorded as before.
+  assert.equal(alertsBehindAfter(TOKEN_Y, 'failed', signupY), TOKEN_Y);
+  assert.equal(alertsBehindAfter(TOKEN_Y, 'sent', signupY), null);
+  assert.equal(storage.has(ALERTS_UNSENT), false);
+  // The app hands over the signup as it is when the answer arrives, not the one the send was made for.
+  const app = readFileSync('src/App.tsx', 'utf8').replace(/\r\n/g, '\n');
+  assert.ok(app.includes('  const signupNow = useRef(signup);\n  signupNow.current = signup;'));
+  assert.ok(app.includes('        const behind = alertsBehindAfter(signup.token, result, signupNow.current);\n        if (behind !== undefined) setBehindFor(behind);'));
+  assert.equal(app.match(/alertsBehindAfter\(/g)?.length, 1);
+  assert.equal(app.match(/setBehindFor\(/g)?.length, 1);
+});
+
+test('My Builds says when the latest changes have not reached price alerts, and the app tries the send again on the next visit', () => {
+  assert.equal(ALERTS_BEHIND, ALERTS_BEHIND_TEXT);
+  const panel = (signup: AlertSignup | null, behind?: boolean) => renderToStaticMarkup(createElement(AlertsPanel, { signup, hasBuilds: true, behind, onSignUp: async () => {}, onRefresh: () => {}, onStop: async () => {} }));
+  const note = `<p class="alerts-behind" role="status">${ALERTS_BEHIND_TEXT.replace(/'/g, '&#x27;')}</p>`;
+  for (const s of [signupX, { ...signupX, confirmed: true }]) {
+    assert.equal(panel(s, true).split(note).length - 1, 1);
+    assert.doesNotMatch(panel(s, false), /reached your price alerts/);
+    assert.doesNotMatch(panel(s), /reached your price alerts/);
+  }
+  // Without a signup there's no emailed list to be behind.
+  assert.doesNotMatch(panel(null, true), /reached your price alerts/);
+  const app = readFileSync('src/App.tsx', 'utf8').replace(/\r\n/g, '\n');
+  // The first draw sends nothing unless a send failed on an earlier visit; a failed send stays unsent and is remembered.
+  assert.ok(app.includes('  const [behindFor, setBehindFor] = useState(loadAlertsUnsent);'));
+  assert.ok(app.includes('    if (firstSync.current) { firstSync.current = false; if (!signup || behindFor !== signup.token) return; }'));
+  assert.ok(app.includes([
+    '      void syncAlertBuilds(signup, saved).then((result) => {',
+    "        if (result === 'gone') setSignup((cur) => signupAfter(cur, signup.token, null));",
+    '        // Only the latest send says whether the emailed list is behind.',
+    '        if (send !== sends.current) return;',
+    "        if (result === 'failed') unsent.current = true;",
+    '        // A signup turned off or replaced while the send was out has nothing recorded for it.',
+    '        const behind = alertsBehindAfter(signup.token, result, signupNow.current);',
+    '        if (behind !== undefined) setBehindFor(behind);',
+    '      });',
+  ].join('\n')));
+  // The note shows only for the signup the failed send was for.
+  assert.ok(app.includes('<AlertsPanel signup={signup} hasBuilds={saved.length > 0} behind={!!signup && behindFor === signup.token}'));
+});
+
+test('alert calls send the JSON header only with a body, and still go out in a browser without AbortSignal.timeout', async (t) => {
+  const answer = async (url: string, init?: RequestInit) => ({
+    ok: true, status: 200,
+    json: async () => (url.endsWith('/status') ? { enabled: true } : init?.method === 'POST' ? { ...signupX } : { email: signupX.email, confirmed: signupX.confirmed }),
+  });
+  const all = async () => {
+    assert.equal(await alertsAvailable(), true);
+    assert.deepEqual(await checkAlertSignup(signupX), signupX);
+    assert.equal((await signUpForAlerts('builder@example.com', [])).token, TOKEN_X);
+    assert.equal(await syncAlertBuilds(signupX, []), 'sent');
+    await stopAlerts(signupX);
+  };
+  // What the Worker needs: JSON on the two requests with a body, and Turn Off (no body) as it has always been sent.
+  const shape = [
+    [undefined, '/api/alerts/status', undefined, undefined],
+    [undefined, `/api/alerts/${TOKEN_X}`, undefined, undefined],
+    ['POST', '/api/alerts', { 'content-type': 'application/json' }, JSON.stringify({ email: 'builder@example.com', builds: [] })],
+    ['PUT', `/api/alerts/${TOKEN_X}`, { 'content-type': 'application/json' }, JSON.stringify({ builds: [] })],
+    ['POST', `/alerts/stop?t=${TOKEN_X}`, undefined, undefined],
+  ];
+  const sent = (calls: { url: string; init: RequestInit }[]) => calls.map((c) => [c.init.method, c.url.replace('https://share.dropinbuilds.com', ''), c.init.headers, c.init.body]);
+  await withFakeFetch(t, answer, async (seen) => {
+    await all();
+    assert.deepEqual(sent(seen.calls), shape);
+    assert.deepEqual(seen.waits, Array(5).fill(10000));
+    for (const c of seen.calls) assert.ok(c.init.signal instanceof AbortSignal, c.url);
+  });
+  // Never there (an older browser), and there but not a function: the same requests, with no time limit.
+  const had = Object.getOwnPropertyDescriptor(AbortSignal, 'timeout')!;
+  const real = globalThis.fetch;
+  const calls: { url: string; init: RequestInit }[] = [];
+  globalThis.fetch = ((url: string, init: RequestInit) => { calls.push({ url, init }); return answer(url, init); }) as typeof fetch;
+  try {
+    for (const missing of [() => { delete (AbortSignal as { timeout?: unknown }).timeout; }, () => { Object.defineProperty(AbortSignal, 'timeout', { value: undefined, configurable: true, writable: true }); }]) {
+      missing();
+      assert.notEqual(typeof AbortSignal.timeout, 'function');
+      calls.length = 0;
+      await all();
+      assert.deepEqual(sent(calls), shape);
+      for (const c of calls) assert.ok(!('signal' in c.init), c.url);
+      Object.defineProperty(AbortSignal, 'timeout', had);
+    }
+  } finally {
+    Object.defineProperty(AbortSignal, 'timeout', had);
+    globalThis.fetch = real;
+  }
+  assert.deepEqual(Object.getOwnPropertyDescriptor(AbortSignal, 'timeout'), had);
 });
 
 test('a community call that runs out of time reads as the service being unreachable, in the words used before', async (t) => {
@@ -4210,6 +4562,53 @@ test('a community call that runs out of time reads as the service being unreacha
   });
   await withFakeFetch(t, async () => ({ ok: false, json: async () => { throw new SyntaxError('not json'); } }), async () => {
     await assert.rejects(listBuilds(null, 'top'), { message: 'The community service is not responding. Please try again.' });
+  });
+});
+
+/* ------------------------------------------------------------------ community builds that can't load, and how many are asked for */
+
+const COMMUNITY_LOAD_FAILED_TEXT = "Community builds couldn't load right now. Please try again later.";
+
+test('Compare says community builds could not load, with Try Again, and not that there are none yet', () => {
+  assert.equal(COMMUNITY_LOAD_FAILED, COMMUNITY_LOAD_FAILED_TEXT);
+  const build = (id: string): CommunityBuild => ({ id, platform: 'ar15', name: `Build ${id}`, note: '', parts: [], createdAt: '', votes: 0, clicks: 0 });
+  const list = (community: CommunityBuild[] | null, failed: boolean) => strip(renderToStaticMarkup(createElement(CommunityChoices, {
+    community, failed, onRetry: noop, row: (c: CommunityBuild) => createElement('li', { key: c.id }, c.name),
+  })));
+  // React writes the apostrophe in "couldn't" as &#x27; in the markup. The block is the Community page's own.
+  const failedHtml = `<div class="load-error"><p class="form-error" role="alert">${COMMUNITY_LOAD_FAILED_TEXT.replace(/'/g, '&#x27;')}</p><button class="btn">Try Again</button></div>`;
+  assert.equal(list(null, true), failedHtml);
+  // A failure is never shown as an empty list, whatever was loaded before it.
+  assert.equal(list([], true), failedHtml);
+  assert.equal(list([build('a')], true), failedHtml);
+  // The other states are as they were.
+  assert.equal(list(null, false), '<p class="dim">Loading community builds…</p>');
+  assert.equal(list([], false), '<p class="dim">No community builds to show yet.</p>');
+  assert.equal(list([build('a'), build('b')], false), '<ul class="cmp-options scroll"><li>Build a</li><li>Build b</li></ul>');
+  assert.equal(list(Array.from({ length: 45 }, (_, i) => build(String(i))), false).split('<li>').length - 1, 40);
+  // The chooser: a failed request is kept as a failure, not as an empty list, and Try Again asks again.
+  const source = readFileSync('src/Compare.tsx', 'utf8');
+  assert.ok(source.includes("listBuilds(null, 'top').then(setCommunity).catch(() => setFailed(true));"));
+  assert.doesNotMatch(source, /setCommunity\(\[\]\)/);
+  assert.ok(source.includes('  }, [src, community, failed]);'));
+  assert.ok(source.includes('<CommunityChoices community={community} failed={failed} onRetry={() => setFailed(false)}'));
+  assert.equal(source.split('No community builds to show yet.').length - 1, 1);
+  // The Community page already says so when its list can't load: the error comes before "none yet".
+  const page = readFileSync('src/CommunityPage.tsx', 'utf8');
+  assert.ok(page.includes('.catch((e: Error) => { if (live) { setBuilds([]); setError(e.message); } });'));
+  assert.ok(page.indexOf('{error ? (') > 0 && page.indexOf('{error ? (') < page.indexOf('No Shared Builds Here Yet'));
+});
+
+test('the community builds list asks the service for up to 60 builds', async (t) => {
+  await withFakeFetch(t, async () => ({ ok: true, json: async () => ({ builds: [] }) }), async (seen) => {
+    await listBuilds(null, 'top');
+    await listBuilds('ar15', 'new');
+    await listBuilds('glock9,glock43x', 'bought');
+    assert.deepEqual(seen.calls.map((c) => c.url), [
+      'https://share.dropinbuilds.com/api/builds?sort=top&limit=60',
+      'https://share.dropinbuilds.com/api/builds?sort=new&platform=ar15&limit=60',
+      'https://share.dropinbuilds.com/api/builds?sort=bought&platform=glock9%2Cglock43x&limit=60',
+    ]);
   });
 });
 
