@@ -40,6 +40,9 @@ import { SavedPage } from '../src/SavedPage';
 import { GUIDES, type FitChart } from '../src/guides/content';
 import { RETAILERS } from '../src/data/retailers';
 import { buyUrl, knownRetailer, offerUrl, retailerName, tagged } from '../src/data/retailers';
+import * as BuyList from '../src/partsList';
+import * as Builder from '../src/BuilderPage';
+import * as Picking from '../src/Picker';
 import { UNKNOWN_RETAILER_OFFERS } from '../src/data/helpers';
 import { priceHtml } from '../src/guides/render';
 import { ERROR_MESSAGE, ErrorBoundary } from '../src/ui';
@@ -1683,6 +1686,62 @@ test('the builder summary notes parts with no price, and counts only retailers t
   assert.doesNotMatch(card(priced), /no price/);
 });
 
+test('Copy Parts List copies plain text: the total, each part to buy with its store, the notes, and the confirm line', async () => {
+  const { platform, sel, build, owned } = whereToBuyFixture();
+  const legal: Issue = { severity: 'warn', slots: ['barrel', 'stock'], message: SBR_MESSAGE, legal: true };
+  // The pinned sample: a live price, an unknown store, an estimate, a part with no price, the owned stock left out,
+  // the no-price note, and the short Legal notice exactly as helpers.ts has it.
+  assert.equal(BuyList.partsListText(platform, build, owned, [legal]), [
+    'My AR-15 build: $210.00 at the best prices we found',
+    'Trigger group: Acme Test trigger, $100.00 at Faxon Firearms',
+    'Pistol grip: Acme Test grip, $20.00 at NOPE',
+    'Barrel: Acme Test barrel, $90.00 at Brownells (Estimate)',
+    'Handguard: Acme Test handguard',
+    '1 part has no price',
+    'May be regulated under the NFA. Not legal advice: check federal, state and local law.',
+    'Always confirm the price at the retailer.',
+  ].join('\n'));
+  // Without a Legal notice or a part with no price, neither line is there.
+  const plainSel = { trigger: sel.trigger, barrel: sel.barrel };
+  assert.equal(BuyList.partsListText(platform, toBuild(platform, plainSel), ownedOf(plainSel), []), [
+    'My AR-15 build: $190.00 at the best prices we found',
+    'Trigger group: Acme Test trigger, $100.00 at Faxon Firearms',
+    'Barrel: Acme Test barrel, $90.00 at Brownells (Estimate)',
+    'Always confirm the price at the retailer.',
+  ].join('\n'));
+  // A real short-barrel build raises the notice from the platform's own rules, and the total is the summary's.
+  const short = { ...baseSelection(ar15), ...CLEAN_SHORT_AR15['ar-bbl-ba10'] };
+  const shortBuild = toBuild(ar15, short);
+  const lines = BuyList.partsListText(ar15, shortBuild, ownedOf(short), issuesFor(ar15, shortBuild)).split('\n');
+  assert.equal(lines[0], `My AR-15 build: ${money(totalOf(ar15, shortBuild))} at the best prices we found`);
+  assert.equal(lines.filter((l: string) => l === NFA_SHORT_NOTICE).length, 1);
+  assert.equal(lines.at(-1), 'Always confirm the price at the retailer.');
+  const usual = baseSelection(ar15);
+  assert.ok(!BuyList.partsListText(ar15, toBuild(ar15, usual), ownedOf(usual), issuesFor(ar15, toBuild(ar15, usual))).includes(NFA_SHORT_NOTICE));
+  // A builder with models names the model the parts make, as the Save form does.
+  const g = baseSelection(glock);
+  const gBuild = toBuild(glock, g);
+  assert.ok(BuyList.partsListText(glock, gBuild, ownedOf(g), []).startsWith(`My ${glock.modelOf!(gBuild)!.name} build: ${money(totalOf(glock, gBuild))} at the best prices we found\n`));
+
+  // Copying: true when the browser takes it, false when it refuses or has no clipboard (the page then shows the text).
+  const taken: string[] = [];
+  assert.equal(await BuyList.copyText('a\nb', { writeText: async (s: string) => { taken.push(s); } }), true);
+  assert.deepEqual(taken, ['a\nb']);
+  assert.equal(await BuyList.copyText('a', { writeText: async () => { throw new Error('denied'); } }), false);
+  assert.equal(await BuyList.copyText('a', undefined), false);
+  assert.equal(BuyList.PARTS_COPIED, 'Parts list copied');
+  const app = readFileSync('src/App.tsx', 'utf8');
+  assert.match(app, /onCopyParts=\{async \(text\) => \{ const ok = await copyText\(text\); if \(ok\) setToast\(PARTS_COPIED\); return ok; \}\}/);
+
+  // The button sits with Copy Link, and is off when there is nothing to buy.
+  const html = strip(summaryHtml(platform, sel));
+  assert.ok(html.includes('<button class="btn">Copy Parts List</button><button class="btn">Copy Link</button>'), html);
+  assert.ok(strip(summaryHtml(platform, { stock: sel.stock, '+stock': 'own' })).includes('<button class="btn" disabled="">Copy Parts List</button>'));
+  // When the browser won't copy, the list shows in a field to copy by hand.
+  const box = renderToStaticMarkup(createElement(Builder.PartsTextBox, { text: 'one\ntwo', onClose: noop }));
+  assert.match(box, /<label for="parts-text">Copy this list:<\/label><textarea id="parts-text" readonly="" rows="2">one\ntwo<\/textarea><button type="button" class="btn">Close<\/button>/);
+});
+
 test('starter build cards and the platform page note parts with no price; totals are unchanged', () => {
   const real = PAGE_VIEWS.find((v) => v.pageId === 'ar15')!;
   const budget = Object.values(presetSelection(real, 'budget'));
@@ -2634,6 +2693,29 @@ test('the picker marks estimates: the row label, the Lowest (estimate) badge, an
   assert.match(css, /\.offers tr\.best\.est td:first-child::after \{ content: 'Lowest \(estimate\)';/);
 });
 
+test('the picker lists the part in the build first, with its retailers open, in every sort', () => {
+  const c = (id: string, sev: 'ok' | 'info' | 'warn' | 'error', price: number, pick = false) => ({ part: { id, pick: pick ? { tier: 'value', note: '' } : undefined } as unknown as Part, issues: [], sev, price });
+  const list = [c('cheap', 'ok', 10), c('pick', 'ok', 30, true), c('mine', 'warn', 50), c('clash', 'error', 5), c('mid', 'info', 20)];
+  const order = (sort: 'fit' | 'price' | 'picks', focusId?: string, selectedId?: string) => Picking.sortCandidates(list, sort, focusId, selectedId).map((x: { part: Part }) => x.part.id);
+  // As before with nothing chosen.
+  assert.deepEqual(order('fit'), ['cheap', 'mid', 'pick', 'mine', 'clash']);
+  assert.deepEqual(order('price'), ['cheap', 'mid', 'pick', 'mine', 'clash']);
+  assert.deepEqual(order('picks'), ['pick', 'cheap', 'mid', 'mine', 'clash']);
+  // The chosen part leads every sort, and the rest keep their order; so does a chosen part that conflicts.
+  assert.deepEqual(order('fit', undefined, 'mine'), ['mine', 'cheap', 'mid', 'pick', 'clash']);
+  assert.deepEqual(order('price', undefined, 'mine'), ['mine', 'cheap', 'mid', 'pick', 'clash']);
+  assert.deepEqual(order('picks', undefined, 'mine'), ['mine', 'pick', 'cheap', 'mid', 'clash']);
+  assert.deepEqual(order('price', undefined, 'clash'), ['clash', 'cheap', 'mid', 'pick', 'mine']);
+  // A part opened from a price drop still comes first, then the chosen one.
+  assert.deepEqual(order('fit', 'pick', 'mine'), ['pick', 'mine', 'cheap', 'mid', 'clash']);
+  assert.deepEqual(order('fit', 'mine', 'mine'), ['mine', 'cheap', 'mid', 'pick', 'clash']);
+  // The list isn't sorted in place.
+  assert.deepEqual(list.map((x) => x.part.id), ['cheap', 'pick', 'mine', 'clash', 'mid']);
+  const src = readFileSync('src/Picker.tsx', 'utf8');
+  assert.ok(src.includes('open={c.part.id === focusId || c.part.id === selectedId}'));
+  assert.ok(src.includes('sortCandidates(all.filter((c) => !hideConflicts || c.sev !== \'error\'), sort, focusId, selectedId)'));
+});
+
 test('the builder rows, Compare cells and the owned finder label an estimate; saved rows leave it out', (t) => {
   const rows = (p: Platform) => {
     const sel = { barrel: baseSelection(ar15).barrel };
@@ -2642,12 +2724,13 @@ test('the builder rows, Compare cells and the owned finder label an estimate; sa
     return strip(renderToStaticMarkup(createElement(PartsList, { platform: p, build, issues, states, hover: null, onHover: noop, onOpen: noop, onRemove: noop, mounts: {}, onMount: noop, owned: ownedOf(sel), onToggleOwn: noop })));
   };
   // A non-breaking space before the dot: it reads the same, and a wrapped row can't start with it.
-  assert.match(rows(allPriced([SAMPLE])), /<span class="src">Brownells\u00a0· Estimate<\/span>/);
-  assert.match(rows(allPriced([LIST])), /<span class="src">[^<]*\u00a0· List Price<\/span>/);
-  assert.match(rows(allPriced([FACTORY_DATED])), /<span class="src">[^<]*\u00a0· Factory Part<\/span>/);
-  assert.match(rows(allPriced([FACTORY_UNDATED])), /<span class="src">[^<]*\u00a0· Factory Part, Estimate<\/span>/);
-  assert.doesNotMatch(rows(allPriced([LIVE])), /<span class="src">[^<]*\s· /);
-  assert.doesNotMatch(rows(allPriced([SAMPLE])), /<span class="src">[^<]* · /);
+  // Since 2026-11-27 the store name is a link (P3), so the label follows the link's closing tag.
+  assert.match(rows(allPriced([SAMPLE])), /<span class="src"><a [^>]*>Brownells ↗<\/a>\u00a0· Estimate<\/span>/);
+  assert.match(rows(allPriced([LIST])), /<span class="src"><a [^>]*>[^<]*<\/a>\u00a0· List Price<\/span>/);
+  assert.match(rows(allPriced([FACTORY_DATED])), /<span class="src"><a [^>]*>[^<]*<\/a>\u00a0· Factory Part<\/span>/);
+  assert.match(rows(allPriced([FACTORY_UNDATED])), /<span class="src"><a [^>]*>[^<]*<\/a>\u00a0· Factory Part, Estimate<\/span>/);
+  assert.doesNotMatch(rows(allPriced([LIVE])), /<span class="src">(?:<a [^>]*>[^<]*<\/a>)?[^<]*\s· /);
+  assert.doesNotMatch(rows(allPriced([SAMPLE])), /<span class="src">(?:<a [^>]*>[^<]*<\/a>)?[^<]* · /);
 
   const barrel = part(ar15, baseSelection(ar15).barrel);
   const found = (p: Part) => strip(renderToStaticMarkup(createElement(FoundRow, { f: { part: p, platform: ar15 } as never, build: {}, owned: ownedOf({}), onOwn: noop })));
@@ -2907,6 +2990,44 @@ test('the one-store table says its cart has estimates, and its note is the appro
   assert.doesNotMatch(html(allPriced([LIVE])), /In-stock parts only/);
 });
 
+test('each one-store cart opens to the parts that store carries, with links, and names the slots it leaves out', () => {
+  const { platform, sel, build, owned, at } = whereToBuyFixture();
+  const chosen = BuyList.buyRows(platform, build, owned).map((r: { part: Part }) => r.part);
+  const carts = singleRetailerCarts(chosen);
+  const brn = carts.find((c) => c.retailer === 'BRN')!;
+  // Brownells: the trigger and the barrel. The grip is out of stock there and the handguard has no price anywhere.
+  assert.deepEqual(brn.items.map((i) => [i.part.slot, i.offer.retailer, i.offer.price]), [['trigger', 'BRN', 130], ['barrel', 'BRN', 90]]);
+  assert.deepEqual(brn.missing.map((x) => x.slot), ['grip', 'handguard']);
+  assert.deepEqual([brn.carried, brn.total, brn.estimates], [2, 220, 2]);
+  for (const c of carts) assert.equal(c.items.length + c.missing.length, chosen.length, c.retailer);
+  assert.equal(BuyList.notListedLine(platform, brn.missing), 'Not listed here: pistol grip, handguard');
+  assert.equal(BuyList.notListedLine(platform, []), '');
+  assert.equal(BuyList.NOT_LISTED_PREFIX, 'Not listed here:');
+
+  const detail = strip(renderToStaticMarkup(createElement(Builder.CartParts, { platform, cart: brn, onBuyClick: noop })));
+  const link = (slot: string) => `<a href="${amp(buyUrl({ retailer: 'BRN' }, `Acme Test ${slot}`)!)}" target="_blank" rel="sponsored noopener">Acme Test ${slot} ↗</a>`;
+  assert.deepEqual([...detail.matchAll(/<li>(.*?)<\/li>/g)].map((m) => m[1]), [
+    `<span class="buy-slot">Trigger group:</span> ${link('trigger')} <span class="amt">$130.00</span>\u00a0· Estimate`,
+    `<span class="buy-slot">Barrel:</span> ${link('barrel')} <span class="amt">$90.00</span>\u00a0· Estimate`,
+  ]);
+  assert.ok(detail.endsWith('<p class="cart-missing">Not listed here: pistol grip, handguard</p>'), detail);
+  // A store's own product page is the link when we have one; a cart with every part has no "Not listed" line.
+  const fax = strip(renderToStaticMarkup(createElement(Builder.CartParts, { platform, cart: carts.find((c) => c.retailer === 'FAX')!, onBuyClick: noop })));
+  assert.ok(fax.includes(`<a href="${amp(buyUrl(bestOffer(at('trigger'))!, 'Acme Test trigger')!)}"`));
+  assert.ok(fax.includes('Not listed here: pistol grip, barrel, handguard'));
+  const full = singleRetailerCarts([at('barrel')])[0];
+  assert.doesNotMatch(renderToStaticMarkup(createElement(Builder.CartParts, { platform, cart: full, onBuyClick: noop })), /Not listed/);
+
+  // In the summary each row is a button that opens its parts (closed to start), and the approved note is word for word.
+  const html = strip(summaryHtml(platform, sel));
+  assert.match(html, /<button class="cart-toggle" aria-expanded="false"[^>]*>Brownells<small class="to-buy"> Includes estimates<\/small><span class="chev" aria-hidden="true">\+<\/span><\/button>/);
+  assert.doesNotMatch(html, /Not listed here/);
+  assert.ok(html.includes('<p class="card-note">Fewer shipments can beat a lower parts total. Leaves out parts the store doesn&#x27;t list or that are marked out of stock. Estimates are included and marked.</p>'));
+  const src = readFileSync('src/BuilderPage.tsx', 'utf8');
+  assert.ok(src.includes("<p className=\"card-note\">Fewer shipments can beat a lower parts total. Leaves out parts the store doesn't list or that are marked out of stock. Estimates are included and marked.</p>"));
+  assert.match(src, /\{open && <tr className="cart-detail"><td colSpan=\{3\}><CartParts platform=\{platform\} cart=\{c\} onBuyClick=\{onBuyClick\} \/><\/td><\/tr>\}/);
+});
+
 test('every platform page marks estimates exactly where it has them, and keeps the no-price wording in place', () => {
   const tierParts = (v: (typeof PAGE_VIEWS)[number], tier: 'budget' | 'value' | 'premium') => Object.values(presetSelection(v, tier)).map((id) => v.parts.find((x) => x.id === id));
   let some = 0;
@@ -3146,6 +3267,88 @@ test('store links keep their rel values, and an offer from an unknown retailer s
   assert.equal([...row(two).matchAll(/<a /g)].length, 1);
 });
 
+/* ------------------------------------------------------------------ where to buy (P3) */
+
+/**
+ * An AR-15 build for the Where to Buy tests, with made-up names and prices: the trigger has a live price with its own
+ * product page, the grip is sold by a store the site doesn't know (and is out of stock at Brownells), the barrel is an
+ * estimate, the handguard has no price, and the stock is one the builder owns.
+ */
+function whereToBuyFixture() {
+  const at = '2026-10-30T08:00:00Z';
+  const offers: Record<string, Offer[]> = {
+    trigger: [{ retailer: 'FAX', price: 100, inStock: true, checkedAt: at, url: 'https://faxonfirearms.com/p/test-trigger?v=2' }, { retailer: 'BRN', price: 130, inStock: true }],
+    stock: [{ retailer: 'BRN', price: 40, inStock: true }],
+    grip: [{ retailer: 'NOPE', price: 20, inStock: true, checkedAt: at }, { retailer: 'BRN', price: 25, inStock: false, checkedAt: at }],
+    barrel: [{ retailer: 'BRN', price: 90, inStock: true }],
+    handguard: [],
+  };
+  const base = baseSelection(ar15);
+  const platform: Platform = { ...ar15, parts: ar15.parts.map((x) => (x.id === base[x.slot] && offers[x.slot] ? { ...x, brand: 'Acme', name: `Test ${x.slot}`, offers: offers[x.slot] } : x)) };
+  const sel: Selection = { ...Object.fromEntries(Object.keys(offers).map((slot) => [slot, base[slot]])), '+stock': 'own' };
+  const build = toBuild(platform, sel);
+  return { platform, sel, build, owned: ownedOf(sel), at: (slot: string) => build[slot]! };
+}
+const amp = (url: string) => url.replace(/&/g, '&amp;');
+const UTM_TAIL = 'utm_source=dropinbuilds&utm_medium=referral';
+
+test('Where to Buy lists each part still to buy with its best price and a link to that store through buyUrl', () => {
+  const { platform, sel, at } = whereToBuyFixture();
+  const html = strip(summaryHtml(platform, sel));
+  const card = html.match(/<section class="card where-to-buy">.*?<\/section>/)?.[0] ?? '';
+  assert.ok(card.includes('<h2 class="card-title">Where to Buy</h2>'), card);
+  const rows = [...card.matchAll(/<li>(.*?)<\/li>/g)].map((m) => m[1]);
+  const link = (o: Offer, x: Part, text: string) => `<a href="${amp(buyUrl(o, `${x.brand} ${x.name}`)!)}" target="_blank" rel="sponsored noopener">${text} ↗</a>`;
+  // In build order, the owned stock left out. A product page links to that page, a price without one to the store's
+  // search; an unknown store is plain text; a part with no price shows the dash the rows show.
+  assert.deepEqual(rows, [
+    `<span class="buy-slot">Trigger group:</span> <span class="amt">$100.00</span> at ${link(bestOffer(at('trigger'))!, at('trigger'), 'Faxon Firearms')}`,
+    '<span class="buy-slot">Pistol grip:</span> <span class="amt">$20.00</span> at NOPE',
+    `<span class="buy-slot">Barrel:</span> <span class="amt">$90.00</span> at ${link(bestOffer(at('barrel'))!, at('barrel'), 'Brownells')}\u00a0· Estimate`,
+    '<span class="buy-slot">Handguard:</span> <span class="amt dim">—</span>',
+  ]);
+  assert.ok(card.includes(`href="https://faxonfirearms.com/p/test-trigger?v=2&amp;${amp(UTM_TAIL)}"`));
+  assert.ok(card.includes(`href="https://www.brownells.com/search/?k=Acme+Test+barrel&amp;${amp(UTM_TAIL)}"`));
+  // The existing no-price note, then the owner-approved line (2026-11-27), and nothing about commissions.
+  assert.ok(card.includes('<p class="buy-note no-price">1 part has no price</p><p class="buy-note">Always confirm the price at the retailer.</p>'), card);
+  assert.equal(BuyList.CONFIRM_PRICE_NOTE, 'Always confirm the price at the retailer.');
+  assert.equal(BuyList.WHERE_TO_BUY_TITLE, 'Where to Buy');
+  assert.doesNotMatch(card, /affiliate|commission|sponsor(?!ed noopener)/i);
+  // The card sits just before the one-store card, and a build with nothing to buy has neither.
+  assert.match(html, /<\/section><section class="card"><h2 class="card-title">Buy It All from One Store<\/h2>/);
+  assert.ok(html.indexOf('Where to Buy') < html.indexOf('Buy It All from One Store'));
+  const allOwned = strip(summaryHtml(platform, { stock: sel.stock, '+stock': 'own' }));
+  assert.doesNotMatch(allOwned, /Where to Buy|Buy It All/);
+  // The rows helper is what the card draws: every part to buy on a real build, in slot order.
+  const real = baseSelection(ar15);
+  const realRows = BuyList.buyRows(ar15, toBuild(ar15, real), ownedOf(real));
+  assert.deepEqual(realRows.map((r: { slot: { id: string } }) => r.slot.id), ar15.slots.filter((s) => real[s.id]).map((s) => s.id));
+  for (const r of realRows) assert.equal(r.offer, bestOffer(r.part), r.part.id);
+  const realCard = strip(summaryHtml(ar15, real)).match(/<section class="card where-to-buy">.*?<\/section>/)![0];
+  for (const r of realRows) if (r.offer) assert.ok(realCard.includes(link(r.offer, r.part, retailerName(r.offer.retailer))), r.part.id);
+  assert.equal([...realCard.matchAll(/<a /g)].length, realRows.filter((r: { offer?: Offer }) => r.offer).length);
+});
+
+test('each parts-list row links its store name the same way, and an owned or unknown-store row has no link', () => {
+  const { platform, sel, at } = whereToBuyFixture();
+  const build = toBuild(platform, sel);
+  const { issues, states } = statesFor(platform, build);
+  const list = strip(renderToStaticMarkup(createElement(PartsList, { platform, build, issues, states, hover: null, onHover: noop, onOpen: noop, onRemove: noop, mounts: {}, onMount: noop, owned: ownedOf(sel), onToggleOwn: noop, onBuyClick: noop })));
+  const link = (slot: string, text: string) => `<a href="${amp(buyUrl(bestOffer(at(slot))!, `${at(slot).brand} ${at(slot).name}`)!)}" target="_blank" rel="sponsored noopener">${text} ↗</a>`;
+  assert.ok(list.includes(`<span class="amt">$100.00</span><span class="src">${link('trigger', 'Faxon Firearms')}</span>`), list);
+  assert.ok(list.includes(`<span class="amt">$90.00</span><span class="src">${link('barrel', 'Brownells')}\u00a0· Estimate</span>`));
+  assert.ok(list.includes('<span class="amt">$20.00</span><span class="src">NOPE</span>'));
+  assert.equal([...list.matchAll(/<a /g)].length, 2);
+  // The link is never inside the row's own button.
+  assert.doesNotMatch(list, /<button class="part-main">(?:(?!<\/button>).)*<a /);
+  // Every builder link counts the click for an open community build, like the picker's links.
+  const src = readFileSync('src/BuilderPage.tsx', 'utf8');
+  assert.match(src, /<a href=\{href\} target="_blank" rel="sponsored noopener" onClick=\{onBuyClick\}>/);
+  assert.equal([...src.matchAll(/rel="([^"]*)"/g)].filter((m) => m[1].includes('sponsored')).length, 1);
+  assert.match(src, /<PartsList [^>]*\n?[^>]*\bonBuyClick=\{onBuyClick\}/);
+  assert.match(src, /<Summary\b[\s\S]*?\bonBuyClick=\{onBuyClick\}[\s\S]*?\/>/);
+});
+
 /* ------------------------------------------------------------------ the error screen */
 
 const ERROR_SCREEN_TEXT = 'Something went wrong showing this page. Reload to try again. Your saved builds are still in this browser.';
@@ -3271,7 +3474,11 @@ test('a link the browser will not copy stays in a read-only field with a Close b
   // Every Copy Link button (the builder, My Builds, Community) calls that one routine; nothing else writes to the clipboard.
   assert.equal((app.match(/onCopyLink=\{\((b|s)?\) => copyLink\(/g) ?? []).length, 3);
   const sources = readdirSync('src', { recursive: true, encoding: 'utf8' }).filter((f) => /\.tsx?$/.test(f)).map((f) => readFileSync(`src/${f}`, 'utf8'));
-  assert.equal(sources.join('\n').match(/clipboard/g)?.length, 1);
+  // Since 2026-11-27 (P3) Copy Parts List copies too, through copyText in partsList.ts: two places write, and no file but these two names the clipboard.
+  assert.equal(sources.join('\n').match(/\.writeText\(/g)?.length, 2);
+  assert.equal(app.match(/clipboard/g)?.length, 1);
+  assert.equal(readFileSync('src/partsList.ts', 'utf8').match(/\.writeText\(/g)?.length, 1);
+  assert.deepEqual(readdirSync('src', { recursive: true, encoding: 'utf8' }).filter((f) => /\.tsx?$/.test(f) && /clipboard/i.test(readFileSync(`src/${f}`, 'utf8'))).sort(), ['App.tsx', 'partsList.ts']);
   assert.equal(sources.join('\n').match(/onCopyLink=\{/g)?.length, 4, 'the three pages, and the builder handing it to its summary');
   // The wording comment, and the long link can shrink inside the toast instead of pushing past a phone's edge.
   assert.match(readFileSync('src/ui.tsx', 'utf8'), /\/\*\* Owner-approved wording \(2026-11-10\)\. \*\/\r?\nexport const TOAST_CLOSE = 'Close';/);
@@ -4803,9 +5010,10 @@ test('with no live prices at all the catalog still builds and every page still r
       const { issues, states } = statesFor(p, build);
       const list = strip(renderToStaticMarkup(createElement(PartsList, { platform: p, build, issues, states, hover: null, onHover: noop, onOpen: noop, onRemove: noop, mounts: {}, onMount: noop, owned: ownedOf(sel), onToggleOwn: noop })));
       neverPrints(list, where);
-      const labels = [...list.matchAll(/<span class="src">([^<]*)<\/span>/g)].map((m) => m[1]);
+      // The store name is a link since 2026-11-27 (P3); the label is the row's words with the link's tags taken off.
+      const labels = [...list.matchAll(/<span class="src">((?:<a [^>]*>[^<]*<\/a>)?[^<]*)<\/span>/g)].map((m) => m[1].replace(/<[^>]*>/g, ''));
       assert.equal(labels.length, chosen.length - none, where);
-      for (const label of labels) assert.ok(NOT_LIVE_LABELS.some((l) => label.endsWith(` · ${l}`)), `${where}: ${label}`);
+      for (const label of labels) assert.ok(NOT_LIVE_LABELS.some((l) => label.endsWith(`\u00a0· ${l}`)), `${where}: ${label}`);
     }
 
   // The picker, every part: each offer's row carries its label (and the day, for a hand-checked price), never Live or Checked.

@@ -22,7 +22,6 @@ export function Picker({ platform, slot, focusId: focusProp, number, model, buil
   const [focusId] = useState(focusProp);
   const [allModels, setAllModels] = useState(!!focusId && !!model?.parts && !model.parts(platform.parts.find((p) => p.id === focusId)!));
   const closeRef = useRef<HTMLButtonElement>(null);
-  const rank = { ok: 0, info: 0, warn: 1, error: 2 } as const;
   useDrawer(onClose, closeRef);
 
   // In a builder with models, the list starts with the current model's parts (frames, slides, barrels...).
@@ -33,16 +32,7 @@ export function Picker({ platform, slot, focusId: focusProp, number, model, buil
     return { part: p, issues: iss, sev: worst(iss) ?? ('ok' as const), price: bestOffer(p)?.price ?? Infinity };
   });
   const conflicts = all.filter((c) => c.sev === 'error').length;
-  const candidates = all
-    .filter((c) => !hideConflicts || c.sev !== 'error')
-    .sort((a, b) => {
-      if (focusId && (a.part.id === focusId) !== (b.part.id === focusId)) return a.part.id === focusId ? -1 : 1;
-      // Every sort lists parts that conflict with the build after the ones that fit.
-      const clash = Number(a.sev === 'error') - Number(b.sev === 'error');
-      if (sort === 'price') return clash || a.price - b.price;
-      if (sort === 'picks') return clash || Number(!!b.part.pick) - Number(!!a.part.pick) || a.price - b.price;
-      return rank[a.sev] - rank[b.sev] || a.price - b.price;
-    });
+  const candidates = sortCandidates(all.filter((c) => !hideConflicts || c.sev !== 'error'), sort, focusId, selectedId);
 
   return createPortal(
     <div className="drawer-wrap">
@@ -77,7 +67,7 @@ export function Picker({ platform, slot, focusId: focusProp, number, model, buil
         </div>
         <ul className="cands">
           {candidates.map((c) => (
-            <Candidate key={c.part.id} part={c.part} open={c.part.id === focusId} issues={c.issues} sev={c.sev} selected={c.part.id === selectedId} owned={c.part.id === selectedId && ownsSelected}
+            <Candidate key={c.part.id} part={c.part} open={c.part.id === focusId || c.part.id === selectedId} issues={c.issues} sev={c.sev} selected={c.part.id === selectedId} owned={c.part.id === selectedId && ownsSelected}
               onChoose={(own) => (c.part.id === selectedId ? onToggleOwn() : onChoose(c.part.id, own))} onBuyClick={onBuyClick} />
           ))}
           {candidates.length === 0 && <li className="cand-empty">Every option conflicts with your current build. Turn off the filter to see why.</li>}
@@ -92,6 +82,24 @@ export function Picker({ platform, slot, focusId: focusProp, number, model, buil
     </div>,
     document.body,
   );
+}
+
+const RANK = { ok: 0, info: 0, warn: 1, error: 2 } as const;
+
+/**
+ * The picker's list in order (a new array). A part opened from a home page price drop comes first, then the part
+ * already in the build, in every sort, so the builder sees what they have before the alternatives.
+ */
+export function sortCandidates<T extends { part: Part; sev: Severity | 'ok'; price: number }>(list: T[], sort: SortKey, focusId?: string, selectedId?: string): T[] {
+  const lead = (c: T) => (focusId && c.part.id === focusId ? 0 : selectedId && c.part.id === selectedId ? 1 : 2);
+  return [...list].sort((a, b) => {
+    if (lead(a) !== lead(b)) return lead(a) - lead(b);
+    // Every sort lists parts that conflict with the build after the ones that fit.
+    const clash = Number(a.sev === 'error') - Number(b.sev === 'error');
+    if (sort === 'price') return clash || a.price - b.price;
+    if (sort === 'picks') return clash || Number(!!b.part.pick) - Number(!!a.part.pick) || a.price - b.price;
+    return RANK[a.sev] - RANK[b.sev] || a.price - b.price;
+  });
 }
 
 /** One option in the picker (exported for the unit tests). */

@@ -8,6 +8,7 @@ import { ALERTS_KEY, alertsAvailable, checkAlertSignup, loadAlertSignup, signUpF
 import type { Part } from './types';
 import { BuilderPage } from './BuilderPage';
 import { CommunityPage } from './CommunityPage';
+import { PARTS_COPIED, copyText } from './partsList';
 import { HomePage } from './HomePage';
 import { AlertsPanel, SavedPage } from './SavedPage';
 import { DRAWER_OPEN, ToastView, priceStatus, toastAfterChange, toastHideMs, useLinkToastFocus, type Toast } from './ui';
@@ -274,6 +275,7 @@ export default function App() {
             onShare={share}
             onCopyLink={() => copyLink(platformId, selOf(platformId), communityOpen?.platform === platformId ? communityOpen.id : undefined)}
             onBuyClick={() => { if (communityOpen) void recordBuyClick(communityOpen.id); }}
+            onCopyParts={async (text) => { const ok = await copyText(text); if (ok) setToast(PARTS_COPIED); return ok; }}
             onBrowseFeatured={() => go('community')}
             onCompare={() => addToCompare({ kind: 'Current Build', name: openSaved?.name ?? communityOpen?.name ?? `Your ${PLATFORMS.find((p) => p.id === platformId)?.name} build`, platform: platformId, selection: { ...selOf(platformId) } })}
           />
