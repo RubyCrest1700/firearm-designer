@@ -221,8 +221,11 @@ const LINKS_ONLY_DAY = '2026-10-31';
 const LINKS_ONLY_DAY_2 = '2026-11-06';
 /** The day we stopped requesting OpticsPlanet. Set it to the merge day (UTC) here and in data/sources.json, then run `npm run retailers`. */
 const LINKS_ONLY_DAY_3 = '2026-11-18';
+/** The day we stopped requesting Black Rifle Depot. Set it to the merge day (UTC) here and in data/sources.json, then run `npm run retailers`. */
+const LINKS_ONLY_DAY_4 = '2026-11-28';
 /** Every links-only retailer, with its date and reason, exactly as data/sources.json must have them. */
 const LINKS_ONLY = {
+  BRD: [LINKS_ONLY_DAY_4, 'its product pages answer the price bot with a 403'],
   BRN: [LINKS_ONLY_DAY, 'its product pages answer the price bot with a 403'],
   CTD: [LINKS_ONLY_DAY, 'its robots.txt answers the price bot with a 403'],
   GRITR: [LINKS_ONLY_DAY_2, 'its product pages often answer the price bot with a 403'],
@@ -232,8 +235,8 @@ const LINKS_ONLY = {
 };
 const LINKS_ONLY_NOW = Object.keys(LINKS_ONLY).sort();
 
-test(`Brownells, Cheaper Than Dirt, Palmetto State Armory and Sig Sauer are links only since ${LINKS_ONLY_DAY}, Gritr Sports since ${LINKS_ONLY_DAY_2}, OpticsPlanet since ${LINKS_ONLY_DAY_3}, each with its reason, and none is paused`, () => {
-  assert.deepEqual(LINKS_ONLY_NOW, ['BRN', 'CTD', 'GRITR', 'OP', 'PSA', 'SIG']);
+test(`Brownells, Cheaper Than Dirt, Palmetto State Armory and Sig Sauer are links only since ${LINKS_ONLY_DAY}, Gritr Sports since ${LINKS_ONLY_DAY_2}, OpticsPlanet since ${LINKS_ONLY_DAY_3}, Black Rifle Depot since ${LINKS_ONLY_DAY_4}, each with its reason, and none is paused`, () => {
+  assert.deepEqual(LINKS_ONLY_NOW, ['BRD', 'BRN', 'CTD', 'GRITR', 'OP', 'PSA', 'SIG']);
   assert.deepEqual([...linksOnlyIds(sources, retailers)].sort(), LINKS_ONLY_NOW);
   assert.deepEqual(Object.keys(sources.linksOnly).sort(), LINKS_ONLY_NOW);
   for (const [id, entry] of Object.entries(sources.linksOnly)) {
@@ -269,7 +272,7 @@ test('listing the links-only retailers leaves the paused results as they are', (
   assert.deepEqual([...pausedIds(sources, retailers)].sort(), PAUSED_NOW);
   assert.deepEqual(activeSources(sources, retailers), activeSources(withoutThem, retailers));
   assert.deepEqual([...pausedHosts(sources, retailers)].sort(), [...pausedHosts(withoutThem, retailers)].sort());
-  for (const h of ['www.cheaperthandirt.com', 'www.brownells.com', 'www.sigsauer.com', 'palmettostatearmory.com', 'gritrsports.com', 'www.opticsplanet.com']) assert.ok(!pausedHosts(sources, retailers).has(h), h);
+  for (const h of ['www.cheaperthandirt.com', 'www.brownells.com', 'www.sigsauer.com', 'palmettostatearmory.com', 'gritrsports.com', 'www.opticsplanet.com', 'blackrifledepot.com']) assert.ok(!pausedHosts(sources, retailers).has(h), h);
   assert.ok(Object.values(activeSources(sources, retailers)).some((b) => b.CTD), 'activeSources still holds their links');
 });
 
@@ -297,7 +300,7 @@ const guardedGate = (answer, refuse = (u) => noFetchHosts(sources, retailers).ha
 
 test('a no-fetch host\'s robots.txt counts as unreadable, so that host is disallowed and nothing reaches it', async () => {
   const g = guardedGate(() => new Response('', { status: 200 }));
-  for (const url of ['https://www.brownells.com/p', 'https://blog.cheaperthandirt.com/p', 'https://gritrsports.com/p', 'https://www.opticsplanet.com/p', 'https://www.primaryarms.com/p']) {
+  for (const url of ['https://www.brownells.com/p', 'https://blog.cheaperthandirt.com/p', 'https://gritrsports.com/p', 'https://www.opticsplanet.com/p', 'https://blackrifledepot.com/p', 'https://www.primaryarms.com/p']) {
     const got = await g.safeGet(url);
     assert.equal(got.blocked, url);
     assert.equal(got.unreadable, true, url);
@@ -327,7 +330,30 @@ test('a page refused after its robots.txt was read rejects, into the script\'s o
 
 test('the no-fetch hosts cover the links-only retailers\' whole sites, the paused ones, and no one else', () => {
   const hosts = noFetchHosts(sources, retailers);
-  for (const h of ['www.cheaperthandirt.com', 'blog.cheaperthandirt.com', 'cheaperthandirt.com', 'www.brownells.com', 'brownells.com', 'www.sigsauer.com', 'palmettostatearmory.com', 'www.palmettostatearmory.com', 'gritrsports.com', 'www.gritrsports.com', 'www.opticsplanet.com', 'opticsplanet.com', ...pausedHosts(sources, retailers)]) assert.ok(hosts.has(h), h);
-  for (const h of ['notcheaperthandirt.com', 'cheaperthandirt.com.example.net', 'blog.cheaperthandirt.example', 'mybrownells.com', 'sigsauer.co', 'palmettostatearmory.org', 'notgritrsports.com', 'gritrsports.com.example.net', 'gritrsports.com.evil.test', 'notopticsplanet.com', 'opticsplanet.com.example.net', 'magpul.com']) assert.ok(!hosts.has(h), h);
+  for (const h of ['www.cheaperthandirt.com', 'blog.cheaperthandirt.com', 'cheaperthandirt.com', 'www.brownells.com', 'brownells.com', 'www.sigsauer.com', 'palmettostatearmory.com', 'www.palmettostatearmory.com', 'gritrsports.com', 'www.gritrsports.com', 'www.opticsplanet.com', 'opticsplanet.com', 'blackrifledepot.com', 'www.blackrifledepot.com', ...pausedHosts(sources, retailers)]) assert.ok(hosts.has(h), h);
+  for (const h of ['notcheaperthandirt.com', 'cheaperthandirt.com.example.net', 'blog.cheaperthandirt.example', 'mybrownells.com', 'sigsauer.co', 'palmettostatearmory.org', 'notgritrsports.com', 'gritrsports.com.example.net', 'gritrsports.com.evil.test', 'notopticsplanet.com', 'opticsplanet.com.example.net', 'notblackrifledepot.com', 'blackrifledepot.com.example.net', 'magpul.com']) assert.ok(!hosts.has(h), h);
   for (const id of Object.keys(retailers).filter((id) => !PAUSED_NOW.includes(id) && !LINKS_ONLY_NOW.includes(id))) assert.ok(!hosts.has(new URL(retailers[id].search).host), id);
+});
+
+test('the README names every links-only date constant this file sets', () => {
+  const names = [...read('scripts/sources.test.mjs').matchAll(/^const (LINKS_ONLY_DAY(?:_\d+)?) = /gm)].map((m) => m[1]);
+  assert.deepEqual(names, ['LINKS_ONLY_DAY', 'LINKS_ONLY_DAY_2', 'LINKS_ONLY_DAY_3', 'LINKS_ONLY_DAY_4']);
+  const readme = read('README.md');
+  for (const name of names) assert.ok(readme.includes('`' + name + '`'), name);
+});
+
+/** Bud's Gun Shop links that answered 404 in the 2026-11-23 link check, taken out on 2026-11-27 (owner decision). */
+const DEAD_BUDS = {
+  'a9-bbl-faxon85': 'https://www.budsgunshop.com/products/gun-parts-barrels/faxon-9mm-ar-15-8-5-light-taper-1-10-black-713086631',
+  'a9-bbl-faxon105': 'https://www.budsgunshop.com/products/gun-parts-barrels/faxon-9mm-pcc-ar-15-10-5-in-barrel-1-2x28-1-10-713099327',
+  'a9-bbl-faxon16': 'https://www.budsgunshop.com/products/gun-parts-barrels/faxon-ar-15-9mm-16in-light-taper-black-nitride-713086630',
+};
+
+test('the three Faxon AR-9 barrels\' dead Bud\'s links are gone from data/sources.json, and no part is left with an empty entry', () => {
+  const links = Object.values(sources.parts).flatMap((byRetailer) => Object.values(byRetailer));
+  for (const [id, url] of Object.entries(DEAD_BUDS)) {
+    assert.equal(sources.parts[id]?.BUDS, undefined, id);
+    assert.ok(!links.includes(url), url);
+  }
+  for (const [id, byRetailer] of Object.entries(sources.parts)) assert.ok(Object.keys(byRetailer).length > 0, id);
 });
