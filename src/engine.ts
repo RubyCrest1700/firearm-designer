@@ -179,6 +179,8 @@ export interface RetailerCart {
   missing: Part[];
   /** How many of the prices in `total` are estimates. */
   estimates: number;
+  /** The parts in the cart, each with this store's price for it. With `missing`, that's every part asked for. */
+  items: { part: Part; offer: Offer }[];
 }
 
 /** What it costs to buy every selected part from a single retailer. */
@@ -189,12 +191,13 @@ export function singleRetailerCarts(parts: Part[]): RetailerCart[] {
       let total = 0;
       let estimates = 0;
       const missing: Part[] = [];
+      const items: RetailerCart['items'] = [];
       for (const p of parts) {
         const o = p.offers.find((x) => x.retailer === r && x.inStock);
-        if (o) { total += o.price; if (isEstimate(o)) estimates += 1; }
+        if (o) { total += o.price; if (isEstimate(o)) estimates += 1; items.push({ part: p, offer: o }); }
         else missing.push(p);
       }
-      return { retailer: r, carried: parts.length - missing.length, total, missing, estimates };
+      return { retailer: r, carried: parts.length - missing.length, total, missing, estimates, items };
     })
     .sort((a, b) => b.carried - a.carried || a.total - b.total);
 }

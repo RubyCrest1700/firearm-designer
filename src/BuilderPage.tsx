@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { PLATFORMS } from './data';
-import { retailerName } from './data/retailers';
-import { bestOffer, encodeMount, estimateNote, estimatedCount, money, noPriceNote, ownedOf, placementOf, presetSelection, baseSelection, priceLabel, singleRetailerCarts, stockedRange, toBuild, totalNotes, unpricedCount, type Owned, type Selection } from './engine';
+import { buyUrl, retailerName } from './data/retailers';
+import { bestOffer, encodeMount, estimateNote, estimatedCount, money, noPriceNote, ownedOf, placementOf, presetSelection, baseSelection, priceLabel, singleRetailerCarts, stockedRange, toBuild, totalNotes, unpricedCount, type Owned, type RetailerCart, type Selection } from './engine';
+import { CONFIRM_PRICE_NOTE, COPY_BY_HAND_LABEL, COPY_PARTS_LABEL, WHERE_TO_BUY_TITLE, buyRows, notListedLine, partsListText } from './partsList';
+import type { Offer } from './types';
 import type { RegionState } from './Blueprint';
 import { Blueprint, useDrawings } from './drawings';
 import { buildStatus, statesFor } from './status';
@@ -14,15 +16,17 @@ import { withArticle } from './text';
 import type { Build, Issue, Part, Platform, Side, Slot, Tier } from './types';
 import { OwnedFinder } from './OwnedFinder';
 import { Picker } from './Picker';
-import { ChangeChip, FitTag, LegalNotice, PlatformMenu, SUMMARY_LEGAL_ID, issueClass, issueLabel, legalOnly } from './ui';
+import { ChangeChip, FitTag, LegalNotice, PlatformMenu, SUMMARY_LEGAL_ID, TOAST_CLOSE, issueClass, issueLabel, legalOnly } from './ui';
 
-export function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelection, startOver, openSaved, communityOpen, onSave, onShare, onCopyLink, onBuyClick, onBrowseFeatured, onCompare }: {
+export function BuilderPage({ platformId, startPart, setPlatformId, selection, setSelection, startOver, openSaved, communityOpen, onSave, onShare, onCopyLink, onBuyClick, onBrowseFeatured, onCompare, onCopyParts }: {
   platformId: string; startPart: Part | null; setPlatformId: (id: string) => void; selection: Selection; setSelection: (s: Selection) => void;
   /** Replaces the whole build, leaving the saved or community build it came from: the next save is a new build. */
   startOver: (s: Selection) => void;
   openSaved: SavedBuild | null; communityOpen: CommunityBuild | null; onSave: (name: string, asNew: boolean) => void;
   onShare: (name: string, note: string) => Promise<void>; onCopyLink: () => void; onBuyClick: () => void; onBrowseFeatured: () => void;
   onCompare: () => void;
+  /** Copies the parts list as text; false when the browser won't, and the summary then shows the text. */
+  onCopyParts?: (text: string) => Promise<boolean>;
 }) {
   const [openSlot, setOpenSlot] = useState<string | null>(startPart?.slot ?? null);
   const [finding, setFinding] = useState(false);
@@ -155,11 +159,11 @@ export function BuilderPage({ platformId, startPart, setPlatformId, selection, s
             <p className="hint">{zoom ? 'Zoomed in. Swipe the drawing sideways to see the rest, or tap a part to change it. ' : ''}{chosen === 0 ? 'Blank build. Pick parts from the list or click any part on the drawing, or start from a ready-made build above.' : Object.keys(mounts).length ? 'Select any part to change it. Drag a light, laser or grip along the rail to move it; pick its side in the parts list. Parts on the left side show as dashed lines.' : 'Select any part on the drawing or in the list to change it. The drawing updates with every part you choose.'}</p>
           </div>
           <PartsList platform={platform} build={build} issues={issues} states={states} hover={hover} onHover={setHover} onOpen={setOpenSlot} onRemove={remove}
-            mounts={mounts} onMount={setMount} owned={owned} onToggleOwn={toggleOwn} />
+            mounts={mounts} onMount={setMount} owned={owned} onToggleOwn={toggleOwn} onBuyClick={onBuyClick} />
           <Summary
             platform={platform} build={build} issues={issues} aware={awarenessFor(platform, build)} states={states} status={status} total={total}
             owned={owned} openSaved={openSaved} onSave={onSave} onShare={onShare} onCopyLink={onCopyLink} onOpen={setOpenSlot} onCompare={onCompare}
-            onFindOwned={() => setFinding(true)}
+            onFindOwned={() => setFinding(true)} onBuyClick={onBuyClick} onCopyParts={onCopyParts}
           />
         </div>
       </div>
@@ -212,17 +216,69 @@ function opticTag(optic?: Part) {
   return optic.attrs.kind === 'lpvo' || optic.attrs.kind === 'scope' ? 'Scope' : 'Red Dot';
 }
 
+/**
+ * A store's name as a link to the part there: its product page when we have one, else the store's search for the
+ * part (buyUrl), marked and counted like the picker's retailer links. A store we can't link shows as plain text.
+ * These are plain links to the store, not affiliate links.
+ */
+export function StoreLink({ offer, part, onBuyClick, children }: { offer: Offer; part: Part; onBuyClick?: () => void; children?: ReactNode }) {
+  const href = buyUrl(offer, `${part.brand} ${part.name}`);
+  const text = children ?? retailerName(offer.retailer);
+  return href ? <a href={href} target="_blank" rel="sponsored noopener" onClick={onBuyClick}>{text} ↗</a> : <>{text}</>;
+}
+
+/** The FFL tag on a serialized part, the same in the parts list, the Where to Buy card and an opened one-store cart. */
+function FflTag({ part }: { part: Part }) {
+  return part.serialized ? <span className="ffl" title="Serialized: ships to an FFL">FFL</span> : null;
+}
+
+/** What an opened one-store cart shows: each part the store carries, linked to it there, and the slots it leaves out. */
+export function CartParts({ platform, cart, onBuyClick }: { platform: Platform; cart: RetailerCart; onBuyClick?: () => void }) {
+  const missing = notListedLine(platform, cart.missing);
+  return (
+    <>
+      <ul className="cart-parts">
+        {cart.items.map(({ part, offer }) => {
+          const label = priceLabel(offer);
+          return (
+            <li key={part.id}>
+              <span className="buy-slot">{platform.slots.find((s) => s.id === part.slot)?.name ?? part.slot}:</span>{' '}
+              <StoreLink offer={offer} part={part} onBuyClick={onBuyClick}>{part.brand} {part.name}</StoreLink><FflTag part={part} />{' '}
+              <span className="amt">{money(offer.price)}</span>{label ? `\u00a0· ${label}` : ''}
+            </li>
+          );
+        })}
+      </ul>
+      {missing && <p className="cart-missing">{missing}</p>}
+    </>
+  );
+}
+
+/** The id of the field that holds the parts list when the browser won't copy it. */
+const PARTS_TEXT_ID = 'parts-text';
+
+/** The parts list in a field to copy by hand, shown when the browser refuses to copy it. */
+export function PartsTextBox({ text, onClose }: { text: string; onClose: () => void }) {
+  return (
+    <div className="parts-text">
+      <label htmlFor={PARTS_TEXT_ID}>{COPY_BY_HAND_LABEL}</label>
+      <textarea id={PARTS_TEXT_ID} readOnly rows={text.split('\n').length} value={text} onFocus={(e) => e.currentTarget.select()} />
+      <button type="button" className="btn" onClick={onClose}>{TOAST_CLOSE}</button>
+    </div>
+  );
+}
+
 function groupSlots(slots: Slot[]): [string, Slot[]][] {
   const m = new Map<string, Slot[]>();
   for (const s of slots) m.set(s.group, [...(m.get(s.group) ?? []), s]);
   return [...m.entries()];
 }
 
-export function PartsList({ platform, build, issues, states, hover, onHover, onOpen, onRemove, mounts, onMount, owned, onToggleOwn }: {
+export function PartsList({ platform, build, issues, states, hover, onHover, onOpen, onRemove, mounts, onMount, owned, onToggleOwn, onBuyClick }: {
   platform: Platform; build: Build; issues: Issue[]; states: Record<string, RegionState>; hover: string | null;
   onHover: (s: string | null) => void; onOpen: (s: string) => void; onRemove: (s: string) => void;
   mounts: Record<string, Resolved>; onMount: (slot: string, side: Side, at: number) => void;
-  owned: Owned; onToggleOwn: (s: string) => void;
+  owned: Owned; onToggleOwn: (s: string) => void; onBuyClick?: () => void;
 }) {
   return (
     <section className="card parts" aria-label="Parts list">
@@ -248,7 +304,7 @@ export function PartsList({ platform, build, issues, states, hover, onHover, onO
                   <button className="part-main" onClick={() => onOpen(slot.id)}>
                     <span className="part-slot">{slot.name}{!slot.required && <span className="opt">Optional</span>}</span>
                     {part ? (
-                      <span className="part-name"><span className="brand-dim">{part.brand}</span> {part.name}{part.serialized && <span className="ffl" title="Serialized: ships to an FFL">FFL</span>}<span className="sr">. Change</span></span>
+                      <span className="part-name"><span className="brand-dim">{part.brand}</span> {part.name}<FflTag part={part} /><span className="sr">. Change</span></span>
                     ) : other ? (
                       <span className="part-name">Your own {slot.name.toLowerCase()} <span className="brand-dim">(not in our list, so its fit isn't checked)</span></span>
                     ) : (
@@ -259,7 +315,7 @@ export function PartsList({ platform, build, issues, states, hover, onHover, onO
                   <span className="part-price">
                     {other ? <span className="src owned-note">You Own It</span>
                       : own && offer ? <><s className="amt dim">{money(offer.price)}</s><span className="src owned-note">You Own It</span></>
-                      : offer ? <><span className="amt">{money(offer.price)}</span><span className="src">{retailerName(offer.retailer)}{label ? `\u00a0· ${label}` : ''}</span>{part && <ChangeChip part={part} />}</> : <span className="amt dim">—</span>}
+                      : offer ? <><span className="amt">{money(offer.price)}</span><span className="src">{part && <StoreLink offer={offer} part={part} onBuyClick={onBuyClick} />}{label ? `\u00a0· ${label}` : ''}</span>{part && <ChangeChip part={part} />}</> : <span className="amt dim">—</span>}
                     {part && (
                       <button className={'own-btn' + (own ? ' on' : '')} aria-pressed={own} onClick={() => onToggleOwn(slot.id)}
                         title={own ? "Count this part's price in the total again" : 'Already have this part? It stays in the fit checks but leaves the total.'}>
@@ -317,10 +373,11 @@ function MountControl({ slot, m, onMount }: { slot: Slot; m: Resolved; onMount: 
   );
 }
 
-export function Summary({ platform, build, issues, aware, states, status, total, owned, openSaved, onSave, onShare, onCopyLink, onOpen, onCompare, onFindOwned }: {
+export function Summary({ platform, build, issues, aware, states, status, total, owned, openSaved, onSave, onShare, onCopyLink, onOpen, onCompare, onFindOwned, onBuyClick, onCopyParts }: {
   platform: Platform; build: Build; issues: Issue[]; aware: Aware[]; states: Record<string, RegionState>; status: { cls: string; text: string; complete: boolean }; total: number;
   owned: Owned; openSaved: SavedBuild | null; onSave: (name: string, asNew: boolean) => void; onShare: (name: string, note: string) => Promise<void>;
   onCopyLink: () => void; onOpen: (s: string) => void; onCompare: () => void; onFindOwned: () => void;
+  onBuyClick?: () => void; onCopyParts?: (text: string) => Promise<boolean>;
 }) {
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState('');
@@ -341,6 +398,11 @@ export function Summary({ platform, build, issues, aware, states, status, total,
   const noPrice = noPriceNote(unpricedCount(chosen));
   const estimates = estimateNote(estimatedCount(chosen));
   const carts = singleRetailerCarts(chosen).slice(0, 4);
+  const [openCart, setOpenCart] = useState<string | null>(null);
+  /** Whether the parts list is shown as text for copying by hand. It follows the build while it's up. */
+  const [partsShown, setPartsShown] = useState(false);
+  const partsText = () => partsListText(platform, build, owned, issues);
+  const copyParts = async () => setPartsShown(!(await onCopyParts?.(partsText())));
   const [dollars, cents] = money(total).split('.');
 
   // Name new builds after the model when the builder covers several ("My Glock 19 build").
@@ -409,6 +471,7 @@ export function Summary({ platform, build, issues, aware, states, status, total,
         ) : (
           <div className="total-actions">
             <button className="btn primary" onClick={startSave}>{openSaved ? 'Save Changes' : 'Save Build'}</button>
+            <button className="btn" onClick={() => void copyParts()} disabled={chosen.length === 0}>{COPY_PARTS_LABEL}</button>
             <button className="btn" onClick={onCopyLink}>Copy Link</button>
             <button className="btn wide-row" onClick={startShare} disabled={!canShare}
               title={canShare ? 'Post this build to the Community page' : owned.other.size ? 'Choose a listed part for every slot to share it' : 'Finish the build and fix any conflicts to share it'}>
@@ -418,6 +481,7 @@ export function Summary({ platform, build, issues, aware, states, status, total,
             <button className="btn ghost" onClick={onFindOwned}>Parts I Own</button>
           </div>
         )}
+        {partsShown && chosen.length > 0 && <PartsTextBox text={partsText()} onClose={() => setPartsShown(false)} />}
       </section>
 
       {issues.length > 0 && (
@@ -452,19 +516,46 @@ export function Summary({ platform, build, issues, aware, states, status, total,
         </section>
       )}
 
+      {chosen.length > 0 && <section className="card where-to-buy">
+        <h2 className="card-title">{WHERE_TO_BUY_TITLE}</h2>
+        <ul className="buy-rows">
+          {buyRows(platform, build, owned).map(({ slot, part, offer }) => {
+            const label = offer ? priceLabel(offer) : '';
+            return (
+              <li key={slot.id}>
+                <span className="buy-slot">{slot.name}:</span><FflTag part={part} />{' '}
+                {offer ? <><span className="amt">{money(offer.price)}</span> at <StoreLink offer={offer} part={part} onBuyClick={onBuyClick} />{label ? `\u00a0· ${label}` : ''}</> : <span className="amt dim">—</span>}
+              </li>
+            );
+          })}
+        </ul>
+        {noPrice && <p className="buy-note no-price">{noPrice}</p>}
+        <p className="buy-note">{CONFIRM_PRICE_NOTE}</p>
+      </section>}
+
       {chosen.length > 0 && <section className="card">
         <h2 className="card-title">Buy It All from One Store</h2>
         {/** Owner-approved wording (2026-10-31, revised the same day to say what the cart actually leaves out). */}
         <p className="card-note">Fewer shipments can beat a lower parts total. Leaves out parts the store doesn't list or that are marked out of stock. Estimates are included and marked.</p>
         <table className="carts">
           <tbody>
-            {carts.map((c) => (
-              <tr key={c.retailer}>
-                <td>{retailerName(c.retailer)}{c.estimates > 0 && <small className="to-buy"> Includes estimates</small>}</td>
-                <td className="num dim">{c.carried} of {chosen.length}</td>
-                <td className="num">{money(c.total)}</td>
-              </tr>
-            ))}
+            {carts.map((c) => {
+              const open = openCart === c.retailer;
+              return (
+                <Fragment key={c.retailer}>
+                  <tr>
+                    <td>
+                      <button className="cart-toggle" aria-expanded={open} onClick={() => setOpenCart(open ? null : c.retailer)}>
+                        {retailerName(c.retailer)}{c.estimates > 0 && <small className="to-buy"> Includes estimates</small>}<span className="chev" aria-hidden="true">{open ? '−' : '+'}</span>
+                      </button>
+                    </td>
+                    <td className="num dim">{c.carried} of {chosen.length}</td>
+                    <td className="num">{money(c.total)}</td>
+                  </tr>
+                  {open && <tr className="cart-detail"><td colSpan={3}><CartParts platform={platform} cart={c} onBuyClick={onBuyClick} /></td></tr>}
+                </Fragment>
+              );
+            })}
           </tbody>
         </table>
       </section>}

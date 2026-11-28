@@ -481,6 +481,27 @@ td, th { padding: 7px 0; border-top: 1px solid var(--line); text-align: left; }
 tr:first-child td { border-top: 0; }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 .carts td.num:last-child { font-weight: 700; padding-left: 12px; }
+/* Where to Buy, and what an opened one-store cart lists. Long store and part names wrap rather than widen the card. */
+.buy-rows, .cart-parts { list-style: none; margin: 0; padding: 0; font-size: 13.5px; line-height: 1.45; overflow-wrap: anywhere; }
+.buy-rows li { padding: 7px 0; border-top: 1px solid var(--line); }
+.buy-rows li:first-child { border-top: 0; padding-top: 0; }
+.buy-slot { color: var(--muted); }
+.buy-rows a, .cart-parts a, .part-price .src a { font-weight: 600; text-decoration: none; }
+.buy-rows a:hover, .cart-parts a:hover, .part-price .src a:hover { text-decoration: underline; }
+.buy-note { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
+.buy-note + .buy-note { margin-top: 4px; }
+.cart-toggle { display: flex; align-items: center; gap: 6px; width: 100%; border: 0; background: none; padding: 0; color: inherit; font: inherit; text-align: left; }
+.cart-toggle .chev { color: var(--muted); font-size: 16px; line-height: 1; }
+.cart-toggle:hover .chev { color: var(--ink); }
+.carts .cart-detail td { border-top: 0; padding-top: 0; }
+.carts td.num { white-space: nowrap; padding-left: 10px; }
+.cart-parts li { padding: 3px 0; }
+.cart-missing { font-size: 13px; color: var(--muted); margin: 4px 0 0; }
+@media (pointer: coarse) { .cart-toggle { min-height: 36px; } }
+.parts-text { display: grid; gap: 8px; margin-top: 12px; }
+.parts-text label { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.parts-text textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--surface); color: var(--ink); font: 13px/1.4 var(--f-sans); resize: vertical; max-height: 240px; }
+.parts-text .btn { justify-self: start; }
 
 .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .preset { border: 1px solid var(--line); background: var(--surface-2); border-radius: 8px; padding: 10px 8px; text-align: left; display: flex; flex-direction: column; gap: 2px; }
