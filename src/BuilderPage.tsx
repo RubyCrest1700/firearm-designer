@@ -2,7 +2,7 @@ import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { PLATFORMS } from './data';
 import { buyUrl, retailerName } from './data/retailers';
 import { bestOffer, encodeMount, estimateNote, estimatedCount, money, noPriceNote, ownedOf, placementOf, presetSelection, baseSelection, priceLabel, singleRetailerCarts, stockedRange, toBuild, totalNotes, unpricedCount, type Owned, type RetailerCart, type Selection } from './engine';
-import { CONFIRM_PRICE_NOTE, COPY_PARTS_LABEL, WHERE_TO_BUY_TITLE, buyRows, notListedLine, partsListText } from './partsList';
+import { CONFIRM_PRICE_NOTE, COPY_BY_HAND_LABEL, COPY_PARTS_LABEL, WHERE_TO_BUY_TITLE, buyRows, notListedLine, partsListText } from './partsList';
 import type { Offer } from './types';
 import type { RegionState } from './Blueprint';
 import { Blueprint, useDrawings } from './drawings';
@@ -227,6 +227,11 @@ export function StoreLink({ offer, part, onBuyClick, children }: { offer: Offer;
   return href ? <a href={href} target="_blank" rel="sponsored noopener" onClick={onBuyClick}>{text} ↗</a> : <>{text}</>;
 }
 
+/** The FFL tag on a serialized part, the same in the parts list, the Where to Buy card and an opened one-store cart. */
+function FflTag({ part }: { part: Part }) {
+  return part.serialized ? <span className="ffl" title="Serialized: ships to an FFL">FFL</span> : null;
+}
+
 /** What an opened one-store cart shows: each part the store carries, linked to it there, and the slots it leaves out. */
 export function CartParts({ platform, cart, onBuyClick }: { platform: Platform; cart: RetailerCart; onBuyClick?: () => void }) {
   const missing = notListedLine(platform, cart.missing);
@@ -238,7 +243,7 @@ export function CartParts({ platform, cart, onBuyClick }: { platform: Platform; 
           return (
             <li key={part.id}>
               <span className="buy-slot">{platform.slots.find((s) => s.id === part.slot)?.name ?? part.slot}:</span>{' '}
-              <StoreLink offer={offer} part={part} onBuyClick={onBuyClick}>{part.brand} {part.name}</StoreLink>{' '}
+              <StoreLink offer={offer} part={part} onBuyClick={onBuyClick}>{part.brand} {part.name}</StoreLink><FflTag part={part} />{' '}
               <span className="amt">{money(offer.price)}</span>{label ? `\u00a0· ${label}` : ''}
             </li>
           );
@@ -256,7 +261,7 @@ const PARTS_TEXT_ID = 'parts-text';
 export function PartsTextBox({ text, onClose }: { text: string; onClose: () => void }) {
   return (
     <div className="parts-text">
-      <label htmlFor={PARTS_TEXT_ID}>Copy this list:</label>
+      <label htmlFor={PARTS_TEXT_ID}>{COPY_BY_HAND_LABEL}</label>
       <textarea id={PARTS_TEXT_ID} readOnly rows={text.split('\n').length} value={text} onFocus={(e) => e.currentTarget.select()} />
       <button type="button" className="btn" onClick={onClose}>{TOAST_CLOSE}</button>
     </div>
@@ -299,7 +304,7 @@ export function PartsList({ platform, build, issues, states, hover, onHover, onO
                   <button className="part-main" onClick={() => onOpen(slot.id)}>
                     <span className="part-slot">{slot.name}{!slot.required && <span className="opt">Optional</span>}</span>
                     {part ? (
-                      <span className="part-name"><span className="brand-dim">{part.brand}</span> {part.name}{part.serialized && <span className="ffl" title="Serialized: ships to an FFL">FFL</span>}<span className="sr">. Change</span></span>
+                      <span className="part-name"><span className="brand-dim">{part.brand}</span> {part.name}<FflTag part={part} /><span className="sr">. Change</span></span>
                     ) : other ? (
                       <span className="part-name">Your own {slot.name.toLowerCase()} <span className="brand-dim">(not in our list, so its fit isn't checked)</span></span>
                     ) : (
@@ -518,7 +523,7 @@ export function Summary({ platform, build, issues, aware, states, status, total,
             const label = offer ? priceLabel(offer) : '';
             return (
               <li key={slot.id}>
-                <span className="buy-slot">{slot.name}:</span>{' '}
+                <span className="buy-slot">{slot.name}:</span><FflTag part={part} />{' '}
                 {offer ? <><span className="amt">{money(offer.price)}</span> at <StoreLink offer={offer} part={part} onBuyClick={onBuyClick} />{label ? `\u00a0· ${label}` : ''}</> : <span className="amt dim">—</span>}
               </li>
             );

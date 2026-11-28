@@ -41,6 +41,7 @@ import { GUIDES, type FitChart } from '../src/guides/content';
 import { RETAILERS } from '../src/data/retailers';
 import { buyUrl, knownRetailer, offerUrl, retailerName, tagged } from '../src/data/retailers';
 import * as BuyList from '../src/partsList';
+import { LegalNotice } from '../src/ui';
 import * as Builder from '../src/BuilderPage';
 import * as Picking from '../src/Picker';
 import { UNKNOWN_RETAILER_OFFERS } from '../src/data/helpers';
@@ -1690,15 +1691,16 @@ test('Copy Parts List copies plain text: the total, each part to buy with its st
   const { platform, sel, build, owned } = whereToBuyFixture();
   const legal: Issue = { severity: 'warn', slots: ['barrel', 'stock'], message: SBR_MESSAGE, legal: true };
   // The pinned sample: a live price, an unknown store, an estimate, a part with no price, the owned stock left out,
-  // the no-price note, and the short Legal notice exactly as helpers.ts has it.
+  // the no-price note, and (owner decision 2026-11-28) the build's own full Legal notice message right under the
+  // first line, exactly as helpers.ts has it, with no label.
   assert.equal(BuyList.partsListText(platform, build, owned, [legal]), [
     'My AR-15 build: $210.00 at the best prices we found',
+    'A barrel under 16" with a stock may be regulated under the National Firearms Act and can require ATF approval before assembly. Some states ban it. Not legal advice: check federal, state and local law before you build.',
     'Trigger group: Acme Test trigger, $100.00 at Faxon Firearms',
     'Pistol grip: Acme Test grip, $20.00 at NOPE',
     'Barrel: Acme Test barrel, $90.00 at Brownells (Estimate)',
     'Handguard: Acme Test handguard',
     '1 part has no price',
-    'May be regulated under the NFA. Not legal advice: check federal, state and local law.',
     'Always confirm the price at the retailer.',
   ].join('\n'));
   // Without a Legal notice or a part with no price, neither line is there.
@@ -1714,10 +1716,14 @@ test('Copy Parts List copies plain text: the total, each part to buy with its st
   const shortBuild = toBuild(ar15, short);
   const lines = BuyList.partsListText(ar15, shortBuild, ownedOf(short), issuesFor(ar15, shortBuild)).split('\n');
   assert.equal(lines[0], `My AR-15 build: ${money(totalOf(ar15, shortBuild))} at the best prices we found`);
-  assert.equal(lines.filter((l: string) => l === NFA_SHORT_NOTICE).length, 1);
+  assert.equal(lines[1], SBR_MESSAGE);
+  assert.equal(lines.filter((l: string) => l === SBR_MESSAGE).length, 1);
+  assert.ok(!lines.includes(NFA_SHORT_NOTICE), 'the full message, not the short form');
   assert.equal(lines.at(-1), 'Always confirm the price at the retailer.');
   const usual = baseSelection(ar15);
-  assert.ok(!BuyList.partsListText(ar15, toBuild(ar15, usual), ownedOf(usual), issuesFor(ar15, toBuild(ar15, usual))).includes(NFA_SHORT_NOTICE));
+  const usualText = BuyList.partsListText(ar15, toBuild(ar15, usual), ownedOf(usual), issuesFor(ar15, toBuild(ar15, usual)));
+  assert.ok(!usualText.includes(NFA_SHORT_NOTICE));
+  assert.ok(!/regulated|legal/i.test(usualText), usualText);
   // A builder with models names the model the parts make, as the Save form does.
   const g = baseSelection(glock);
   const gBuild = toBuild(glock, g);
@@ -1730,6 +1736,11 @@ test('Copy Parts List copies plain text: the total, each part to buy with its st
   assert.equal(await BuyList.copyText('a', { writeText: async () => { throw new Error('denied'); } }), false);
   assert.equal(await BuyList.copyText('a', undefined), false);
   assert.equal(BuyList.PARTS_COPIED, 'Parts list copied');
+  assert.equal(BuyList.COPY_BY_HAND_LABEL, 'Copy this list:');
+  // Both were accepted as written by the owner on 2026-11-28, and say so.
+  const listSrc = readFileSync('src/partsList.ts', 'utf8');
+  assert.match(listSrc, /\/\*\* Owner-approved wording \(2026-11-28\)\. \*\/\r?\nexport const PARTS_COPIED = 'Parts list copied';/);
+  assert.match(listSrc, /\/\*\* Owner-approved wording \(2026-11-28\)\.[^\n]*\*\/\r?\nexport const COPY_BY_HAND_LABEL = 'Copy this list:';/);
   const app = readFileSync('src/App.tsx', 'utf8');
   assert.match(app, /onCopyParts=\{async \(text\) => \{ const ok = await copyText\(text\); if \(ok\) setToast\(PARTS_COPIED\); return ok; \}\}/);
 
@@ -1740,6 +1751,81 @@ test('Copy Parts List copies plain text: the total, each part to buy with its st
   // When the browser won't copy, the list shows in a field to copy by hand.
   const box = renderToStaticMarkup(createElement(Builder.PartsTextBox, { text: 'one\ntwo', onClose: noop }));
   assert.match(box, /<label for="parts-text">Copy this list:<\/label><textarea id="parts-text" readonly="" rows="2">one\ntwo<\/textarea><button type="button" class="btn">Close<\/button>/);
+
+  // The wiring, pinned as text. The summary hands the build's own issues to the text, so the Legal lines can't be
+  // dropped without a test failing; the box to copy by hand starts hidden and shows only when the copy is refused.
+  const src = readFileSync('src/BuilderPage.tsx', 'utf8');
+  assert.ok(src.includes('  const partsText = () => partsListText(platform, build, owned, issues);'));
+  assert.equal(src.match(/partsListText\(/g)?.length, 1);
+  assert.ok(src.includes('  const [partsShown, setPartsShown] = useState(false);'));
+  assert.ok(src.includes('  const copyParts = async () => setPartsShown(!(await onCopyParts?.(partsText())));'));
+  assert.ok(src.includes('<button className="btn" onClick={() => void copyParts()} disabled={chosen.length === 0}>{COPY_PARTS_LABEL}</button>'));
+  assert.ok(src.includes('{partsShown && chosen.length > 0 && <PartsTextBox text={partsText()} onClose={() => setPartsShown(false)} />}'));
+  assert.equal(src.match(/<PartsTextBox /g)?.length, 1);
+  assert.equal(src.match(/setPartsShown\(/g)?.length, 2, 'set by the copy answer and by Close, nowhere else');
+  assert.ok(src.includes('<label htmlFor={PARTS_TEXT_ID}>{COPY_BY_HAND_LABEL}</label>'));
+  const summaryTag = builderSummaryTag(src);
+  assert.ok(summaryTag.includes(' issues={issues} '), summaryTag);
+  assert.ok(summaryTag.includes(' onCopyParts={onCopyParts}'), summaryTag);
+  assert.equal(src.match(/onCopyParts=\{/g)?.length, 1);
+});
+
+/** The builder page's one `<Summary ... />` element as written in its source, and nothing after it (the Picker follows it). */
+function builderSummaryTag(src: string): string {
+  const all = [...src.matchAll(/<Summary\r?\n(?:(?!\/>)[\s\S])*\/>/g)].map((m) => m[0]);
+  assert.equal(all.length, 1, 'one Summary on the builder page');
+  assert.doesNotMatch(all[0], /<Picker|<PartsList/);
+  return all[0];
+}
+
+test("the copied parts list carries the build's own Legal notice messages, whole, right under the first line", () => {
+  const { platform, build, owned } = whereToBuyFixture();
+  const sbr: Issue = { severity: 'warn', slots: ['barrel', 'stock'], message: SBR_MESSAGE, legal: true };
+  const grip: Issue = { severity: 'warn', slots: ['foregrip'], message: VERTICAL_GRIP_MESSAGE, legal: true };
+  const fit: Issue = { severity: 'warn', slots: ['barrel', 'handguard'], message: 'A made-up fit warning about legal-length handguards.' };
+  const text = (issues: Issue[]) => BuyList.partsListText(platform, build, owned, issues).split('\n');
+  const first = 'My AR-15 build: $210.00 at the best prices we found';
+  const rest = text([]).slice(1);
+  assert.equal(rest[0], 'Trigger group: Acme Test trigger, $100.00 at Faxon Firearms');
+  // What the summary's Legal notice shows for the same issues, in its order.
+  const shown = (issues: Issue[]) => [...renderToStaticMarkup(createElement(LegalNotice, { issues })).matchAll(/<p>(.*?)<\/p>/g)].map((m) => m[1].replace(/&quot;/g, '"'));
+
+  // A short barrel with a stock: the whole approved message, unchanged, on line 2, with no label or prefix.
+  assert.deepEqual(text([sbr]), [first, SBR_TEXT, ...rest]);
+  assert.deepEqual(shown([sbr]), [SBR_TEXT]);
+  // A vertical foregrip on a short pistol: its own message.
+  assert.deepEqual(text([grip]), [first, GRIP_TEXT, ...rest]);
+  // Both: one per line, in the order the summary shows them, whichever comes first; fit warnings between them change nothing.
+  assert.deepEqual(text([sbr, fit, grip]), [first, SBR_TEXT, GRIP_TEXT, ...rest]);
+  assert.deepEqual(shown([sbr, fit, grip]), [SBR_TEXT, GRIP_TEXT]);
+  assert.deepEqual(text([grip, sbr]), [first, GRIP_TEXT, SBR_TEXT, ...rest]);
+  assert.deepEqual(shown([grip, sbr]), [GRIP_TEXT, SBR_TEXT]);
+  // A message raised twice shows once, as in the summary.
+  assert.deepEqual(text([sbr, grip, sbr]), [first, SBR_TEXT, GRIP_TEXT, ...rest]);
+  assert.deepEqual(shown([sbr, grip, sbr]), [SBR_TEXT, GRIP_TEXT]);
+  // A warning that isn't a legal point, with no legal issue: no legal line at all.
+  assert.deepEqual(text([fit]), [first, ...rest]);
+  assert.deepEqual(text([fit, { severity: 'error', slots: ['barrel'], message: 'A made-up conflict.' }, { severity: 'info', slots: ['barrel'], message: 'A made-up note.' }]), [first, ...rest]);
+  assert.deepEqual(shown([fit]), []);
+  // The short form is never what's copied.
+  for (const issues of [[sbr], [grip], [sbr, grip], [fit]]) assert.ok(!text(issues).includes(NFA_SHORT_NOTICE));
+
+  // Real builds, from the platforms' own rules: the copied lines are exactly the summary's Legal notice.
+  const real = (p: Platform, s: Selection) => {
+    const b = toBuild(p, s);
+    const issues = issuesFor(p, b);
+    const lines = BuyList.partsListText(p, b, ownedOf(s), issues).split('\n');
+    const legalShown = shown(issues);
+    assert.deepEqual(lines.slice(1, 1 + legalShown.length), legalShown);
+    assert.equal(lines.filter((l: string) => l === SBR_TEXT || l === GRIP_TEXT).length, legalShown.length);
+    return legalShown;
+  };
+  assert.deepEqual(real(ar15, { ...baseSelection(ar15), ...CLEAN_SHORT_AR15['ar-bbl-ba10'] }), [SBR_TEXT]);
+  assert.deepEqual(real(ar9, { ...baseSelection(ar9), barrel: 'a9-bbl-faxon85', stock: 'a9-brace-sba3', foregrip: 'r-fg-mvg' }), [GRIP_TEXT]);
+  assert.deepEqual(real(ar15, baseSelection(ar15)), []);
+  // The approved messages themselves are untouched.
+  assert.equal(SBR_MESSAGE, SBR_TEXT);
+  assert.equal(VERTICAL_GRIP_MESSAGE, GRIP_TEXT);
 });
 
 test('starter build cards and the platform page note parts with no price; totals are unchanged', () => {
@@ -3253,6 +3339,18 @@ function whereToBuyFixture() {
 }
 const amp = (url: string) => url.replace(/&/g, '&amp;');
 const UTM_TAIL = 'utm_source=dropinbuilds&utm_medium=referral';
+/** The same build with a made-up serialized lower receiver, priced as an estimate at Brownells. */
+function whereToBuyWithLower() {
+  const f = whereToBuyFixture();
+  const lowerId = baseSelection(ar15).lower;
+  const platform: Platform = { ...f.platform, parts: f.platform.parts.map((x) => (x.id === lowerId ? { ...x, brand: 'Acme', name: 'Test lower', offers: [{ retailer: 'BRN', price: 60, inStock: true }] } : x)) };
+  const sel: Selection = { ...f.sel, lower: lowerId };
+  const build = toBuild(platform, sel);
+  assert.equal(build.lower!.serialized, true);
+  return { platform, sel, build, owned: ownedOf(sel) };
+}
+/** The FFL tag exactly as a parts-list row draws it. */
+const FFL_TAG = '<span class="ffl" title="Serialized: ships to an FFL">FFL</span>';
 
 test('Where to Buy lists each part still to buy with its best price and a link to that store through buyUrl', () => {
   const { platform, sel, at } = whereToBuyFixture();
@@ -3289,6 +3387,29 @@ test('Where to Buy lists each part still to buy with its best price and a link t
   const realCard = strip(summaryHtml(ar15, real)).match(/<section class="card where-to-buy">.*?<\/section>/)![0];
   for (const r of realRows) if (r.offer) assert.ok(realCard.includes(link(r.offer, r.part, retailerName(r.offer.retailer))), r.part.id);
   assert.equal([...realCard.matchAll(/<a /g)].length, realRows.filter((r: { offer?: Offer }) => r.offer).length);
+
+  // A serialized part carries the FFL tag the parts-list row gives it, by its slot name; no other row has one.
+  const lower = whereToBuyWithLower();
+  const { issues, states } = statesFor(lower.platform, lower.build);
+  const list = strip(renderToStaticMarkup(createElement(PartsList, { platform: lower.platform, build: lower.build, issues, states, hover: null, onHover: noop, onOpen: noop, onRemove: noop, mounts: {}, onMount: noop, owned: lower.owned, onToggleOwn: noop })));
+  assert.ok(list.includes(`Test lower${FFL_TAG}`), 'the parts-list row');
+  assert.equal(list.split(FFL_TAG).length - 1, 1);
+  const lowerRows = [...strip(summaryHtml(lower.platform, lower.sel)).match(/<section class="card where-to-buy">.*?<\/section>/)![0].matchAll(/<li>(.*?)<\/li>/g)].map((m) => m[1]);
+  assert.equal(lowerRows.length, 5);
+  assert.ok(lowerRows[0].startsWith(`<span class="buy-slot">Stripped lower receiver:</span>${FFL_TAG} <span class="amt">$60.00</span> at <a `), lowerRows[0]);
+  assert.deepEqual(lowerRows.slice(1), rows);
+  assert.equal(lowerRows.join('').split('class="ffl"').length - 1, 1);
+  // A real build: the tag is on exactly the serialized parts' rows.
+  const realLis = [...realCard.matchAll(/<li>(.*?)<\/li>/g)].map((m) => m[1]);
+  assert.deepEqual(realLis.map((li) => li.includes(FFL_TAG)), realRows.map((r: { part: Part }) => !!r.part.serialized));
+  assert.ok(realRows.some((r: { part: Part }) => r.part.serialized));
+  // One piece draws the tag in all three places.
+  const src = readFileSync('src/BuilderPage.tsx', 'utf8');
+  assert.equal(src.match(/className="ffl"/g)?.length, 1);
+  assert.equal(src.match(/Serialized: ships to an FFL/g)?.length, 1);
+  assert.equal(src.match(/<FflTag part=\{part\} \/>/g)?.length, 3);
+  // Each row's link counts the click, like the parts-list rows'.
+  assert.ok(src.includes('{offer ? <><span className="amt">{money(offer.price)}</span> at <StoreLink offer={offer} part={part} onBuyClick={onBuyClick} />{label ?'));
 });
 
 test('each parts-list row links its store name the same way, and an owned or unknown-store row has no link', () => {
@@ -3308,7 +3429,12 @@ test('each parts-list row links its store name the same way, and an owned or unk
   assert.match(src, /<a href=\{href\} target="_blank" rel="sponsored noopener" onClick=\{onBuyClick\}>/);
   assert.equal([...src.matchAll(/rel="([^"]*)"/g)].filter((m) => m[1].includes('sponsored')).length, 1);
   assert.match(src, /<PartsList [^>]*\n?[^>]*\bonBuyClick=\{onBuyClick\}/);
-  assert.match(src, /<Summary\b[\s\S]*?\bonBuyClick=\{onBuyClick\}[\s\S]*?\/>/);
+  // The Summary element itself, so the Picker's own onBuyClick further down can't stand in for it.
+  assert.ok(builderSummaryTag(src).includes(' onBuyClick={onBuyClick} '), builderSummaryTag(src));
+  assert.ok(src.includes('<span className="src">{part && <StoreLink offer={offer} part={part} onBuyClick={onBuyClick} />}{label ?'));
+  // The page's own prop reaches four places: the parts list, the summary, the picker, and nothing else.
+  assert.equal(src.match(/onBuyClick=\{onBuyClick\}/g)?.length, 3 + 4, 'PartsList, Summary and Picker; the link itself, the row, the card and the cart');
+  assert.equal(src.match(/<StoreLink /g)?.length, 3);
 });
 
 test('each one-store cart opens to the parts that store carries, with links, and names the slots it leaves out', () => {
@@ -3347,6 +3473,22 @@ test('each one-store cart opens to the parts that store carries, with links, and
   const src = readFileSync('src/BuilderPage.tsx', 'utf8');
   assert.ok(src.includes("<p className=\"card-note\">Fewer shipments can beat a lower parts total. Leaves out parts the store doesn't list or that are marked out of stock. Estimates are included and marked.</p>"));
   assert.match(src, /\{open && <tr className="cart-detail"><td colSpan=\{3\}><CartParts platform=\{platform\} cart=\{c\} onBuyClick=\{onBuyClick\} \/><\/td><\/tr>\}/);
+  // The toggle opens its own store's parts and closes them again; each part's link there counts the click.
+  assert.ok(src.includes('  const [openCart, setOpenCart] = useState<string | null>(null);'));
+  assert.ok(src.includes('              const open = openCart === c.retailer;'));
+  assert.ok(src.includes('<button className="cart-toggle" aria-expanded={open} onClick={() => setOpenCart(open ? null : c.retailer)}>'));
+  assert.equal(src.match(/setOpenCart\(/g)?.length, 1);
+  assert.ok(src.includes('<StoreLink offer={offer} part={part} onBuyClick={onBuyClick}>{part.brand} {part.name}</StoreLink>'));
+
+  // A serialized part in an opened cart carries the FFL tag after its name, as its parts-list row does.
+  const lower = whereToBuyWithLower();
+  const lowerCart = singleRetailerCarts(BuyList.buyRows(lower.platform, lower.build, lower.owned).map((r: { part: Part }) => r.part)).find((c) => c.retailer === 'BRN')!;
+  const lowerLis = [...strip(renderToStaticMarkup(createElement(Builder.CartParts, { platform: lower.platform, cart: lowerCart, onBuyClick: noop }))).matchAll(/<li>(.*?)<\/li>/g)].map((m) => m[1]);
+  assert.deepEqual(lowerLis, [
+    `<span class="buy-slot">Stripped lower receiver:</span> ${link('lower')}${FFL_TAG} <span class="amt">$60.00</span> · Estimate`,
+    `<span class="buy-slot">Trigger group:</span> ${link('trigger')} <span class="amt">$130.00</span> · Estimate`,
+    `<span class="buy-slot">Barrel:</span> ${link('barrel')} <span class="amt">$90.00</span> · Estimate`,
+  ]);
 });
 
 /* ------------------------------------------------------------------ the error screen */
@@ -3479,6 +3621,18 @@ test('a link the browser will not copy stays in a read-only field with a Close b
   assert.equal(app.match(/clipboard/g)?.length, 1);
   assert.equal(readFileSync('src/partsList.ts', 'utf8').match(/\.writeText\(/g)?.length, 1);
   assert.deepEqual(readdirSync('src', { recursive: true, encoding: 'utf8' }).filter((f) => /\.tsx?$/.test(f) && /clipboard/i.test(readFileSync(`src/${f}`, 'utf8'))).sort(), ['App.tsx', 'partsList.ts']);
+  // A third writer can't come in through copyText either: it is named in exactly two places, its definition and
+  // App.tsx's one call for Copy Parts List. And partsList.ts names the clipboard only in copyText: its comment (twice),
+  // its parameter and that parameter's type and default, and the one writeText call.
+  const copyTextUses = readdirSync('src', { recursive: true, encoding: 'utf8' }).filter((f) => /\.tsx?$/.test(f))
+    .flatMap((f) => [...readFileSync(`src/${f}`, 'utf8').matchAll(/^.*\bcopyText\(.*$/gm)].map((m) => `${f.replace(/\\/g, '/')}: ${m[0].trim()}`));
+  assert.deepEqual(copyTextUses.sort(), [
+    'App.tsx: onCopyParts={async (text) => { const ok = await copyText(text); if (ok) setToast(PARTS_COPIED); return ok; }}',
+    "partsList.ts: export async function copyText(text: string, clipboard: Pick<Clipboard, 'writeText'> | undefined = globalThis.navigator?.clipboard): Promise<boolean> {",
+  ]);
+  assert.equal(sources.join('\n').match(/\bcopyText\b/g)?.length, 3, 'the definition, the import and the one call');
+  assert.equal(readFileSync('src/partsList.ts', 'utf8').match(/clipboard/gi)?.length, 6);
+  assert.equal(readFileSync('src/partsList.ts', 'utf8').match(/clipboard[!?]?\.(?!writeText\()\w/g), null, 'no other clipboard method');
   assert.equal(sources.join('\n').match(/onCopyLink=\{/g)?.length, 4, 'the three pages, and the builder handing it to its summary');
   // The wording comment, and the long link can shrink inside the toast instead of pushing past a phone's edge.
   assert.match(readFileSync('src/ui.tsx', 'utf8'), /\/\*\* Owner-approved wording \(2026-11-10\)\. \*\/\r?\nexport const TOAST_CLOSE = 'Close';/);

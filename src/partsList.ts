@@ -1,4 +1,3 @@
-import { NFA_SHORT_NOTICE } from './data/helpers';
 import { retailerName } from './data/retailers';
 import { ESTIMATE_LABEL, bestOffer, isEstimate, money, noPriceNote, type Owned } from './engine';
 import { totalOf } from './store';
@@ -12,8 +11,10 @@ export const CONFIRM_PRICE_NOTE = 'Always confirm the price at the retailer.';
 export const NOT_LISTED_PREFIX = 'Not listed here:';
 /** Owner-approved wording (2026-11-27). */
 export const COPY_PARTS_LABEL = 'Copy Parts List';
-/** Owner-approved wording (2026-11-27). */
+/** Owner-approved wording (2026-11-28). */
 export const PARTS_COPIED = 'Parts list copied';
+/** Owner-approved wording (2026-11-28). The label over the list when the browser won't copy it. */
+export const COPY_BY_HAND_LABEL = 'Copy this list:';
 /** Owner-approved wording (2026-11-27). The copied list's first line: "My AR-15 build: $1,234.56 at the best prices we found". */
 const firstLine = (name: string, total: string) => `My ${name} build: ${total} at the best prices we found`;
 
@@ -40,20 +41,23 @@ export function notListedLine(platform: Platform, missing: Part[]): string {
 }
 
 /**
- * The build as plain text for Copy Parts List: the total as the summary shows it, one line for each part still to
- * buy, the no-price note when it applies, the short Legal notice (helpers.ts, unchanged) when the build raises one,
- * and the line about confirming prices.
+ * The build as plain text for Copy Parts List: the total as the summary shows it; then, when the build raises a
+ * Legal notice, each of its messages whole and unchanged (the owner-approved wording in helpers.ts), one per line in
+ * the summary's order, with no label (owner decision 2026-11-28); one line for each part still to buy; the no-price
+ * note when it applies; and the line about confirming prices.
  */
 export function partsListText(platform: Platform, build: Build, owned: Owned, issues: Issue[]): string {
   const rows = buyRows(platform, build, owned);
   const name = platform.modelOf?.(build)?.name ?? platform.name;
   const noPrice = noPriceNote(rows.filter((r) => !r.offer).length);
+  // The same messages, in the same order, as the summary's Legal notice (LegalNotice in ui.tsx).
+  const legal = [...new Set(issues.filter((i) => i.legal).map((i) => i.message))];
   return [
     firstLine(name, money(totalOf(platform, build, owned.owned))),
+    ...legal,
     ...rows.map(({ slot, part, offer }) =>
       `${slot.name}: ${part.brand} ${part.name}` + (offer ? `, ${money(offer.price)} at ${retailerName(offer.retailer)}${isEstimate(offer) ? ` (${ESTIMATE_LABEL})` : ''}` : '')),
     ...(noPrice ? [noPrice] : []),
-    ...(issues.some((i) => i.legal) ? [NFA_SHORT_NOTICE] : []),
     CONFIRM_PRICE_NOTE,
   ].join('\n');
 }
