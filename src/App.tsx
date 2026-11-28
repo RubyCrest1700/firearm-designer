@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { PLATFORMS, PRICES_READ_AT, canonicalPlatform, currentSelection } from './data';
 import { ownsAny, partIds, baseSelection, selectionTokens, withoutOwned, type Selection } from './engine';
 import { ComparePage, loadCompare, storeCompare, type CompareItem } from './Compare';
-import { droppedBuilds, loadSavedBuilds, priceChanges, newId, readSharedLink, savedPrices, selectionFromParts, shareUrl, unlistedNote, checkShareLinks, storeSavedBuilds, SAVED_KEY, type SavedBuild } from './store';
+import { droppedBuilds, linkNamesNoParts, loadSavedBuilds, priceChanges, newId, readSharedLink, savedPrices, selectionFromParts, shareUrl, unlistedNote, checkShareLinks, storeSavedBuilds, SAVED_KEY, type SavedBuild } from './store';
+import { draftEntry, keptOpen, openDraft, openedText, replaceDraft, undoAfter, type Draft, type KeptOpen } from './draft';
 import { recordBuyClick, shareBuild, type CommunityBuild } from './community';
 import { ALERTS_KEY, alertsAvailable, checkAlertSignup, loadAlertSignup, signUpForAlerts, stopAlerts, storeAlertSignup, syncAlertBuilds, type AlertSignup } from './alerts';
 import type { Part } from './types';
@@ -10,7 +11,7 @@ import { BuilderPage } from './BuilderPage';
 import { CommunityPage } from './CommunityPage';
 import { HomePage } from './HomePage';
 import { AlertsPanel, SavedPage } from './SavedPage';
-import { DRAWER_OPEN, ToastView, priceStatus, toastAfterChange, toastHideMs, useLinkToastFocus, type Toast } from './ui';
+import { DRAWER_OPEN, ToastView, noteDue, priceStatus, toastAfterChange, toastHideMs, useLinkToastFocus, type Toast } from './ui';
 
 const STORE_KEY = 'firearm-designer:v2';
 /** The home page's title, the same as the <title> in index.html. */
@@ -35,6 +36,18 @@ export function loadPersisted(): Persisted | null {
     return { platform: canonicalPlatform(p.platform), selections };
   } catch {
     return null;
+  }
+}
+
+/**
+ * The saved build and the community build that were open in the builder when the tab's draft was last stored, read
+ * from the same entry. They're checked again as the page opens (openDraft): the saved build must still exist.
+ */
+export function loadKeptOpen(): KeptOpen {
+  try {
+    return keptOpen(JSON.parse(sessionStorage.getItem(STORE_KEY) ?? 'null'));
+  } catch {
+    return keptOpen(null);
   }
 }
 
@@ -63,18 +76,30 @@ export default function App() {
   /** What to say about parts the opened link named that the site no longer lists; '' when there's nothing to say. */
   const linkNote = unlistedNote(shared?.unlisted ?? 0);
   const [route, setRoute] = useState<Route>(() => (shared ? 'build' : routeFromHash()));
-  const [platformId, setPlatformId] = useState(shared?.platform ?? (PLATFORMS.some((p) => p.id === persisted?.platform) ? persisted!.platform : PLATFORMS[0].id));
-  const [selections, setSelections] = useState<Record<string, Selection>>(() => ({
-    ...persisted?.selections,
-    ...(shared ? { [shared.platform]: shared.selection } : {}),
-  }));
+  const [saved, setSaved] = useState<SavedBuild[]>(loadSavedBuilds);
+  /**
+   * The builder as the page opens: what the tab kept, or the build a link names. A link that names no parts (a guide
+   * or platform page's builder button) leaves a build in progress as it is.
+   */
+  const opening = useMemo(() => openDraft(persisted, loadKeptOpen(), shared, linkNamesNoParts(), saved), []);
+  const [platformId, setPlatformId] = useState(opening.draft.platform);
+  const [selections, setSelections] = useState<Record<string, Selection>>(opening.draft.selections);
   /** A builder not opened before starts on its plain factory build. */
   const selOf = (pid: string) => selections[pid] ?? baseSelection(PLATFORMS.find((p) => p.id === pid) ?? PLATFORMS[0]);
-  const [saved, setSaved] = useState<SavedBuild[]>(loadSavedBuilds);
-  /** The saved build open in the builder, so Save can update it instead of adding a copy. */
-  const [openSavedId, setOpenSavedId] = useState<string | null>(null);
-  /** The community build open in the builder, so retailer clicks count toward it. Cleared on any edit. */
-  const [communityOpen, setCommunityOpen] = useState<CommunityBuild | null>(null);
+  /** The saved build open in the builder, so Save can update it instead of adding a copy. Kept for the tab, so a reload still knows it. */
+  const [openSavedId, setOpenSavedId] = useState<string | null>(opening.draft.openSavedId);
+  /** The community build open in the builder, so retailer clicks count toward it. Cleared on any edit. Kept for the tab too. */
+  const [communityOpen, setCommunityOpen] = useState<CommunityBuild | null>(opening.draft.community);
+  /** The builder's state as one value, for replacing a whole build and undoing it (src/draft.ts). */
+  const draft: Draft = { platform: platformId, selections, openSavedId, community: communityOpen };
+  const latest = useRef(draft);
+  latest.current = draft;
+  /** The note about parts a link named that we no longer list, while it waits behind that link's Undo toast (below). */
+  const noteOwed = useRef(false);
+  // Replacing the whole build, or putting one back, takes a link's build off the screen, so its note is no longer owed.
+  const setDraft = (d: Draft) => { setPlatformId(d.platform); setSelections(d.selections); setOpenSavedId(d.openSavedId); setCommunityOpen(d.community); noteOwed.current = false; };
+  /** The Undo on offer: its toast, the draft its replace left, and what puts the earlier build back (see undoAfter). */
+  const offered = useRef<{ toast: Toast; after: Draft; undo: (now: Draft) => Draft } | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
   /** The part a home page price drop opens in the builder: its slot's picker starts open on it. Used once. */
   const [startPart, setStartPart] = useState<Part | null>(null);
@@ -94,8 +119,8 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHash);
   }, [shared]);
   useEffect(() => {
-    try { sessionStorage.setItem(STORE_KEY, JSON.stringify({ platform: platformId, selections })); } catch { /* not persisted */ }
-  }, [platformId, selections]);
+    try { sessionStorage.setItem(STORE_KEY, JSON.stringify(draftEntry(draft))); } catch { /* not persisted */ }
+  }, [platformId, selections, openSavedId, communityOpen]);
   /** The list as another tab stored it, while it's still the list shown: it's already stored and that tab keeps the emailed list, so this tab does neither. */
   const fromOtherTab = useRef<SavedBuild[] | null>(null);
   useEffect(() => { if (saved !== fromOtherTab.current) storeSavedBuilds(saved); }, [saved]);
@@ -135,8 +160,8 @@ export default function App() {
   }, [saved]);
   // Tell a returning visitor once when a saved build gets cheaper; a new drop tells them again.
   useEffect(() => {
-    // The note about the link just opened shows instead; the drop isn't marked as told, so the next visit tells it.
-    if (linkNote) return;
+    // The note about the link just opened, or that link's Undo toast, shows instead; the drop isn't marked as told, so the next visit tells it.
+    if (linkNote || opening.undo) return;
     const seen = dropped.map((s) => `${s.id}:${priceChanges(s).drop.toFixed(2)}`).sort().join(',');
     try {
       if (!seen || localStorage.getItem(DROPS_SEEN_KEY) === seen) return;
@@ -152,6 +177,9 @@ export default function App() {
     const t = setTimeout(() => setToast(null), ms);
     return () => clearTimeout(t);
   }, [toast]);
+  // The link note that waited behind the link's Undo toast shows once no toast is up: the Undo toast timed out, was closed,
+  // or went with an edit. It reads the toast the draw before showed (drawnToast, below), so it comes before that is updated.
+  useEffect(() => { if (noteDue(noteOwed.current, drawnToast.current, toast)) { noteOwed.current = false; setToast(linkNote); } }, [toast]);
   // A link toast goes when a drawer opens: the page behind a drawer can't be used, and the toast is part of that page.
   useEffect(() => {
     const onDrawer = () => setToast(toastAfterChange);
@@ -164,6 +192,9 @@ export default function App() {
   useEffect(() => { if (drawnToast.current === toast) setToast(toastAfterChange); }, [route, platformId, selections]);
   useEffect(() => { drawnToast.current = toast; });
   useLinkToastFocus(toast);
+  // A link that replaced a build in progress says so and offers Undo. This runs after the effects above, so it's the toast that shows.
+  // The note about parts the link named that we no longer list waits behind it (noteOwed).
+  useEffect(() => { if (opening.undo) { offerUndo(opening.said, opening.draft, opening.undo); noteOwed.current = !!linkNote; } }, []);
 
   // Each page gets its own history entry, so Back returns to the page before (the hashchange listener follows it).
   const go = (r: Route) => {
@@ -172,12 +203,25 @@ export default function App() {
     setRoute(r);
     window.scrollTo(0, 0);
   };
-  const openInBuilder = (pid: string, sel: Selection, savedId: string | null = null, community: CommunityBuild | null = null) => {
-    setPlatformId(pid);
-    setSelections((s) => ({ ...s, [pid]: { ...sel } }));
-    setOpenSavedId(savedId);
-    setCommunityOpen(community);
-    go('build');
+  /** An Undo toast: Undo puts the replaced build back into the builder as it is at that moment, and the toast goes. */
+  const undoToast = (text: string, undo: (now: Draft) => Draft): Toast => ({ text, undo: () => { setDraft(undo(latest.current)); setToast(null); } });
+  /** Shows an Undo toast and keeps what it offers, for a replace that follows while it's still up. `after` is the draft the replace left. */
+  const offerUndo = (said: string, after: Draft, undo: (now: Draft) => Draft) => {
+    const shown = undoToast(said, undo);
+    offered.current = { toast: shown, after, undo };
+    setToast(shown);
+  };
+  /**
+   * Replaces the whole build on a platform and shows that platform: a starter chip, Clear Build, a model chip, or
+   * Open in Builder. When that loses a build in progress, a toast says what happened (`said`) and offers Undo.
+   * A replace made while an earlier Undo toast is still up, with nothing edited since, keeps that earlier build as
+   * what Undo puts back.
+   */
+  const replaceBuild = (pid: string, sel: Selection, said: string, savedId: string | null = null, community: CommunityBuild | null = null, shown?: Selection) => {
+    const { next, undo } = replaceDraft(draft, pid, sel, savedId, community, shown);
+    const back = undoAfter(toast === offered.current?.toast ? offered.current : null, draft, undo);
+    setDraft(next);
+    if (back) offerUndo(said, next, back);
   };
   const saveCopy = (name: string, pid: string, sel: Selection) => {
     setSaved((list) => [{ id: newId(), name, platform: pid, selection: { ...sel }, ...savedPrices(pid, sel) }, ...list]);
@@ -267,7 +311,7 @@ export default function App() {
             setPlatformId={(id) => { setPlatformId(id); setOpenSavedId(null); setCommunityOpen(null); }}
             selection={selOf(platformId)}
             setSelection={(sel) => { setSelections((s) => ({ ...s, [platformId]: sel })); setCommunityOpen(null); }}
-            startOver={(sel) => { setSelections((s) => ({ ...s, [platformId]: sel })); setOpenSavedId(null); setCommunityOpen(null); }}
+            startOver={(sel, said) => replaceBuild(platformId, sel, said, null, null, selOf(platformId))}
             openSaved={openSaved}
             communityOpen={communityOpen?.platform === platformId ? communityOpen : null}
             onSave={saveBuild}
@@ -280,8 +324,8 @@ export default function App() {
         )}
         {route === 'community' && (
           <CommunityPage
-            onOpen={(b) => openInBuilder(b.platform, selectionFromParts(b.platform, b.parts), null, b)}
-            onOpenStarter={(fb) => openInBuilder(fb.platform.id, fb.selection)}
+            onOpen={(b) => { replaceBuild(b.platform, selectionFromParts(b.platform, b.parts), openedText(b.name), null, b); go('build'); }}
+            onOpenStarter={(fb) => { replaceBuild(fb.platform.id, fb.selection, openedText(fb.name)); go('build'); }}
             onSave={(name, pid, sel) => saveCopy(name, pid, sel)}
             onCopyLink={(b) => copyLink(b.platform, selectionFromParts(b.platform, b.parts), b.id)}
             onCompare={(item) => addToCompare(item)}
@@ -298,7 +342,7 @@ export default function App() {
                 onRefresh={() => { if (signup) void checkAlertSignup(signup).then((next) => setSignup((cur) => signupAfter(cur, signup.token, next))); }}
                 onStop={async () => { if (signup) await stopAlerts(signup); setSignup(null); setToast('Price alert emails are off.'); }} />
             ) : null}
-            onOpen={(s) => openInBuilder(s.platform, s.selection, s.id)}
+            onOpen={(s) => { replaceBuild(s.platform, s.selection, openedText(s.name), s.id); go('build'); }}
             onRename={(id, name) => setSaved((list) => list.map((s) => (s.id === id ? { ...s, name } : s)))}
             onDuplicate={(s) => setSaved((list) => [{ ...s, id: newId(), name: `${s.name} (copy)`, savedAt: new Date().toISOString() }, ...list])}
             onDelete={(id) => { setSaved((list) => list.filter((s) => s.id !== id)); if (id === openSavedId) setOpenSavedId(null); }}
@@ -316,7 +360,7 @@ export default function App() {
             saved={saved}
             current={opened.has(platformId) && (partIds(selOf(platformId)).length || ownsAny(selOf(platformId))) ? { platform: platformId, selection: selOf(platformId), name: openSaved?.name } : null}
             lastPlatform={platformId}
-            onOpen={(item) => openInBuilder(item.platform, item.selection)}
+            onOpen={(item) => { replaceBuild(item.platform, item.selection, openedText(item.name)); go('build'); }}
             onNote={setToast}
           />
         )}

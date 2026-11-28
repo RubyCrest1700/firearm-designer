@@ -256,6 +256,19 @@ export function readSharedLink(): { platform: string; selection: Selection; unli
   }
 }
 
+/**
+ * Whether the opened `?b=` link names a platform and nothing else (`ar15~`): the builder buttons on the guide and
+ * platform pages. The app opens such a link without replacing a build already in progress on that platform.
+ */
+export function linkNamesNoParts(): boolean {
+  try {
+    const raw = new URLSearchParams(location.search).get('b');
+    return !!raw && !(raw.split('~')[1] ?? '').split('.').some(Boolean);
+  } catch {
+    return false;
+  }
+}
+
 /** A placement token (`at-<slot>-<code>`) and an owned mark (`own-<slot>`, `has-<slot>`): never part ids. */
 const AT_TOKEN = /^at-([a-z]+)-(\w+)$/;
 const OWN_TOKEN = /^(own|has)-([a-z]+)$/;

@@ -627,6 +627,10 @@ tr:first-child td { border-top: 0; }
 @media (max-width: 979px) { .toast { bottom: 84px; } }
 .toast-link { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; width: 560px; }
 .toast-link input { flex: 1 1 200px; min-width: 0; padding: 9px 12px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--surface); color: var(--ink); font-size: 16px; font-weight: 400; }
+/* The Undo toast: as wide as its words (a fixed box centred this way would otherwise stop at half the screen), wrapping on a phone. */
+.toast-undo { display: flex; align-items: center; gap: 14px; width: max-content; }
+.toast-undo span { flex: 1 1 auto; min-width: 0; }
+.toast-undo .btn { flex: none; }
 .bp-canvas .bp { max-height: 620px; }
 @media (min-width: 1240px) { .bp-canvas .bp { max-height: calc(100vh - 380px); min-height: 260px; } }
 
@@ -646,6 +650,7 @@ tr:first-child td { border-top: 0; }
 .btn.wide-row { flex-basis: 100%; }
 .save-form textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--surface); resize: vertical; font: inherit; color: inherit; }
 .form-note { font-size: 12.5px; color: var(--muted); }
+.share-reason { flex-basis: 100%; margin-top: -2px; }
 .form-error { font-size: 13.5px; color: var(--err); font-weight: 600; margin-bottom: 10px; }
 .load-error { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: 10px; }
 .load-error .form-error { margin-bottom: 0; }
