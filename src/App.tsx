@@ -3,7 +3,7 @@ import { PLATFORMS, PRICES_READ_AT, canonicalPlatform, currentSelection } from '
 import { ownsAny, partIds, baseSelection, selectionTokens, withoutOwned, type Selection } from './engine';
 import { ComparePage, loadCompare, storeCompare, type CompareItem } from './Compare';
 import { droppedBuilds, linkNamesNoParts, loadSavedBuilds, priceChanges, newId, readSharedLink, savedPrices, selectionFromParts, shareUrl, unlistedNote, checkShareLinks, storeSavedBuilds, SAVED_KEY, type SavedBuild } from './store';
-import { draftEntry, keptOpen, openDraft, openedText, replaceDraft, type Draft, type KeptOpen } from './draft';
+import { draftEntry, keptOpen, openDraft, openedText, replaceDraft, undoAfter, type Draft, type KeptOpen } from './draft';
 import { recordBuyClick, shareBuild, type CommunityBuild } from './community';
 import { ALERTS_KEY, alertsAvailable, checkAlertSignup, loadAlertSignup, signUpForAlerts, stopAlerts, storeAlertSignup, syncAlertBuilds, type AlertSignup } from './alerts';
 import type { Part } from './types';
@@ -11,7 +11,7 @@ import { BuilderPage } from './BuilderPage';
 import { CommunityPage } from './CommunityPage';
 import { HomePage } from './HomePage';
 import { AlertsPanel, SavedPage } from './SavedPage';
-import { DRAWER_OPEN, ToastView, priceStatus, toastAfterChange, toastHideMs, useLinkToastFocus, type Toast } from './ui';
+import { DRAWER_OPEN, ToastView, noteDue, priceStatus, toastAfterChange, toastHideMs, useLinkToastFocus, type Toast } from './ui';
 
 const STORE_KEY = 'firearm-designer:v2';
 /** The home page's title, the same as the <title> in index.html. */
@@ -94,7 +94,12 @@ export default function App() {
   const draft: Draft = { platform: platformId, selections, openSavedId, community: communityOpen };
   const latest = useRef(draft);
   latest.current = draft;
-  const setDraft = (d: Draft) => { setPlatformId(d.platform); setSelections(d.selections); setOpenSavedId(d.openSavedId); setCommunityOpen(d.community); };
+  /** The note about parts a link named that we no longer list, while it waits behind that link's Undo toast (below). */
+  const noteOwed = useRef(false);
+  // Replacing the whole build, or putting one back, takes a link's build off the screen, so its note is no longer owed.
+  const setDraft = (d: Draft) => { setPlatformId(d.platform); setSelections(d.selections); setOpenSavedId(d.openSavedId); setCommunityOpen(d.community); noteOwed.current = false; };
+  /** The Undo on offer: its toast, the draft its replace left, and what puts the earlier build back (see undoAfter). */
+  const offered = useRef<{ toast: Toast; after: Draft; undo: (now: Draft) => Draft } | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
   /** The part a home page price drop opens in the builder: its slot's picker starts open on it. Used once. */
   const [startPart, setStartPart] = useState<Part | null>(null);
@@ -155,8 +160,8 @@ export default function App() {
   }, [saved]);
   // Tell a returning visitor once when a saved build gets cheaper; a new drop tells them again.
   useEffect(() => {
-    // The note about the link just opened shows instead; the drop isn't marked as told, so the next visit tells it.
-    if (linkNote) return;
+    // The note about the link just opened, or that link's Undo toast, shows instead; the drop isn't marked as told, so the next visit tells it.
+    if (linkNote || opening.undo) return;
     const seen = dropped.map((s) => `${s.id}:${priceChanges(s).drop.toFixed(2)}`).sort().join(',');
     try {
       if (!seen || localStorage.getItem(DROPS_SEEN_KEY) === seen) return;
@@ -172,6 +177,9 @@ export default function App() {
     const t = setTimeout(() => setToast(null), ms);
     return () => clearTimeout(t);
   }, [toast]);
+  // The link note that waited behind the link's Undo toast shows once no toast is up: the Undo toast timed out, was closed,
+  // or went with an edit. It reads the toast the draw before showed (drawnToast, below), so it comes before that is updated.
+  useEffect(() => { if (noteDue(noteOwed.current, drawnToast.current, toast)) { noteOwed.current = false; setToast(linkNote); } }, [toast]);
   // A link toast goes when a drawer opens: the page behind a drawer can't be used, and the toast is part of that page.
   useEffect(() => {
     const onDrawer = () => setToast(toastAfterChange);
@@ -185,7 +193,8 @@ export default function App() {
   useEffect(() => { drawnToast.current = toast; });
   useLinkToastFocus(toast);
   // A link that replaced a build in progress says so and offers Undo. This runs after the effects above, so it's the toast that shows.
-  useEffect(() => { if (opening.undo) setToast(undoToast(opening.said, opening.undo)); }, []);
+  // The note about parts the link named that we no longer list waits behind it (noteOwed).
+  useEffect(() => { if (opening.undo) { offerUndo(opening.said, opening.draft, opening.undo); noteOwed.current = !!linkNote; } }, []);
 
   // Each page gets its own history entry, so Back returns to the page before (the hashchange listener follows it).
   const go = (r: Route) => {
@@ -196,14 +205,23 @@ export default function App() {
   };
   /** An Undo toast: Undo puts the replaced build back into the builder as it is at that moment, and the toast goes. */
   const undoToast = (text: string, undo: (now: Draft) => Draft): Toast => ({ text, undo: () => { setDraft(undo(latest.current)); setToast(null); } });
+  /** Shows an Undo toast and keeps what it offers, for a replace that follows while it's still up. `after` is the draft the replace left. */
+  const offerUndo = (said: string, after: Draft, undo: (now: Draft) => Draft) => {
+    const shown = undoToast(said, undo);
+    offered.current = { toast: shown, after, undo };
+    setToast(shown);
+  };
   /**
    * Replaces the whole build on a platform and shows that platform: a starter chip, Clear Build, a model chip, or
    * Open in Builder. When that loses a build in progress, a toast says what happened (`said`) and offers Undo.
+   * A replace made while an earlier Undo toast is still up, with nothing edited since, keeps that earlier build as
+   * what Undo puts back.
    */
   const replaceBuild = (pid: string, sel: Selection, said: string, savedId: string | null = null, community: CommunityBuild | null = null, shown?: Selection) => {
     const { next, undo } = replaceDraft(draft, pid, sel, savedId, community, shown);
+    const back = undoAfter(toast === offered.current?.toast ? offered.current : null, draft, undo);
     setDraft(next);
-    if (undo) setToast(undoToast(said, undo));
+    if (back) offerUndo(said, next, back);
   };
   const saveCopy = (name: string, pid: string, sel: Selection) => {
     setSaved((list) => [{ id: newId(), name, platform: pid, selection: { ...sel }, ...savedPrices(pid, sel) }, ...list]);

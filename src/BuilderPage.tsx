@@ -298,6 +298,9 @@ function WeightLine({ platform, build }: { platform: Platform; build: Build }) {
   );
 }
 
+/** The id of the line under a disabled Share to Community button (in the summary) that says why it can't be used. */
+const SHARE_REASON_ID = 'share-reason';
+
 /** Side and rail position for a light, laser or grip. Dragging it on the drawing does the same. */
 function MountControl({ slot, m, onMount }: { slot: Slot; m: Resolved; onMount: (side: Side, at: number) => void }) {
   const sides = MOVABLE[slot.id].sides;
@@ -320,9 +323,6 @@ function MountControl({ slot, m, onMount }: { slot: Slot; m: Resolved; onMount: 
     </div>
   );
 }
-
-/** The id of the line under a disabled Share to Community button that says why it can't be used. */
-const SHARE_REASON_ID = 'share-reason';
 
 export function Summary({ platform, build, issues, aware, states, status, total, owned, openSaved, onSave, onShare, onCopyLink, onOpen, onCompare, onFindOwned }: {
   platform: Platform; build: Build; issues: Issue[]; aware: Aware[]; states: Record<string, RegionState>; status: { cls: string; text: string; complete: boolean }; total: number;

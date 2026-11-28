@@ -49,6 +49,19 @@ export function replaceDraft(d: Draft, pid: string, sel: Selection, savedId: str
   return { next, undo };
 }
 
+/**
+ * What Undo does after a replace made from draft `d`, whose own undo is `undo` (null when it lost nothing). `offered`
+ * is the Undo still on offer from the replace before, with the draft that replace left; null once its toast has gone.
+ * While the builder is exactly as that replace left it (nothing edited, saved, shared or switched since), Undo goes
+ * all the way back to the build before the first replace: Budget, then Premium, then Undo is the visitor's own build,
+ * not Budget. Otherwise it is one level.
+ */
+export function undoAfter(offered: { after: Draft; undo: (now: Draft) => Draft } | null, d: Draft, undo: ((now: Draft) => Draft) | null): ((now: Draft) => Draft) | null {
+  const unedited = !!offered && d.platform === offered.after.platform && d.selections === offered.after.selections && d.openSavedId === offered.after.openSavedId && d.community === offered.after.community;
+  if (!offered || !unedited) return undo;
+  return (now) => offered.undo(undo ? undo(now) : now);
+}
+
 /** What the tab keeps of the open saved build and community build (see draftEntry). */
 export interface KeptOpen { openSavedId: string | null; community: CommunityBuild | null }
 

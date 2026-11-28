@@ -94,8 +94,15 @@ export const TOAST_CLOSE = 'Close';
  * after a newer change Undo would throw that change away. Plain words stay and hide on their own timer.
  */
 export const toastAfterChange = (toast: Toast | null): Toast | null => (toast !== null && typeof toast !== 'string' ? null : toast);
+/**
+ * Whether a note that waited behind another toast is due: it's owed, a toast was up at the last draw, and none is up
+ * now. "A toast was up" keeps it from showing as the page opens, before the toast it waits behind has been drawn.
+ */
+export const noteDue = (owed: boolean, before: Toast | null, now: Toast | null) => owed && before !== null && now === null;
 /** The id of the link toast's field. */
 export const TOAST_LINK_ID = 'toast-link';
+/** The id of the Undo toast's words, which describe its button to a screen reader that lands on it. */
+export const TOAST_UNDO_TEXT_ID = 'toast-undo-text';
 /** Selects the whole link. Some in-app phone browsers ignore select() on a read-only field, so the range is set as well. */
 const selectAll = (field: HTMLInputElement) => { field.select(); field.setSelectionRange(0, field.value.length); };
 
@@ -113,10 +120,21 @@ export function useLinkToastFocus(toast: Toast | null) {
   }, [toast]);
 }
 
-/** The toast. A link is one line in a read-only field that selects itself when focused or clicked, with a Close button (Escape closes it too). */
+/** A number of its own for each Undo toast (see ToastView). */
+const undoToastKeys = new WeakMap<UndoToast, number>();
+let undoToastCount = 0;
+function undoToastKey(toast: UndoToast) {
+  if (!undoToastKeys.has(toast)) undoToastKeys.set(toast, ++undoToastCount);
+  return undoToastKeys.get(toast);
+}
+
+/**
+ * The toast. A link is one line in a read-only field that selects itself when focused or clicked, with a Close button (Escape closes it too).
+ * Each Undo toast is drawn afresh (its key): one that takes the place of another reads for itself where the focus was and starts its own time.
+ */
 export function ToastView({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   if (typeof toast === 'string') return <div className="toast" role="status">{toast}</div>;
-  if ('undo' in toast) return <UndoToastView toast={toast} onClose={onClose} />;
+  if ('undo' in toast) return <UndoToastView key={undoToastKey(toast)} toast={toast} onClose={onClose} />;
   return (
     <div className="toast toast-link" role="status" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
       <label htmlFor={TOAST_LINK_ID}>{COPY_LINK_LEAD}</label>
@@ -146,8 +164,8 @@ export function UndoToastBody({ toast, onClose, onHold, buttonRef }: {
   return (
     <div className="toast toast-undo" role="status" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
       onMouseEnter={() => onHold('pointer', true)} onMouseLeave={() => onHold('pointer', false)} onFocus={() => onHold('focus', true)} onBlur={() => onHold('focus', false)}>
-      <span>{toast.text}</span>
-      <button type="button" className="btn" ref={buttonRef} onClick={toast.undo}>{UNDO_LABEL}</button>
+      <span id={TOAST_UNDO_TEXT_ID}>{toast.text}</span>
+      <button type="button" className="btn" ref={buttonRef} onClick={toast.undo} aria-describedby={TOAST_UNDO_TEXT_ID}>{UNDO_LABEL}</button>
     </div>
   );
 }

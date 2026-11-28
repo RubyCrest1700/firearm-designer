@@ -49,10 +49,10 @@ import PRICES_JSON from '../data/prices.json';
 import { priceIndex } from './og-index';
 import { publishedIndex } from './og-index';
 import { loadPersisted } from '../src/App';
-import { CLEARED_TEXT, draftEntry, keptOpen, openDraft, openedFactoryText, openedLinkText, openedText, replaceDraft, startedOverText, switchedText, type Draft } from '../src/draft';
+import { CLEARED_TEXT, draftEntry, keptOpen, openDraft, openedFactoryText, openedLinkText, openedText, replaceDraft, startedOverText, switchedText, undoAfter, type Draft } from '../src/draft';
 import { loadKeptOpen } from '../src/App';
 import { TIER_LABEL as STARTER_NAMES, linkNamesNoParts } from '../src/store';
-import { UNDO_LABEL, UNDO_TOAST_MS, UndoToastBody } from '../src/ui';
+import { TOAST_UNDO_TEXT_ID, UNDO_LABEL, UNDO_TOAST_MS, UndoToastBody, noteDue } from '../src/ui';
 import { recordHistory } from './price-history.mjs';
 import { cardTotalWords } from './og-index';
 import { retailersFrom } from './sources.mjs';
@@ -846,7 +846,7 @@ test('an opened or pasted link carries its count of unlisted parts; the app says
   assert.ok(app.includes(`  const shared = useMemo(readSharedLink, []);`));
   assert.ok(app.includes(`  const linkNote = unlistedNote(shared?.unlisted ?? 0);`));
   assert.ok(app.includes(`  useEffect(() => { if (linkNote) setToast(linkNote); }, []);`));
-  assert.ok(app.includes(`    if (linkNote) return;\n    const seen = dropped.map(`), 'checked before the drop is marked as told');
+  assert.ok(app.includes(`    if (linkNote || opening.undo) return;\n    const seen = dropped.map(`), 'checked before the drop is marked as told');
   assert.equal(toastHideMs(ONE_UNLISTED), 2800);
   // Compare: both kinds of pasted link report through the page's note, which the app shows as a toast.
   const compare = readFileSync('src/Compare.tsx', 'utf8').replace(/\r\n/g, '\n');
@@ -2183,6 +2183,10 @@ test('a builder button link keeps the build in progress; a link with parts repla
   assert.deepEqual(openDraft(kept, open, { platform: 'ar15', selection: base }, true, mine), { draft: before, undo: null, said: '' });
   // The same button for another platform's builder shows that platform's build in progress; the saved build belongs to the AR-15 one.
   assert.deepEqual(openDraft(kept, open, { platform: 'glock9', selection: baseSelection(glock) }, true, mine), { draft: { ...before, platform: 'glock9', openSavedId: null }, undo: null, said: '' });
+  // The same for an open community build: kept by its own platform's button, left behind by another platform's.
+  const openShared = { openSavedId: null, community: COMMUNITY_OPEN };
+  assert.equal(openDraft(kept, openShared, { platform: 'ar15', selection: base }, true, mine).draft.community, COMMUNITY_OPEN);
+  assert.deepEqual(openDraft(kept, openShared, { platform: 'glock9', selection: baseSelection(glock) }, true, mine), { draft: { ...before, platform: 'glock9', openSavedId: null, community: null }, undo: null, said: '' });
   // No build in progress there (never opened, or cleared): the factory build the link names.
   for (const selections of [{}, { ar15: {} }, { glock9: { slide: 'g19-slide-g5' } }] as Record<string, Selection>[]) {
     const got = openDraft({ platform: 'glock9', selections }, NOTHING_OPEN, { platform: 'ar15', selection: base }, true, []);
@@ -2213,7 +2217,7 @@ test('a builder button link keeps the build in progress; a link with parts repla
 
   // The app says it once as the page opens, after the other opening toasts so Undo is the one that shows.
   const app = readFileSync('src/App.tsx', 'utf8').replace(/\r\n/g, '\n');
-  assert.ok(app.includes(`  useLinkToastFocus(toast);\n  // A link that replaced a build in progress says so and offers Undo. This runs after the effects above, so it's the toast that shows.\n  useEffect(() => { if (opening.undo) setToast(undoToast(opening.said, opening.undo)); }, []);\n`));
+  assert.ok(app.includes(`  useLinkToastFocus(toast);\n  // A link that replaced a build in progress says so and offers Undo. This runs after the effects above, so it's the toast that shows.\n  // The note about parts the link named that we no longer list waits behind it (noteOwed).\n  useEffect(() => { if (opening.undo) { offerUndo(opening.said, opening.draft, opening.undo); noteOwed.current = !!linkNote; } }, []);\n`));
   // The guide pages' buttons are those no-parts links (scripts/builder-links.test.mjs checks every page).
   const render = readFileSync('src/guides/render.ts', 'utf8');
   assert.ok(render.includes('const baseUrl = (platform: PageView) => builderUrl(platform.pageId, []);'));
@@ -3452,8 +3456,15 @@ test('the Undo toast is words and a real button; it stays at least 8 seconds and
   assert.equal(UNDO_LABEL, UNDO_TEXT);
   assert.equal(
     renderToStaticMarkup(createElement(ToastView, { toast, onClose })),
-    `<div class="toast toast-undo" role="status"><span>${CLEARED_BUILD}</span><button type="button" class="btn">${UNDO_TEXT}</button></div>`,
+    `<div class="toast toast-undo" role="status"><span id="toast-undo-text">${CLEARED_BUILD}</span><button type="button" class="btn" aria-describedby="toast-undo-text">${UNDO_TEXT}</button></div>`,
   );
+  assert.equal(TOAST_UNDO_TEXT_ID, 'toast-undo-text');
+  // Each Undo toast is drawn afresh, so a second one right after a first takes its own reading of where the focus was:
+  // the same toast keeps its key from draw to draw, and another toast has another key even with the same words.
+  const keyOf = (t: typeof toast) => (ToastView({ toast: t, onClose }) as ReactElement).key;
+  assert.ok(keyOf(toast) !== null);
+  assert.equal(keyOf(toast), keyOf(toast));
+  assert.notEqual(keyOf({ ...toast }), keyOf(toast));
   // The button undoes; Escape closes; pointing at it or focusing inside it holds it, leaving lets it go.
   const held: [string, boolean][] = [];
   const drawn = UndoToastBody({ toast, onClose, onHold: (how, on) => { held.push([how, on]); } }) as ReactElement;
@@ -3540,6 +3551,9 @@ test('every whole-build replace can be undone: starter chips, Clear Build, the m
   const other = replaceDraft(before, 'glock9', baseSelection(glock), 'saved-3');
   assert.deepEqual(other.next, { platform: 'glock9', selections: { ar15: mine, glock9: baseSelection(glock) }, openSavedId: 'saved-3', community: null });
   assert.deepEqual(other.undo!(other.next), { platform: 'glock9', selections: { ar15: mine, glock9: glockMine }, openSavedId: null, community: null });
+  // The same with a community build open in the AR-15 builder: it isn't the Glock build's, before or after Undo.
+  const otherShared = replaceDraft(shared, 'glock9', baseSelection(glock));
+  assert.deepEqual(otherShared.undo!(otherShared.next), { platform: 'glock9', selections: { ar15: mine, glock9: glockMine }, openSavedId: null, community: null });
   // Undo keeps what other builders have gained since.
   const later = { ...fromSaved.next, selections: { ...fromSaved.next.selections, ar9: { barrel: 'x' } } };
   assert.deepEqual(fromSaved.undo!(later).selections, { ar15: mine, glock9: glockMine, ar9: { barrel: 'x' } });
@@ -3568,10 +3582,21 @@ test('every whole-build replace can be undone: starter chips, Clear Build, the m
   assert.ok(app.includes([
     '  const replaceBuild = (pid: string, sel: Selection, said: string, savedId: string | null = null, community: CommunityBuild | null = null, shown?: Selection) => {',
     '    const { next, undo } = replaceDraft(draft, pid, sel, savedId, community, shown);',
+    '    const back = undoAfter(toast === offered.current?.toast ? offered.current : null, draft, undo);',
     '    setDraft(next);',
-    '    if (undo) setToast(undoToast(said, undo));',
+    '    if (back) offerUndo(said, next, back);',
     '  };',
   ].join('\n')));
+  assert.ok(app.includes([
+    '  const offerUndo = (said: string, after: Draft, undo: (now: Draft) => Draft) => {',
+    '    const shown = undoToast(said, undo);',
+    '    offered.current = { toast: shown, after, undo };',
+    '    setToast(shown);',
+    '  };',
+  ].join('\n')));
+  // Undo works on the builder as it is when pressed, not as it was when the toast was made; and putting a draft in sets all four parts of it.
+  assert.ok(app.includes(`  const latest = useRef(draft);\n  latest.current = draft;\n`));
+  assert.ok(app.includes(`  const setDraft = (d: Draft) => { setPlatformId(d.platform); setSelections(d.selections); setOpenSavedId(d.openSavedId); setCommunityOpen(d.community); noteOwed.current = false; };\n`));
   assert.ok(app.includes(`  const undoToast = (text: string, undo: (now: Draft) => Draft): Toast => ({ text, undo: () => { setDraft(undo(latest.current)); setToast(null); } });\n`));
   assert.ok(app.includes(`startOver={(sel, said) => replaceBuild(platformId, sel, said, null, null, selOf(platformId))}`));
   assert.ok(app.includes(`onOpen={(b) => { replaceBuild(b.platform, selectionFromParts(b.platform, b.parts), openedText(b.name), null, b); go('build'); }}`), 'Community');
@@ -3579,8 +3604,91 @@ test('every whole-build replace can be undone: starter chips, Clear Build, the m
   assert.ok(app.includes(`onOpen={(s) => { replaceBuild(s.platform, s.selection, openedText(s.name), s.id); go('build'); }}`), 'My Builds');
   assert.ok(app.includes(`onOpen={(item) => { replaceBuild(item.platform, item.selection, openedText(item.name)); go('build'); }}`), 'Compare');
   assert.equal(app.match(/replaceBuild\(/g)?.length, 5);
-  assert.equal(app.match(/undoToast\(/g)?.length, 2, 'a replace, and a link as the page opens');
+  assert.equal(app.match(/undoToast\(/g)?.length, 1, 'only where an Undo is offered');
+  assert.equal(app.match(/offerUndo\(/g)?.length, 2, 'a replace, and a link as the page opens');
   assert.doesNotMatch(app, /openInBuilder/);
+});
+
+test('a second replace while Undo is still on offer and the build is unedited keeps the first build as what Undo puts back', () => {
+  const budget = presetSelection(ar15, 'budget');
+  const premium = presetSelection(ar15, 'premium');
+  const mine: Selection = { ...baseSelection(ar15), '+barrel': 'own', '@light': 'r45' };
+  const glockMine: Selection = { slide: 'g19-slide-g5', '+slide': 'own' };
+  const before: Draft = { platform: 'ar15', selections: { ar15: mine, glock9: glockMine }, openSavedId: 'saved-1', community: null };
+  const snapshot = JSON.stringify(before);
+
+  // Budget, then Premium while Budget's Undo toast is still up: Undo puts back the visitor's own build, not Budget.
+  const first = replaceDraft(before, 'ar15', budget);
+  const offered = { after: first.next, undo: first.undo! };
+  const second = replaceDraft(first.next, 'ar15', premium);
+  assert.deepEqual(second.undo!(second.next), first.next, 'on its own, the second Undo is one level');
+  const back = undoAfter(offered, first.next, second.undo)!;
+  assert.deepEqual(back(second.next), before);
+  assert.equal(back(second.next).selections.ar15, mine);
+  // And a third: Clear Build straight after.
+  const third = replaceDraft(second.next, 'ar15', {});
+  assert.deepEqual(undoAfter({ after: second.next, undo: back }, second.next, third.undo)!(third.next), before);
+  // Clear Build then Budget: the second replace loses nothing itself, and Undo is still offered, back to the visitor's build.
+  const cleared = replaceDraft(before, 'ar15', {});
+  const refilled = replaceDraft(cleared.next, 'ar15', budget);
+  assert.equal(refilled.undo, null);
+  assert.deepEqual(undoAfter({ after: cleared.next, undo: cleared.undo! }, cleared.next, refilled.undo)!(refilled.next), before);
+  // A link that replaced the build as the page opened, then a starter chip: the same.
+  const link = openDraft({ platform: 'ar15', selections: before.selections }, { openSavedId: 'saved-1', community: null }, { platform: 'ar15', selection: budget }, false, [{ id: 'saved-1', platform: 'ar15' }]);
+  const chip = replaceDraft(link.draft, 'ar15', premium);
+  assert.deepEqual(undoAfter({ after: link.draft, undo: link.undo! }, link.draft, chip.undo)!(chip.next), before);
+  // The first replace opened another platform's builder, the second is on it: both builds go back as they were.
+  const glockOpened = replaceDraft(before, 'glock9', baseSelection(glock), 'saved-3');
+  const glockCleared = replaceDraft(glockOpened.next, 'glock9', {});
+  assert.deepEqual(undoAfter({ after: glockOpened.next, undo: glockOpened.undo! }, glockOpened.next, glockCleared.undo)!(glockCleared.next), { ...before, platform: 'glock9', openSavedId: null });
+  // A second replace on another platform's builder: Undo puts both builds back, and shows the first.
+  const glockNext = replaceDraft(first.next, 'glock9', baseSelection(glock));
+  assert.deepEqual(undoAfter(offered, first.next, glockNext.undo)!(glockNext.next), before);
+  // Whatever other builders have gained since stays.
+  assert.deepEqual(back({ ...second.next, selections: { ...second.next.selections, ar9: { barrel: 'x' } } }).selections, { ar15: mine, glock9: glockMine, ar9: { barrel: 'x' } });
+
+  // Edited since the first replace: Undo is one level, back to the edited build.
+  const edited: Draft = { ...first.next, selections: { ...first.next.selections, ar15: { ...first.next.selections.ar15, '+barrel': 'own' } } };
+  const afterEdit = replaceDraft(edited, 'ar15', premium);
+  assert.equal(undoAfter(offered, edited, afterEdit.undo), afterEdit.undo);
+  assert.deepEqual(afterEdit.undo!(afterEdit.next), edited);
+  // The same when anything else about the builder has changed: saved as a new build, shared, another platform shown, or an edit on any platform.
+  for (const now of [{ ...first.next, openSavedId: 'saved-9' }, { ...first.next, community: COMMUNITY_OPEN }, { ...first.next, platform: 'glock9' }, { ...first.next, selections: { ...first.next.selections } }] as Draft[])
+    assert.equal(undoAfter(offered, now, second.undo), second.undo, JSON.stringify(now).slice(0, 60));
+  // The toast has gone (nothing on offer): one level, and no Undo when nothing was lost.
+  assert.equal(undoAfter(null, first.next, second.undo), second.undo);
+  assert.equal(undoAfter(null, cleared.next, null), null);
+  assert.equal(JSON.stringify(before), snapshot);
+
+  // The app: what is on offer is the Undo whose toast is the one up now, and the draft that replace left.
+  const app = readFileSync('src/App.tsx', 'utf8').replace(/\r\n/g, '\n');
+  assert.ok(app.includes(`  const offered = useRef<{ toast: Toast; after: Draft; undo: (now: Draft) => Draft } | null>(null);\n`));
+  assert.ok(app.includes(`    const back = undoAfter(toast === offered.current?.toast ? offered.current : null, draft, undo);\n`));
+});
+
+test('a link that replaced a build still shows its unlisted-parts note once the Undo toast has gone, and a price drop waits', () => {
+  const undo = { text: LINK_FACTORY_AR15, undo: () => {} };
+  // The note is due when it's owed, a toast was up at the last draw, and none is up now.
+  assert.equal(noteDue(true, undo, null), true, 'the Undo toast timed out, was closed, or went with an edit');
+  assert.equal(noteDue(true, 'Saved "Mine" to My Builds', null), true, 'another toast took its place first, and has now gone');
+  assert.equal(noteDue(true, undo, undo), false, 'still up');
+  assert.equal(noteDue(true, undo, 'Saved "Mine" to My Builds'), false, 'another toast is up');
+  assert.equal(noteDue(true, null, null), false, 'as the page opens, before the Undo toast has been drawn');
+  assert.equal(noteDue(true, null, undo), false);
+  assert.equal(noteDue(false, undo, null), false, 'nothing owed: no link note, Undo was pressed, or the build was replaced again');
+  const app = readFileSync('src/App.tsx', 'utf8').replace(/\r\n/g, '\n');
+  // It's owed from the load where the link's Undo toast took its place (pinned with that toast, above), shown once, with the same words as ever.
+  assert.ok(app.includes(`  const noteOwed = useRef(false);\n`));
+  const shows = app.indexOf(`  useEffect(() => { if (noteDue(noteOwed.current, drawnToast.current, toast)) { noteOwed.current = false; setToast(linkNote); } }, [toast]);\n`);
+  assert.ok(shows > 0 && shows < app.indexOf(`  useEffect(() => { drawnToast.current = toast; });\n`), 'it reads the toast the draw before showed, so it runs before that is updated');
+  // Undo, or replacing the build again, takes the link's build off the screen: the note is dropped (both go through setDraft).
+  assert.ok(app.includes(`setCommunityOpen(d.community); noteOwed.current = false; };\n`));
+  assert.ok(app.includes(`undo: () => { setDraft(undo(latest.current)); setToast(null); } });\n`));
+  assert.equal(app.match(/noteOwed\.current = /g)?.length, 3, 'owed as the page opens; dropped when shown and when the build is replaced or put back');
+  // The price drop: its toast would be replaced by the link's Undo toast on that load, so it isn't marked as told and the next visit tells it.
+  const at = app.indexOf(`    if (linkNote || opening.undo) return;\n`);
+  assert.ok(at > 0 && at < app.indexOf(`localStorage.setItem(DROPS_SEEN_KEY, seen);`), 'checked before the drop is marked as told');
+  assert.equal(app.match(/DROPS_SEEN_KEY, /g)?.length, 1);
 });
 
 /* ------------------------------------------------------------------ same product, one price (Part.sameAs) */
